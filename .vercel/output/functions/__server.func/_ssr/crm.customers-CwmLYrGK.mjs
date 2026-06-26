@@ -4,7 +4,7 @@ import { F as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+
 import { t as Button } from "./button-PwNqyxv_.mjs";
 import { t as Input } from "./input-uzm9g8Y7.mjs";
 import { t as useLocalStorage } from "./use-local-storage-C6y5r3WN.mjs";
-import { E as Plus, f as Trash2, i as User, mt as Crown } from "../_libs/lucide-react.mjs";
+import { T as Plus, f as Trash2, i as User, pt as Crown } from "../_libs/lucide-react.mjs";
 import { a as DialogHeader, i as DialogFooter, n as DialogContent, o as DialogTitle, r as DialogDescription, s as DialogTrigger, t as Dialog } from "./dialog-BvYONHWJ.mjs";
 import { n as formatINR, t as bookings } from "./mock-data-4__fbKqF.mjs";
 import { t as Label } from "./label-BeT0bXvu.mjs";

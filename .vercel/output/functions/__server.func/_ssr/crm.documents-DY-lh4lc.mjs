@@ -4,7 +4,7 @@ import { F as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+
 import { t as Button } from "./button-PwNqyxv_.mjs";
 import { t as Input } from "./input-uzm9g8Y7.mjs";
 import { t as useLocalStorage } from "./use-local-storage-C6y5r3WN.mjs";
-import { $ as Folder, A as Pencil, Dt as Check, Rt as ArrowLeft, Tt as ChevronRight, V as Link2, X as HardDrive, c as Unlink, et as FolderPlus, f as Trash2, ft as EllipsisVertical, gt as Cloud, it as FileText, n as X, nt as Film, pt as Download, rt as File, s as Upload, st as FileImage, tt as FolderOpen, w as Search, zt as Archive } from "../_libs/lucide-react.mjs";
+import { $ as FolderPlus, B as Link2, C as Search, Et as Check, Lt as ArrowLeft, Q as Folder, Rt as Archive, Y as HardDrive, c as Unlink, dt as EllipsisVertical, et as FolderOpen, f as Trash2, ft as Download, ht as Cloud, k as Pencil, n as X, nt as File, ot as FileImage, rt as FileText, s as Upload, tt as Film, wt as ChevronRight } from "../_libs/lucide-react.mjs";
 import { n as useGoogleLogin } from "../_libs/react-oauth__google.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/crm.documents-DY-lh4lc.js
 var import_react = /* @__PURE__ */ __toESM(require_react());

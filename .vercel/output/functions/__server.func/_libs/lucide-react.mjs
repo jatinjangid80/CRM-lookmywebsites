@@ -1587,19 +1587,6 @@ var Search = createLucideIcon("search", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
-var Send = createLucideIcon("send", [["path", {
-	d: "M14.536 21.686a.5.5 0 0 0 .937-.024l6.5-19a.496.496 0 0 0-.635-.635l-19 6.5a.5.5 0 0 0-.024.937l7.93 3.18a2 2 0 0 1 1.112 1.11z",
-	key: "1ffxy3"
-}], ["path", {
-	d: "m21.854 2.147-10.94 10.939",
-	key: "12cjpa"
-}]]);
-/**
-* @license lucide-react v0.575.0 - ISC
-*
-* This source code is licensed under the ISC license.
-* See the LICENSE file in the root directory of this source tree.
-*/
 var Settings = createLucideIcon("settings", [["path", {
 	d: "M9.671 4.136a2.34 2.34 0 0 1 4.659 0 2.34 2.34 0 0 0 3.319 1.915 2.34 2.34 0 0 1 2.33 4.033 2.34 2.34 0 0 0 0 3.831 2.34 2.34 0 0 1-2.33 4.033 2.34 2.34 0 0 0-3.319 1.915 2.34 2.34 0 0 1-4.659 0 2.34 2.34 0 0 0-3.32-1.915 2.34 2.34 0 0 1-2.33-4.033 2.34 2.34 0 0 0 0-3.831A2.34 2.34 0 0 1 6.35 6.051a2.34 2.34 0 0 0 3.319-1.915",
 	key: "1i5ecw"
@@ -2052,4 +2039,4 @@ var Youtube = createLucideIcon("youtube", [["path", {
 	key: "1jp15x"
 }]]);
 //#endregion
-export { Folder as $, Pencil as A, CalendarDays as At, ListChecks as B, Send as C, ChevronsUpDown as Ct, Play as D, Check as Dt, Plus as E, ChevronDown as Et, Map as F, Briefcase as Ft, Instagram as G, LayoutGrid as H, MapPin as I, Bell as It, Hotel as J, Info as K, Mail as L, Award as Lt, Paperclip as M, Calculator as Mt, Palette as N, Bus as Nt, Plane as O, Car as Ot, Package as P, Building2 as Pt, Funnel as Q, LogOut as R, ArrowLeft as Rt, Settings as S, CircleAlert as St, Save as T, ChevronRight as Tt, LayoutDashboard as U, Link2 as V, Key as W, HardDrive as X, Heart as Y, Globe as Z, Stamp as _, Clock as _t, UserCog as a, FileSpreadsheet as at, Sparkles as b, CircleCheck as bt, Unlink as c, Facebook as ct, TrendingDown as d, ExternalLink as dt, FolderPlus as et, Trash2 as f, EllipsisVertical as ft, Star as g, Cloud as gt, Table2 as h, CreditCard as ht, User as i, FileText as it, Pen as j, CalendarCheck as jt, Phone as k, Camera as kt, TriangleAlert as l, Eye as lt, Tag as m, Crown as mt, X as n, Film as nt, UserCheck as o, FilePenLine as ot, TramFront as p, Download as pt, IndianRupee as q, Users as r, File as rt, Upload as s, FileImage as st, Youtube as t, FolderOpen as tt, TrendingUp as u, EyeOff as ut, Square as v, Circle as vt, Search as w, ChevronUp as wt, Shield as x, CircleCheckBig as xt, SquarePen as y, CircleX as yt, Lock as z, Archive as zt };
+export { FolderPlus as $, Pen as A, CalendarCheck as At, Link2 as B, Search as C, ChevronUp as Ct, Plane as D, Car as Dt, Play as E, Check as Et, MapPin as F, Bell as Ft, Info as G, LayoutDashboard as H, Mail as I, Award as It, Heart as J, IndianRupee as K, LogOut as L, ArrowLeft as Lt, Palette as M, Bus as Mt, Package as N, Building2 as Nt, Phone as O, Camera as Ot, Map as P, Briefcase as Pt, Folder as Q, Lock as R, Archive as Rt, Settings as S, ChevronsUpDown as St, Plus as T, ChevronDown as Tt, Key as U, LayoutGrid as V, Instagram as W, Globe as X, HardDrive as Y, Funnel as Z, Stamp as _, Circle as _t, UserCog as a, FilePenLine as at, Sparkles as b, CircleCheckBig as bt, Unlink as c, Eye as ct, TrendingDown as d, EllipsisVertical as dt, FolderOpen as et, Trash2 as f, Download as ft, Star as g, Clock as gt, Table2 as h, Cloud as ht, User as i, FileSpreadsheet as it, Paperclip as j, Calculator as jt, Pencil as k, CalendarDays as kt, TriangleAlert as l, EyeOff as lt, Tag as m, CreditCard as mt, X as n, File as nt, UserCheck as o, FileImage as ot, TramFront as p, Crown as pt, Hotel as q, Users as r, FileText as rt, Upload as s, Facebook as st, Youtube as t, Film as tt, TrendingUp as u, ExternalLink as ut, Square as v, CircleX as vt, Save as w, ChevronRight as wt, Shield as x, CircleAlert as xt, SquarePen as y, CircleCheck as yt, ListChecks as z };

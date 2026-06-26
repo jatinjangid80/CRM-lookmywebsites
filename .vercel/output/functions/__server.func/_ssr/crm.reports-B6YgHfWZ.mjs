@@ -1,6 +1,6 @@
 import { F as require_jsx_runtime } from "../_libs/@radix-ui/react-alert-dialog+[...].mjs";
 import { t as Button } from "./button-PwNqyxv_.mjs";
-import { jt as CalendarCheck, o as UserCheck, pt as Download, q as IndianRupee, u as TrendingUp } from "../_libs/lucide-react.mjs";
+import { At as CalendarCheck, K as IndianRupee, ft as Download, o as UserCheck, u as TrendingUp } from "../_libs/lucide-react.mjs";
 import { n as formatINR, r as leads, t as bookings } from "./mock-data-4__fbKqF.mjs";
 import { a as XAxis, c as Bar, d as ResponsiveContainer, f as Tooltip, i as YAxis, l as Pie, n as BarChart, o as Line, p as Legend, r as LineChart, s as CartesianGrid, t as PieChart, u as Cell } from "../_libs/recharts+[...].mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/crm.reports-B6YgHfWZ.js
