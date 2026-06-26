@@ -174,14 +174,14 @@ function VendorsPage() {
   // Filtered List
   const { filtered, totalOutstanding } = useMemo(() => {
     const f = vendors.filter((v) => {
-      const q = searchQuery.toLowerCase();
-      const matchQ = !q || v.name.toLowerCase().includes(q) || v.contactPerson?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q);
+      const searchStr = q.toLowerCase();
+      const matchQ = !searchStr || v.name.toLowerCase().includes(searchStr) || v.contactPerson?.toLowerCase().includes(searchStr) || v.location?.toLowerCase().includes(searchStr);
       const matchCat = categoryFilter === "All" || v.category === categoryFilter;
       const matchStat = statusFilter === "All" || v.status === statusFilter;
       return matchQ && matchCat && matchStat;
     });
     return { filtered: f, totalOutstanding: f.reduce((sum, v) => sum + v.balance, 0) };
-  }, [vendors, searchQuery, categoryFilter, statusFilter]);
+  }, [vendors, q, categoryFilter, statusFilter]);
 
   return (
     <div className="space-y-6">

@@ -1,4 +1,4 @@
-import { createFileRoute, Link } from "@tanstack/react-router";
+import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { Plus, Users, UserCheck, IndianRupee, CalendarCheck, TrendingUp, TrendingDown, AlertCircle, Award, ChevronRight, Sparkles, User } from "lucide-react";
 import { LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, ResponsiveContainer, XAxis, YAxis, Tooltip, CartesianGrid, Legend } from "recharts";
 import { revenueByMonth, destinationPerformance, leads as seedLeads, bookings as seedBookings, customers as seedCustomers, formatINR } from "@/lib/mock-data";
@@ -59,6 +59,7 @@ const FunnelTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+
 function getLocalStorageItem<T>(key: string, fallback: T): T {
   if (typeof window === "undefined") return fallback;
   try {
@@ -78,6 +79,8 @@ function formatLakhs(amount: number) {
 
 function Dashboard() {
   const user = getAuth();
+  const navigate = useNavigate();
+
   
   // Read dynamic lists safely (read-only) from localStorage to prevent default-overwriting bugs
   const leadsList = getLocalStorageItem<any[]>("crm_leads_v2", []);
@@ -300,29 +303,39 @@ function Dashboard() {
 
       {/* Bottom row: Funnel, Bookings & Destinations */}
       <div className="grid gap-6 lg:grid-cols-3">
-        {/* Conversion Funnel */}
+        {/* Lead Funnel — live data, click bar to go to Leads */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
-          <h3 className="font-display text-lg font-bold">Lead funnel</h3>
-          <p className="text-xs text-muted-foreground mt-0.5">Distribution of active leads by stage</p>
+          <div className="flex items-center justify-between mb-1">
+            <h3 className="font-display text-lg font-bold">Lead funnel</h3>
+            <Link
+              to="/crm/leads"
+              className="text-[11px] font-semibold text-primary hover:underline flex items-center gap-0.5"
+            >
+              View all <ChevronRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <p className="text-xs text-muted-foreground">Click a bar to see those leads</p>
           <div className="mt-4 h-64">
             <ResponsiveContainer>
-              <BarChart data={[
-                { stage: "New Lead", count: leadsList.filter(l => l.status === "New Lead").length || 4 },
-                { stage: "Contacted", count: leadsList.filter(l => l.status === "Contacted").length || 3 },
-                { stage: "Quoted", count: leadsList.filter(l => l.status === "Quotation Sent" || l.status === "Quoted").length || 5 },
-                { stage: "Negotiate", count: leadsList.filter(l => l.status === "Negotiation").length || 2 },
-                { stage: "Booked", count: leadsList.filter(l => l.status === "Booked" || l.status === "Completed").length || 4 },
-              ]}>
+              <BarChart
+                data={[
+                  { stage: "New Lead",  count: leadsList.filter(l => l.status === "New Lead").length },
+                  { stage: "Contacted", count: leadsList.filter(l => l.status === "Contacted").length },
+                  { stage: "Quoted",    count: leadsList.filter(l => l.status === "Quotation Sent" || l.status === "Quoted").length },
+                  { stage: "Negotiate", count: leadsList.filter(l => l.status === "Negotiation").length },
+                  { stage: "Booked",    count: leadsList.filter(l => l.status === "Booked" || l.status === "Completed").length },
+                ]}
+                style={{ cursor: "pointer" }}
+                onClick={() => navigate({ to: "/crm/leads" })}
+              >
                 <CartesianGrid strokeDasharray="3 3" stroke="rgba(0,0,0,0.03)" />
                 <XAxis dataKey="stage" stroke="#888" fontSize={11} tickLine={false} axisLine={false} />
-                <YAxis stroke="#888" fontSize={11} tickLine={false} axisLine={false} />
-                <Tooltip content={<FunnelTooltip />} />
+                <YAxis stroke="#888" fontSize={11} tickLine={false} axisLine={false} allowDecimals={false} />
+                <Tooltip content={<FunnelTooltip />} cursor={{ fill: "rgba(255,107,0,0.07)" }} />
                 <Bar dataKey="count" fill="#FF6B00" radius={[6, 6, 0, 0]}>
-                  {
-                    [1, 2, 3, 4, 5].map((_, index) => (
-                      <Cell key={`cell-${index}`} fill={index === 4 ? "#FF6B00" : "#FFA666"} />
-                    ))
-                  }
+                  {[0,1,2,3,4].map((index) => (
+                    <Cell key={`cell-${index}`} fill={index === 4 ? "#FF6B00" : "#FFA666"} />
+                  ))}
                 </Bar>
               </BarChart>
             </ResponsiveContainer>

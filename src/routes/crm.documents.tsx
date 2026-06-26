@@ -542,7 +542,10 @@ function FoldersPage() {
   const [zohoModalOpen, setZohoModalOpen] = useState(false);
   const [isConnectingZoho, setIsConnectingZoho] = useState(false);
 
-  const loginWithGoogle = useGoogleLogin({
+  // Always call useGoogleLogin unconditionally (React hook rules).
+  // When no clientId is configured, GoogleOAuthProvider still wraps the app
+  // but login will show an alert instead of launching the OAuth popup.
+  const googleLogin = useGoogleLogin({
     onSuccess: (tokenResponse) => {
       setGoogleAccessToken(tokenResponse.access_token);
       setIsConnectingZoho(false);
@@ -550,11 +553,21 @@ function FoldersPage() {
     },
     onError: () => {
       setIsConnectingZoho(false);
-      console.error('Google Login Failed');
-      alert('Google Login Failed');
+      console.error("Google Login Failed");
+      alert("Google Login Failed. Make sure a valid Google OAuth Client ID is configured.");
     },
-    scope: 'https://www.googleapis.com/auth/drive.file',
+    scope: "https://www.googleapis.com/auth/drive.file",
   });
+
+  const loginWithGoogle = () => {
+    const clientId = import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID as string | undefined;
+    if (!clientId) {
+      setIsConnectingZoho(false);
+      alert("Google Drive is not configured. To enable it, add your VITE_GOOGLE_DRIVE_CLIENT_ID to the .env file.");
+      return;
+    }
+    googleLogin();
+  };
 
   // Auto-save to localStorage whenever folders change
   useEffect(() => {
@@ -564,8 +577,8 @@ function FoldersPage() {
   const openFolder = folders.find((f) => f.id === openFolderId) ?? null;
 
   const filtered = folders.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase()) ||
-    f.description.toLowerCase().includes(search.toLowerCase())
+    f?.name?.toLowerCase().includes(search.toLowerCase()) ||
+    f?.description?.toLowerCase().includes(search.toLowerCase())
   );
 
   /* ── CRUD ── */

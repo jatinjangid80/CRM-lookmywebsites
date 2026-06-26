@@ -183,8 +183,12 @@ function RootComponent() {
     }
   }, []);
 
+  // Use a placeholder clientId so GoogleOAuthProvider never receives an empty string
+  // (which causes useGoogleLogin to throw). Real Google Drive login requires VITE_GOOGLE_DRIVE_CLIENT_ID.
+  const googleClientId = (import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID as string | undefined) || "placeholder-not-configured.apps.googleusercontent.com";
+
   return (
-    <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID || ""}>
+    <GoogleOAuthProvider clientId={googleClientId}>
       <QueryClientProvider client={queryClient}>
         {/* Required: nested routes render here. Removing <Outlet /> breaks all child routes. */}
         <Outlet />
