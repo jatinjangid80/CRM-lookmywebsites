@@ -2,11 +2,11 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import {
   UserCog, Phone, Mail, Plus, Search,
-  TrendingUp, Star, CalendarCheck, UserCheck, Shield, X, Info,
-  Clock, CheckCircle2, AlertCircle, Calendar, MapPin, ClipboardList,
-  Sparkles, FileText, ChevronDown, ChevronUp, Check, Play, Square, FileSignature, Download, Trash2, Heart, MessageSquare
+  TrendingUp, Star, CalendarCheck, UserCheck, Shield, X,
+  Clock, CheckCircle2, Calendar, MapPin, ClipboardList,
+  FileText, ChevronDown, ChevronUp, Check, Play, Square, FileSignature, Download, Trash2, Heart, MessageSquare
 } from "lucide-react";
-import { Edit, CheckSquare, Send, CheckCircle, Award, Upload, User } from "lucide-react";
+import { Edit, Send, CheckCircle, Award, Upload, User } from "lucide-react";
 
 function EditField({ label, value, onChange, type = "text" }: { label: string; value: string; onChange: (v: string) => void; type?: string }) {
   return (
@@ -507,7 +507,7 @@ function EmployeesPage() {
     status: "Active" as Status,
     description: "",
     username: "",
-    password: "emp123"
+    password: ""
   });
 
   // Pre-generate credentials and ID when modal is opened
@@ -533,7 +533,7 @@ function EmployeesPage() {
         status: "Active" as Status,
         description: "",
         username: "",
-        password: "emp123"
+        password: ""
       });
     }
   }, [isAddOpen, employees]);
@@ -582,7 +582,7 @@ function EmployeesPage() {
       description: newEmployee.description || "No description provided.",
       username: newEmployee.username,
       password: newEmployee.password,
-    } as any;
+    } as Employee;
 
     setEmployees([employee, ...employees]);
     setIsAddOpen(false);
@@ -941,7 +941,7 @@ function EmployeesPage() {
                 status: cur.status,
                 joinDate: cur.joinDate
               });
-              setProfileEditDetails(JSON.parse(JSON.stringify(empDetails))); // deep clone
+              setProfileEditDetails(structuredClone(empDetails)); // deep clone
               setProfileIsEditing(true);
             };
 
@@ -981,12 +981,16 @@ function EmployeesPage() {
               // 3. Update auth if modifying current user
               const authStored = localStorage.getItem("crm_auth");
               if (authStored) {
-                const authObj = JSON.parse(authStored);
-                if (authObj.empId === cur.id || authObj.name.toLowerCase() === profileEditCore.name.toLowerCase()) {
-                  authObj.name = profileEditCore.name;
-                  authObj.role = profileEditCore.role;
-                  authObj.email = profileEditCore.email;
-                  localStorage.setItem("crm_auth", JSON.stringify(authObj));
+                try {
+                  const authObj = JSON.parse(authStored);
+                  if (authObj.empId === cur.id || authObj.name?.toLowerCase() === profileEditCore.name.toLowerCase()) {
+                    authObj.name = profileEditCore.name;
+                    authObj.role = profileEditCore.role;
+                    authObj.email = profileEditCore.email;
+                    localStorage.setItem("crm_auth", JSON.stringify(authObj));
+                  }
+                } catch {
+                  // Ignore malformed auth data
                 }
               }
 
@@ -1159,58 +1163,23 @@ function EmployeesPage() {
                             variant="outline"
                             onClick={() => {
                               const printWindow = window.open('', '_blank');
-                              if (printWindow) {
-                                printWindow.document.write(`
-                                  <html>
-                                    <head>
-                                      <title>Employee Profile - ${cur.name}</title>
-                                      <style>
-                                        body { font-family: sans-serif; padding: 40px; color: #333; }
-                                        h1 { color: #FF6B00; margin-bottom: 5px; }
-                                        .subtitle { color: #666; margin-bottom: 30px; font-weight: bold; }
-                                        .section { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-                                        .section-title { font-size: 18px; color: #FF6B00; margin-bottom: 10px; }
-                                        .grid { display: grid; grid-template-cols: 1fr 1fr; gap: 15px; }
-                                        .field { margin-bottom: 8px; }
-                                        .label { font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold; }
-                                        .value { font-size: 14px; font-weight: 500; margin-top: 2px; }
-                                      </style>
-                                    </head>
-                                    <body>
-                                      <h1>${cur.name}</h1>
-                                      <div class="subtitle">${cur.role} • ${empDetails.department} (${cur.id})</div>
-                                      
-                                      <div class="section">
-                                        <div class="section-title">Employment Details</div>
-                                        <div class="grid">
-                                          <div class="field"><div class="label">Designation</div><div class="value">${empDetails.designation}</div></div>
-                                          <div class="field"><div class="label">Employment Type</div><div class="value">${empDetails.employmentType}</div></div>
-                                          <div class="field"><div class="label">Work Location</div><div class="value">${empDetails.workLocation}</div></div>
-                                          <div class="field"><div class="label">Reporting Manager</div><div class="value">${empDetails.manager}</div></div>
-                                        </div>
-                                      </div>
-
-                                      <div class="section">
-                                        <div class="section-title">Contact Information</div>
-                                        <div class="grid">
-                                          <div class="field"><div class="label">Work Phone</div><div class="value">${cur.phone}</div></div>
-                                          <div class="field"><div class="label">Personal Phone</div><div class="value">${empDetails.personalPhone}</div></div>
-                                          <div class="field"><div class="label">Work Email</div><div class="value">${cur.email}</div></div>
-                                          <div class="field"><div class="label">Personal Email</div><div class="value">${empDetails.personalEmail}</div></div>
-                                        </div>
-                                      </div>
-                                      
-                                      <script>
-                                        window.onload = function() {
-                                          window.print();
-                                          window.close();
-                                        };
-                                      </script>
-                                    </body>
-                                  </html>
-                                `);
-                                printWindow.document.close();
-                              }
+                              if (!printWindow) return;
+                              const css = `body{font-family:sans-serif;padding:40px;color:#333}h1{color:#FF6B00;margin-bottom:5px}.subtitle{color:#666;margin-bottom:30px;font-weight:bold}.section{margin-bottom:25px;border-bottom:1px solid #eee;padding-bottom:15px}.section-title{font-size:18px;color:#FF6B00;margin-bottom:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field{margin-bottom:8px}.label{font-size:11px;text-transform:uppercase;color:#888;font-weight:bold}.value{font-size:14px;font-weight:500;margin-top:2px}`;
+                              const styleEl = printWindow.document.createElement('style');
+                              styleEl.textContent = css;
+                              printWindow.document.head.appendChild(styleEl);
+                              const titleEl = printWindow.document.createElement('title');
+                              titleEl.textContent = `Employee Profile - ${cur.name}`;
+                              printWindow.document.head.appendChild(titleEl);
+                              const safeText = (s: string) => String(s ?? '').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                              const bodyHtml = `<h1>${safeText(cur.name)}</h1><div class="subtitle">${safeText(cur.role)} &bull; ${safeText(empDetails.department)} (${safeText(cur.id)})</div><div class="section"><div class="section-title">Employment Details</div><div class="grid"><div class="field"><div class="label">Designation</div><div class="value">${safeText(empDetails.designation)}</div></div><div class="field"><div class="label">Employment Type</div><div class="value">${safeText(empDetails.employmentType)}</div></div><div class="field"><div class="label">Work Location</div><div class="value">${safeText(empDetails.workLocation)}</div></div><div class="field"><div class="label">Reporting Manager</div><div class="value">${safeText(empDetails.manager)}</div></div></div></div><div class="section"><div class="section-title">Contact Information</div><div class="grid"><div class="field"><div class="label">Work Phone</div><div class="value">${safeText(cur.phone)}</div></div><div class="field"><div class="label">Personal Phone</div><div class="value">${safeText(empDetails.personalPhone)}</div></div><div class="field"><div class="label">Work Email</div><div class="value">${safeText(cur.email)}</div></div><div class="field"><div class="label">Personal Email</div><div class="value">${safeText(empDetails.personalEmail)}</div></div></div></div>`;
+                              const wrapper = printWindow.document.createElement('div');
+                              wrapper.innerHTML = bodyHtml;
+                              printWindow.document.body.appendChild(wrapper);
+                              const script = printWindow.document.createElement('script');
+                              script.textContent = 'window.onload=function(){window.print();window.onafterprint=function(){window.close();}}';
+                              printWindow.document.body.appendChild(script);
+                              printWindow.document.close();
                             }}
                             className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
                           >

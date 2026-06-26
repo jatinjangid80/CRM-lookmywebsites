@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { 
-  Shield, MapPin, User, Mail, Phone, Calendar, Clock, 
+  MapPin, User, Mail, Phone, Calendar, Clock, 
   Award, TrendingUp, CheckCircle, FileText, ChevronDown, ChevronUp, 
-  Plus, Edit, Download, Send, CheckSquare, ListTodo, GraduationCap, Users, Trash2, Check, X, Key, Eye, EyeOff, Camera
+  Plus, Edit, Download, Send, CheckSquare, GraduationCap, Users, Trash2, Check, X, Key, Eye, EyeOff, Camera
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -248,13 +248,17 @@ export function EmployeeProfileModal({
       // Also write back to crm_auth if the logged in user changed their own profile
       const authStored2 = localStorage.getItem("crm_auth");
       if (authStored2) {
-        const authObj2 = JSON.parse(authStored2);
-        if (authObj2.empId === employee.id || authObj2.name.toLowerCase() === employee.name.toLowerCase()) {
-          authObj2.name = editCore.name;
-          authObj2.role = editCore.role;
-          authObj2.email = editCore.email;
-          if (editAvatar) authObj2.avatar = editAvatar;
-          localStorage.setItem("crm_auth", JSON.stringify(authObj2));
+        try {
+          const authObj2 = JSON.parse(authStored2);
+          if (authObj2.empId === employee.id || authObj2.name?.toLowerCase() === employee.name.toLowerCase()) {
+            authObj2.name = editCore.name;
+            authObj2.role = editCore.role;
+            authObj2.email = editCore.email;
+            if (editAvatar) authObj2.avatar = editAvatar;
+            localStorage.setItem("crm_auth", JSON.stringify(authObj2));
+          }
+        } catch {
+          // Ignore malformed auth data
         }
       }
 

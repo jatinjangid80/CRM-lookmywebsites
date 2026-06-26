@@ -112,7 +112,7 @@ function SettingsPage() {
         const updated = emps.map((e: any) => e.id === auth.empId ? { ...e, name: profile.name, email: profile.email || e.email, phone: profile.phone || e.phone, avatar: avatarPreview || e.avatar } : e);
         localStorage.setItem("crm_employees_v3", JSON.stringify(updated));
       }
-    } catch {}
+    } catch { /* employee list sync is non-critical; profile was already saved */ }
     showToast("✅ Profile saved successfully!");
   };
 
