@@ -2,23 +2,57 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import {
-  FileText, Clock, CheckCircle2, XCircle, AlertTriangle,
-  Search, Plus, ExternalLink, ChevronDown, ChevronUp, Stamp,
-  Edit, Trash2, Globe, Sparkles, FileSpreadsheet, ShieldCheck, Check, ChevronsUpDown, Download
+  FileText,
+  Clock,
+  CheckCircle2,
+  XCircle,
+  AlertTriangle,
+  Search,
+  Plus,
+  ChevronDown,
+  ChevronUp,
+  Stamp,
+  Edit,
+  Trash2,
+  Globe,
+  FileSpreadsheet,
+  ShieldCheck,
+  Check,
+  ChevronsUpDown,
+  Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
+
+const BRAND_STYLE = { background: "var(--gradient-brand)" };
 
 export const Route = createFileRoute("/crm/visa")({ component: VisaPage });
 
 /* ─── Types ─── */
 type VisaStatus = "Pending Documents" | "Submitted" | "Under Review" | "Approved" | "Rejected";
 
-interface VisaDoc { name: string; received: boolean }
+interface VisaDoc {
+  name: string;
+  received: boolean;
+}
 interface VisaApp {
   id: string;
   customer: string;
@@ -61,188 +95,451 @@ interface VisaRequirement {
 }
 
 /* ─── Mock data ─── */
-const APPS: VisaApp[] = [
-  {
-    id: "V-2201", customer: "Ananya Verma", avatar: "https://i.pravatar.cc/80?img=47",
-    country: "Indonesia", flag: "🇮🇩", visaType: "Tourist – Visa on Arrival",
-    appliedOn: "2026-06-10", travelDate: "2026-08-14", status: "Pending Documents",
-    docs: [
-      { name: "Passport copy (front & back)", received: true },
-      { name: "Passport-size photo", received: true },
-      { name: "Flight itinerary", received: false },
-      { name: "Hotel confirmation", received: false },
-      { name: "Bank statement (3 months)", received: false },
-    ],
-  },
-  {
-    id: "V-2200", customer: "Rohan Mehta", avatar: "https://i.pravatar.cc/80?img=12",
-    country: "France / Schengen", flag: "🇫🇷", visaType: "Schengen Tourist",
-    appliedOn: "2026-06-05", travelDate: "2026-10-04", status: "Under Review",
-    embassyRef: "SCH-IN-20260605-4471",
-    docs: [
-      { name: "Passport (valid 6+ months)", received: true },
-      { name: "Travel insurance €30k", received: true },
-      { name: "ITR last 2 years", received: true },
-      { name: "Bank statement (6 months)", received: true },
-      { name: "Leave letter from employer", received: true },
-    ],
-  },
-  {
-    id: "V-2199", customer: "Neha Kapoor", avatar: "https://i.pravatar.cc/80?img=5",
-    country: "Maldives", flag: "🇲🇻", visaType: "Free 30-day on Arrival",
-    appliedOn: "2026-06-14", travelDate: "2026-09-05", status: "Approved",
-    embassyRef: "MV-FREEOA",
-    docs: [
-      { name: "Passport copy", received: true },
-      { name: "Hotel/resort booking", received: true },
-      { name: "Return ticket", received: true },
-    ],
-  },
-  {
-    id: "V-2198", customer: "Karan Patel", avatar: "https://i.pravatar.cc/80?img=33",
-    country: "Singapore", flag: "🇸🇬", visaType: "Tourist e-Visa",
-    appliedOn: "2026-05-28", travelDate: "2026-07-30", status: "Rejected",
-    embassyRef: "SG-EV-8823",
-    docs: [
-      { name: "Passport copy", received: true },
-      { name: "Bank statement", received: true },
-      { name: "Sponsor letter", received: false },
-    ],
-  },
-  {
-    id: "V-2197", customer: "Aditya Rao", avatar: "https://i.pravatar.cc/80?img=15",
-    country: "UAE", flag: "🇦🇪", visaType: "30-day Tourist Visa",
-    appliedOn: "2026-06-18", travelDate: "2026-07-22", status: "Submitted",
-    embassyRef: "UAE-T30-66712",
-    docs: [
-      { name: "Passport (6 months validity)", received: true },
-      { name: "Colour photo – white background", received: true },
-      { name: "Bank statement (3 months)", received: true },
-      { name: "Return flight ticket", received: true },
-    ],
-  },
-];
+const APPS: VisaApp[] = [];
 
-const INITIAL_REQUIREMENTS: VisaRequirement[] = [
-  {
-    id: "REQ-01",
-    country: "Indonesia",
-    visaType: "Tourist – Visa on Arrival",
-    docs: [
-      { name: "Passport copy (front & back)", shortName: "passport_copy" },
-      { name: "Passport-size photo", shortName: "photo" },
-      { name: "Flight itinerary", shortName: "flights" }
-    ],
-    formUrls: ["https://molina.imigrasi.go.id/"],
-    currency: "INR",
-    visaFees: 2700,
-    vfsFees: 0,
-    otherFees: 0,
-    serviceFees: 500,
-    consulateFees: 0,
-    urgentFees: 0,
-    urgentFees2: 0,
-    extraName1: "",
-    extraFees1: 0,
-    extraName2: "",
-    extraFees2: 0,
-    extraName3: "",
-    extraFees3: 0,
-    timeRequired: "1-2 Working Days",
-    remark1: "Passport must be valid for at least 6 months",
-    remark2: "Return tickets must be confirmed",
-    remark3: "Hotel bookings should be pre-arranged"
-  },
-  {
-    id: "REQ-02",
-    country: "France / Schengen",
-    visaType: "Schengen Tourist",
-    docs: [
-      { name: "Passport (valid 6+ months)", shortName: "passport_original" },
-      { name: "Travel insurance €30k", shortName: "insurance" },
-      { name: "ITR last 2 years", shortName: "itr" },
-      { name: "Bank statement (6 months)", shortName: "bank_statement" },
-      { name: "Leave letter from employer", shortName: "leave_letter" }
-    ],
-    formUrls: ["https://visa.vfsglobal.com/ind/en/fra"],
-    currency: "EUR",
-    visaFees: 80,
-    vfsFees: 2300,
-    otherFees: 500,
-    serviceFees: 2500,
-    consulateFees: 0,
-    urgentFees: 5000,
-    urgentFees2: 0,
-    extraName1: "Courier Charge",
-    extraFees1: 450,
-    extraName2: "SMS Charge",
-    extraFees2: 150,
-    extraName3: "",
-    extraFees3: 0,
-    timeRequired: "15 Calendar Days",
-    remark1: "Biometrics are mandatory at VFS center",
-    remark2: "All documents must be in English or translated",
-    remark3: "No digital photo print, must be studio print"
-  }
-];
+const INITIAL_REQUIREMENTS: VisaRequirement[] = [];
 
 const STATUS_STYLE: Record<VisaStatus, string> = {
   "Pending Documents": "bg-amber-100 text-amber-700",
-  "Submitted":         "bg-blue-100 text-blue-700",
-  "Under Review":      "bg-violet-100 text-violet-700",
-  "Approved":          "bg-emerald-100 text-emerald-700",
-  "Rejected":          "bg-red-100 text-red-700",
+  Submitted: "bg-blue-100 text-blue-700",
+  "Under Review": "bg-violet-100 text-violet-700",
+  Approved: "bg-emerald-100 text-emerald-700",
+  Rejected: "bg-red-100 text-red-700",
 };
 
 const STATUS_ICON: Record<VisaStatus, React.ReactNode> = {
   "Pending Documents": <AlertTriangle className="h-3.5 w-3.5" />,
-  "Submitted":         <Clock className="h-3.5 w-3.5" />,
-  "Under Review":      <FileText className="h-3.5 w-3.5" />,
-  "Approved":          <CheckCircle2 className="h-3.5 w-3.5" />,
-  "Rejected":          <XCircle className="h-3.5 w-3.5" />,
+  Submitted: <Clock className="h-3.5 w-3.5" />,
+  "Under Review": <FileText className="h-3.5 w-3.5" />,
+  Approved: <CheckCircle2 className="h-3.5 w-3.5" />,
+  Rejected: <XCircle className="h-3.5 w-3.5" />,
 };
 
-const ALL_STATUSES: VisaStatus[] = ["Pending Documents", "Submitted", "Under Review", "Approved", "Rejected"];
+const ALL_STATUSES: VisaStatus[] = [
+  "Pending Documents",
+  "Submitted",
+  "Under Review",
+  "Approved",
+  "Rejected",
+];
 
 const COUNTRY_CODES: Record<string, string> = {
-  "Afghanistan": "af", "Albania": "al", "Algeria": "dz", "Andorra": "ad", "Angola": "ao", "Antigua and Barbuda": "ag", "Argentina": "ar", "Armenia": "am", "Australia": "au", "Austria": "at", "Azerbaijan": "az",
-  "Bahamas": "bs", "Bahrain": "bh", "Bangladesh": "bd", "Barbados": "bb", "Belarus": "by", "Belgium": "be", "Belize": "bz", "Benin": "bj", "Bhutan": "bt", "Bolivia": "bo", "Bosnia and Herzegovina": "ba", "Botswana": "bw", "Brazil": "br", "Brunei": "bn", "Bulgaria": "bg", "Burkina Faso": "bf", "Burundi": "bi",
-  "Cabo Verde": "cv", "Cambodia": "kh", "Cameroon": "cm", "Canada": "ca", "Central African Republic": "cf", "Chad": "td", "Chile": "cl", "China": "cn", "Colombia": "co", "Comoros": "km", "Congo": "cg", "Costa Rica": "cr", "Croatia": "hr", "Cuba": "cu", "Cyprus": "cy", "Czechia": "cz",
-  "Denmark": "dk", "Djibouti": "dj", "Dominica": "dm", "Dominican Republic": "do", "Ecuador": "ec", "Egypt": "eg", "El Salvador": "sv", "Equatorial Guinea": "gq", "Eritrea": "er", "Estonia": "ee", "Eswatini": "sz", "Ethiopia": "et",
-  "Fiji": "fj", "Finland": "fi", "France": "fr", "France / Schengen": "fr", "Gabon": "ga", "Gambia": "gm", "Georgia": "ge", "Germany": "de", "Ghana": "gh", "Greece": "gr", "Grenada": "gd", "Guatemala": "gt", "Guinea": "gn", "Guinea-Bissau": "gw", "Guyana": "gy",
-  "Haiti": "ht", "Honduras": "hn", "Hungary": "hu", "Iceland": "is", "India": "in", "Indonesia": "id", "Iran": "ir", "Iraq": "iq", "Ireland": "ie", "Israel": "il", "Italy": "it", "Jamaica": "jm", "Japan": "jp", "Jordan": "jo",
-  "Kazakhstan": "kz", "Kenya": "ke", "Kiribati": "ki", "Kuwait": "kw", "Kyrgyzstan": "kg", "Laos": "la", "Latvia": "lv", "Lebanon": "lb", "Lesotho": "ls", "Liberia": "lr", "Libya": "ly", "Liechtenstein": "li", "Lithuania": "lt", "Luxembourg": "lu",
-  "Madagascar": "mg", "Malawi": "mw", "Malaysia": "my", "Maldives": "mv", "Mali": "ml", "Malta": "mt", "Marshall Islands": "mh", "Mauritania": "mr", "Mauritius": "mu", "Mexico": "mx", "Micronesia": "fm", "Moldova": "md", "Monaco": "mc", "Mongolia": "mn", "Montenegro": "me", "Morocco": "ma", "Mozambique": "mz", "Myanmar": "mm",
-  "Namibia": "na", "Nauru": "nr", "Nepal": "np", "Netherlands": "nl", "New Zealand": "nz", "Nicaragua": "ni", "Niger": "ne", "Nigeria": "ng", "North Korea": "kp", "North Macedonia": "mk", "Norway": "no", "Oman": "om",
-  "Pakistan": "pk", "Palau": "pw", "Palestine": "ps", "Panama": "pa", "Papua New Guinea": "pg", "Paraguay": "py", "Peru": "pe", "Philippines": "ph", "Poland": "pl", "Portugal": "pt", "Qatar": "qa", "Romania": "ro", "Russia": "ru", "Rwanda": "rw",
-  "Saint Kitts and Nevis": "kn", "Saint Lucia": "lc", "Saint Vincent and the Grenadines": "vc", "Samoa": "ws", "San Marino": "sm", "Sao Tome and Principe": "st", "Saudi Arabia": "sa", "Senegal": "sn", "Serbia": "rs", "Seychelles": "sc", "Sierra Leone": "sl", "Singapore": "sg", "Slovakia": "sk", "Slovenia": "si", "Solomon Islands": "sb", "Somalia": "so", "South Africa": "za", "South Korea": "kr", "South Sudan": "ss", "Spain": "es", "Sri Lanka": "lk", "Sudan": "sd", "Suriname": "sr", "Sweden": "se", "Switzerland": "ch", "Syria": "sy",
-  "Taiwan": "tw", "Tajikistan": "tj", "Tanzania": "tz", "Thailand": "th", "Timor-Leste": "tl", "Togo": "tg", "Tonga": "to", "Trinidad and Tobago": "tt", "Tunisia": "tn", "Turkey": "tr", "Turkmenistan": "tm", "Tuvalu": "tv",
-  "UAE": "ae", "Uganda": "ug", "Ukraine": "ua", "United Kingdom": "gb", "United States": "us", "Uruguay": "uy", "Uzbekistan": "uz", "Vanuatu": "vu", "Vatican City": "va", "Venezuela": "ve", "Vietnam": "vn", "Yemen": "ye", "Zambia": "zm", "Zimbabwe": "zw"
+  Afghanistan: "af",
+  Albania: "al",
+  Algeria: "dz",
+  Andorra: "ad",
+  Angola: "ao",
+  "Antigua and Barbuda": "ag",
+  Argentina: "ar",
+  Armenia: "am",
+  Australia: "au",
+  Austria: "at",
+  Azerbaijan: "az",
+  Bahamas: "bs",
+  Bahrain: "bh",
+  Bangladesh: "bd",
+  Barbados: "bb",
+  Belarus: "by",
+  Belgium: "be",
+  Belize: "bz",
+  Benin: "bj",
+  Bhutan: "bt",
+  Bolivia: "bo",
+  "Bosnia and Herzegovina": "ba",
+  Botswana: "bw",
+  Brazil: "br",
+  Brunei: "bn",
+  Bulgaria: "bg",
+  "Burkina Faso": "bf",
+  Burundi: "bi",
+  "Cabo Verde": "cv",
+  Cambodia: "kh",
+  Cameroon: "cm",
+  Canada: "ca",
+  "Central African Republic": "cf",
+  Chad: "td",
+  Chile: "cl",
+  China: "cn",
+  Colombia: "co",
+  Comoros: "km",
+  Congo: "cg",
+  "Costa Rica": "cr",
+  Croatia: "hr",
+  Cuba: "cu",
+  Cyprus: "cy",
+  Czechia: "cz",
+  Denmark: "dk",
+  Djibouti: "dj",
+  Dominica: "dm",
+  "Dominican Republic": "do",
+  Ecuador: "ec",
+  Egypt: "eg",
+  "El Salvador": "sv",
+  "Equatorial Guinea": "gq",
+  Eritrea: "er",
+  Estonia: "ee",
+  Eswatini: "sz",
+  Ethiopia: "et",
+  Fiji: "fj",
+  Finland: "fi",
+  France: "fr",
+  "France / Schengen": "fr",
+  Gabon: "ga",
+  Gambia: "gm",
+  Georgia: "ge",
+  Germany: "de",
+  Ghana: "gh",
+  Greece: "gr",
+  Grenada: "gd",
+  Guatemala: "gt",
+  Guinea: "gn",
+  "Guinea-Bissau": "gw",
+  Guyana: "gy",
+  Haiti: "ht",
+  Honduras: "hn",
+  Hungary: "hu",
+  Iceland: "is",
+  India: "in",
+  Indonesia: "id",
+  Iran: "ir",
+  Iraq: "iq",
+  Ireland: "ie",
+  Israel: "il",
+  Italy: "it",
+  Jamaica: "jm",
+  Japan: "jp",
+  Jordan: "jo",
+  Kazakhstan: "kz",
+  Kenya: "ke",
+  Kiribati: "ki",
+  Kuwait: "kw",
+  Kyrgyzstan: "kg",
+  Laos: "la",
+  Latvia: "lv",
+  Lebanon: "lb",
+  Lesotho: "ls",
+  Liberia: "lr",
+  Libya: "ly",
+  Liechtenstein: "li",
+  Lithuania: "lt",
+  Luxembourg: "lu",
+  Madagascar: "mg",
+  Malawi: "mw",
+  Malaysia: "my",
+  Maldives: "mv",
+  Mali: "ml",
+  Malta: "mt",
+  "Marshall Islands": "mh",
+  Mauritania: "mr",
+  Mauritius: "mu",
+  Mexico: "mx",
+  Micronesia: "fm",
+  Moldova: "md",
+  Monaco: "mc",
+  Mongolia: "mn",
+  Montenegro: "me",
+  Morocco: "ma",
+  Mozambique: "mz",
+  Myanmar: "mm",
+  Namibia: "na",
+  Nauru: "nr",
+  Nepal: "np",
+  Netherlands: "nl",
+  "New Zealand": "nz",
+  Nicaragua: "ni",
+  Niger: "ne",
+  Nigeria: "ng",
+  "North Korea": "kp",
+  "North Macedonia": "mk",
+  Norway: "no",
+  Oman: "om",
+  Pakistan: "pk",
+  Palau: "pw",
+  Palestine: "ps",
+  Panama: "pa",
+  "Papua New Guinea": "pg",
+  Paraguay: "py",
+  Peru: "pe",
+  Philippines: "ph",
+  Poland: "pl",
+  Portugal: "pt",
+  Qatar: "qa",
+  Romania: "ro",
+  Russia: "ru",
+  Rwanda: "rw",
+  "Saint Kitts and Nevis": "kn",
+  "Saint Lucia": "lc",
+  "Saint Vincent and the Grenadines": "vc",
+  Samoa: "ws",
+  "San Marino": "sm",
+  "Sao Tome and Principe": "st",
+  "Saudi Arabia": "sa",
+  Senegal: "sn",
+  Serbia: "rs",
+  Seychelles: "sc",
+  "Sierra Leone": "sl",
+  Singapore: "sg",
+  Slovakia: "sk",
+  Slovenia: "si",
+  "Solomon Islands": "sb",
+  Somalia: "so",
+  "South Africa": "za",
+  "South Korea": "kr",
+  "South Sudan": "ss",
+  Spain: "es",
+  "Sri Lanka": "lk",
+  Sudan: "sd",
+  Suriname: "sr",
+  Sweden: "se",
+  Switzerland: "ch",
+  Syria: "sy",
+  Taiwan: "tw",
+  Tajikistan: "tj",
+  Tanzania: "tz",
+  Thailand: "th",
+  "Timor-Leste": "tl",
+  Togo: "tg",
+  Tonga: "to",
+  "Trinidad and Tobago": "tt",
+  Tunisia: "tn",
+  Turkey: "tr",
+  Turkmenistan: "tm",
+  Tuvalu: "tv",
+  UAE: "ae",
+  Uganda: "ug",
+  Ukraine: "ua",
+  "United Kingdom": "gb",
+  "United States": "us",
+  Uruguay: "uy",
+  Uzbekistan: "uz",
+  Vanuatu: "vu",
+  "Vatican City": "va",
+  Venezuela: "ve",
+  Vietnam: "vn",
+  Yemen: "ye",
+  Zambia: "zm",
+  Zimbabwe: "zw",
 };
 
 const COUNTRIES_LIST = [
-  "Afghanistan", "Albania", "Algeria", "Andorra", "Angola", "Antigua and Barbuda", "Argentina", "Armenia", "Australia", "Austria", "Azerbaijan",
-  "Bahamas", "Bahrain", "Bangladesh", "Barbados", "Belarus", "Belgium", "Belize", "Benin", "Bhutan", "Bolivia", "Bosnia and Herzegovina", "Botswana", "Brazil", "Brunei", "Bulgaria", "Burkina Faso", "Burundi",
-  "Cabo Verde", "Cambodia", "Cameroon", "Canada", "Central African Republic", "Chad", "Chile", "China", "Colombia", "Comoros", "Congo", "Costa Rica", "Croatia", "Cuba", "Cyprus", "Czechia",
-  "Denmark", "Djibouti", "Dominica", "Dominican Republic", "Ecuador", "Egypt", "El Salvador", "Equatorial Guinea", "Eritrea", "Estonia", "Eswatini", "Ethiopia",
-  "Fiji", "Finland", "France", "France / Schengen", "Gabon", "Gambia", "Georgia", "Germany", "Ghana", "Greece", "Grenada", "Guatemala", "Guinea", "Guinea-Bissau", "Guyana",
-  "Haiti", "Honduras", "Hungary", "Iceland", "India", "Indonesia", "Iran", "Iraq", "Ireland", "Israel", "Italy", "Jamaica", "Japan", "Jordan",
-  "Kazakhstan", "Kenya", "Kiribati", "Kuwait", "Kyrgyzstan", "Laos", "Latvia", "Lebanon", "Lesotho", "Liberia", "Libya", "Liechtenstein", "Lithuania", "Luxembourg",
-  "Madagascar", "Malawi", "Malaysia", "Maldives", "Mali", "Malta", "Marshall Islands", "Mauritania", "Mauritius", "Mexico", "Micronesia", "Moldova", "Monaco", "Mongolia", "Montenegro", "Morocco", "Mozambique", "Myanmar",
-  "Namibia", "Nauru", "Nepal", "Netherlands", "New Zealand", "Nicaragua", "Niger", "Nigeria", "North Korea", "North Macedonia", "Norway", "Oman",
-  "Pakistan", "Palau", "Palestine", "Panama", "Papua New Guinea", "Paraguay", "Peru", "Philippines", "Poland", "Portugal", "Qatar", "Romania", "Russia", "Rwanda",
-  "Saint Kitts and Nevis", "Saint Lucia", "Saint Vincent and the Grenadines", "Samoa", "San Marino", "Sao Tome and Principe", "Saudi Arabia", "Senegal", "Serbia", "Seychelles", "Sierra Leone", "Singapore", "Slovakia", "Slovenia", "Solomon Islands", "Somalia", "South Africa", "South Korea", "South Sudan", "Spain", "Sri Lanka", "Sudan", "Suriname", "Sweden", "Switzerland", "Syria",
-  "Taiwan", "Tajikistan", "Tanzania", "Thailand", "Timor-Leste", "Togo", "Tonga", "Trinidad and Tobago", "Tunisia", "Turkey", "Turkmenistan", "Tuvalu",
-  "UAE", "Uganda", "Ukraine", "United Kingdom", "United States", "Uruguay", "Uzbekistan", "Vanuatu", "Vatican City", "Venezuela", "Vietnam", "Yemen", "Zambia", "Zimbabwe"
+  "Afghanistan",
+  "Albania",
+  "Algeria",
+  "Andorra",
+  "Angola",
+  "Antigua and Barbuda",
+  "Argentina",
+  "Armenia",
+  "Australia",
+  "Austria",
+  "Azerbaijan",
+  "Bahamas",
+  "Bahrain",
+  "Bangladesh",
+  "Barbados",
+  "Belarus",
+  "Belgium",
+  "Belize",
+  "Benin",
+  "Bhutan",
+  "Bolivia",
+  "Bosnia and Herzegovina",
+  "Botswana",
+  "Brazil",
+  "Brunei",
+  "Bulgaria",
+  "Burkina Faso",
+  "Burundi",
+  "Cabo Verde",
+  "Cambodia",
+  "Cameroon",
+  "Canada",
+  "Central African Republic",
+  "Chad",
+  "Chile",
+  "China",
+  "Colombia",
+  "Comoros",
+  "Congo",
+  "Costa Rica",
+  "Croatia",
+  "Cuba",
+  "Cyprus",
+  "Czechia",
+  "Denmark",
+  "Djibouti",
+  "Dominica",
+  "Dominican Republic",
+  "Ecuador",
+  "Egypt",
+  "El Salvador",
+  "Equatorial Guinea",
+  "Eritrea",
+  "Estonia",
+  "Eswatini",
+  "Ethiopia",
+  "Fiji",
+  "Finland",
+  "France",
+  "France / Schengen",
+  "Gabon",
+  "Gambia",
+  "Georgia",
+  "Germany",
+  "Ghana",
+  "Greece",
+  "Grenada",
+  "Guatemala",
+  "Guinea",
+  "Guinea-Bissau",
+  "Guyana",
+  "Haiti",
+  "Honduras",
+  "Hungary",
+  "Iceland",
+  "India",
+  "Indonesia",
+  "Iran",
+  "Iraq",
+  "Ireland",
+  "Israel",
+  "Italy",
+  "Jamaica",
+  "Japan",
+  "Jordan",
+  "Kazakhstan",
+  "Kenya",
+  "Kiribati",
+  "Kuwait",
+  "Kyrgyzstan",
+  "Laos",
+  "Latvia",
+  "Lebanon",
+  "Lesotho",
+  "Liberia",
+  "Libya",
+  "Liechtenstein",
+  "Lithuania",
+  "Luxembourg",
+  "Madagascar",
+  "Malawi",
+  "Malaysia",
+  "Maldives",
+  "Mali",
+  "Malta",
+  "Marshall Islands",
+  "Mauritania",
+  "Mauritius",
+  "Mexico",
+  "Micronesia",
+  "Moldova",
+  "Monaco",
+  "Mongolia",
+  "Montenegro",
+  "Morocco",
+  "Mozambique",
+  "Myanmar",
+  "Namibia",
+  "Nauru",
+  "Nepal",
+  "Netherlands",
+  "New Zealand",
+  "Nicaragua",
+  "Niger",
+  "Nigeria",
+  "North Korea",
+  "North Macedonia",
+  "Norway",
+  "Oman",
+  "Pakistan",
+  "Palau",
+  "Palestine",
+  "Panama",
+  "Papua New Guinea",
+  "Paraguay",
+  "Peru",
+  "Philippines",
+  "Poland",
+  "Portugal",
+  "Qatar",
+  "Romania",
+  "Russia",
+  "Rwanda",
+  "Saint Kitts and Nevis",
+  "Saint Lucia",
+  "Saint Vincent and the Grenadines",
+  "Samoa",
+  "San Marino",
+  "Sao Tome and Principe",
+  "Saudi Arabia",
+  "Senegal",
+  "Serbia",
+  "Seychelles",
+  "Sierra Leone",
+  "Singapore",
+  "Slovakia",
+  "Slovenia",
+  "Solomon Islands",
+  "Somalia",
+  "South Africa",
+  "South Korea",
+  "South Sudan",
+  "Spain",
+  "Sri Lanka",
+  "Sudan",
+  "Suriname",
+  "Sweden",
+  "Switzerland",
+  "Syria",
+  "Taiwan",
+  "Tajikistan",
+  "Tanzania",
+  "Thailand",
+  "Timor-Leste",
+  "Togo",
+  "Tonga",
+  "Trinidad and Tobago",
+  "Tunisia",
+  "Turkey",
+  "Turkmenistan",
+  "Tuvalu",
+  "UAE",
+  "Uganda",
+  "Ukraine",
+  "United Kingdom",
+  "United States",
+  "Uruguay",
+  "Uzbekistan",
+  "Vanuatu",
+  "Vatican City",
+  "Venezuela",
+  "Vietnam",
+  "Yemen",
+  "Zambia",
+  "Zimbabwe",
 ];
-const VISA_TYPES_LIST = ["Tourist – Visa on Arrival", "Schengen Tourist", "Free 30-day on Arrival", "Tourist e-Visa", "30-day Tourist Visa", "14-day Tourist Visa", "Business Visa", "Student Visa", "Transit Visa", "Multiple Entry Tourist Visa"];
+const VISA_TYPES_LIST = [
+  "Tourist – Visa on Arrival",
+  "Schengen Tourist",
+  "Free 30-day on Arrival",
+  "Tourist e-Visa",
+  "30-day Tourist Visa",
+  "14-day Tourist Visa",
+  "Business Visa",
+  "Student Visa",
+  "Transit Visa",
+  "Multiple Entry Tourist Visa",
+];
 const CURRENCY_LIST = ["INR", "USD", "EUR", "AED", "SGD", "THB", "GBP", "IDR"];
 
 function VisaPage() {
-  const [apps, setApps] = useLocalStorage<VisaApp[]>("crm_visa_apps_v2", []);
-  const [requirements, setRequirements] = useLocalStorage<VisaRequirement[]>("crm_visa_requirements", INITIAL_REQUIREMENTS);
+  const [apps, setApps] = useLocalStorage<VisaApp[]>("crm_visa_apps_v3", APPS);
+  const [requirements, setRequirements] = useLocalStorage<VisaRequirement[]>(
+    "crm_visa_requirements",
+    INITIAL_REQUIREMENTS,
+  );
   const [activeSubTab, setActiveSubTab] = useState<"applications" | "requirements">("applications");
-  
+
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<VisaStatus | "All">("All");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
@@ -261,22 +558,36 @@ function VisaPage() {
 
   const getFlagEmoji = (countryName: string) => {
     const flags: Record<string, string> = {
-      "Indonesia": "🇮🇩", "France": "🇫🇷", "France / Schengen": "🇫🇷", "Maldives": "🇲🇻", "Singapore": "🇸🇬", "UAE": "🇦🇪", "Thailand": "🇹🇭",
-      "United Kingdom": "🇬🇧", "United States": "🇺🇸", "Canada": "🇨🇦", "Australia": "🇦🇺", "Germany": "🇩🇪",
-      "Italy": "🇮🇹", "Spain": "🇪🇸", "Japan": "🇯🇵", "Switzerland": "🇨🇭", "Vietnam": "🇻🇳", "Malaysia": "🇲🇾"
+      Indonesia: "🇮🇩",
+      France: "🇫🇷",
+      "France / Schengen": "🇫🇷",
+      Maldives: "🇲🇻",
+      Singapore: "🇸🇬",
+      UAE: "🇦🇪",
+      Thailand: "🇹🇭",
+      "United Kingdom": "🇬🇧",
+      "United States": "🇺🇸",
+      Canada: "🇨🇦",
+      Australia: "🇦🇺",
+      Germany: "🇩🇪",
+      Italy: "🇮🇹",
+      Spain: "🇪🇸",
+      Japan: "🇯🇵",
+      Switzerland: "🇨🇭",
+      Vietnam: "🇻🇳",
+      Malaysia: "🇲🇾",
     };
     return flags[countryName] || "🏳️";
   };
 
   const getRandomAvatar = () => {
     const avatars = [
-      "https://i.pravatar.cc/80?img=47",
-      "https://i.pravatar.cc/80?img=12",
-      "https://i.pravatar.cc/80?img=5",
-      "https://i.pravatar.cc/80?img=15",
-      "https://i.pravatar.cc/80?img=25",
-      "https://i.pravatar.cc/80?img=33",
-      "https://i.pravatar.cc/80?img=32",
+      "/avatars/aman.jpeg",
+      "/avatars/deepak.jpeg",
+      "/avatars/manvendra.png",
+      "/avatars/nikita.jpeg",
+      "/avatars/pushplata.png",
+      "/avatars/suman.jpeg",
     ];
     return avatars[Math.floor(Math.random() * avatars.length)];
   };
@@ -288,7 +599,7 @@ function VisaPage() {
     const match = requirements.find(
       (r) =>
         r.country.toLowerCase() === appCountry.toLowerCase() &&
-        r.visaType.toLowerCase() === appVisaType.toLowerCase()
+        r.visaType.toLowerCase() === appVisaType.toLowerCase(),
     );
 
     const initialDocs = match
@@ -336,7 +647,9 @@ function VisaPage() {
   const [formCountry, setFormCountry] = useState("");
   const [countryOpen, setCountryOpen] = useState(false);
   const [formVisaType, setFormVisaType] = useState("");
-  const [formDocs, setFormDocs] = useState<{ name: string; shortName: string }[]>([{ name: "", shortName: "" }]);
+  const [formDocs, setFormDocs] = useState<{ name: string; shortName: string }[]>([
+    { name: "", shortName: "" },
+  ]);
   const [formUrls, setFormUrls] = useState<string[]>([""]);
   const [formCurrency, setFormCurrency] = useState("INR");
   const [formVisaFees, setFormVisaFees] = useState("");
@@ -429,7 +742,11 @@ function VisaPage() {
   };
 
   const handleDocChange = (idx: number, field: "name" | "shortName", value: string) => {
-    setFormDocs(formDocs.map((doc, i) => i === idx ? { ...doc, [field]: value } : doc));
+    setFormDocs(
+      formDocs.map((doc, i) =>
+        i === idx ? { name: doc.name, shortName: doc.shortName, [field]: value } : doc,
+      ),
+    );
   };
 
   const handleAddUrlRow = () => {
@@ -443,22 +760,25 @@ function VisaPage() {
   };
 
   const handleUrlChange = (idx: number, value: string) => {
-    setFormUrls(formUrls.map((url, i) => i === idx ? value : url));
+    setFormUrls(formUrls.map((url, i) => (i === idx ? value : url)));
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files) return;
 
-    Array.from(files).forEach(file => {
+    Array.from(files).forEach((file) => {
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
-          setFormFiles(prev => [...prev, {
-            name: file.name,
-            data: event.target!.result as string,
-            size: file.size
-          }]);
+          setFormFiles((prev) => [
+            ...prev,
+            {
+              name: file.name,
+              data: event.target?.result as string,
+              size: file.size,
+            },
+          ]);
         }
       };
       reader.readAsDataURL(file);
@@ -474,8 +794,8 @@ function VisaPage() {
     if (!formCountry || !formVisaType) return;
 
     // Filter empty documents/URLs
-    const cleanDocs = formDocs.filter(d => d.name.trim() !== "");
-    const cleanUrls = formUrls.filter(u => u.trim() !== "");
+    const cleanDocs = formDocs.filter((d) => d.name.trim() !== "");
+    const cleanUrls = formUrls.filter((u) => u.trim() !== "");
 
     const newReq: VisaRequirement = {
       id: editingReq ? editingReq.id : `REQ-${Math.floor(1000 + Math.random() * 9000)}`,
@@ -505,7 +825,7 @@ function VisaPage() {
     };
 
     if (editingReq) {
-      setRequirements(requirements.map(r => r.id === editingReq.id ? newReq : r));
+      setRequirements(requirements.map((r) => (r.id === editingReq.id ? newReq : r)));
     } else {
       setRequirements([newReq, ...requirements]);
     }
@@ -519,7 +839,7 @@ function VisaPage() {
 
   const confirmDelete = () => {
     if (deleteTargetId) {
-      setRequirements(requirements.filter(r => r.id !== deleteTargetId));
+      setRequirements(requirements.filter((r) => r.id !== deleteTargetId));
       setDeleteTargetId(null);
     }
   };
@@ -531,35 +851,45 @@ function VisaPage() {
     }
   };
 
-  const filteredApps = apps.filter((a) =>
-    (filter === "All" || a.status === filter) &&
-    (q === "" || a.customer.toLowerCase().includes(q.toLowerCase()) || a.country.toLowerCase().includes(q.toLowerCase()))
+  const filteredApps = apps.filter(
+    (a) =>
+      (filter === "All" || a.status === filter) &&
+      (q === "" ||
+        a.customer.toLowerCase().includes(q.toLowerCase()) ||
+        a.country.toLowerCase().includes(q.toLowerCase())),
   );
 
-  const filteredReqs = requirements.filter((r) =>
-    reqQ === "" || r.country.toLowerCase().includes(reqQ.toLowerCase()) || r.visaType.toLowerCase().includes(reqQ.toLowerCase())
+  const filteredReqs = requirements.filter(
+    (r) =>
+      reqQ === "" ||
+      r.country.toLowerCase().includes(reqQ.toLowerCase()) ||
+      r.visaType.toLowerCase().includes(reqQ.toLowerCase()),
   );
 
   const counts: Record<string, number> = { All: apps.length };
-  ALL_STATUSES.forEach((s) => { counts[s] = apps.filter((a) => a.status === s).length; });
+  ALL_STATUSES.forEach((s) => {
+    counts[s] = apps.filter((a) => a.status === s).length;
+  });
 
   const toggleDoc = (appId: string, docName: string) => {
-    setApps(apps.map(app => {
-      if (app.id === appId) {
-        return {
-          ...app,
-          docs: app.docs.map(doc => 
-            doc.name === docName ? { ...doc, received: !doc.received } : doc
-          )
-        };
-      }
-      return app;
-    }));
+    setApps(
+      apps.map((app) => {
+        if (app.id === appId) {
+          return {
+            ...app,
+            docs: app.docs.map((doc) =>
+              doc.name === docName ? { name: doc.name, received: !doc.received } : doc,
+            ),
+          };
+        }
+        return app;
+      }),
+    );
   };
 
   return (
     <div className="space-y-6 animate-fade-in">
-      {/* If requirement configuration form mode is active, render full-page mockup form directly */}
+      {/* If requirement configuration form mode is active, show full-page mockup form directly */}
       {activeSubTab === "requirements" && reqFormMode !== "list" ? (
         <div className="max-w-4xl mx-auto">
           {/* Mockup Form card */}
@@ -567,10 +897,16 @@ function VisaPage() {
             <form onSubmit={handleSaveReq}>
               {/* Form Top Title Bar */}
               <div className="bg-background border-b border-border px-6 py-4 flex items-center gap-2">
-                <span className="bg-[#1d1d1f] text-white text-[10px] font-mono px-2 py-0.5 rounded tracking-wide shrink-0 inline-flex items-center justify-center font-extrabold select-none">VISA</span>
+                <span className="bg-[#1d1d1f] text-white text-[10px] font-mono px-2 py-0.5 rounded tracking-wide shrink-0 inline-flex items-center justify-center font-extrabold select-none">
+                  VISA
+                </span>
                 <div>
-                  <h2 className="font-display text-sm font-bold text-foreground leading-tight">Visa Document</h2>
-                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">Visa Document</p>
+                  <h2 className="font-display text-sm font-bold text-foreground leading-tight">
+                    Visa Document
+                  </h2>
+                  <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                    Visa Document
+                  </p>
                 </div>
               </div>
 
@@ -578,13 +914,17 @@ function VisaPage() {
               <div className="p-6 space-y-6">
                 {/* Form Section Header */}
                 <div className="border-b border-border pb-3">
-                  <h3 className="font-display text-sm font-bold text-rose-500 tracking-wide">Visa Information (Fees Per Person)</h3>
+                  <h3 className="font-display text-sm font-bold text-rose-500 tracking-wide">
+                    Visa Information (Fees Per Person)
+                  </h3>
                 </div>
 
                 {/* Countries / Visa Type */}
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1 flex flex-col justify-end">
-                    <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">Countries <span className="text-rose-500">*</span></label>
+                    <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      Countries <span className="text-rose-500">*</span>
+                    </label>
                     <Popover open={countryOpen} onOpenChange={setCountryOpen}>
                       <PopoverTrigger asChild>
                         <Button
@@ -596,7 +936,12 @@ function VisaPage() {
                           {formCountry ? (
                             <div className="flex items-center gap-2 overflow-hidden">
                               <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full bg-secondary">
-                                <img height="20" title={COUNTRY_CODES[formCountry]} src={`https://react-circle-flags.pages.dev/${COUNTRY_CODES[formCountry] || 'un'}.svg`} alt="" />
+                                <img
+                                  height="20"
+                                  title={COUNTRY_CODES[formCountry]}
+                                  src={`https://react-circle-flags.pages.dev/${COUNTRY_CODES[formCountry] || "un"}.svg`}
+                                  alt=""
+                                />
                               </div>
                               <span className="truncate">{formCountry}</span>
                             </div>
@@ -617,17 +962,29 @@ function VisaPage() {
                                   key={country}
                                   value={country}
                                   onSelect={(currentValue) => {
-                                    const actualCountry = COUNTRIES_LIST.find(c => c.toLowerCase() === currentValue.toLowerCase()) || country;
-                                    setFormCountry(actualCountry === formCountry ? "" : actualCountry);
+                                    const actualCountry =
+                                      COUNTRIES_LIST.find(
+                                        (c) => c.toLowerCase() === currentValue.toLowerCase(),
+                                      ) || country;
+                                    setFormCountry(
+                                      actualCountry === formCountry ? "" : actualCountry,
+                                    );
                                     setCountryOpen(false);
                                   }}
                                   className="flex items-center w-full gap-2 px-2 py-1.5 text-sm"
                                 >
                                   <div className="flex flex-grow w-0 space-x-2 overflow-hidden items-center">
                                     <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full bg-secondary">
-                                      <img height="20" title={COUNTRY_CODES[country]} src={`https://react-circle-flags.pages.dev/${COUNTRY_CODES[country] || 'un'}.svg`} alt="" />
+                                      <img
+                                        height="20"
+                                        title={COUNTRY_CODES[country]}
+                                        src={`https://react-circle-flags.pages.dev/${COUNTRY_CODES[country] || "un"}.svg`}
+                                        alt=""
+                                      />
                                     </div>
-                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">{country}</span>
+                                    <span className="overflow-hidden text-ellipsis whitespace-nowrap">
+                                      {country}
+                                    </span>
                                   </div>
                                   <Check
                                     className={`ml-auto h-4 w-4 shrink-0 ${formCountry === country ? "opacity-100" : "opacity-0"}`}
@@ -642,15 +999,21 @@ function VisaPage() {
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">Visa Type <span className="text-rose-500">*</span></label>
-                    <select 
-                      value={formVisaType} 
+                    <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
+                      Visa Type <span className="text-rose-500">*</span>
+                    </label>
+                    <select
+                      value={formVisaType}
                       required
                       onChange={(e) => setFormVisaType(e.target.value)}
                       className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                     >
                       <option value="">Select Visa</option>
-                      {VISA_TYPES_LIST.map(t => <option key={t} value={t}>{t}</option>)}
+                      {VISA_TYPES_LIST.map((t) => (
+                        <option key={t} value={t}>
+                          {t}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -658,14 +1021,15 @@ function VisaPage() {
                 {/* Documents checklist configuration - directly inline */}
                 <div className="space-y-4 pt-2">
                   {formDocs.map((doc, idx) => (
-                    <div key={idx} className="space-y-2">
+                    <div key={`form-doc-${idx}`} className="space-y-2">
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                            Document {idx + 1} {idx === 0 && <span className="text-rose-500">*</span>}
+                            Document {idx + 1}{" "}
+                            {idx === 0 && <span className="text-rose-500">*</span>}
                           </label>
-                          <Input 
-                            placeholder="Document" 
+                          <Input
+                            placeholder="Document"
                             required={idx === 0}
                             value={doc.name}
                             onChange={(e) => handleDocChange(idx, "name", e.target.value)}
@@ -674,22 +1038,23 @@ function VisaPage() {
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
-                            Short Name for auto mails {idx + 1} {idx === 0 && <span className="text-rose-500">*</span>}
+                            Short Name for auto mails {idx + 1}{" "}
+                            {idx === 0 && <span className="text-rose-500">*</span>}
                           </label>
                           <div className="flex gap-2 items-center">
-                            <Input 
-                              placeholder="Short Name for auto mails" 
+                            <Input
+                              placeholder="Short Name for auto mails"
                               required={idx === 0}
                               value={doc.shortName}
                               onChange={(e) => handleDocChange(idx, "shortName", e.target.value)}
                               className="h-9 text-xs rounded-lg flex-1"
                             />
                             {formDocs.length > 1 && (
-                              <Button 
-                                type="button" 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-8 w-8 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0" 
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0"
                                 onClick={() => handleRemoveDocRow(idx)}
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -700,11 +1065,11 @@ function VisaPage() {
                       </div>
                     </div>
                   ))}
-                  
+
                   <div className="flex">
-                    <button 
-                      type="button" 
-                      onClick={handleAddDocRow} 
+                    <button
+                      type="button"
+                      onClick={handleAddDocRow}
                       className="text-rose-500 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 mt-1.5 transition-colors"
                     >
                       <span className="text-sm">⊕</span>Add More
@@ -715,24 +1080,24 @@ function VisaPage() {
                 {/* Form URLs configuration - directly inline */}
                 <div className="space-y-4 pt-2">
                   {formUrls.map((url, idx) => (
-                    <div key={idx} className="grid gap-4 sm:grid-cols-2">
+                    <div key={`url-${idx}`} className="grid gap-4 sm:grid-cols-2">
                       <div className="space-y-1">
                         <label className="text-xs font-semibold text-muted-foreground">
                           Form Url {idx + 1}
                         </label>
                         <div className="flex gap-2 items-center">
-                          <Input 
-                            placeholder="Form Url" 
+                          <Input
+                            placeholder="Form Url"
                             value={url}
                             onChange={(e) => handleUrlChange(idx, e.target.value)}
                             className="h-9 text-xs rounded-lg flex-1"
                           />
                           {formUrls.length > 1 && (
-                            <Button 
-                              type="button" 
-                              variant="ghost" 
-                              size="icon" 
-                              className="h-8 w-8 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0" 
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-rose-500 hover:bg-rose-50 rounded-lg shrink-0"
                               onClick={() => handleRemoveUrlRow(idx)}
                             >
                               <Trash2 className="h-4 w-4" />
@@ -740,14 +1105,13 @@ function VisaPage() {
                           )}
                         </div>
                       </div>
-                      <div></div>
                     </div>
                   ))}
-                  
+
                   <div className="flex">
-                    <button 
-                      type="button" 
-                      onClick={handleAddUrlRow} 
+                    <button
+                      type="button"
+                      onClick={handleAddUrlRow}
                       className="text-rose-500 hover:text-rose-600 text-xs font-semibold flex items-center gap-1 mt-1.5 transition-colors"
                     >
                       <span className="text-sm">⊕</span>Add More
@@ -759,94 +1123,210 @@ function VisaPage() {
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-6 border-t border-border pt-6">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Currency</label>
-                    <select 
-                      value={formCurrency} 
+                    <select
+                      value={formCurrency}
                       onChange={(e) => setFormCurrency(e.target.value)}
                       className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-2.5 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                     >
-                      {CURRENCY_LIST.map(curr => <option key={curr} value={curr}>{curr}</option>)}
+                      {CURRENCY_LIST.map((curr) => (
+                        <option key={curr} value={curr}>
+                          {curr}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Visa Fees <span className="text-rose-500">*</span></label>
-                    <Input type="number" placeholder="Visa Fees" required value={formVisaFees} onChange={(e) => setFormVisaFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Visa Fees <span className="text-rose-500">*</span>
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Visa Fees"
+                      required
+                      value={formVisaFees}
+                      onChange={(e) => setFormVisaFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">VFS Fees</label>
-                    <Input type="number" placeholder="VFS Fees" value={formVfsFees} onChange={(e) => setFormVfsFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <Input
+                      type="number"
+                      placeholder="VFS Fees"
+                      value={formVfsFees}
+                      onChange={(e) => setFormVfsFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Other Fees</label>
-                    <Input type="number" placeholder="Other Fees" value={formOtherFees} onChange={(e) => setFormOtherFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Other Fees
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Other Fees"
+                      value={formOtherFees}
+                      onChange={(e) => setFormOtherFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Service Fees</label>
-                    <Input type="number" placeholder="Service Fees" value={formServiceFees} onChange={(e) => setFormServiceFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Service Fees
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Service Fees"
+                      value={formServiceFees}
+                      onChange={(e) => setFormServiceFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Consulate Fees</label>
-                    <Input type="number" placeholder="Consulate Fees" value={formConsulateFees} onChange={(e) => setFormConsulateFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Consulate Fees
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Consulate Fees"
+                      value={formConsulateFees}
+                      onChange={(e) => setFormConsulateFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
                 </div>
 
                 {/* Extra & Urgent fees row */}
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-6">
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Urgent Fees</label>
-                    <Input type="number" placeholder="Urgent Fees" value={formUrgentFees} onChange={(e) => setFormUrgentFees(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Urgent Fees
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Urgent Fees"
+                      value={formUrgentFees}
+                      onChange={(e) => setFormUrgentFees(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Urgent Fees 2</label>
-                    <Input type="number" placeholder="Urgent Fees 2" value={formUrgentFees2} onChange={(e) => setFormUrgentFees2(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Urgent Fees 2
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Urgent Fees 2"
+                      value={formUrgentFees2}
+                      onChange={(e) => setFormUrgentFees2(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Name 1</label>
-                    <Input placeholder="Extra Name" value={formExtraName1} onChange={(e) => setFormExtraName1(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Name 1
+                    </label>
+                    <Input
+                      placeholder="Extra Name"
+                      value={formExtraName1}
+                      onChange={(e) => setFormExtraName1(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Fees 1</label>
-                    <Input type="number" placeholder="Extra Fees" value={formExtraFees1} onChange={(e) => setFormExtraFees1(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Fees 1
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Extra Fees"
+                      value={formExtraFees1}
+                      onChange={(e) => setFormExtraFees1(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Name 2</label>
-                    <Input placeholder="Extra Name" value={formExtraName2} onChange={(e) => setFormExtraName2(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Name 2
+                    </label>
+                    <Input
+                      placeholder="Extra Name"
+                      value={formExtraName2}
+                      onChange={(e) => setFormExtraName2(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Fees 2</label>
-                    <Input type="number" placeholder="Extra Fees" value={formExtraFees2} onChange={(e) => setFormExtraFees2(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Fees 2
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Extra Fees"
+                      value={formExtraFees2}
+                      onChange={(e) => setFormExtraFees2(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
                 </div>
 
                 {/* Third row fields */}
                 <div className="grid gap-4 grid-cols-2 sm:grid-cols-6">
                   <div className="space-y-1 sm:col-span-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Name 3</label>
-                    <Input placeholder="Extra Name" value={formExtraName3} onChange={(e) => setFormExtraName3(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Name 3
+                    </label>
+                    <Input
+                      placeholder="Extra Name"
+                      value={formExtraName3}
+                      onChange={(e) => setFormExtraName3(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1 sm:col-span-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Extra Fees 3</label>
-                    <Input type="number" placeholder="Extra Fees" value={formExtraFees3} onChange={(e) => setFormExtraFees3(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Extra Fees 3
+                    </label>
+                    <Input
+                      type="number"
+                      placeholder="Extra Fees"
+                      value={formExtraFees3}
+                      onChange={(e) => setFormExtraFees3(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1 sm:col-span-1">
-                    <label className="text-xs font-semibold text-muted-foreground">Time Required</label>
-                    <Input placeholder="Time Required" value={formTimeRequired} onChange={(e) => setFormTimeRequired(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <label className="text-xs font-semibold text-muted-foreground">
+                      Time Required
+                    </label>
+                    <Input
+                      placeholder="Time Required"
+                      value={formTimeRequired}
+                      onChange={(e) => setFormTimeRequired(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1 sm:col-span-3">
                     <label className="text-xs font-semibold text-muted-foreground">Remark 1</label>
-                    <Input placeholder="Remark" value={formRemark1} onChange={(e) => setFormRemark1(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <Input
+                      placeholder="Remark"
+                      value={formRemark1}
+                      onChange={(e) => setFormRemark1(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
                 </div>
 
@@ -854,45 +1334,68 @@ function VisaPage() {
                 <div className="grid gap-4 sm:grid-cols-2">
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Remark 2</label>
-                    <Input placeholder="Remark" value={formRemark2} onChange={(e) => setFormRemark2(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <Input
+                      placeholder="Remark"
+                      value={formRemark2}
+                      onChange={(e) => setFormRemark2(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
 
                   <div className="space-y-1">
                     <label className="text-xs font-semibold text-muted-foreground">Remark 3</label>
-                    <Input placeholder="Remark" value={formRemark3} onChange={(e) => setFormRemark3(e.target.value)} className="h-9 text-xs rounded-lg" />
+                    <Input
+                      placeholder="Remark"
+                      value={formRemark3}
+                      onChange={(e) => setFormRemark3(e.target.value)}
+                      className="h-9 text-xs rounded-lg"
+                    />
                   </div>
                 </div>
 
                 {/* Files Upload row */}
                 <div className="pt-2 border-t border-border/50">
                   <div className="flex items-center gap-3 mb-3">
-                    <input type="file" id="req-support-files-inline" multiple className="hidden" onChange={handleFileChange} />
-                    <Button 
-                      type="button" 
+                    <input
+                      type="file"
+                      id="req-support-files-inline"
+                      multiple
+                      className="hidden"
+                      onChange={handleFileChange}
+                    />
+                    <Button
+                      type="button"
                       onClick={() => document.getElementById("req-support-files-inline")?.click()}
-                      variant="outline" 
+                      variant="outline"
                       className="h-9 text-xs border border-border bg-background hover:bg-secondary rounded-lg gap-1.5"
                     >
                       Choose Files
                     </Button>
                     <span className="text-xs text-muted-foreground">
-                      {formFiles.length > 0 ? `${formFiles.length} file(s) selected` : "No file chosen"}
+                      {formFiles.length > 0
+                        ? `${formFiles.length} file(s) selected`
+                        : "No file chosen"}
                     </span>
                   </div>
                   {formFiles.length > 0 && (
                     <div className="space-y-2">
                       {formFiles.map((file, idx) => (
-                        <div key={idx} className="flex items-center justify-between bg-secondary/30 border border-border rounded-lg px-3 py-2">
+                        <div
+                          key={file.name}
+                          className="flex items-center justify-between p-3 border border-border rounded-lg bg-secondary/20"
+                        >
                           <div className="flex items-center gap-2 overflow-hidden">
                             <FileText className="h-4 w-4 text-rose-500 shrink-0" />
                             <span className="text-xs font-medium truncate">{file.name}</span>
-                            <span className="text-[10px] text-muted-foreground shrink-0">({Math.round(file.size / 1024)} KB)</span>
+                            <span className="text-[10px] text-muted-foreground shrink-0">
+                              ({Math.round(file.size / 1024)} KB)
+                            </span>
                           </div>
-                          <Button 
-                            type="button" 
-                            variant="ghost" 
-                            size="icon" 
-                            className="h-6 w-6 text-muted-foreground hover:text-rose-500 shrink-0" 
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-6 w-6 text-muted-foreground hover:text-rose-500 shrink-0"
                             onClick={() => handleRemoveFile(idx)}
                           >
                             <XCircle className="h-4 w-4" />
@@ -906,10 +1409,18 @@ function VisaPage() {
 
               {/* Bottom Actions Row */}
               <div className="bg-secondary/10 border-t border-border px-6 py-4 flex gap-2 justify-start">
-                <Button type="submit" className="rounded-lg text-xs font-semibold px-6 bg-rose-500 hover:bg-rose-600 text-white shadow-sm h-9">
+                <Button
+                  type="submit"
+                  className="rounded-lg text-xs font-semibold px-6 bg-rose-500 hover:bg-rose-600 text-white shadow-sm h-9"
+                >
                   Save
                 </Button>
-                <Button type="button" variant="outline" onClick={() => setReqFormMode("list")} className="rounded-lg text-xs font-semibold px-6 border border-border bg-background hover:bg-secondary h-9">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setReqFormMode("list")}
+                  className="rounded-lg text-xs font-semibold px-6 border border-border bg-background hover:bg-secondary h-9"
+                >
                   Cancel
                 </Button>
               </div>
@@ -922,15 +1433,25 @@ function VisaPage() {
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div>
               <h1 className="font-display text-3xl font-bold">Visa Management</h1>
-              <p className="mt-1 text-sm text-muted-foreground">Track applications, document checklists, and setup country-wise requirements.</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Track applications, document checklists, and setup country-wise requirements.
+              </p>
             </div>
             <div className="flex gap-2">
               {activeSubTab === "applications" ? (
-                <Button onClick={() => setAppModalOpen(true)} className="gap-2 rounded-xl" style={{ background: "var(--gradient-brand)" }}>
+                <Button
+                  onClick={() => setAppModalOpen(true)}
+                  className="gap-2 rounded-xl"
+                  style={BRAND_STYLE}
+                >
                   <Plus className="h-4 w-4" /> New Application
                 </Button>
               ) : (
-                <Button onClick={handleOpenAddReq} className="gap-2 rounded-xl" style={{ background: "var(--gradient-brand)" }}>
+                <Button
+                  onClick={handleOpenAddReq}
+                  className="gap-2 rounded-xl"
+                  style={{ background: "var(--gradient-brand)" }}
+                >
                   <Plus className="h-4 w-4" /> New Visa Setup
                 </Button>
               )}
@@ -958,14 +1479,44 @@ function VisaPage() {
               {/* Stat strip */}
               <div className="grid gap-3 grid-cols-2 sm:grid-cols-5">
                 {[
-                  { label: "Pending Docs", count: counts["Pending Documents"], color: "text-amber-600", bg: "bg-amber-50" },
-                  { label: "Submitted",    count: counts["Submitted"],         color: "text-blue-600",  bg: "bg-blue-50" },
-                  { label: "Under Review", count: counts["Under Review"],      color: "text-violet-600", bg: "bg-violet-50" },
-                  { label: "Approved",     count: counts["Approved"],          color: "text-emerald-600",bg: "bg-emerald-50" },
-                  { label: "Rejected",     count: counts["Rejected"],          color: "text-red-600",   bg: "bg-red-50" },
+                  {
+                    label: "Pending Docs",
+                    count: counts["Pending Documents"],
+                    color: "text-amber-600",
+                    bg: "bg-amber-50",
+                  },
+                  {
+                    label: "Submitted",
+                    count: counts["Submitted"],
+                    color: "text-blue-600",
+                    bg: "bg-blue-50",
+                  },
+                  {
+                    label: "Under Review",
+                    count: counts["Under Review"],
+                    color: "text-violet-600",
+                    bg: "bg-violet-50",
+                  },
+                  {
+                    label: "Approved",
+                    count: counts["Approved"],
+                    color: "text-emerald-600",
+                    bg: "bg-emerald-50",
+                  },
+                  {
+                    label: "Rejected",
+                    count: counts["Rejected"],
+                    color: "text-red-600",
+                    bg: "bg-red-50",
+                  },
                 ].map((s) => (
-                  <div key={s.label} className={`rounded-2xl border border-border bg-card p-4 shadow-card hover:shadow-md transition-shadow`}>
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{s.label}</p>
+                  <div
+                    key={s.label}
+                    className={`rounded-2xl border border-border bg-card p-4 shadow-card hover:shadow-md transition-shadow`}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                      {s.label}
+                    </p>
                     <p className={`mt-1 font-display text-3xl font-bold ${s.color}`}>{s.count}</p>
                   </div>
                 ))}
@@ -975,14 +1526,22 @@ function VisaPage() {
               <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
                 <div className="relative max-w-xs flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Search customer or country..." className="pl-9 rounded-xl" />
+                  <Input
+                    value={q}
+                    onChange={(e) => setQ(e.target.value)}
+                    placeholder="Search customer or country..."
+                    className="pl-9 rounded-xl"
+                  />
                 </div>
                 <div className="flex flex-wrap gap-1.5">
                   {(["All", ...ALL_STATUSES] as const).map((s) => (
-                    <button key={s}
+                    <button
+                      key={s}
                       onClick={() => setFilter(s as typeof filter)}
                       className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${filter === s ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-foreground hover:bg-secondary/80"}`}
-                    >{s} {counts[s] !== undefined ? `(${counts[s]})` : ""}</button>
+                    >
+                      {s} {counts[s] !== undefined ? `(${counts[s]})` : ""}
+                    </button>
                   ))}
                 </div>
               </div>
@@ -993,10 +1552,17 @@ function VisaPage() {
                   const docsReceived = app.docs.filter((d) => d.received).length;
                   const isOpen = expanded === app.id;
                   return (
-                    <div key={app.id} className="overflow-hidden rounded-2xl border border-border bg-card shadow-card hover:shadow-md transition-shadow">
+                    <div
+                      key={app.id}
+                      className="overflow-hidden rounded-2xl border border-border bg-card shadow-card hover:shadow-md transition-shadow"
+                    >
                       {/* Main row */}
                       <div className="flex flex-wrap items-center gap-4 px-5 py-4">
-                        <img src={app.avatar} alt={app.customer} className="h-10 w-10 rounded-full object-cover border border-border" />
+                        <img
+                          src={app.avatar}
+                          alt={app.customer}
+                          className="h-10 w-10 rounded-full object-cover border border-border"
+                        />
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold">{app.customer}</p>
@@ -1009,23 +1575,36 @@ function VisaPage() {
 
                         {/* Dates */}
                         <div className="hidden text-xs text-muted-foreground sm:block">
-                          <p>Applied: <span className="font-medium text-foreground">{app.appliedOn}</span></p>
-                          <p>Travel: <span className="font-medium text-foreground">{app.travelDate}</span></p>
+                          <p>
+                            Applied:{" "}
+                            <span className="font-medium text-foreground">{app.appliedOn}</span>
+                          </p>
+                          <p>
+                            Travel:{" "}
+                            <span className="font-medium text-foreground">{app.travelDate}</span>
+                          </p>
                         </div>
 
                         {/* Doc progress */}
                         <div className="hidden w-28 sm:block">
-                          <p className="mb-1 text-xs text-muted-foreground">Docs {docsReceived}/{app.docs.length}</p>
+                          <p className="mb-1 text-xs text-muted-foreground">
+                            Docs {docsReceived}/{app.docs.length}
+                          </p>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                             <div
                               className="h-full rounded-full bg-primary transition-all"
-                              style={{ width: `${Math.round((docsReceived / app.docs.length) * 100)}%` }}
+                              style={Object.assign(
+                                {},
+                                { width: `${Math.round((docsReceived / app.docs.length) * 100)}%` },
+                              )}
                             />
                           </div>
                         </div>
 
                         {/* Status badge */}
-                        <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[app.status]}`}>
+                        <span
+                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[app.status]}`}
+                        >
                           {STATUS_ICON[app.status]} {app.status}
                         </span>
 
@@ -1034,7 +1613,11 @@ function VisaPage() {
                           onClick={() => setExpanded(isOpen ? null : app.id)}
                           className="rounded-lg p-2 hover:bg-secondary transition-colors"
                         >
-                          {isOpen ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+                          {isOpen ? (
+                            <ChevronUp className="h-4 w-4" />
+                          ) : (
+                            <ChevronDown className="h-4 w-4" />
+                          )}
                         </button>
                       </div>
 
@@ -1044,8 +1627,10 @@ function VisaPage() {
                           <div className="grid gap-6 md:grid-cols-3">
                             {/* Left column: Application Details */}
                             <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-                              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Application Details</p>
-                              
+                              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                                Application Details
+                              </p>
+
                               <div className="space-y-2.5 text-sm">
                                 <div className="flex justify-between gap-2">
                                   <span className="text-muted-foreground">Visa Type:</span>
@@ -1061,12 +1646,14 @@ function VisaPage() {
                                 </div>
                                 <div className="flex justify-between border-t border-border pt-2">
                                   <span className="text-muted-foreground">Embassy Ref:</span>
-                                  <span className="font-mono text-xs">{app.embassyRef || "N/A"}</span>
+                                  <span className="font-mono text-xs">
+                                    {app.embassyRef || "N/A"}
+                                  </span>
                                 </div>
                               </div>
 
                               <div className="border-t border-border pt-3">
-                                <Button 
+                                <Button
                                   variant="destructive"
                                   size="sm"
                                   className="w-full gap-2 rounded-xl text-xs font-semibold"
@@ -1084,15 +1671,23 @@ function VisaPage() {
                               </p>
                               <div className="grid gap-2 sm:grid-cols-2">
                                 {app.docs.map((doc) => (
-                                  <button 
-                                    key={doc.name} 
+                                  <button
+                                    key={doc.name}
                                     onClick={() => toggleDoc(app.id, doc.name)}
                                     className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm transition-colors text-left ${doc.received ? "border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50" : "border-border bg-background hover:bg-secondary/50"}`}
                                   >
-                                    {doc.received
-                                      ? <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                                      : <div className="h-4 w-4 shrink-0 rounded-full border-2 border-border transition-colors" />}
-                                    <span className={doc.received ? "text-foreground" : "text-muted-foreground"}>{doc.name}</span>
+                                    {doc.received ? (
+                                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                                    ) : (
+                                      <div className="h-4 w-4 shrink-0 rounded-full border-2 border-border transition-colors" />
+                                    )}
+                                    <span
+                                      className={
+                                        doc.received ? "text-foreground" : "text-muted-foreground"
+                                      }
+                                    >
+                                      {doc.name}
+                                    </span>
                                   </button>
                                 ))}
                               </div>
@@ -1111,9 +1706,16 @@ function VisaPage() {
               <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
                 <div className="relative max-w-xs flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input value={reqQ} onChange={(e) => setReqQ(e.target.value)} placeholder="Search country or visa type..." className="pl-9 rounded-xl" />
+                  <Input
+                    value={reqQ}
+                    onChange={(e) => setReqQ(e.target.value)}
+                    placeholder="Search country or visa type..."
+                    className="pl-9 rounded-xl"
+                  />
                 </div>
-                <span className="text-xs text-muted-foreground ml-auto">{filteredReqs.length} configurations setup</span>
+                <span className="text-xs text-muted-foreground ml-auto">
+                  {filteredReqs.length} configurations setup
+                </span>
               </div>
 
               <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
@@ -1144,31 +1746,149 @@ function VisaPage() {
                               <Globe className="h-4 w-4 text-primary shrink-0" />
                               {req.country}
                             </td>
-                            <td className="px-5 py-4 font-medium text-muted-foreground">{req.visaType}</td>
+                            <td className="px-5 py-4 font-medium text-muted-foreground">
+                              {req.visaType}
+                            </td>
                             <td className="px-5 py-4">
                               <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-semibold border border-blue-100">
                                 {req.docs.length} Documents
                               </span>
                             </td>
                             <td className="px-5 py-4">
-                              {req.formUrls.length > 0 ? (
-                                <a href={req.formUrls[0]} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs">
-                                  <Download className="h-3 w-3" /> Download PDF Form ({req.formUrls.length})
-                                </a>
-                              ) : (
-                                <span className="text-muted-foreground/60">—</span>
-                              )}
+                              {(() => {
+                                const totalForms =
+                                  req.formUrls.length + (req.supportFiles?.length || 0);
+                                if (totalForms === 0)
+                                  return <span className="text-muted-foreground/60">—</span>;
+
+                                if (totalForms === 1) {
+                                  if (req.formUrls.length === 1) {
+                                    const url = req.formUrls[0];
+                                    const formattedUrl = url.startsWith("http")
+                                      ? url
+                                      : `https://${url}`;
+                                    return (
+                                      <a
+                                        href={formattedUrl}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs"
+                                      >
+                                        <Download className="h-3 w-3" /> Download Form (1)
+                                      </a>
+                                    );
+                                  } else {
+                                    const file = req.supportFiles![0];
+                                    return (
+                                      <button
+                                        type="button"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          const link = document.createElement("a");
+                                          link.href = file.data;
+                                          link.download = file.name;
+                                          document.body.appendChild(link);
+                                          link.click();
+                                          document.body.removeChild(link);
+                                        }}
+                                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs cursor-pointer bg-transparent border-none p-0"
+                                      >
+                                        <Download className="h-3 w-3" /> Download Form (1)
+                                      </button>
+                                    );
+                                  }
+                                }
+
+                                return (
+                                  <Popover>
+                                    <PopoverTrigger asChild>
+                                      <button className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs">
+                                        <Download className="h-3 w-3" /> Download Forms (
+                                        {totalForms})
+                                      </button>
+                                    </PopoverTrigger>
+                                    <PopoverContent className="w-64 p-3 text-sm" align="start">
+                                      <div className="space-y-3">
+                                        {req.formUrls.length > 0 && (
+                                          <div>
+                                            <div className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                                              Web Links
+                                            </div>
+                                            <div className="space-y-1">
+                                              {req.formUrls.map((url, i) => {
+                                                const formattedUrl = url.startsWith("http")
+                                                  ? url
+                                                  : `https://${url}`;
+                                                return (
+                                                  <a
+                                                    key={i}
+                                                    href={formattedUrl}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className="block text-primary hover:underline truncate"
+                                                  >
+                                                    {url}
+                                                  </a>
+                                                );
+                                              })}
+                                            </div>
+                                          </div>
+                                        )}
+                                        {req.supportFiles && req.supportFiles.length > 0 && (
+                                          <div>
+                                            <div className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
+                                              Files
+                                            </div>
+                                            <div className="space-y-1">
+                                              {req.supportFiles.map((file, i) => (
+                                                <button
+                                                  key={`file-${i}`}
+                                                  type="button"
+                                                  onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    const link = document.createElement("a");
+                                                    link.href = file.data;
+                                                    link.download = file.name;
+                                                    document.body.appendChild(link);
+                                                    link.click();
+                                                    document.body.removeChild(link);
+                                                  }}
+                                                  className="block text-primary hover:underline truncate w-full text-left bg-transparent border-none p-0 cursor-pointer text-sm"
+                                                >
+                                                  {file.name}
+                                                </button>
+                                              ))}
+                                            </div>
+                                          </div>
+                                        )}
+                                      </div>
+                                    </PopoverContent>
+                                  </Popover>
+                                );
+                              })()}
                             </td>
                             <td className="px-5 py-4 font-semibold text-primary">
                               {req.visaFees > 0 ? `${req.currency} ${req.visaFees}` : "N/A"}
                             </td>
-                            <td className="px-5 py-4 font-medium text-muted-foreground">{req.timeRequired || "—"}</td>
+                            <td className="px-5 py-4 font-medium text-muted-foreground">
+                              {req.timeRequired || "—"}
+                            </td>
                             <td className="px-5 py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-primary rounded-lg" onClick={() => handleOpenEditReq(req)}>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-muted-foreground hover:text-primary rounded-lg"
+                                  onClick={() => handleOpenEditReq(req)}
+                                >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg" onClick={() => handleDeleteReq(req.id)}>
+                                <Button
+                                  size="icon"
+                                  variant="ghost"
+                                  className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                  onClick={() => handleDeleteReq(req.id)}
+                                >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -1202,7 +1922,9 @@ function VisaPage() {
       <Dialog open={appModalOpen} onOpenChange={setAppModalOpen}>
         <DialogContent className="sm:max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg font-bold">New Visa Application</DialogTitle>
+            <DialogTitle className="font-display text-lg font-bold">
+              New Visa Application
+            </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
               Add a new visa application track for a customer.
             </DialogDescription>
@@ -1321,10 +2043,15 @@ function VisaPage() {
             </div>
 
             <DialogFooter className="border-t border-border pt-4">
-              <Button type="button" variant="outline" className="rounded-xl" onClick={() => setAppModalOpen(false)}>
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => setAppModalOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button type="submit" className="rounded-xl" style={{ background: "var(--gradient-brand)" }}>
+              <Button type="submit" className="rounded-xl" style={BRAND_STYLE}>
                 Add Application
               </Button>
             </DialogFooter>

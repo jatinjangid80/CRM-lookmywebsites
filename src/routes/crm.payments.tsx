@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { CreditCard, AlertCircle, CheckCircle2, Plus, Trash2, Search } from "lucide-react";
 import { bookings, formatINR } from "@/lib/mock-data";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
@@ -14,6 +14,38 @@ export const Route = createFileRoute("/crm/payments")({ component: PaymentsPage 
 
 function PaymentsPage() {
   const [payments, setPayments] = useLocalStorage<Booking[]>("crm_bookings", bookings);
+  const [leads] = useLocalStorage<any[]>("crm_leads_v2", []);
+
+  const allPayments = useMemo(() => {
+    const derived = leads
+      .filter((l: any) => l.totalAmount)
+      .map((l: any) => ({
+        id: "LD-" + l.id.replace("L-", ""),
+        bookingType: (l.service || "Holiday Package") as unknown as Booking["bookingType"],
+        supplier: l.vendorName || "Not Assigned",
+        bookingDate: l.createdAt,
+        customer: l.name,
+        mobileNumber: l.phone,
+        bookedBy: l.assignedTo || "Admin",
+        company: l.clientCompany || "",
+        reference: l.bookingReference || "",
+        saleInvoiceNo: "",
+        purchaseInvoiceNo: "",
+        remarks: l.notes || "",
+        sellingPrice: l.totalAmount || 0,
+        purchasePrice: 0,
+        profit: 0,
+        margin: 0,
+        amount: l.totalAmount || 0,
+        paid: l.amountPaid || 0,
+        paymentMode: ("Card") as "Cash" | "UPI" | "Card" | "Bank Transfer" | "Cheque" | "",
+        transactionId: "",
+        status: (l.paymentStatus || "Pending"),
+        package: l.destination || "Unknown",
+        travelDate: l.travelDate || "TBD",
+      } as Booking));
+    return [...payments, ...derived];
+  }, [leads, payments]);
   const [searchTerm, setSearchTerm] = useState("");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -26,13 +58,13 @@ function PaymentsPage() {
     status: "Pending" as Booking["status"]
   });
 
-  const filteredPayments = payments.filter(p => 
+  const filteredPayments = allPayments.filter(p => 
     p.customer.toLowerCase().includes(searchTerm.toLowerCase()) || 
     `INV-${p.id.replace("BK-", "")}`.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const total = payments.reduce((s, b) => s + b.amount, 0);
-  const paid = payments.reduce((s, b) => s + b.paid, 0);
+  const total = allPayments.reduce((s, b) => s + b.amount, 0);
+  const paid = allPayments.reduce((s, b) => s + b.paid, 0);
   const pending = total - paid;
   
   const cards = [
@@ -68,7 +100,7 @@ function PaymentsPage() {
       amount: newInvoice.amount,
       paid: newInvoice.paid,
       status: newInvoice.status,
-    };
+    } as unknown as Booking;
 
     setPayments([invoice, ...payments]);
     setIsAddOpen(false);

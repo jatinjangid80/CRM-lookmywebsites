@@ -1,10 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { Plus, X, Upload, FileText, FileSpreadsheet, FileImage, File, Download, Trash2, Table2, Briefcase } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { ImportModal } from "@/components/ui/import-modal";
 import { bookings as initialBookings, formatINR, type Booking } from "@/lib/mock-data";
 import { useLocalStorage } from "@/lib/use-local-storage";
@@ -44,6 +44,38 @@ function BookingsPage() {
   const isAdmin = auth?.role === "admin";
 
   const [bookingList, setBookingList] = useLocalStorage<ExtBooking[]>("crm_bookings", initialBookings);
+  const [leads] = useLocalStorage<any[]>("crm_leads_v2", []);
+
+  const allBookings = useMemo(() => {
+    const derived = leads
+      .filter((l: any) => l.bookingReference || l.status === "Booked" || l.status === "Completed")
+      .map((l: any) => ({
+        id: "LD-" + l.id.replace("L-", ""),
+        bookingType: (l.service || "Holiday Package") as BookingType,
+        supplier: l.vendorName || "Not Assigned",
+        bookingDate: l.createdAt,
+        customer: l.name,
+        mobileNumber: l.phone,
+        bookedBy: l.assignedTo || "Admin",
+        company: l.clientCompany || "",
+        reference: l.bookingReference || "",
+        saleInvoiceNo: "",
+        purchaseInvoiceNo: "",
+        remarks: l.notes || "",
+        sellingPrice: l.totalAmount || 0,
+        purchasePrice: 0,
+        profit: 0,
+        margin: 0,
+        amount: l.totalAmount || 0,
+        paid: l.amountPaid || 0,
+        paymentMode: "Card",
+        transactionId: "",
+        status: (l.paymentStatus || "Pending"),
+        package: l.destination || "Unknown",
+        travelDate: l.travelDate || "TBD",
+      } as ExtBooking));
+    return [...bookingList, ...derived];
+  }, [leads, bookingList]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
@@ -73,7 +105,7 @@ function BookingsPage() {
     const headers = ["ID", "Customer", "Package", "Travel Date", "Amount (₹)", "Paid (₹)", "Status"];
     const csvRows = [
       headers.join(","),
-      ...bookingList.map(b => [
+      ...allBookings.map(b => [
         `"${b.id}"`,
         `"${b.customer.replace(/"/g, '""')}"`,
         `"${b.package.replace(/"/g, '""')}"`,
@@ -96,7 +128,7 @@ function BookingsPage() {
   // Export: Word (.doc)
   const exportToWord = () => {
     const tableHeader = "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = bookingList.map(b =>
+    const tableRows = allBookings.map(b =>
       `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`
     ).join("");
     const htmlString = `
@@ -120,39 +152,23 @@ function BookingsPage() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     const tableHeader = "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = bookingList.map(b =>
-      `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`
+    const tableRows = allBookings.map(b =>
+      `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>\u20b9${b.amount}</td><td>\u20b9${b.paid}</td><td>${b.status}</td></tr>`
     ).join("");
-    printWindow.document.write(`
-      <html>
-      <head>
-        <title>Bookings Export PDF</title>
-        <style>
-          body { font-family: sans-serif; padding: 20px; color: #333; }
-          h2 { color: #f43f5e; margin-bottom: 5px; }
-          p { font-size: 12px; color: #666; margin-bottom: 20px; }
-          table { border-collapse: collapse; width: 100%; font-size: 12px; }
-          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-          th { background-color: #f9fafb; font-weight: bold; }
-          tr:nth-child(even) { background-color: #f3f4f6; }
-        </style>
-      </head>
-      <body>
-        <h2>Grand Journeys CRM - Bookings Export</h2>
-        <p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${bookingList.length}</p>
-        <table>
-          <thead>${tableHeader}</thead>
-          <tbody>${tableRows}</tbody>
-        </table>
-        <script>
-          window.onload = function() {
-            window.print();
-            window.onafterprint = function() { window.close(); };
-          }
-        </script>
-      </body>
-      </html>
-    `);
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Bookings Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Bookings Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${allBookings.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent = "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
     printWindow.document.close();
   };
 
@@ -206,6 +222,7 @@ function BookingsPage() {
       if (fileInput) fileInput.value = "";
     } catch (err) {
       console.error("File upload failed", err);
+      alert("File upload failed: " + (err instanceof Error ? err.message : "Unknown error"));
     } finally {
       setUploading(false);
     }
@@ -291,7 +308,7 @@ function BookingsPage() {
     setShowSuccess(true);
   };
   
-  const filteredBookings = bookingList.filter(b => activeTab === "All" || b.bookingType === activeTab || (activeTab === "Holiday Package" && !b.bookingType)); // Fallback for legacy items
+  const filteredBookings = allBookings.filter(b => activeTab === "All" || b.bookingType === activeTab || (activeTab === "Holiday Package" && !b.bookingType)); // Fallback for legacy items
 
   return (
     <div className="space-y-6">
@@ -324,7 +341,7 @@ function BookingsPage() {
         {["All", "Air Ticket", "Train Ticket", "Hotel", "Holiday Package", "Taxi", "Visa", "Travel Insurance", "Bus Ticket"].map((tab) => (
           <button
             key={tab}
-            onClick={() => setActiveTab(tab as any)}
+            onClick={() => setActiveTab(tab as BookingType | "All")}
             className={`whitespace-nowrap px-4 py-2 rounded-t-lg text-sm font-semibold transition-colors ${
               activeTab === tab
                 ? "bg-card text-primary border-b-2 border-primary"
@@ -571,7 +588,7 @@ function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Bookings</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {bookingList.length} bookings in your preferred file format.
+              Export the current list of {allBookings.length} bookings in your preferred file format.
             </DialogDescription>
           </DialogHeader>
 

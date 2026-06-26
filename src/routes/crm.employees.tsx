@@ -1216,15 +1216,6 @@ function EmployeesPage() {
                           >
                             <Download className="h-4 w-4" /> Download Profile
                           </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              window.location.href = `mailto:${cur.email}?subject=Regarding CRM Employee Profile`;
-                            }}
-                            className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
-                          >
-                            <Send className="h-4 w-4" /> Send Email
-                          </Button>
                         </div>
                       )}
                     </div>

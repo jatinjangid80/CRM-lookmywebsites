@@ -14,9 +14,13 @@ import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
-const TASKS_LS_KEY = "crm_tasks_v1";
+const TASKS_LS_KEY = "crm_tasks_v2";
 function loadTasks(): Task[] | null {
-  try { const r = localStorage.getItem(TASKS_LS_KEY); return r ? JSON.parse(r) : null; }
+  try { 
+    const r = localStorage.getItem(TASKS_LS_KEY); 
+    // eslint-disable-next-line
+    return r ? JSON.parse(r) : null; 
+  }
   catch { return null; }
 }
 function saveTasks(tasks: Task[]) {
@@ -48,15 +52,7 @@ interface Task {
 
 /* ─── Seed data ──────────────────────────────────────── */
 const today = new Date().toISOString().slice(0, 10);
-const SEED: Task[] = [
-  { id: "T-001", title: "Call Ananya re: Bali visa docs", type: "Call", priority: "High", assignee: "Riya Bansal", dueDate: "2026-06-20", status: "Pending", note: "She needs visa guidance before July", lead: "Ananya Verma" },
-  { id: "T-002", title: "Send Maldives quote to Neha Kapoor", type: "Email", priority: "High", assignee: "Riya Bansal", dueDate: "2026-06-19", status: "Pending", note: "Upgrade to water villa", lead: "Neha Kapoor" },
-  { id: "T-003", title: "Collect 50% advance from Rohan Mehta", type: "Payment", priority: "High", assignee: "Amit Shah", dueDate: "2026-06-21", status: "Pending", note: "Europe trip booked, advance pending", lead: "Rohan Mehta" },
-  { id: "T-004", title: "Follow up with Aditya — Europe interest", type: "Follow-up", priority: "Medium", assignee: "Pooja Nair", dueDate: "2026-06-22", status: "Pending", note: "", lead: "Aditya Rao" },
-  { id: "T-005", title: "Send Sneha Thailand itinerary PDF", type: "Document", priority: "Medium", assignee: "Riya Bansal", dueDate: "2026-06-23", status: "Pending", note: "Thailand Island Hopper 8D/7N", lead: "Sneha Joshi" },
-  { id: "T-006", title: "Confirm Dubai hotel for Divya Bhatt", type: "Call", priority: "Medium", assignee: "Rahul Gupta", dueDate: "2026-06-18", status: "Done", note: "Address Beach Resort confirmed", lead: "Divya Bhatt" },
-  { id: "T-007", title: "Send payment receipt to Priya Sharma", type: "Email", priority: "Low", assignee: "Riya Bansal", dueDate: "2026-06-17", status: "Done", note: "", lead: "Priya Sharma" },
-];
+const SEED: Task[] = [];
 
 /* ─── Constants ──────────────────────────────────────── */
 const TYPE_ICONS: Record<TaskType, typeof Phone> = {

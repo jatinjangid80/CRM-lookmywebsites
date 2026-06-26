@@ -1,9 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
-  Building2, Plus, Search, X, MapPin, IndianRupee,
-  Phone, Mail, User, Star, Trash2, Edit2, Check,
-  ChevronRight, Filter, LayoutGrid, Table2, Info, CreditCard
+  Plus, Search, X, MapPin, IndianRupee,
+  Phone, Mail, Star, Trash2, Edit2, Check,
+  Filter, LayoutGrid, Table2, Info, CreditCard
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,74 +35,6 @@ interface Vendor {
   rating: number;
   notes?: string;
 }
-
-const INITIAL_VENDORS: Vendor[] = [
-  {
-    id: "VND-001",
-    name: "Address Beach Resort Dubai",
-    category: "Hotel",
-    contactPerson: "Sarah Jenkins",
-    email: "reservations@addressbeach.com",
-    phone: "+971 4 879 8888",
-    location: "JBR, Dubai, UAE",
-    status: "Active",
-    balance: 145000,
-    rating: 4.8,
-    notes: "Top luxury resort partner in JBR, Dubai."
-  },
-  {
-    id: "VND-002",
-    name: "Golden Sands Destination DMC",
-    category: "Local DMC",
-    contactPerson: "Amit Patel",
-    email: "bookings@goldensandsbali.com",
-    phone: "+62 361 751111",
-    location: "Kuta, Bali, Indonesia",
-    status: "Active",
-    balance: 85000,
-    rating: 4.6,
-    notes: "Main partner for Bali tours, transfers and activities."
-  },
-  {
-    id: "VND-003",
-    name: "IndiGo Flight Group Desk",
-    category: "Flight DMC",
-    contactPerson: "Vikram Rathore",
-    email: "groups@goindigo.in",
-    phone: "+91 124 6173839",
-    location: "Gurugram, India",
-    status: "Active",
-    balance: 210000,
-    rating: 4.5,
-    notes: "Flight ticketing group agent coordinator."
-  },
-  {
-    id: "VND-004",
-    name: "Desert Safari Operators LLC",
-    category: "Sightseeing Vendor",
-    contactPerson: "Yousuf Al-Mansoori",
-    email: "safari@desertoasis.ae",
-    phone: "+971 50 123 4567",
-    location: "Dubai, UAE",
-    status: "Active",
-    balance: 12000,
-    rating: 4.2,
-    notes: "Premium camp coordinator for dune bashing & safari dinner."
-  },
-  {
-    id: "VND-005",
-    name: "Jaipur Travels & Cabs",
-    category: "Transport DMC",
-    contactPerson: "Mahesh Sharma",
-    email: "cabs@jaipurtravels.com",
-    phone: "+91 9414012345",
-    location: "Jaipur, Rajasthan, India",
-    status: "Active",
-    balance: 45000,
-    rating: 4.7,
-    notes: "Fleet supplier for Rajasthan packages."
-  }
-];
 
 const formatINR = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
@@ -240,20 +172,16 @@ function VendorsPage() {
   };
 
   // Filtered List
-  const filtered = vendors.filter(v => {
-    const matchQ = q === "" || 
-      v.name.toLowerCase().includes(q.toLowerCase()) ||
-      v.contactPerson.toLowerCase().includes(q.toLowerCase()) ||
-      v.email.toLowerCase().includes(q.toLowerCase()) ||
-      v.location.toLowerCase().includes(q.toLowerCase());
-
-    const matchCat = categoryFilter === "All" || v.category === categoryFilter;
-    const matchStat = statusFilter === "All" || v.status === statusFilter;
-
-    return matchQ && matchCat && matchStat;
-  });
-
-  const totalOutstanding = filtered.reduce((sum, v) => sum + v.balance, 0);
+  const { filtered, totalOutstanding } = useMemo(() => {
+    const f = vendors.filter((v) => {
+      const q = searchQuery.toLowerCase();
+      const matchQ = !q || v.name.toLowerCase().includes(q) || v.contactPerson?.toLowerCase().includes(q) || v.location?.toLowerCase().includes(q);
+      const matchCat = categoryFilter === "All" || v.category === categoryFilter;
+      const matchStat = statusFilter === "All" || v.status === statusFilter;
+      return matchQ && matchCat && matchStat;
+    });
+    return { filtered: f, totalOutstanding: f.reduce((sum, v) => sum + v.balance, 0) };
+  }, [vendors, searchQuery, categoryFilter, statusFilter]);
 
   return (
     <div className="space-y-6">
@@ -613,7 +541,7 @@ function VendorsPage() {
             <div className="bg-gray-50 border border-gray-100 p-3 rounded-lg flex justify-between items-center">
               <div>
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase">Current Balance</p>
-                <p className="text-base font-black text-gray-800 mt-0.5">{selectedVendor && formatINR(selectedVendor.balance)}</p>
+                <p className="text-base font-black text-gray-800 mt-0.5">{selectedVendor && formatINR(selectedVendor?.balance || 0)}</p>
               </div>
               <div className="text-right">
                 <p className="text-[10px] text-muted-foreground font-semibold uppercase">Vendor Code</p>
