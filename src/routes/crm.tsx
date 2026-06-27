@@ -274,7 +274,7 @@ function CrmLayout() {
   if (!auth) return null;
 
   const nav = getNavForUser(auth);
-  const isAdmin = auth.role === "admin" || auth.role === "HR & Admin Manager";
+  const isAdmin = auth.role === "admin" || auth.role === "manager";
 
   return (
     <div className="flex min-h-screen bg-secondary/30">
