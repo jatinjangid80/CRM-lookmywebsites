@@ -554,7 +554,17 @@ function EmployeesPage() {
       (q === "" || e.name.toLowerCase().includes(q.toLowerCase()) || e.email.toLowerCase().includes(q.toLowerCase()))
   );
 
-  const totalRevenue = employees.reduce((s, e) => s + e.revenue, 0);
+  // Live data: Total Bookings from actual bookings localStorage
+  const totalBookings = (() => {
+    try {
+      const raw = localStorage.getItem("crm_bookings");
+      const list = raw ? JSON.parse(raw) : [];
+      return Array.isArray(list) ? list.length : 0;
+    } catch { return 0; }
+  })();
+
+  // Live data: Team Revenue = total salary paid to all employees (from payroll records)
+  const totalRevenue = payroll.reduce((sum: number, p: any) => sum + (Number(p.salary) || 0), 0);
 
   const handleDeleteEmployee = (e: React.MouseEvent, id: string) => {
     e.stopPropagation();
@@ -742,7 +752,7 @@ function EmployeesPage() {
             {[
               { label: "Total Staff", value: employees.length, icon: <UserCog className="h-4 w-4" />, color: "bg-blue-100 text-blue-600" },
               { label: "Active", value: employees.filter(e => e.status === "Active").length, icon: <UserCheck className="h-4 w-4" />, color: "bg-emerald-100 text-emerald-600" },
-              { label: "Total Bookings", value: employees.reduce((s, e) => s + e.closedDeals, 0), icon: <CalendarCheck className="h-4 w-4" />, color: "bg-violet-100 text-violet-600" },
+              { label: "Total Bookings", value: totalBookings, icon: <CalendarCheck className="h-4 w-4" />, color: "bg-violet-100 text-violet-600" },
               { label: "Team Revenue", value: formatINR(totalRevenue), icon: <TrendingUp className="h-4 w-4" />, color: "bg-amber-100 text-amber-600" },
             ].map((s) => (
               <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
