@@ -8,6 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { ImportModal } from "@/components/ui/import-modal";
 import { bookings as initialBookings, formatINR, type Booking } from "@/lib/mock-data";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth } from "@/lib/auth";
 import { AddBookingModal } from "@/components/AddBookingModal";
 import { BookingType } from "@/lib/mock-data";
@@ -43,8 +44,8 @@ function BookingsPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
 
-  const [bookingList, setBookingList] = useLocalStorage<ExtBooking[]>("crm_bookings", initialBookings);
-  const [leads] = useLocalStorage<any[]>("crm_leads_v2", []);
+  const [bookingList, setBookingList] = useSupabaseTable<ExtBooking[]>("bookings", initialBookings);
+  const [leads] = useSupabaseTable<any[]>("leads", []);
 
   const allBookings = useMemo(() => {
     const derived = leads

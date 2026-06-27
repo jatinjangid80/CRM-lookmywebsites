@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth, setAuth } from "@/lib/auth";
 import {
   Building2, User, Bell, Shield, Palette, Phone, Mail, MapPin,
@@ -85,7 +86,7 @@ function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(auth?.avatar || null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
   
-  const [localLiveEmps] = useLocalStorage("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [localLiveEmps] = useSupabaseTable("employees", INITIAL_EMPLOYEES);
   const liveEmps = localLiveEmps?.length ? localLiveEmps : INITIAL_EMPLOYEES;
 
   const showToast = (msg: string) => {
@@ -125,8 +126,7 @@ function SettingsPage() {
     showToast("Avatar updated! (preview only)");
   };
 
-  // ── Company Info state ──────────────────────────────────────────
-  const [company, setCompany] = useLocalStorage("crm-company", {
+  const defaultCompany = {
     name: "LookMyHolidays",
     tagline: "Plan memorable trips with LookMyHolidays",
     email: "resv@lookmyholidays.in",
@@ -144,7 +144,42 @@ function SettingsPage() {
     pan: "",
     currency: "INR",
     timezone: "Asia/Kolkata",
-  });
+  };
+  const defaultAppearance = {
+    theme: "light",
+    sidebarCompact: false,
+    fontSize: "default",
+    accentColor: "#f43f5e",
+  };
+  const defaultNotifications = {
+    leadAssigned: true,
+    taskDue: true,
+    bookingConfirmed: true,
+    leaveRequested: true,
+    systemUpdates: false,
+    emailDigest: true,
+    whatsapp: false,
+  };
+  
+  const defaultSettings = [
+    { id: "company", type: "company", data: defaultCompany },
+    { id: "appearance", type: "appearance", data: defaultAppearance },
+    { id: "notifications", type: "notifications", data: defaultNotifications }
+  ];
+
+  const [settings, setSettings] = useSupabaseTable<any[]>("settings", defaultSettings);
+
+  // ── Company Info state ──────────────────────────────────────────
+  const company = settings.find(s => s.id === "company")?.data || defaultCompany;
+  const setCompany = (newVal: any) => {
+    setSettings((prev: any[]) => {
+      const exists = prev.find(s => s.id === "company");
+      if (exists) {
+         return prev.map(s => s.id === "company" ? { ...s, data: typeof newVal === 'function' ? newVal(s.data) : newVal } : s);
+      }
+      return [...prev, { id: "company", type: "company", data: typeof newVal === 'function' ? newVal(defaultCompany) : newVal }];
+    });
+  };
 
   // ── Profile state ───────────────────────────────────────────────
   const [profile, setProfile] = useState({
@@ -156,12 +191,16 @@ function SettingsPage() {
   });
 
   // ── Appearance state ────────────────────────────────────────────
-  const [appearance, setAppearance] = useLocalStorage("crm-appearance", {
-    theme: "light",
-    sidebarCompact: false,
-    fontSize: "default",
-    accentColor: "#f43f5e",
-  });
+  const appearance = settings.find(s => s.id === "appearance")?.data || defaultAppearance;
+  const setAppearance = (newVal: any) => {
+    setSettings((prev: any[]) => {
+      const exists = prev.find(s => s.id === "appearance");
+      if (exists) {
+         return prev.map(s => s.id === "appearance" ? { ...s, data: typeof newVal === 'function' ? newVal(s.data) : newVal } : s);
+      }
+      return [...prev, { id: "appearance", type: "appearance", data: typeof newVal === 'function' ? newVal(defaultAppearance) : newVal }];
+    });
+  };
 
   // Apply appearance to DOM
   useEffect(() => {
@@ -194,15 +233,16 @@ function SettingsPage() {
   }, [appearance]);
 
   // ── Notifications state ─────────────────────────────────────────
-  const [notifications, setNotifications] = useLocalStorage("crm-notifications", {
-    leadAssigned: true,
-    taskDue: true,
-    bookingConfirmed: true,
-    leaveRequested: true,
-    systemUpdates: false,
-    emailDigest: true,
-    whatsapp: false,
-  });
+  const notifications = settings.find(s => s.id === "notifications")?.data || defaultNotifications;
+  const setNotifications = (newVal: any) => {
+    setSettings((prev: any[]) => {
+      const exists = prev.find(s => s.id === "notifications");
+      if (exists) {
+         return prev.map(s => s.id === "notifications" ? { ...s, data: typeof newVal === 'function' ? newVal(s.data) : newVal } : s);
+      }
+      return [...prev, { id: "notifications", type: "notifications", data: typeof newVal === 'function' ? newVal(defaultNotifications) : newVal }];
+    });
+  };
 
   // ── Security state ──────────────────────────────────────────────
   const [security, setSecurity] = useState({ current: "", newPass: "", confirm: "" });

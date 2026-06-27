@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 export const Route = createFileRoute("/crm/packages")({ component: PackagesPage });
 
@@ -74,7 +75,7 @@ function PackagesPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
 
-  const [packages, setPackages] = useLocalStorage<Package[]>("crm_packages", SEED_PACKAGES);
+  const [packages, setPackages] = useSupabaseTable<Package[]>("packages", SEED_PACKAGES);
   const [q, setQ] = useState("");
   const [filterTag, setFilterTag] = useState("All");
   const [isFormOpen, setIsFormOpen] = useState(false);

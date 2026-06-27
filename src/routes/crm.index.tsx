@@ -5,6 +5,7 @@ import { revenueByMonth, destinationPerformance, leads as seedLeads, bookings as
 import { getAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { SEED_PACKAGES } from "./crm.packages";
 

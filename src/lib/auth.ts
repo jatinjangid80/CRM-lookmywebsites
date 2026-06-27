@@ -1,5 +1,5 @@
 /* ─── Auth types ─── */
-export type UserRole = "admin" | "employee" | "Accounts Manager" | "Accounts" | "HR & Admin Manager" | "Sales Executive" | "Travel Consultant" | "Visa Executive" | (string & {});
+export type UserRole = "admin" | "manager" | "employee";
 
 export interface AuthUser {
   role: UserRole;
@@ -136,8 +136,9 @@ export function login(username: string, password: string): AuthUser | null {
           emp.password === password
       );
       if (dynamicMatch) {
+        const accessRole = dynamicMatch.accessRole ? dynamicMatch.accessRole.toLowerCase() : (dynamicMatch.role === "HR & Admin Manager" || dynamicMatch.role === "admin" ? "admin" : "employee");
         const user: AuthUser = {
-          role: dynamicMatch.role === "HR & Admin Manager" || dynamicMatch.role === "admin" ? "admin" : "employee",
+          role: accessRole as UserRole,
           name: dynamicMatch.name,
           empId: dynamicMatch.id,
           avatar: dynamicMatch.avatar || "",

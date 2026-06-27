@@ -6,6 +6,7 @@ import {
   FileText, FileImage, Film, Archive, ChevronRight, HardDrive, Cloud, Link2, Unlink
 } from "lucide-react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";

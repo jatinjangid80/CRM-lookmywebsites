@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 export const Route = createFileRoute("/crm/vendors")({ component: VendorsPage });
 
@@ -40,7 +41,7 @@ const formatINR = (n: number) =>
   new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
 
 function VendorsPage() {
-  const [vendors, setVendors] = useLocalStorage<Vendor[]>("crm_vendors_v2", []);
+  const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
 
   // Search & Filter state
   const [q, setQ] = useState("");

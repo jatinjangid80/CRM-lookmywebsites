@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { bookings, customers as initialCustomers, formatINR, type Customer } from "@/lib/mock-data";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 export const Route = createFileRoute("/crm/customers")({
   component: CustomersPage,
@@ -19,7 +20,7 @@ const tierColor: Record<string, string> = {
 };
 
 function CustomersPage() {
-  const [customerList, setCustomerList] = useLocalStorage<Customer[]>("crm_customers_v2", []);
+  const [customerList, setCustomerList] = useSupabaseTable<Customer[]>("customers", []);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", email: "" });
 

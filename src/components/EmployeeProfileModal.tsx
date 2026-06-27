@@ -8,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { 
   INITIAL_EMPLOYEE_DETAILS, 
   createDefaultEmployeeDetails, 
@@ -59,36 +60,38 @@ export function EmployeeProfileModal({
     email: "",
     phone: "",
     status: "",
-    joinDate: ""
+    joinDate: "",
+    department: "",
+    accessRole: ""
   });
 
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
-  // States for Employee Records loaded from local storage
-  const [leaves, setLeaves] = useLocalStorage<any[]>("crm_leaves_v1", []);
-  const [attendance, setAttendance] = useLocalStorage<any[]>("crm_attendance_v2", []);
-  const [reviews, setReviews] = useLocalStorage<any[]>("crm_reviews_v1", [
+  // States for Employee Records loaded from Supabase
+  const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
+  const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
+  const [reviews, setReviews] = useSupabaseTable<any[]>("reviews", [
     { id: "REV-01", empId: "LMH-02", period: "Q1 2026", rating: 4.5, feedback: "Excellent sales performance, exceeded targets.", reviewer: "Manvendra Singhal", date: "2026-04-05" },
     { id: "REV-02", empId: "LMH-03", period: "Q1 2026", rating: 4.8, feedback: "Great coordination and support on tour bookings.", reviewer: "Manvendra Singhal", date: "2026-04-06" }
   ]);
-  const [hrFiles, setHrFiles] = useLocalStorage<any[]>("crm_hr_files_v1", [
+  const [hrFiles, setHrFiles] = useSupabaseTable<any[]>("hr_files", [
     { id: "file-1", name: "Employee_Handbook_2026.pdf", size: "1.2 MB", date: "2026-01-10", uploader: "Manvendra Singhal" },
     { id: "file-2", name: "Travel_Expense_Guidelines.pdf", size: "840 KB", date: "2026-02-15", uploader: "Manvendra Singhal" },
     { id: "file-3", name: "Leave_Policy_Manual.pdf", size: "620 KB", date: "2026-03-01", uploader: "Manvendra Singhal" },
     { id: "file-4", name: "Company_Holidays_2026.pdf", size: "450 KB", date: "2026-01-05", uploader: "Manvendra Singhal" }
   ]);
-  const [payroll, setPayroll] = useLocalStorage<any[]>("crm_payroll_v1", [
+  const [payroll, setPayroll] = useSupabaseTable<any[]>("payroll", [
     { id: "PAY-01", empId: "LMH-02", month: "May 2026", salary: 35000, status: "Paid", txId: "TXN1029384", date: "2026-06-01" },
     { id: "PAY-02", empId: "LMH-03", month: "May 2026", salary: 32000, status: "Paid", txId: "TXN1029385", date: "2026-06-01" },
     { id: "PAY-03", empId: "LMH-04", month: "May 2026", salary: 45000, status: "Paid", txId: "TXN1029386", date: "2026-06-01" }
   ]);
-  const [assets, setAssets] = useLocalStorage<any[]>("crm_assets_v1", [
+  const [assets, setAssets] = useSupabaseTable<any[]>("assets", [
     { id: "AST-01", empId: "LMH-02", name: "Dell Latitude 5420 Laptop", serial: "CN-0V2H3Y-1234", type: "Laptop", value: 65000, date: "2023-03-10" },
     { id: "AST-02", empId: "LMH-03", name: "HP ProBook 440 G8 Laptop", serial: "CN-0V2H3Y-5678", type: "Laptop", value: 58000, date: "2022-06-25" },
     { id: "AST-03", empId: "LMH-04", name: "MacBook Air M1", serial: "FVFCX123QY7", type: "Laptop", value: 85000, date: "2021-11-05" },
     { id: "AST-04", empId: "LMH-05", name: "Lenovo ThinkPad L14", serial: "CN-0V2H3Y-9012", type: "Laptop", value: 55000, date: "2023-08-12" }
   ]);
-  const [certificates, setCertificates] = useLocalStorage<any[]>("crm_certificates_v1", [
+  const [certificates, setCertificates] = useSupabaseTable<any[]>("certificates", [
     { id: "CRT-01", empId: "LMH-02", name: "Destination Expert - Middle East", issuer: "Tourism Board", date: "2024-05-15", url: "#" },
     { id: "CRT-02", empId: "LMH-03", name: "IATA Foundation Course", issuer: "IATA", date: "2023-11-20", url: "#" },
     { id: "CRT-03", empId: "LMH-05", name: "Visa Regulations & Compliance", issuer: "VFS Global Academy", date: "2024-02-18", url: "#" }
@@ -169,7 +172,9 @@ export function EmployeeProfileModal({
       email: employee.email,
       phone: employee.phone,
       status: employee.status,
-      joinDate: employee.joinDate
+      joinDate: employee.joinDate,
+      department: employee.department || "Sales",
+      accessRole: employee.accessRole || "Employee"
     });
     setEditAvatar(null); // reset to current
     setEditDetails(JSON.parse(JSON.stringify(empDetails))); // deep clone
@@ -227,6 +232,8 @@ export function EmployeeProfileModal({
             phone: editCore.phone,
             status: editCore.status,
             joinDate: editCore.joinDate,
+            department: editCore.department,
+            accessRole: editCore.accessRole,
             description: editDetails.bio,
             ...(editAvatar ? { avatar: editAvatar } : {})
           };
@@ -1033,6 +1040,24 @@ export function EmployeeProfileModal({
                 {isEditing && editDetails ? (
                   <div className="grid gap-4 sm:grid-cols-2 text-xs">
                     <div className="space-y-2.5">
+                      <EditSelect 
+                        label="Status" 
+                        value={editCore.status} 
+                        onChange={(v) => setEditCore({...editCore, status: v})}
+                        options={["Active", "On Leave", "Inactive"]}
+                      />
+                      <EditSelect 
+                        label="Access Role" 
+                        value={editCore.accessRole} 
+                        onChange={(v) => setEditCore({...editCore, accessRole: v})}
+                        options={["Admin", "Manager", "Employee"]}
+                      />
+                      <EditSelect 
+                        label="Department" 
+                        value={editCore.department} 
+                        onChange={(v) => setEditCore({...editCore, department: v})}
+                        options={["Sales", "Operations", "HR & Admin", "Accounts", "Visa"]}
+                      />
                       <EditField 
                         label="Work Phone" 
                         value={editCore.phone} 

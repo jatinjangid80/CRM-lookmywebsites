@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Mail, Phone, User } from "lucide-react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEE_DETAILS, createDefaultEmployeeDetails, type EmployeeDetails } from "@/lib/employee-profile-defaults";
 import { INITIAL_EMPLOYEES } from "@/routes/crm.employees";
 
@@ -12,7 +13,7 @@ const STATUS_COLOR = {
 
 export function EmployeeProfileCard({ employeeName }: { employeeName: string }) {
   const [imgError, setImgError] = useState(false);
-  const [localEmployees] = useLocalStorage<any[]>("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const [employeesDetails] = useLocalStorage<Record<string, EmployeeDetails>>(
     "crm_employee_details_v3",
@@ -20,10 +21,12 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
   );
 
   let employee = employees.find(e => 
-    e.name === employeeName || 
-    e.name.toLowerCase() === employeeName.toLowerCase() ||
-    e.name.toLowerCase().includes(employeeName.toLowerCase()) ||
-    employeeName.toLowerCase().includes(e.name.toLowerCase()) ||
+    (e.name && employeeName && (
+      e.name === employeeName || 
+      e.name.toLowerCase() === employeeName.toLowerCase() ||
+      e.name.toLowerCase().includes(employeeName.toLowerCase()) ||
+      employeeName.toLowerCase().includes(e.name.toLowerCase())
+    )) ||
     e.id === employeeName
   );
   

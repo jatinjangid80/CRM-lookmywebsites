@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { type Booking } from "@/lib/mock-data";
@@ -13,8 +14,8 @@ import { type Booking } from "@/lib/mock-data";
 export const Route = createFileRoute("/crm/payments")({ component: PaymentsPage });
 
 function PaymentsPage() {
-  const [payments, setPayments] = useLocalStorage<Booking[]>("crm_bookings", bookings);
-  const [leads] = useLocalStorage<any[]>("crm_leads_v2", []);
+  const [payments, setPayments] = useSupabaseTable<Booking[]>("bookings", bookings);
+  const [leads] = useSupabaseTable<any[]>("leads", []);
 
   const allPayments = useMemo(() => {
     const derived = leads

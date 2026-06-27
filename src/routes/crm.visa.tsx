@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import {
   FileText,
   Clock,
@@ -533,7 +534,7 @@ const VISA_TYPES_LIST = [
 const CURRENCY_LIST = ["INR", "USD", "EUR", "AED", "SGD", "THB", "GBP", "IDR"];
 
 function VisaPage() {
-  const [apps, setApps] = useLocalStorage<VisaApp[]>("crm_visa_apps_v3", APPS);
+  const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa_apps", APPS);
   const [requirements, setRequirements] = useLocalStorage<VisaRequirement[]>(
     "crm_visa_requirements",
     INITIAL_REQUIREMENTS,

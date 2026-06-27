@@ -50,6 +50,7 @@ import { ImportModal } from "@/components/ui/import-modal";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
 import { leads as SEED_LEADS, formatINR, type Lead } from "@/lib/mock-data";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 
 export const Route = createFileRoute("/crm/leads")({ component: LeadsPage });
@@ -223,6 +224,7 @@ const SOURCE_ICONS: Record<string, string> = {
 };
 
 function initials(n: string) {
+  if (!n) return "";
   return n
     .split(" ")
     .map((w) => w[0])
@@ -267,7 +269,7 @@ function AddLeadModal({
   onAdd: (l: ExtLead) => void;
   existingLeads: ExtLead[];
 }) {
-  const [localEmployees] = useLocalStorage<unknown[]>("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
   const assignees = Array.from(
@@ -280,7 +282,7 @@ function AddLeadModal({
 
   const [form, setForm] = useState({ ...EMPTY_FORM, assignedTo: assignees[0] || "" });
 
-  const isInsurance = form.service.toLowerCase().includes("insurance");
+  const isInsurance = form.service?.toLowerCase().includes("insurance");
   const canSubmit = isInsurance
     ? form.name.trim() && form.phone.trim() && form.insuranceDate
     : form.name.trim() && form.phone.trim() && form.destination && form.travelDate;
@@ -295,7 +297,7 @@ function AddLeadModal({
 
   const submit = () => {
     if (!canSubmit) return;
-    const lmhLeads = existingLeads.filter((l) => l.id.startsWith("LMH-"));
+    const lmhLeads = existingLeads.filter((l) => l.id?.startsWith("LMH-"));
     let nextNum = 1;
     if (lmhLeads.length > 0) {
       const nums = lmhLeads.map((l) => {
@@ -828,12 +830,12 @@ function LeadDetail({
           {/* Trip details */}
           <div className="grid gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
             <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {lead.service.toLowerCase().includes("insurance")
+              {lead.service?.toLowerCase().includes("insurance")
                 ? "Insurance Details"
                 : "Trip Details"}
             </p>
             <div className="grid grid-cols-2 gap-3">
-              {lead.service.toLowerCase().includes("insurance")
+              {lead.service?.toLowerCase().includes("insurance")
                 ? [
                     {
                       icon: <CalendarDays className="h-4 w-4 text-primary" />,
@@ -1186,16 +1188,10 @@ function LeadDetail({
                 <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   Notes
                 </p>
-                {isAdmin && onEditNote && (
-                  <button
-                    onClick={() => {
-                      setEditNoteText(lead.notes || "");
-                      setIsEditingNote(true);
-                    }}
-                    className="text-[10px] text-blue-500 hover:underline opacity-0 group-hover/note:opacity-100 transition-opacity"
-                  >
-                    Edit Note
-                  </button>
+                {lead.noteDate && (
+                  <span className="text-[10px] text-muted-foreground">
+                    {new Date(lead.noteDate).toLocaleString()}
+                  </span>
                 )}
               </div>
               <p className="text-sm text-muted-foreground italic">"{lead.notes}"</p>
@@ -1209,7 +1205,7 @@ function LeadDetail({
                 }}
                 className="text-xs text-blue-500 hover:underline"
               >
-                + Add Note
+                + New Note
               </button>
             </div>
           ) : null}
@@ -1329,7 +1325,7 @@ function KanbanCol({
     }
   };
 
-  const total = leads.reduce((s, l) => s + l.budget, 0);
+  const total = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
   return (
     <div
       className="flex min-w-[220px] flex-1 flex-col rounded-2xl border border-border bg-secondary/30 p-3 transition-colors hover:bg-secondary/50"
@@ -1375,7 +1371,7 @@ function KanbanCol({
               <div className="min-w-0">
                 <p className="truncate text-xs font-semibold">{l.name}</p>
                 <p className="truncate text-xs text-muted-foreground">
-                  {l.service.toLowerCase().includes("insurance")
+                  {l.service?.toLowerCase().includes("insurance")
                     ? `${l.policyType || "Insurance"} · ${l.clientCompany || "—"}`
                     : l.destination}
                 </p>
@@ -1390,7 +1386,7 @@ function KanbanCol({
             </p>
             <p className="mt-0.5 text-xs text-muted-foreground">
               {PRIORITY_BADGE[l.priority]} ·{" "}
-              {l.service.toLowerCase().includes("insurance")
+              {l.service?.toLowerCase().includes("insurance")
                 ? l.insuranceDate || l.travelDate
                 : l.travelDate}
             </p>
@@ -1406,8 +1402,8 @@ function KanbanCol({
 
 /* ─── Main Page ─── */
 function LeadsPage() {
-  const [leads, setLeads] = useLocalStorage<ExtLead[]>("crm_leads_v2", []);
-  const [localEmployees] = useLocalStorage<unknown[]>("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", []);
+  const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const [newNote, setNewNote] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
@@ -1539,7 +1535,7 @@ function LeadsPage() {
     let nextNum = 1;
     if (lmhLeads.length > 0) {
       const nums = lmhLeads.map((l) => {
-        const parts = l.id.split("-");
+        const parts = l.id?.split("-");
         const n = parseInt(parts[1], 10);
         return isNaN(n) ? 0 : n;
       });
@@ -1578,9 +1574,9 @@ function LeadsPage() {
     (l) =>
       (filterStatus === "All" || l.status === filterStatus) &&
       (q === "" ||
-        l.name.toLowerCase().includes(q.toLowerCase()) ||
-        l.destination.toLowerCase().includes(q.toLowerCase()) ||
-        l.id.toLowerCase().includes(q.toLowerCase())),
+        l.name?.toLowerCase().includes(q.toLowerCase()) ||
+        l.destination?.toLowerCase().includes(q.toLowerCase()) ||
+        l.id?.toLowerCase().includes(q.toLowerCase())),
   );
 
   const addLead = (l: ExtLead) => {
@@ -1598,7 +1594,7 @@ function LeadsPage() {
   };
 
   /* Stats */
-  const totalBudget = leads.reduce((s, l) => s + l.budget, 0);
+  const totalBudget = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
   const completedLeads = leads.filter((l) => l.status === "Completed").length;
   const newToday = leads.filter(
     (l) => l.createdAt === new Date().toISOString().slice(0, 10),
@@ -1643,7 +1639,7 @@ function LeadsPage() {
         </div>
 
         {/* ── Stat cards ── */}
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
           {[
             {
               label: "Total Leads",
@@ -1659,13 +1655,7 @@ function LeadsPage() {
               color: "bg-emerald-100 text-emerald-600",
               sub: `${conversion}% conversion`,
             },
-            {
-              label: "Total Pipeline",
-              value: formatINR(totalBudget),
-              icon: <IndianRupee className="h-4 w-4" />,
-              color: "bg-primary/15 text-primary",
-              sub: "Combined budgets",
-            },
+
             {
               label: "Avg Budget",
               value: formatINR(leads.length ? Math.round(totalBudget / leads.length) : 0),
@@ -1817,7 +1807,7 @@ function LeadsPage() {
                       </td>
                       <td className="px-5 py-3.5">
                         <div className="flex items-center gap-1.5">
-                          {l.service.toLowerCase().includes("insurance") ? (
+                          {l.service?.toLowerCase().includes("insurance") ? (
                             <>
                               <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
                               <span>{l.clientCompany || l.destination || "Insurance"}</span>
@@ -1845,7 +1835,7 @@ function LeadsPage() {
                           <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
                             {initials(l.assignedTo)}
                           </span>
-                          {l.assignedTo.split(" ")[0]}
+                          {l.assignedTo?.split(" ")[0]}
                         </div>
                       </td>
                       <td className="px-5 py-3.5">
@@ -1882,7 +1872,7 @@ function LeadsPage() {
               <p className="text-xs font-semibold text-muted-foreground">
                 Pipeline:{" "}
                 <span className="text-primary">
-                  {formatINR(filtered.reduce((s, l) => s + l.budget, 0))}
+                  {formatINR(filtered.reduce((s, l) => s + (Number(l.budget) || 0), 0))}
                 </span>
               </p>
             </div>
@@ -1933,7 +1923,8 @@ function LeadsPage() {
           onDelete={deleteLead}
           isAdmin={isAdmin}
           onEditNote={(id, newNote) => {
-            const newLeads = leads.map((x) => (x.id === id ? { ...x, notes: newNote } : x));
+            const noteDate = new Date().toISOString();
+            const newLeads = leads.map((x) => (x.id === id ? { ...x, notes: newNote, noteDate } : x));
             setLeads(newLeads);
             setSelected(newLeads.find((x) => x.id === id) || null);
           }}

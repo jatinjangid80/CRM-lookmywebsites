@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useRef } from "react";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import {
   Plus, CheckCircle2, Circle, Clock, AlertCircle,
@@ -14,18 +15,7 @@ import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
-const TASKS_LS_KEY = "crm_tasks_v2";
-function loadTasks(): Task[] | null {
-  try { 
-    const r = localStorage.getItem(TASKS_LS_KEY); 
-    // eslint-disable-next-line
-    return r ? JSON.parse(r) : null; 
-  }
-  catch { return null; }
-}
-function saveTasks(tasks: Task[]) {
-  localStorage.setItem(TASKS_LS_KEY, JSON.stringify(tasks));
-}
+
 
 /* ─── Types ─────────────────────────────────────────── */
 type Priority = "High" | "Medium" | "Low";
@@ -527,8 +517,8 @@ function Pill({ active, onClick, children }: { active: boolean; onClick: () => v
 
 /* ─── Main page ──────────────────────────────────────── */
 function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>(() => loadTasks() ?? SEED);
-  const [localEmployees] = useLocalStorage<any[]>("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [tasks, setTasks] = useSupabaseTable<Task[]>("tasks", SEED);
+  const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
   const assignees = Array.from(new Set([
@@ -536,7 +526,7 @@ function TasksPage() {
     ...(auth?.name ? [auth.name] : []),
     "Other"
   ]));
-  const isAdmin = auth?.role === "admin" || auth?.role === "HR & Admin Manager";
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager" || auth?.role === "HR & Admin Manager";
   const userAssigneeName = auth?.name || "";
 
   const [showModal, setShowModal] = useState(false);
@@ -547,7 +537,7 @@ function TasksPage() {
   const [filterAssignee, setFilterAssignee] = useState<"All" | string>("All");
 
   // Persist every time tasks change
-  useEffect(() => { saveTasks(tasks); }, [tasks]);
+
 
   const toggle = (id: string) =>
     setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: t.status === "Done" ? "Pending" : "Done" } as Task : t));
@@ -718,7 +708,7 @@ function TasksPage() {
                 onToggle={() => {
                   const newTasks = tasks.map(x => x.id === t.id ? { ...x, status: x.status === "Pending" ? "Done" as TaskStatus : "Pending" as TaskStatus } : x);
                   setTasks(newTasks);
-                  saveTasks(newTasks);
+
                 }}
                 onEditNote={(newNote) => {
                   const newTasks = tasks.map(x => {
@@ -732,7 +722,7 @@ function TasksPage() {
                     return x;
                   });
                   setTasks(newTasks);
-                  saveTasks(newTasks);
+
                 }}
                 onDelete={() => {
                   setDeleteConfirmId(t.id);
@@ -783,7 +773,7 @@ function TasksPage() {
                 onClick={() => {
                   const newTasks = tasks.filter(x => x.id !== deleteConfirmId);
                   setTasks(newTasks);
-                  saveTasks(newTasks);
+
                   setDeleteConfirmId(null);
                 }} 
                 className="rounded-xl"

@@ -2,6 +2,7 @@ import { createFileRoute, Outlet, Link, useRouterState, useNavigate } from "@tan
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import {
   LayoutDashboard, Users, UserCheck, Package as Pkg, CalendarCheck,
   FileText, ClipboardList, FolderOpen, Star, BarChart3, UserCog, Settings,
@@ -46,27 +47,30 @@ const FULL_NAV: NavItem[] = [
 
 function getNavForUser(auth: AuthUser): NavItem[] {
   // Nikita
+  if (auth.role === "admin") {
+    return FULL_NAV;
+  }
+  
+  if (auth.role === "manager") {
+    // Manager has access to Employees and Tasks, plus regular modules
+    return FULL_NAV.filter(n => n.label !== "Settings");
+  }
+
+  // Employee role
+  // Maintain some specific access for demonstration based on old role names if they exist
+  const empSpecificNav = FULL_NAV.filter(n => !["Employees", "Settings"].includes(n.label));
+  
   if (auth.name.toLowerCase().includes("nikita")) {
     return FULL_NAV.filter(n => ["Leads", "Tasks", "Settings"].includes(n.label));
   }
-  // Accounts / Aman
-  if (auth.name.toLowerCase().includes("aman") || auth.role === "Accounts Manager" || auth.role === "Accounts") {
+  if (auth.name.toLowerCase().includes("aman")) {
     return FULL_NAV.filter(n => ["Vendors", "Payments", "Settings", "Tasks"].includes(n.label));
   }
-  // Admin / HR
-  if (auth.role === "admin" || auth.role === "HR & Admin Manager") {
-    return FULL_NAV;
-  }
-  // Sales
-  if (auth.role === "Sales Executive" || auth.role === "Travel Consultant") {
-    return FULL_NAV.filter(n => ["Leads", "Tasks", "Customers", "Bookings", "Packages", "Documents", "Settings"].includes(n.label));
-  }
-  // Visa
-  if (auth.role === "Visa Executive" || auth.name.toLowerCase().includes("deepak")) {
+  if (auth.name.toLowerCase().includes("deepak")) {
     return FULL_NAV.filter(n => ["Visa", "Tasks", "Settings"].includes(n.label));
   }
-  // Default minimal
-  return FULL_NAV.filter(n => ["Leads", "Tasks", "Packages", "Settings"].includes(n.label));
+  
+  return empSpecificNav;
 }
 
 const MOCK_EMPLOYEE_DETAILS = [

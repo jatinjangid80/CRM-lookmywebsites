@@ -41,6 +41,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { useLocalStorage } from "@/lib/use-local-storage";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { EmployeeProfileModal } from "@/components/EmployeeProfileModal";
 import { getAuth } from "@/lib/auth";
 import {
@@ -57,6 +58,7 @@ export const Route = createFileRoute("/crm/employees")({ component: EmployeesPag
 /* ─── Types ─── */
 type Role = "Operations Manager" | "Travel Consultant" | "Visa Executive" | "Accounts" | "Marketing" | "Sales Executive" | "Executive" | "HR & Admin Manager" | "Accounts Manager";
 type Status = "Active" | "On Leave" | "Inactive";
+type AccessRole = "Admin" | "Manager" | "Employee";
 
 interface Employee {
   id: string;
@@ -73,6 +75,8 @@ interface Employee {
   rating: number;
   recentActivity: string;
   description: string;
+  department?: string;
+  accessRole?: AccessRole;
 }
 
 /* ─── Mock data ─── */
@@ -84,6 +88,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     leads: 0, closedDeals: 0, revenue: 0, rating: 5.0,
     recentActivity: "Updated company HR policies.",
     description: "Oversees Human Resources and Administrative operations.",
+    department: "HR & Admin", accessRole: "Admin",
   },
   {
     id: "LMH-02", name: "Nikita Bairwa", avatar: "/avatars/nikita.jpeg",
@@ -92,30 +97,61 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     leads: 45, closedDeals: 20, revenue: 1200000, rating: 4.6,
     recentActivity: "Closed package for Dubai",
     description: "Driving sales and client acquisition.",
+    department: "Sales", accessRole: "Employee",
   },
   {
     id: "LMH-03", name: "Pushplata Kriplani", avatar: "/avatars/pushplata.png",
     role: "Executive", email: "resv@lookmyholidays.in", phone: "+91 9928795483",
     joinDate: "2022-06-25", status: "Active",
-    leads: 30, closedDeals: 15, revenue: 850000, rating: 4.8,
-    recentActivity: "Confirmed reservation for Manali trip",
-    description: "Handles reservations and customer support.",
+    leads: 32, closedDeals: 15, revenue: 850000, rating: 4.8,
+    recentActivity: "Followed up on 15 pending leads.",
+    description: "Handles executive tasks and reservations.",
+    department: "Operations", accessRole: "Employee",
   },
   {
-    id: "LMH-04", name: "AMAN SHARMA", avatar: "/avatars/aman.jpeg",
-    role: "Accounts Manager", email: "accounts@lookmyholidays.in", phone: "+91 9660095483",
-    joinDate: "2021-11-05", status: "Active",
+    id: "LMH-04", name: "Khushboo Naruka", avatar: "/avatars/khushboo.png",
+    role: "Sales Executive", email: "booking@lookmyholidays.in", phone: "+91 8890731731",
+    joinDate: "2023-01-05", status: "Active",
+    leads: 50, closedDeals: 25, revenue: 1500000, rating: 4.9,
+    recentActivity: "Achieved monthly sales target.",
+    description: "Specializes in domestic and international holiday packages.",
+    department: "Sales", accessRole: "Employee",
+  },
+  {
+    id: "LMH-05", name: "Tushar Mathur", avatar: "/avatars/tushar.png",
+    role: "Visa Executive", email: "visa@lookmyholidays.in", phone: "+91 9928395483",
+    joinDate: "2021-11-20", status: "Active",
+    leads: 60, closedDeals: 40, revenue: 800000, rating: 4.7,
+    recentActivity: "Processed 10 UK visas successfully.",
+    description: "Expert in visa processing and documentation.",
+    department: "Visa", accessRole: "Employee",
+  },
+  {
+    id: "LMH-06", name: "Kashish Singh", avatar: "/avatars/kashish.jpeg",
+    role: "Sales Executive", email: "sales@lookmyholidays.in", phone: "+91 9529155562",
+    joinDate: "2024-02-15", status: "Active",
+    leads: 20, closedDeals: 8, revenue: 450000, rating: 4.5,
+    recentActivity: "Onboarded a new corporate client.",
+    description: "Focuses on B2B sales and corporate tie-ups.",
+    department: "Sales", accessRole: "Employee",
+  },
+  {
+    id: "LMH-07", name: "Yogesh Choudhary", avatar: "/avatars/yogesh.png",
+    role: "Accounts", email: "accounts@lookmyholidays.in", phone: "+91 8696803738",
+    joinDate: "2020-08-10", status: "Active",
     leads: 0, closedDeals: 0, revenue: 0, rating: 4.9,
-    recentActivity: "Cleared monthly invoices",
-    description: "Manages financial transactions and payroll.",
+    recentActivity: "Reconciled monthly accounts.",
+    description: "Manages financial transactions, invoicing, and payroll.",
+    department: "Accounts", accessRole: "Manager",
   },
   {
-    id: "LMH-05", name: "Deepak Kumar", avatar: "/avatars/deepak.jpeg",
-    role: "Visa Executive", email: "visa@lookmyholidays.in", phone: "+91 9636305562",
-    joinDate: "2023-08-12", status: "Active",
-    leads: 0, closedDeals: 0, revenue: 0, rating: 4.7,
-    recentActivity: "Submitted Schengen visa files",
-    description: "Specializes in international visa processing.",
+    id: "LMH-08", name: "Megha Saini", avatar: "/avatars/megha.png",
+    role: "Sales Executive", email: "info@lookmyholidays.in", phone: "+91 9529155562",
+    joinDate: "2023-09-01", status: "On Leave",
+    leads: 28, closedDeals: 12, revenue: 600000, rating: 4.4,
+    recentActivity: "Currently on planned leave.",
+    description: "Assists with retail sales and customer inquiries.",
+    department: "Sales", accessRole: "Employee",
   },
 ];
 
@@ -301,7 +337,7 @@ function EmployeeTaskCard({ task, isAdmin, onToggle, onEditNote }: { task: any; 
 }
 
 function EmployeesPage() {
-  const [localEmployees, setEmployees] = useLocalStorage<Employee[]>("crm_employees_v3", INITIAL_EMPLOYEES);
+  const [localEmployees, setEmployees] = useSupabaseTable<Employee[]>("employees", INITIAL_EMPLOYEES);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const [employeesDetails, setEmployeesDetails] = useLocalStorage<Record<string, EmployeeDetails>>(
@@ -394,33 +430,33 @@ function EmployeesPage() {
     });
   };
 
-  const [tasks, setTasks] = useLocalStorage<any[]>("crm_tasks_v1", []);
+  const [tasks, setTasks] = useSupabaseTable<any[]>("tasks", []);
 
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
-  const [leaves, setLeaves] = useLocalStorage<any[]>("crm_leaves_v1", DEFAULT_LEAVES);
-  const [attendance, setAttendance] = useLocalStorage<any[]>("crm_attendance_v2", []);
-  const [feeds, setFeeds] = useLocalStorage<any[]>("crm_feeds_v1", DEFAULT_FEEDS);
-  const [timeLogs, setTimeLogs] = useLocalStorage<any[]>("crm_timelogs_v1", DEFAULT_TIMELOGS);
-  const [hrFiles, setHrFiles] = useLocalStorage<any[]>("crm_hr_files_v1", DEFAULT_FILES);
+  const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", DEFAULT_LEAVES);
+  const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
+  const [feeds, setFeeds] = useSupabaseTable<any[]>("feeds", DEFAULT_FEEDS);
+  const [timeLogs, setTimeLogs] = useSupabaseTable<any[]>("timelogs", DEFAULT_TIMELOGS);
+  const [hrFiles, setHrFiles] = useSupabaseTable<any[]>("hr_files", DEFAULT_FILES);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
-  const [reviews, setReviews] = useLocalStorage<any[]>("crm_reviews_v1", [
+  const [reviews, setReviews] = useSupabaseTable<any[]>("reviews", [
     { id: "REV-01", empId: "LMH-02", period: "Q1 2026", rating: 4.5, feedback: "Excellent sales performance, exceeded targets.", reviewer: "Manvendra Singhal", date: "2026-04-05" },
     { id: "REV-02", empId: "LMH-03", period: "Q1 2026", rating: 4.8, feedback: "Great coordination and support on tour bookings.", reviewer: "Manvendra Singhal", date: "2026-04-06" }
   ]);
-  const [payroll, setPayroll] = useLocalStorage<any[]>("crm_payroll_v1", [
+  const [payroll, setPayroll] = useSupabaseTable<any[]>("payroll", [
     { id: "PAY-01", empId: "LMH-02", month: "May 2026", salary: 35000, status: "Paid", txId: "TXN1029384", date: "2026-06-01" },
     { id: "PAY-02", empId: "LMH-03", month: "May 2026", salary: 32000, status: "Paid", txId: "TXN1029385", date: "2026-06-01" },
     { id: "PAY-03", empId: "LMH-04", month: "May 2026", salary: 45000, status: "Paid", txId: "TXN1029386", date: "2026-06-01" }
   ]);
-  const [assets, setAssets] = useLocalStorage<any[]>("crm_assets_v1", [
+  const [assets, setAssets] = useSupabaseTable<any[]>("assets", [
     { id: "AST-01", empId: "LMH-02", name: "Dell Latitude 5420 Laptop", serial: "CN-0V2H3Y-1234", type: "Laptop", value: 65000, date: "2023-03-10" },
     { id: "AST-02", empId: "LMH-03", name: "HP ProBook 440 G8 Laptop", serial: "CN-0V2H3Y-5678", type: "Laptop", value: 58000, date: "2022-06-25" },
     { id: "AST-03", empId: "LMH-04", name: "MacBook Air M1", serial: "FVFCX123QY7", type: "Laptop", value: 85000, date: "2021-11-05" },
     { id: "AST-04", empId: "LMH-05", name: "Lenovo ThinkPad L14", serial: "CN-0V2H3Y-9012", type: "Laptop", value: 55000, date: "2023-08-12" }
   ]);
-  const [certificates, setCertificates] = useLocalStorage<any[]>("crm_certificates_v1", [
+  const [certificates, setCertificates] = useSupabaseTable<any[]>("certificates", [
     { id: "CRT-01", empId: "LMH-02", name: "Destination Expert - Middle East", issuer: "Tourism Board", date: "2024-05-15", url: "#" },
     { id: "CRT-02", empId: "LMH-03", name: "IATA Foundation Course", issuer: "IATA", date: "2023-11-20", url: "#" },
     { id: "CRT-03", empId: "LMH-05", name: "Visa Regulations & Compliance", issuer: "VFS Global Academy", date: "2024-02-18", url: "#" }

@@ -54,6 +54,8 @@ export type Lead = {
   queryType?: string;
   clientCompany?: string;
   expiryDate?: string;
+  notes?: string;
+  noteDate?: string;
 };
 
 export const leads: Lead[] = [];
