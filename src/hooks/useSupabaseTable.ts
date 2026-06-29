@@ -21,11 +21,12 @@ export function useSupabaseTable<T extends Array<any>>(
         return;
       }
       if (remoteData && remoteData.length > 0) {
-        setData(remoteData.map(fromDB) as T);
+        setData(remoteData as T);
       } else if (initialValue && initialValue.length > 0) {
         // Seed the database with the initial local data if it's completely empty!
         console.log(`Seeding ${tableName} with initial data...`);
-        const { error: seedError } = await supabase.from(tableName).insert(initialValue.map(toDB));
+        console.log(`SCHEMA_DUMP|${tableName}|` + JSON.stringify(Object.keys(initialValue.map(sanitizeRow)[0])));
+        const { error: seedError } = await supabase.from(tableName).insert(initialValue.map(sanitizeRow));
         if (seedError) {
           console.error(`Error seeding ${tableName}:`, seedError);
         }
@@ -35,17 +36,7 @@ export function useSupabaseTable<T extends Array<any>>(
     fetchData();
   }, [tableName]);
 
-  const keyMappings: Record<string, string> = {
-    joinDate: 'joindate', closedDeals: 'closeddeals', recentActivity: 'recentactivity', accessRole: 'accessrole',
-    contactPerson: 'contactperson', dueDate: 'duedate', visaType: 'visatype', appliedOn: 'appliedon',
-    travelDate: 'traveldate', embassyRef: 'embassyref', employeeId: 'employeeid', startDate: 'startdate',
-    endDate: 'enddate', checkIn: 'checkin', checkOut: 'checkout', uploadedAt: 'uploadedat',
-    serialNumber: 'serialnumber', assignedDate: 'assigneddate', issuedBy: 'issuedby', issueDate: 'issuedate',
-    expiryDate: 'expirydate'
-  };
-  const reverseKeyMappings = Object.fromEntries(Object.entries(keyMappings).map(([k, v]) => [v, k]));
-
-  function toDB(row: any) {
+  function sanitizeRow(row: any) {
     const newRow = { ...row };
     if (tableName === 'employees') delete newRow.closedDeals;
     if (tableName === 'certificates' && newRow.date) { newRow.issueDate = newRow.date; delete newRow.date; }
@@ -57,25 +48,6 @@ export function useSupabaseTable<T extends Array<any>>(
     if (tableName === 'timelogs' && newRow.employee) { newRow.employeeId = newRow.employee; delete newRow.employee; }
     if (tableName === 'packages') delete newRow.active;
     if (tableName === 'reviews' && newRow.empId) { newRow.employeeId = newRow.empId; delete newRow.empId; }
-    
-    // Map camelCase to Postgres lowercase
-    for (const key of Object.keys(newRow)) {
-      if (keyMappings[key]) {
-        newRow[keyMappings[key]] = newRow[key];
-        delete newRow[key];
-      }
-    }
-    return newRow;
-  }
-
-  function fromDB(row: any) {
-    const newRow = { ...row };
-    for (const key of Object.keys(newRow)) {
-      if (reverseKeyMappings[key]) {
-        newRow[reverseKeyMappings[key]] = newRow[key];
-        delete newRow[key];
-      }
-    }
     return newRow;
   }
 
@@ -91,7 +63,7 @@ export function useSupabaseTable<T extends Array<any>>(
     }
 
     // Find Insertions (in new, but not in old)
-    const toInsert = newArray.filter((item: any) => !oldIds.has(item.id)).map(toDB);
+    const toInsert = newArray.filter((item: any) => !oldIds.has(item.id)).map(sanitizeRow);
     if (toInsert.length > 0) {
       // Supabase supports bulk insert
       await supabase.from(tableName).insert(toInsert);
@@ -102,7 +74,7 @@ export function useSupabaseTable<T extends Array<any>>(
       if (!oldIds.has(item.id)) return false; 
       const oldItem = oldArray.find((old: any) => old.id === item.id);
       return oldItem !== item;
-    }).map(toDB);
+    }).map(sanitizeRow);
 
     for (const item of toUpdate) {
       await supabase.from(tableName).update(item).eq("id", item.id);

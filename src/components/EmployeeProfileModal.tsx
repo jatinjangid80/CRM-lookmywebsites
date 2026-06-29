@@ -35,14 +35,10 @@ export function EmployeeProfileModal({
 }) {
   if (!employee) return null;
 
-  // Local storage for custom profile details
-  const [employeesDetails, setEmployeesDetails] = useLocalStorage<Record<string, EmployeeDetails>>(
-    "crm_employee_details_v3",
-    INITIAL_EMPLOYEE_DETAILS
-  );
+
 
   // Load profile details or generate default
-  const empDetails = employeesDetails[employee.id] || createDefaultEmployeeDetails(
+  const empDetails: EmployeeDetails = employee.profile_details || createDefaultEmployeeDetails(
     employee.id,
     employee.name,
     employee.role,
@@ -211,14 +207,7 @@ export function EmployeeProfileModal({
   const handleSave = () => {
     if (!editDetails) return;
 
-    // 1. Save custom details
-    const updatedDetails = {
-      ...employeesDetails,
-      [employee.id]: editDetails
-    };
-    setEmployeesDetails(updatedDetails);
-
-    // 2. Sync core properties to directory crm_employees_v3 list
+    // Sync core properties and details to directory crm_employees_v3 list
     try {
       const stored = localStorage.getItem("crm_employees_v3");
       const list = stored ? JSON.parse(stored) : [];
@@ -235,6 +224,7 @@ export function EmployeeProfileModal({
             department: editCore.department,
             accessRole: editCore.accessRole,
             description: editDetails.bio,
+            profile_details: editDetails,
             ...(editAvatar ? { avatar: editAvatar } : {})
           };
         }

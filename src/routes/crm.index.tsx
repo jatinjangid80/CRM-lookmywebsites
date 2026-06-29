@@ -83,13 +83,12 @@ function Dashboard() {
   const navigate = useNavigate();
 
   
-  // Read dynamic lists safely (read-only) from localStorage to prevent default-overwriting bugs
-  const leadsList = getLocalStorageItem<any[]>("crm_leads_v2", []);
-  const bookingsList = getLocalStorageItem<any[]>("crm_bookings", seedBookings);
-  const customersList = getLocalStorageItem<any[]>("crm_customers_v2", []);
-  const localEmployeesList = getLocalStorageItem<any[]>("crm_employees_v3", []);
-  const employeesList = localEmployeesList?.length ? localEmployeesList : INITIAL_EMPLOYEES;
-  const packagesList = getLocalStorageItem<any[]>("crm_packages", SEED_PACKAGES);
+  // Read dynamic lists from Supabase
+  const [leadsList] = useSupabaseTable<any[]>("leads", []);
+  const [bookingsList] = useSupabaseTable<any[]>("bookings", seedBookings);
+  const [customersList] = useSupabaseTable<any[]>("customers", []);
+  const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
+  const [packagesList] = useSupabaseTable<any[]>("packages", SEED_PACKAGES);
 
   const tagCounts: Record<string, number> = {};
   packagesList.forEach(p => {

@@ -1416,7 +1416,7 @@ function LeadsPage() {
   const [isExportOpen, setIsExportOpen] = useState(false);
 
   const auth = getAuth();
-  const isAdmin = auth?.role === "admin" || auth?.role === "HR & Admin Manager";
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
 
   const assignees = Array.from(
     new Set([
@@ -1578,6 +1578,7 @@ function LeadsPage() {
         l.destination?.toLowerCase().includes(q.toLowerCase()) ||
         l.id?.toLowerCase().includes(q.toLowerCase())),
   );
+  
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);

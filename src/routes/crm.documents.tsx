@@ -528,8 +528,8 @@ function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
 
 /* ─── Main Page ─── */
 function FoldersPage() {
-  // Load from localStorage on first render, fall back to seed
-  const [folders, setFolders] = useState<FolderItem[]>(() => loadFromStorage() ?? SEED_FOLDERS);
+  // Load from Supabase, fall back to seed
+  const [folders, setFolders] = useSupabaseTable<FolderItem[]>("folders", SEED_FOLDERS);
   const [search, setSearch] = useState("");
   const [createOpen, setCreateOpen] = useState(false);
   const [newName, setNewName] = useState("");
@@ -570,10 +570,7 @@ function FoldersPage() {
     googleLogin();
   };
 
-  // Auto-save to localStorage whenever folders change
-  useEffect(() => {
-    saveToStorage(folders);
-  }, [folders]);
+
 
   const openFolder = folders.find((f) => f.id === openFolderId) ?? null;
 

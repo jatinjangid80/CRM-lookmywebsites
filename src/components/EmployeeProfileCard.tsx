@@ -15,10 +15,7 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
   const [imgError, setImgError] = useState(false);
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
-  const [employeesDetails] = useLocalStorage<Record<string, EmployeeDetails>>(
-    "crm_employee_details_v3",
-    INITIAL_EMPLOYEE_DETAILS
-  );
+
 
   let employee = employees.find(e => 
     (e.name && employeeName && (
@@ -54,7 +51,7 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
     );
   }
 
-  const empDetails = employeesDetails[employee.id] || createDefaultEmployeeDetails(
+  const empDetails: EmployeeDetails = employee.profile_details || createDefaultEmployeeDetails(
     employee.id,
     employee.name,
     employee.role,

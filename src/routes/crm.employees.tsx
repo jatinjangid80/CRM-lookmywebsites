@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   UserCog, Phone, Mail, Plus, Search,
   TrendingUp, Star, CalendarCheck, UserCheck, Shield, X,
@@ -56,7 +56,7 @@ import {
 export const Route = createFileRoute("/crm/employees")({ component: EmployeesPage });
 
 /* ─── Types ─── */
-type Role = "Operations Manager" | "Travel Consultant" | "Visa Executive" | "Accounts" | "Marketing" | "Sales Executive" | "Executive" | "HR & Admin Manager" | "Accounts Manager";
+type Role = "Operations Manager" | "Travel Consultant" | "Visa Executive" | "Accounts" | "Marketing" | "Sales Executive" | "Executive" | "HR & Admin Manager" | "Accounts Manager" | "Ceo Founder" | "Insurance Sales" | "Web Design Internship";
 type Status = "Active" | "On Leave" | "Inactive";
 type AccessRole = "Admin" | "Manager" | "Employee";
 
@@ -77,81 +77,80 @@ interface Employee {
   description: string;
   department?: string;
   accessRole?: AccessRole;
+  profile_details?: EmployeeDetails;
 }
 
 /* ─── Mock data ─── */
 export const INITIAL_EMPLOYEES: Employee[] = [
   {
-    id: "LMH-01", name: "Manvendra Singhal", avatar: "/avatars/manvendra.png",
-    role: "HR & Admin Manager", email: "insurancesolutions58@gmail.com", phone: "+91 9887155570",
-    joinDate: "2022-01-15", status: "Active",
+    id: "LMH-01", name: "Manvendra Singhal", avatar: "",
+    role: "Ceo Founder", email: "bookings@lookmyholidays.in", phone: "9413095483",
+    joinDate: "2008-06-01", status: "Active",
     leads: 0, closedDeals: 0, revenue: 0, rating: 5.0,
     recentActivity: "Updated company HR policies.",
-    description: "Oversees Human Resources and Administrative operations.",
-    department: "HR & Admin", accessRole: "Admin",
+    description: "CEO Founder of LookMyHolidays.",
+    department: "Management", accessRole: "Admin",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-01"],
   },
   {
-    id: "LMH-02", name: "Nikita Bairwa", avatar: "/avatars/nikita.jpeg",
-    role: "Sales Executive", email: "info.insurance58@gmail.com", phone: "+91 9783395483",
-    joinDate: "2023-03-10", status: "Active",
+    id: "LMH-02", name: "Suman Yadav", avatar: "",
+    role: "HR & Admin Manager", email: "insurancesolutions58@gmail.com", phone: "9887155570",
+    joinDate: "2017-01-09", status: "Active",
+    leads: 0, closedDeals: 0, revenue: 0, rating: 5.0,
+    recentActivity: "Handled monthly operation logs.",
+    description: "Sales & Marketing",
+    department: "Insurance & Travel", accessRole: "Manager",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-02"],
+  },
+  {
+    id: "LMH-03", name: "Nikita Birwa", avatar: "",
+    role: "Insurance Sales", email: "info.insurance58@gmail.com", phone: "9783395483",
+    joinDate: "2025-11-19", status: "Active",
     leads: 45, closedDeals: 20, revenue: 1200000, rating: 4.6,
-    recentActivity: "Closed package for Dubai",
-    description: "Driving sales and client acquisition.",
-    department: "Sales", accessRole: "Employee",
+    recentActivity: "Logged new insurance query.",
+    description: "Telecaller Sales & Marketing",
+    department: "Insurance", accessRole: "Employee",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-03"],
   },
   {
-    id: "LMH-03", name: "Pushplata Kriplani", avatar: "/avatars/pushplata.png",
-    role: "Executive", email: "resv@lookmyholidays.in", phone: "+91 9928795483",
-    joinDate: "2022-06-25", status: "Active",
+    id: "LMH-04", name: "Aman Sharma", avatar: "",
+    role: "Accounts Manager", email: "Accounts@lookmyholidays.in", phone: "9660095483",
+    joinDate: "2026-01-01", status: "Active",
+    leads: 0, closedDeals: 0, revenue: 0, rating: 5.0,
+    recentActivity: "Processed tax records.",
+    description: "",
+    department: "Accounting", accessRole: "Manager",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-04"],
+  },
+  {
+    id: "LMH-05", name: "Pushplata Kriplani", avatar: "",
+    role: "Sales Executive", email: "resv@lookmyholidays.in", phone: "9928795483",
+    joinDate: "2025-12-22", status: "Active",
     leads: 32, closedDeals: 15, revenue: 850000, rating: 4.8,
-    recentActivity: "Followed up on 15 pending leads.",
-    description: "Handles executive tasks and reservations.",
-    department: "Operations", accessRole: "Employee",
+    recentActivity: "Sent out quotations.",
+    description: "Sales & Marketing",
+    department: "Travel", accessRole: "Employee",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-05"],
   },
   {
-    id: "LMH-04", name: "Khushboo Naruka", avatar: "/avatars/khushboo.png",
-    role: "Sales Executive", email: "booking@lookmyholidays.in", phone: "+91 8890731731",
-    joinDate: "2023-01-05", status: "Active",
-    leads: 50, closedDeals: 25, revenue: 1500000, rating: 4.9,
-    recentActivity: "Achieved monthly sales target.",
-    description: "Specializes in domestic and international holiday packages.",
-    department: "Sales", accessRole: "Employee",
-  },
-  {
-    id: "LMH-05", name: "Tushar Mathur", avatar: "/avatars/tushar.png",
-    role: "Visa Executive", email: "visa@lookmyholidays.in", phone: "+91 9928395483",
-    joinDate: "2021-11-20", status: "Active",
+    id: "LMH-06", name: "Deepak Yogi", avatar: "",
+    role: "Executive", email: "visa@lookmyholidays.in", phone: "9636305562",
+    joinDate: "2026-05-21", status: "Active",
     leads: 60, closedDeals: 40, revenue: 800000, rating: 4.7,
-    recentActivity: "Processed 10 UK visas successfully.",
-    description: "Expert in visa processing and documentation.",
-    department: "Visa", accessRole: "Employee",
+    recentActivity: "Updated visa requirements checklist.",
+    description: "Sales & Marketing",
+    department: "Visa Exctive", accessRole: "Employee",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-06"],
   },
   {
-    id: "LMH-06", name: "Kashish Singh", avatar: "/avatars/kashish.jpeg",
-    role: "Sales Executive", email: "sales@lookmyholidays.in", phone: "+91 9529155562",
-    joinDate: "2024-02-15", status: "Active",
-    leads: 20, closedDeals: 8, revenue: 450000, rating: 4.5,
-    recentActivity: "Onboarded a new corporate client.",
-    description: "Focuses on B2B sales and corporate tie-ups.",
-    department: "Sales", accessRole: "Employee",
-  },
-  {
-    id: "LMH-07", name: "Yogesh Choudhary", avatar: "/avatars/yogesh.png",
-    role: "Accounts", email: "accounts@lookmyholidays.in", phone: "+91 8696803738",
-    joinDate: "2020-08-10", status: "Active",
-    leads: 0, closedDeals: 0, revenue: 0, rating: 4.9,
-    recentActivity: "Reconciled monthly accounts.",
-    description: "Manages financial transactions, invoicing, and payroll.",
-    department: "Accounts", accessRole: "Manager",
-  },
-  {
-    id: "LMH-08", name: "Megha Saini", avatar: "/avatars/megha.png",
-    role: "Sales Executive", email: "info@lookmyholidays.in", phone: "+91 9529155562",
-    joinDate: "2023-09-01", status: "On Leave",
-    leads: 28, closedDeals: 12, revenue: 600000, rating: 4.4,
-    recentActivity: "Currently on planned leave.",
-    description: "Assists with retail sales and customer inquiries.",
-    department: "Sales", accessRole: "Employee",
+    id: "LMH-07", name: "Jatin Jangid", avatar: "",
+    role: "Web Design Internship", email: "NA", phone: "NA",
+    joinDate: "2026-06-18", status: "Active",
+    leads: 0, closedDeals: 0, revenue: 0, rating: 5.0,
+    recentActivity: "Designed fresh layouts.",
+    description: "",
+    department: "Internship", accessRole: "Employee",
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-07"],
   },
 ];
 
@@ -165,6 +164,9 @@ const ROLE_COLOR: Record<Role, string> = {
   "Executive": "bg-teal-100 text-teal-700",
   "HR & Admin Manager": "bg-rose-100 text-rose-700",
   "Accounts Manager": "bg-amber-100 text-amber-700",
+  "Ceo Founder": "bg-red-100 text-red-700",
+  "Insurance Sales": "bg-orange-100 text-orange-700",
+  "Web Design Internship": "bg-purple-100 text-purple-700",
 };
 
 const STATUS_COLOR: Record<Status, string> = {
@@ -340,10 +342,13 @@ function EmployeesPage() {
   const [localEmployees, setEmployees] = useSupabaseTable<Employee[]>("employees", INITIAL_EMPLOYEES);
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
-  const [employeesDetails, setEmployeesDetails] = useLocalStorage<Record<string, EmployeeDetails>>(
-    "crm_employee_details_v3",
-    INITIAL_EMPLOYEE_DETAILS
-  );
+  const employeesDetails = useMemo(() => {
+    const map: Record<string, EmployeeDetails> = {};
+    employees.forEach((e: any) => {
+      map[e.id] = e.profile_details || INITIAL_EMPLOYEE_DETAILS[e.id] || createDefaultEmployeeDetails(e.id, e.name, e.role, e.email, e.phone);
+    });
+    return map;
+  }, [employees]);
 
   // Profile inline edit states
   const [profileIsEditing, setProfileIsEditing] = useState(false);
@@ -999,14 +1004,7 @@ function EmployeesPage() {
             const handleSave = () => {
               if (!profileEditDetails) return;
 
-              // 1. Save details
-              const updatedDetails = {
-                ...employeesDetails,
-                [cur.id]: profileEditDetails
-              };
-              setEmployeesDetails(updatedDetails);
-
-              // 2. Sync core
+              // Sync core and details to Supabase
               const updatedList = employees.map((e) => {
                 if (e.id === cur.id) {
                   return {
@@ -1017,7 +1015,8 @@ function EmployeesPage() {
                     phone: profileEditCore.phone,
                     status: profileEditCore.status as Status,
                     joinDate: profileEditCore.joinDate,
-                    description: profileEditDetails.bio
+                    description: profileEditDetails.bio,
+                    profile_details: profileEditDetails
                   };
                 }
                 return e;

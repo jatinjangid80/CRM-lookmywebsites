@@ -526,7 +526,7 @@ function TasksPage() {
     ...(auth?.name ? [auth.name] : []),
     "Other"
   ]));
-  const isAdmin = auth?.role === "admin" || auth?.role === "manager" || auth?.role === "HR & Admin Manager";
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const userAssigneeName = auth?.name || "";
 
   const [showModal, setShowModal] = useState(false);
