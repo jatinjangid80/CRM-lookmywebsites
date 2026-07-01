@@ -1,9 +1,28 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Folder, FolderOpen, FolderPlus, Pencil, Trash2, Search,
-  MoreVertical, File, X, Check, Upload, ArrowLeft, Download,
-  FileText, FileImage, Film, Archive, ChevronRight, HardDrive, Cloud, Link2, Unlink
+  Folder,
+  FolderOpen,
+  FolderPlus,
+  Pencil,
+  Trash2,
+  Search,
+  MoreVertical,
+  File,
+  X,
+  Check,
+  Upload,
+  ArrowLeft,
+  Download,
+  FileText,
+  FileImage,
+  Film,
+  Archive,
+  ChevronRight,
+  HardDrive,
+  Cloud,
+  Link2,
+  Unlink,
 } from "lucide-react";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
@@ -21,7 +40,7 @@ interface UploadedFile {
   size: number;
   type: string;
   uploadedAt: string;
-  dataUrl: string;   // base64 data URL – survives refresh
+  dataUrl: string; // base64 data URL – survives refresh
 }
 
 interface FolderItem {
@@ -59,15 +78,17 @@ function saveToStorage(folders: FolderItem[]) {
 
 /* ─── Helpers ─── */
 const COLORS = [
-  { bg: "bg-blue-100 text-blue-600 border-blue-200",         icon: "#3b82f6" },
-  { bg: "bg-violet-100 text-violet-600 border-violet-200",   icon: "#8b5cf6" },
-  { bg: "bg-amber-100 text-amber-600 border-amber-200",      icon: "#f59e0b" },
-  { bg: "bg-emerald-100 text-emerald-600 border-emerald-200",icon: "#10b981" },
-  { bg: "bg-rose-100 text-rose-600 border-rose-200",         icon: "#f43f5e" },
-  { bg: "bg-cyan-100 text-cyan-600 border-cyan-200",         icon: "#06b6d4" },
+  { bg: "bg-blue-100 text-blue-600 border-blue-200", icon: "#3b82f6" },
+  { bg: "bg-violet-100 text-violet-600 border-violet-200", icon: "#8b5cf6" },
+  { bg: "bg-amber-100 text-amber-600 border-amber-200", icon: "#f59e0b" },
+  { bg: "bg-emerald-100 text-emerald-600 border-emerald-200", icon: "#10b981" },
+  { bg: "bg-rose-100 text-rose-600 border-rose-200", icon: "#f43f5e" },
+  { bg: "bg-cyan-100 text-cyan-600 border-cyan-200", icon: "#06b6d4" },
 ];
 
-function pickColor(idx: number) { return COLORS[idx % COLORS.length]; }
+function pickColor(idx: number) {
+  return COLORS[idx % COLORS.length];
+}
 
 function fmtSize(bytes: number) {
   if (bytes < 1024) return `${bytes} B`;
@@ -75,14 +96,19 @@ function fmtSize(bytes: number) {
   return `${(bytes / 1024 / 1024).toFixed(2)} MB`;
 }
 function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString("en-IN", { day: "2-digit", month: "short", year: "numeric" });
+  return new Date(iso).toLocaleDateString("en-IN", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function fileIcon(mime: string) {
   if (mime.startsWith("image/")) return <FileImage className="h-4 w-4 text-emerald-500" />;
   if (mime.startsWith("video/")) return <Film className="h-4 w-4 text-purple-500" />;
   if (mime === "application/pdf") return <FileText className="h-4 w-4 text-red-500" />;
-  if (mime.includes("zip") || mime.includes("rar")) return <Archive className="h-4 w-4 text-amber-500" />;
+  if (mime.includes("zip") || mime.includes("rar"))
+    return <Archive className="h-4 w-4 text-amber-500" />;
   return <File className="h-4 w-4 text-blue-400" />;
 }
 
@@ -107,37 +133,110 @@ function readAsDataUrl(file: File): Promise<string> {
 }
 
 let _fid = 7;
-function genFolderId() { return `F-${String(_fid++).padStart(2, "0")}`; }
+function genFolderId() {
+  return `F-${String(_fid++).padStart(2, "0")}`;
+}
 let _uid = 1;
-function genFileId() { return `U-${String(_uid++).padStart(4, "0")}`; }
+function genFileId() {
+  return `U-${String(_uid++).padStart(4, "0")}`;
+}
 
 /* ─── Seed folders (only used when localStorage is empty) ─── */
 const SEED_FOLDERS: FolderItem[] = [
-  { id: "F-01", name: "Passports & IDs",   color: pickColor(0).bg, iconColor: pickColor(0).icon, createdAt: "2026-01-10", description: "Customer passport scans and ID documents", files: [], manager: "Pushplata Kriplani" },
-  { id: "F-02", name: "Visa Applications", color: pickColor(1).bg, iconColor: pickColor(1).icon, createdAt: "2026-01-15", description: "Submitted and approved visa documents",    files: [], manager: "Pushplata Kriplani" },
-  { id: "F-03", name: "Travel Insurance",  color: pickColor(2).bg, iconColor: pickColor(2).icon, createdAt: "2026-02-03", description: "Insurance certificates and policy PDFs",  files: [], manager: "Pushplata Kriplani" },
-  { id: "F-04", name: "Hotel Vouchers",    color: pickColor(3).bg, iconColor: pickColor(3).icon, createdAt: "2026-02-20", description: "Confirmed booking vouchers for all hotels", files: [], manager: "Pushplata Kriplani" },
-  { id: "F-05", name: "Flight Tickets",    color: pickColor(4).bg, iconColor: pickColor(4).icon, createdAt: "2026-03-05", description: "E-tickets and boarding pass copies",       files: [], manager: "Pushplata Kriplani" },
-  { id: "F-06", name: "Tour Itineraries",  color: pickColor(5).bg, iconColor: pickColor(5).icon, createdAt: "2026-03-18", description: "Day-wise itinerary PDFs for each package", files: [], manager: "Pushplata Kriplani" },
+  {
+    id: "F-01",
+    name: "Passports & IDs",
+    color: pickColor(0).bg,
+    iconColor: pickColor(0).icon,
+    createdAt: "2026-01-10",
+    description: "Customer passport scans and ID documents",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
+  {
+    id: "F-02",
+    name: "Visa Applications",
+    color: pickColor(1).bg,
+    iconColor: pickColor(1).icon,
+    createdAt: "2026-01-15",
+    description: "Submitted and approved visa documents",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
+  {
+    id: "F-03",
+    name: "Travel Insurance",
+    color: pickColor(2).bg,
+    iconColor: pickColor(2).icon,
+    createdAt: "2026-02-03",
+    description: "Insurance certificates and policy PDFs",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
+  {
+    id: "F-04",
+    name: "Hotel Vouchers",
+    color: pickColor(3).bg,
+    iconColor: pickColor(3).icon,
+    createdAt: "2026-02-20",
+    description: "Confirmed booking vouchers for all hotels",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
+  {
+    id: "F-05",
+    name: "Flight Tickets",
+    color: pickColor(4).bg,
+    iconColor: pickColor(4).icon,
+    createdAt: "2026-03-05",
+    description: "E-tickets and boarding pass copies",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
+  {
+    id: "F-06",
+    name: "Tour Itineraries",
+    color: pickColor(5).bg,
+    iconColor: pickColor(5).icon,
+    createdAt: "2026-03-18",
+    description: "Day-wise itinerary PDFs for each package",
+    files: [],
+    manager: "Pushplata Kriplani",
+  },
 ];
 
 /* ─── Modal ─── */
-function Modal({ open, onClose, title, children }: {
-  open: boolean; onClose: () => void; title: string; children: React.ReactNode;
+function Modal({
+  open,
+  onClose,
+  title,
+  children,
+}: {
+  open: boolean;
+  onClose: () => void;
+  title: string;
+  children: React.ReactNode;
 }) {
   useEffect(() => {
-    const h = (e: KeyboardEvent) => { if (e.key === "Escape") onClose(); };
+    const h = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onClose();
+    };
     if (open) window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
   }, [open, onClose]);
   if (!open) return null;
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4"
-      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+    >
       <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="font-display text-lg font-bold">{title}</h2>
-          <button onClick={onClose} className="rounded-lg p-1 text-muted-foreground hover:bg-secondary transition-colors">
+          <button
+            onClick={onClose}
+            className="rounded-lg p-1 text-muted-foreground hover:bg-secondary transition-colors"
+          >
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -148,23 +247,43 @@ function Modal({ open, onClose, title, children }: {
 }
 
 /* ─── Inline rename ─── */
-function RenameInput({ value, onSave, onCancel }: {
-  value: string; onSave: (v: string) => void; onCancel: () => void;
+function RenameInput({
+  value,
+  onSave,
+  onCancel,
+}: {
+  value: string;
+  onSave: (v: string) => void;
+  onCancel: () => void;
 }) {
   const [v, setV] = useState(value);
   const ref = useRef<HTMLInputElement>(null);
-  useEffect(() => { ref.current?.focus(); ref.current?.select(); }, []);
+  useEffect(() => {
+    ref.current?.focus();
+    ref.current?.select();
+  }, []);
   return (
     <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
       <input
-        ref={ref} value={v} onChange={(e) => setV(e.target.value)}
-        onKeyDown={(e) => { if (e.key === "Enter") onSave(v.trim()); if (e.key === "Escape") onCancel(); }}
+        ref={ref}
+        value={v}
+        onChange={(e) => setV(e.target.value)}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") onSave(v.trim());
+          if (e.key === "Escape") onCancel();
+        }}
         className="flex-1 rounded-lg border border-primary bg-background px-2 py-1 text-sm font-semibold outline-none ring-2 ring-primary/30"
       />
-      <button onClick={() => onSave(v.trim())} className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50 transition-colors">
+      <button
+        onClick={() => onSave(v.trim())}
+        className="rounded-md p-1 text-emerald-600 hover:bg-emerald-50 transition-colors"
+      >
         <Check className="h-3.5 w-3.5" />
       </button>
-      <button onClick={onCancel} className="rounded-md p-1 text-red-500 hover:bg-red-50 transition-colors">
+      <button
+        onClick={onCancel}
+        className="rounded-md p-1 text-red-500 hover:bg-red-50 transition-colors"
+      >
         <X className="h-3.5 w-3.5" />
       </button>
     </div>
@@ -172,7 +291,12 @@ function RenameInput({ value, onSave, onCancel }: {
 }
 
 /* ─── Folder Card ─── */
-function FolderCard({ folder, onRename, onDelete, onOpen }: {
+function FolderCard({
+  folder,
+  onRename,
+  onDelete,
+  onOpen,
+}: {
   folder: FolderItem;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
@@ -208,13 +332,19 @@ function FolderCard({ folder, onRename, onDelete, onOpen }: {
         {menuOpen && (
           <div className="absolute right-0 top-8 z-20 min-w-[140px] rounded-xl border border-border bg-card py-1 shadow-xl">
             <button
-              onClick={() => { setRenaming(true); setMenuOpen(false); }}
+              onClick={() => {
+                setRenaming(true);
+                setMenuOpen(false);
+              }}
               className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-secondary transition-colors"
             >
               <Pencil className="h-3.5 w-3.5" /> Rename
             </button>
             <button
-              onClick={() => { onDelete(folder.id); setMenuOpen(false); }}
+              onClick={() => {
+                onDelete(folder.id);
+                setMenuOpen(false);
+              }}
               className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
             >
               <Trash2 className="h-3.5 w-3.5" /> Delete
@@ -224,7 +354,9 @@ function FolderCard({ folder, onRename, onDelete, onOpen }: {
       </div>
 
       {/* Icon */}
-      <div className={`flex h-12 w-12 items-center justify-center rounded-2xl border-2 ${folder.color}`}>
+      <div
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl border-2 ${folder.color}`}
+      >
         <Folder className="h-6 w-6" />
       </div>
 
@@ -232,16 +364,19 @@ function FolderCard({ folder, onRename, onDelete, onOpen }: {
       {renaming ? (
         <RenameInput
           value={folder.name}
-          onSave={(v) => { if (v) onRename(folder.id, v); setRenaming(false); }}
+          onSave={(v) => {
+            if (v) onRename(folder.id, v);
+            setRenaming(false);
+          }}
           onCancel={() => setRenaming(false)}
         />
       ) : (
         <p className="font-semibold leading-tight line-clamp-1">{folder.name}</p>
       )}
 
-      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{folder.description}</p>
-
-
+      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+        {folder.description}
+      </p>
 
       <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
@@ -258,19 +393,33 @@ function FolderCard({ folder, onRename, onDelete, onOpen }: {
 }
 
 /* ─── Drop Zone ─── */
-function DropZone({ onFiles, uploading, isZoho }: { onFiles: (files: File[]) => void; uploading: boolean; isZoho: boolean }) {
+function DropZone({
+  onFiles,
+  uploading,
+  isZoho,
+}: {
+  onFiles: (files: File[]) => void;
+  uploading: boolean;
+  isZoho: boolean;
+}) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
-  const handleDrop = useCallback((e: React.DragEvent) => {
-    e.preventDefault();
-    setDragging(false);
-    onFiles(Array.from(e.dataTransfer.files));
-  }, [onFiles]);
+  const handleDrop = useCallback(
+    (e: React.DragEvent) => {
+      e.preventDefault();
+      setDragging(false);
+      onFiles(Array.from(e.dataTransfer.files));
+    },
+    [onFiles],
+  );
 
   return (
     <div
-      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragOver={(e) => {
+        e.preventDefault();
+        setDragging(true);
+      }}
       onDragLeave={() => setDragging(false)}
       onDrop={handleDrop}
       onClick={() => !uploading && inputRef.current?.click()}
@@ -278,8 +427,8 @@ function DropZone({ onFiles, uploading, isZoho }: { onFiles: (files: File[]) => 
         uploading
           ? "border-primary/40 bg-primary/5 cursor-wait"
           : dragging
-          ? "border-primary bg-primary/5 scale-[1.01]"
-          : "border-border bg-secondary/30 hover:border-primary/50 hover:bg-primary/5"
+            ? "border-primary bg-primary/5 scale-[1.01]"
+            : "border-border bg-secondary/30 hover:border-primary/50 hover:bg-primary/5"
       }`}
     >
       <input
@@ -289,14 +438,20 @@ function DropZone({ onFiles, uploading, isZoho }: { onFiles: (files: File[]) => 
         accept=".pdf,.doc,.docx,.xls,.xlsx,.jpg,.jpeg,.png,.gif,.webp,.zip,.rar,.txt,image/*,video/*"
         className="hidden"
         onChange={(e) => {
-          if (e.target.files) { onFiles(Array.from(e.target.files)); e.target.value = ""; }
+          if (e.target.files) {
+            onFiles(Array.from(e.target.files));
+            e.target.value = "";
+          }
         }}
       />
-      <div className={`grid h-14 w-14 place-items-center rounded-2xl transition-colors ${uploading ? "bg-primary/20" : "bg-primary/10"}`}>
-        {uploading
-          ? <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-          : <Upload className="h-7 w-7 text-primary" />
-        }
+      <div
+        className={`grid h-14 w-14 place-items-center rounded-2xl transition-colors ${uploading ? "bg-primary/20" : "bg-primary/10"}`}
+      >
+        {uploading ? (
+          <div className="h-7 w-7 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+        ) : (
+          <Upload className="h-7 w-7 text-primary" />
+        )}
       </div>
       <div className="text-center">
         {uploading ? (
@@ -304,12 +459,19 @@ function DropZone({ onFiles, uploading, isZoho }: { onFiles: (files: File[]) => 
         ) : (
           <>
             <p className="font-semibold text-sm">Drag & drop files here</p>
-            <p className="mt-1 text-xs text-muted-foreground">or click to browse — PDF, Images, Docs, Excel, ZIP…</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              or click to browse — PDF, Images, Docs, Excel, ZIP…
+            </p>
             <p className="mt-1 text-xs text-muted-foreground flex items-center justify-center gap-1">
               {isZoho ? (
-                <><Cloud className="h-3 w-3 text-[#0F9D58]" /> Files will be saved directly to Google Drive</>
+                <>
+                  <Cloud className="h-3 w-3 text-[#0F9D58]" /> Files will be saved directly to
+                  Google Drive
+                </>
               ) : (
-                <><HardDrive className="h-3 w-3" /> Files are saved locally in your browser</>
+                <>
+                  <HardDrive className="h-3 w-3" /> Files are saved locally in your browser
+                </>
               )}
             </p>
           </>
@@ -320,7 +482,11 @@ function DropZone({ onFiles, uploading, isZoho }: { onFiles: (files: File[]) => 
 }
 
 /* ─── File Row ─── */
-function FileRow({ file, onDelete, onPreview }: {
+function FileRow({
+  file,
+  onDelete,
+  onPreview,
+}: {
   file: UploadedFile;
   onDelete: (id: string) => void;
   onPreview: (file: UploadedFile) => void;
@@ -369,7 +535,13 @@ function FileRow({ file, onDelete, onPreview }: {
 }
 
 /* ─── Folder Detail View ─── */
-function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
+function FolderDetail({
+  folder,
+  onBack,
+  onUpload,
+  onDeleteFile,
+  isZoho,
+}: {
   folder: FolderItem;
   onBack: () => void;
   onUpload: (folderId: string, files: File[]) => Promise<void>;
@@ -381,9 +553,7 @@ function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
   const [uploading, setUploading] = useState(false);
   const [savedBanner, setSavedBanner] = useState(false);
 
-  const filtered = folder.files.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = folder.files.filter((f) => f.name.toLowerCase().includes(search.toLowerCase()));
 
   const handleDrop = async (files: File[]) => {
     setUploading(true);
@@ -406,7 +576,9 @@ function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
           <ArrowLeft className="h-4 w-4" /> Back to Folders
         </button>
         <div className="flex items-center gap-2">
-          <div className={`flex h-9 w-9 items-center justify-center rounded-xl border-2 ${folder.color}`}>
+          <div
+            className={`flex h-9 w-9 items-center justify-center rounded-xl border-2 ${folder.color}`}
+          >
             <FolderOpen className="h-5 w-5" />
           </div>
           <div>
@@ -415,18 +587,34 @@ function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
           </div>
         </div>
         <div className="ml-auto flex items-center gap-4 text-sm text-muted-foreground">
-          <span className="flex items-center gap-1"><File className="h-3.5 w-3.5" /> {folder.files.length} file{folder.files.length !== 1 ? "s" : ""}</span>
-          {totalSize > 0 && <span className="flex items-center gap-1"><HardDrive className="h-3.5 w-3.5" /> {fmtSize(totalSize)}</span>}
+          <span className="flex items-center gap-1">
+            <File className="h-3.5 w-3.5" /> {folder.files.length} file
+            {folder.files.length !== 1 ? "s" : ""}
+          </span>
+          {totalSize > 0 && (
+            <span className="flex items-center gap-1">
+              <HardDrive className="h-3.5 w-3.5" /> {fmtSize(totalSize)}
+            </span>
+          )}
         </div>
       </div>
 
       {/* Saved banner */}
       {savedBanner && (
-        <div className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm animate-in fade-in duration-300 ${
-          isZoho ? "border-[#FF6B00]/30 bg-green-50 text-[#0F9D58]" : "border-emerald-200 bg-emerald-50 text-emerald-700"
-        }`}>
+        <div
+          className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm animate-in fade-in duration-300 ${
+            isZoho
+              ? "border-[#FF6B00]/30 bg-green-50 text-[#0F9D58]"
+              : "border-emerald-200 bg-emerald-50 text-emerald-700"
+          }`}
+        >
           <Check className="h-4 w-4 shrink-0" />
-          <span>Files {isZoho ? "uploaded successfully to Google Drive." : "saved successfully — they will persist after page refresh."}</span>
+          <span>
+            Files{" "}
+            {isZoho
+              ? "uploaded successfully to Google Drive."
+              : "saved successfully — they will persist after page refresh."}
+          </span>
         </div>
       )}
 
@@ -495,28 +683,46 @@ function FolderDetail({ folder, onBack, onUpload, onDeleteFile, isZoho }: {
       </div>
 
       {/* Preview Modal */}
-      <Modal open={!!previewFile} onClose={() => setPreviewFile(null)} title={previewFile?.name ?? ""}>
+      <Modal
+        open={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        title={previewFile?.name ?? ""}
+      >
         {previewFile && (
           <div className="space-y-4">
             <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-3">
               {fileIcon(previewFile.type)}
               <div className="min-w-0 flex-1">
                 <p className="truncate text-sm font-semibold">{previewFile.name}</p>
-                <p className="text-xs text-muted-foreground">{fmtSize(previewFile.size)} · {fmtDate(previewFile.uploadedAt)}</p>
+                <p className="text-xs text-muted-foreground">
+                  {fmtSize(previewFile.size)} · {fmtDate(previewFile.uploadedAt)}
+                </p>
               </div>
             </div>
 
             {previewFile.type.startsWith("image/") && (
-              <img src={previewFile.dataUrl} alt={previewFile.name} className="max-h-64 w-full rounded-xl object-contain bg-secondary/30" />
+              <img
+                src={previewFile.dataUrl}
+                alt={previewFile.name}
+                className="max-h-64 w-full rounded-xl object-contain bg-secondary/30"
+              />
             )}
             {previewFile.type === "application/pdf" && (
-              <iframe src={previewFile.dataUrl} className="h-64 w-full rounded-xl border border-border" title={previewFile.name} />
+              <iframe
+                src={previewFile.dataUrl}
+                className="h-64 w-full rounded-xl border border-border"
+                title={previewFile.name}
+              />
             )}
 
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setPreviewFile(null)} className="rounded-xl">Close</Button>
+              <Button variant="outline" onClick={() => setPreviewFile(null)} className="rounded-xl">
+                Close
+              </Button>
               <a href={previewFile.dataUrl} download={previewFile.name}>
-                <Button className="gap-2 rounded-xl"><Download className="h-4 w-4" /> Download</Button>
+                <Button className="gap-2 rounded-xl">
+                  <Download className="h-4 w-4" /> Download
+                </Button>
               </a>
             </div>
           </div>
@@ -536,7 +742,7 @@ function FoldersPage() {
   const [newDesc, setNewDesc] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FolderItem | null>(null);
-  
+
   // Google Drive State
   const [googleAccessToken, setGoogleAccessToken] = useLocalStorage("crm_gdrive_token", "");
   const isZohoConnected = !!googleAccessToken;
@@ -564,19 +770,20 @@ function FoldersPage() {
     const clientId = import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID as string | undefined;
     if (!clientId) {
       setIsConnectingZoho(false);
-      alert("Google Drive is not configured. To enable it, add your VITE_GOOGLE_DRIVE_CLIENT_ID to the .env file.");
+      alert(
+        "Google Drive is not configured. To enable it, add your VITE_GOOGLE_DRIVE_CLIENT_ID to the .env file.",
+      );
       return;
     }
     googleLogin();
   };
 
-
-
   const openFolder = folders.find((f) => f.id === openFolderId) ?? null;
 
-  const filtered = folders.filter((f) =>
-    f?.name?.toLowerCase().includes(search.toLowerCase()) ||
-    f?.description?.toLowerCase().includes(search.toLowerCase())
+  const filtered = folders.filter(
+    (f) =>
+      f?.name?.toLowerCase().includes(search.toLowerCase()) ||
+      f?.description?.toLowerCase().includes(search.toLowerCase()),
   );
 
   /* ── CRUD ── */
@@ -596,7 +803,9 @@ function FoldersPage() {
       manager: "Pushplata Kriplani",
     };
     setFolders((p) => [folder, ...p]);
-    setNewName(""); setNewDesc(""); setCreateOpen(false);
+    setNewName("");
+    setNewDesc("");
+    setCreateOpen(false);
   }
 
   function handleRename(id: string, name: string) {
@@ -618,54 +827,59 @@ function FoldersPage() {
             name: file.name,
             mimeType: file.type || "application/octet-stream",
           };
-          
-          const form = new FormData();
-          form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-          form.append('file', file);
 
-          const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-            method: 'POST',
-            headers: {
-              Authorization: `Bearer ${googleAccessToken}`
+          const form = new FormData();
+          form.append(
+            "metadata",
+            new Blob([JSON.stringify(metadata)], { type: "application/json" }),
+          );
+          form.append("file", file);
+
+          const res = await fetch(
+            "https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart",
+            {
+              method: "POST",
+              headers: {
+                Authorization: `Bearer ${googleAccessToken}`,
+              },
+              body: form,
             },
-            body: form
-          });
-          
+          );
+
           if (!res.ok) {
             console.error("Failed to upload to Google Drive", await res.text());
             alert("Failed to upload " + file.name + " to Google Drive.");
           }
         }
       } catch (e) {
-         console.error(e);
-         alert("Failed to upload to Google Drive. Check console.");
+        console.error(e);
+        alert("Failed to upload to Google Drive. Check console.");
       }
     }
 
     const uploads = await Promise.all(
-      rawFiles.map(async (rf) => ({
-        id: genFileId(),
-        name: rf.name,
-        size: rf.size,
-        type: rf.type || "application/octet-stream",
-        uploadedAt: new Date().toISOString(),
-        dataUrl: await readAsDataUrl(rf),
-      } satisfies UploadedFile))
+      rawFiles.map(
+        async (rf) =>
+          ({
+            id: genFileId(),
+            name: rf.name,
+            size: rf.size,
+            type: rf.type || "application/octet-stream",
+            uploadedAt: new Date().toISOString(),
+            dataUrl: await readAsDataUrl(rf),
+          }) satisfies UploadedFile,
+      ),
     );
     setFolders((p) =>
-      p.map((f) =>
-        f.id === folderId ? { ...f, files: [...uploads, ...f.files] } : f
-      )
+      p.map((f) => (f.id === folderId ? { ...f, files: [...uploads, ...f.files] } : f)),
     );
   }
 
   function handleDeleteFile(folderId: string, fileId: string) {
     setFolders((p) =>
       p.map((f) =>
-        f.id === folderId
-          ? { ...f, files: f.files.filter((u) => u.id !== fileId) }
-          : f
-      )
+        f.id === folderId ? { ...f, files: f.files.filter((u) => u.id !== fileId) } : f,
+      ),
     );
   }
 
@@ -696,9 +910,9 @@ function FoldersPage() {
           </p>
         </div>
         <div className="flex gap-2">
-          <Button 
-            onClick={() => setCreateOpen(true)} 
-            className="gap-2 rounded-xl text-white text-xs font-semibold h-9 hover:opacity-90 transition-opacity" 
+          <Button
+            onClick={() => setCreateOpen(true)}
+            className="gap-2 rounded-xl text-white text-xs font-semibold h-9 hover:opacity-90 transition-opacity"
             style={{ background: "var(--gradient-brand)" }}
             id="new-folder-btn"
           >
@@ -722,16 +936,27 @@ function FoldersPage() {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
         {[
           { label: "Total Folders", value: folders.length, icon: <Folder className="h-4 w-4" /> },
-          { label: "Total Files",   value: totalFiles,     icon: <File className="h-4 w-4" /> },
+          { label: "Total Files", value: totalFiles, icon: <File className="h-4 w-4" /> },
           {
             label: "Recent (30d)",
-            value: folders.filter((f) => f.createdAt >= new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10)).length,
+            value: folders.filter(
+              (f) => f.createdAt >= new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10),
+            ).length,
             icon: <FolderOpen className="h-4 w-4" />,
           },
-          { label: "Empty Folders", value: folders.filter((f) => f.files.length === 0).length, icon: <Folder className="h-4 w-4" /> },
+          {
+            label: "Empty Folders",
+            value: folders.filter((f) => f.files.length === 0).length,
+            icon: <Folder className="h-4 w-4" />,
+          },
         ].map((s) => (
-          <div key={s.label} className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-card">
-            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">{s.icon}</span>
+          <div
+            key={s.label}
+            className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-4 shadow-card"
+          >
+            <span className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+              {s.icon}
+            </span>
             <div>
               <p className="font-display text-xl font-bold">{s.value}</p>
               <p className="text-xs text-muted-foreground">{s.label}</p>
@@ -750,7 +975,11 @@ function FoldersPage() {
               {search ? "Try a different search term." : "Create your first folder to get started."}
             </p>
             {!search && (
-              <Button onClick={() => setCreateOpen(true)} className="mt-4 gap-2 rounded-xl" variant="outline">
+              <Button
+                onClick={() => setCreateOpen(true)}
+                className="mt-4 gap-2 rounded-xl"
+                variant="outline"
+              >
                 <FolderPlus className="h-4 w-4" /> New Folder
               </Button>
             )}
@@ -782,7 +1011,9 @@ function FoldersPage() {
               placeholder="e.g. Client Contracts 2026"
               value={newName}
               onChange={(e) => setNewName(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Enter") handleCreate(); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleCreate();
+              }}
               autoFocus
             />
           </div>
@@ -799,7 +1030,9 @@ function FoldersPage() {
             />
           </div>
           <div className="flex justify-end gap-2 pt-1">
-            <Button variant="outline" onClick={() => setCreateOpen(false)} className="rounded-xl">Cancel</Button>
+            <Button variant="outline" onClick={() => setCreateOpen(false)} className="rounded-xl">
+              Cancel
+            </Button>
             <Button onClick={handleCreate} disabled={!newName.trim()} className="gap-2 rounded-xl">
               <FolderPlus className="h-4 w-4" /> Create Folder
             </Button>
@@ -818,7 +1051,13 @@ function FoldersPage() {
               This action cannot be undone.
             </div>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setDeleteTarget(null)} className="rounded-xl">Cancel</Button>
+              <Button
+                variant="outline"
+                onClick={() => setDeleteTarget(null)}
+                className="rounded-xl"
+              >
+                Cancel
+              </Button>
               <Button
                 onClick={() => handleDelete(deleteTarget.id)}
                 className="gap-2 rounded-xl bg-red-600 text-white hover:bg-red-700"
@@ -831,7 +1070,13 @@ function FoldersPage() {
       </Modal>
 
       {/* Zoho Integration Modal */}
-      <Modal open={zohoModalOpen} onClose={() => { if (!isConnectingZoho) setZohoModalOpen(false) }} title="Google Drive Integration">
+      <Modal
+        open={zohoModalOpen}
+        onClose={() => {
+          if (!isConnectingZoho) setZohoModalOpen(false);
+        }}
+        title="Google Drive Integration"
+      >
         <div className="space-y-4">
           <div className="flex items-center gap-4 bg-green-50 border border-green-100 p-4 rounded-xl">
             <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
@@ -839,46 +1084,61 @@ function FoldersPage() {
             </div>
             <div>
               <p className="font-bold text-gray-900 text-sm">Google Drive Workspace</p>
-              <p className="text-xs text-muted-foreground">{isZohoConnected ? "Status: Connected & Synchronized" : "Status: Not Connected"}</p>
+              <p className="text-xs text-muted-foreground">
+                {isZohoConnected ? "Status: Connected & Synchronized" : "Status: Not Connected"}
+              </p>
             </div>
           </div>
-          
+
           <p className="text-xs text-gray-600 leading-relaxed">
-            {isZohoConnected 
+            {isZohoConnected
               ? "Your CRM documents are actively syncing with Google Drive. Files uploaded here are automatically transferred to your secure Google cloud."
-              : "Connect your Google Drive account to seamlessly synchronize travel documents, booking vouchers, and passenger passports securely."
-            }
+              : "Connect your Google Drive account to seamlessly synchronize travel documents, booking vouchers, and passenger passports securely."}
           </p>
 
           <div className="flex justify-end gap-2 pt-2">
-            <Button variant="outline" onClick={() => setZohoModalOpen(false)} disabled={isConnectingZoho} className="rounded-xl text-xs h-9">
+            <Button
+              variant="outline"
+              onClick={() => setZohoModalOpen(false)}
+              disabled={isConnectingZoho}
+              className="rounded-xl text-xs h-9"
+            >
               Close
             </Button>
             {isZohoConnected ? (
-              <Button 
+              <Button
                 onClick={() => {
-                  if (confirm("Disconnect Google Drive? Your files will remain but new uploads will save locally.")) {
+                  if (
+                    confirm(
+                      "Disconnect Google Drive? Your files will remain but new uploads will save locally.",
+                    )
+                  ) {
                     setGoogleAccessToken("");
                     setZohoModalOpen(false);
                   }
-                }} 
+                }}
                 className="gap-2 rounded-xl bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs font-semibold h-9"
               >
                 <Unlink className="h-4 w-4" /> Disconnect
               </Button>
             ) : (
-              <Button 
+              <Button
                 onClick={() => {
                   setIsConnectingZoho(true);
                   loginWithGoogle();
-                }} 
+                }}
                 disabled={isConnectingZoho}
                 className="gap-2 rounded-xl bg-[#0F9D58] hover:bg-[#0B8043] text-white text-xs font-semibold h-9 min-w-[140px]"
               >
                 {isConnectingZoho ? (
-                  <><div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" /> Connecting...</>
+                  <>
+                    <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />{" "}
+                    Connecting...
+                  </>
                 ) : (
-                  <><Link2 className="h-4 w-4" /> Connect to Google Drive</>
+                  <>
+                    <Link2 className="h-4 w-4" /> Connect to Google Drive
+                  </>
                 )}
               </Button>
             )}

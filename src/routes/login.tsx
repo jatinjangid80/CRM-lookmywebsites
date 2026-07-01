@@ -18,7 +18,9 @@ function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [dynamicHints, setDynamicHints] = useState<{ label: string; username: string; password: string }[]>([]);
+  const [dynamicHints, setDynamicHints] = useState<
+    { label: string; username: string; password: string }[]
+  >([]);
 
   const loadDynamicHints = () => {
     try {
@@ -75,7 +77,7 @@ function LoginPage() {
         setError(
           role === "admin"
             ? "This account is an Employee account. Please select Employee role."
-            : "This account is an Admin account. Please select Admin role."
+            : "This account is an Admin account. Please select Admin role.",
         );
         setLoading(false);
         return;
@@ -105,13 +107,18 @@ function LoginPage() {
       >
         {/* Logo */}
         <div className="flex items-center gap-3">
-          <img src={logoImg} alt="LookMyHolidays" className="h-12 w-auto rounded-xl mix-blend-multiply" />
+          <img
+            src={logoImg}
+            alt="LookMyHolidays"
+            className="h-12 w-auto rounded-xl mix-blend-multiply"
+          />
         </div>
 
         {/* Center copy */}
         <div className="space-y-6">
           <h1 className="font-display text-5xl font-extrabold leading-tight">
-            Grand Journeys<br />
+            Grand Journeys
+            <br />
             <span className="opacity-75">CRM Portal</span>
           </h1>
           <p className="max-w-md text-lg opacity-85">
@@ -164,7 +171,11 @@ function LoginPage() {
       <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12">
         {/* Mobile logo */}
         <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <img src={logoImg} alt="LookMyHolidays" className="h-10 w-auto rounded-xl mix-blend-multiply" />
+          <img
+            src={logoImg}
+            alt="LookMyHolidays"
+            className="h-10 w-auto rounded-xl mix-blend-multiply"
+          />
         </div>
 
         <div className="w-full max-w-md">
@@ -177,7 +188,12 @@ function LoginPage() {
           <div className="mt-8 flex rounded-2xl border border-border bg-secondary/40 p-1">
             <button
               type="button"
-              onClick={() => { setRole("admin"); setError(""); setUsername(""); setPassword(""); }}
+              onClick={() => {
+                setRole("admin");
+                setError("");
+                setUsername("");
+                setPassword("");
+              }}
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all ${
                 role === "admin"
                   ? "bg-card shadow-md text-foreground"
@@ -189,7 +205,12 @@ function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setRole("employee"); setError(""); setUsername(""); setPassword(""); }}
+              onClick={() => {
+                setRole("employee");
+                setError("");
+                setUsername("");
+                setPassword("");
+              }}
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all ${
                 role === "employee"
                   ? "bg-card shadow-md text-foreground"
@@ -212,7 +233,10 @@ function LoginPage() {
                   id="login-username"
                   placeholder={role === "admin" ? "admin" : "e.g. riya"}
                   value={username}
-                  onChange={(e) => { setUsername(e.target.value); setError(""); }}
+                  onChange={(e) => {
+                    setUsername(e.target.value);
+                    setError("");
+                  }}
                   className="pl-9 rounded-xl"
                   autoComplete="username"
                   autoFocus
@@ -230,7 +254,10 @@ function LoginPage() {
                   type={showPass ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
-                  onChange={(e) => { setPassword(e.target.value); setError(""); }}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    setError("");
+                  }}
                   className="pl-9 pr-10 rounded-xl"
                   autoComplete="current-password"
                 />
@@ -289,14 +316,19 @@ function LoginPage() {
             <div className="space-y-2">
               {hintUsers.length === 0 ? (
                 <p className="text-xs text-muted-foreground text-center py-2">
-                  No employee credentials set yet. Go to an employee profile → "Set Login Credentials".
+                  No employee credentials set yet. Go to an employee profile → "Set Login
+                  Credentials".
                 </p>
               ) : (
                 hintUsers.map((u) => (
                   <button
                     key={u.username}
                     type="button"
-                    onClick={() => { setUsername(u.username); setPassword(u.password); setError(""); }}
+                    onClick={() => {
+                      setUsername(u.username);
+                      setPassword(u.password);
+                      setError("");
+                    }}
                     className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs hover:border-primary/50 hover:bg-primary/5 transition-all"
                   >
                     <span className="font-semibold">{u.label}</span>
@@ -311,7 +343,6 @@ function LoginPage() {
               Click any row to auto-fill credentials.
             </p>
           </div>
-
         </div>
       </div>
     </div>

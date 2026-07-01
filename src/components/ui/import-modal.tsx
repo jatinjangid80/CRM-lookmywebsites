@@ -2,17 +2,24 @@ import { useState } from "react";
 import { Upload, File, X, AlertCircle } from "lucide-react";
 import Papa from "papaparse";
 import * as XLSX from "xlsx";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 
-export function ImportModal({ 
-  open, 
-  onOpenChange, 
+export function ImportModal({
+  open,
+  onOpenChange,
   onImport,
   title = "Import Data",
-  description = "Upload a CSV or Excel file to import records."
-}: { 
-  open: boolean; 
+  description = "Upload a CSV or Excel file to import records.",
+}: {
+  open: boolean;
   onOpenChange: (open: boolean) => void;
   onImport: (data: any[]) => void;
   title?: string;
@@ -28,9 +35,9 @@ export function ImportModal({
     setLoading(true);
     setError(null);
 
-    const fileExt = file.name.split('.').pop()?.toLowerCase();
+    const fileExt = file.name.split(".").pop()?.toLowerCase();
 
-    if (fileExt === 'csv') {
+    if (fileExt === "csv") {
       Papa.parse(file, {
         header: true,
         skipEmptyLines: true,
@@ -46,14 +53,14 @@ export function ImportModal({
         error: (error: any) => {
           setLoading(false);
           setError(error.message || "Failed to read CSV file.");
-        }
+        },
       });
-    } else if (fileExt === 'xls' || fileExt === 'xlsx') {
+    } else if (fileExt === "xls" || fileExt === "xlsx") {
       const reader = new FileReader();
       reader.onload = (evt) => {
         try {
           const bstr = evt.target?.result;
-          const wb = XLSX.read(bstr, { type: 'binary' });
+          const wb = XLSX.read(bstr, { type: "binary" });
           const wsname = wb.SheetNames[0];
           const ws = wb.Sheets[wsname];
           const data = XLSX.utils.sheet_to_json(ws, { raw: false });
@@ -68,7 +75,7 @@ export function ImportModal({
       reader.onerror = () => {
         setLoading(false);
         setError("Error reading the file.");
-      }
+      };
       reader.readAsBinaryString(file);
     } else {
       setLoading(false);
@@ -76,24 +83,28 @@ export function ImportModal({
     }
 
     // Reset the input value
-    e.target.value = '';
+    e.target.value = "";
   };
 
   return (
-    <Dialog open={open} onOpenChange={(val) => {
-      onOpenChange(val);
-      if (!val) setError(null);
-    }}>
+    <Dialog
+      open={open}
+      onOpenChange={(val) => {
+        onOpenChange(val);
+        if (!val) setError(null);
+      }}
+    >
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
-          <DialogDescription>
-            {description}
-          </DialogDescription>
+          <DialogDescription>{description}</DialogDescription>
         </DialogHeader>
-        
+
         <div className="flex items-center justify-center w-full mt-4">
-          <label htmlFor="dropzone-file" className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl cursor-pointer hover:bg-secondary/50 border-border bg-card transition-colors">
+          <label
+            htmlFor="dropzone-file"
+            className="flex flex-col items-center justify-center w-full h-48 border-2 border-dashed rounded-2xl cursor-pointer hover:bg-secondary/50 border-border bg-card transition-colors"
+          >
             <div className="flex flex-col items-center justify-center pt-5 pb-6">
               <Upload className="w-10 h-10 mb-4 text-muted-foreground" />
               <p className="mb-2 text-sm text-muted-foreground">
@@ -101,10 +112,10 @@ export function ImportModal({
               </p>
               <p className="text-xs text-muted-foreground">CSV, XLS, or XLSX</p>
             </div>
-            <input 
-              id="dropzone-file" 
-              type="file" 
-              className="hidden" 
+            <input
+              id="dropzone-file"
+              type="file"
+              className="hidden"
               accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
               onChange={handleFileUpload}
               disabled={loading}
@@ -120,7 +131,9 @@ export function ImportModal({
         )}
 
         <div className="flex justify-end mt-4">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>Cancel</Button>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

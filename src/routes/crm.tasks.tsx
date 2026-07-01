@@ -4,9 +4,21 @@ import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import {
-  Plus, CheckCircle2, Circle, Clock, AlertCircle,
-  Phone, Mail, CreditCard, FileText, CalendarDays,
-  Trash2, X, Filter, Sparkles, ListChecks,
+  Plus,
+  CheckCircle2,
+  Circle,
+  Clock,
+  AlertCircle,
+  Phone,
+  Mail,
+  CreditCard,
+  FileText,
+  CalendarDays,
+  Trash2,
+  X,
+  Filter,
+  Sparkles,
+  ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +26,6 @@ import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
 import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
-
-
 
 /* ─── Types ─────────────────────────────────────────── */
 type Priority = "High" | "Medium" | "Low";
@@ -55,46 +65,48 @@ const TYPE_ICONS: Record<TaskType, typeof Phone> = {
 };
 
 const TYPE_COLORS: Record<TaskType, string> = {
-  Call:        "bg-blue-100   text-blue-700",
-  Email:       "bg-violet-100 text-violet-700",
-  Payment:     "bg-emerald-100 text-emerald-700",
-  Document:    "bg-amber-100  text-amber-700",
+  Call: "bg-blue-100   text-blue-700",
+  Email: "bg-violet-100 text-violet-700",
+  Payment: "bg-emerald-100 text-emerald-700",
+  Document: "bg-amber-100  text-amber-700",
   "Follow-up": "bg-pink-100   text-pink-700",
-  Other:       "bg-slate-100  text-slate-600",
+  Other: "bg-slate-100  text-slate-600",
 };
 
 const TYPE_ACCENT: Record<TaskType, string> = {
-  Call:        "border-l-blue-400",
-  Email:       "border-l-violet-400",
-  Payment:     "border-l-emerald-400",
-  Document:    "border-l-amber-400",
+  Call: "border-l-blue-400",
+  Email: "border-l-violet-400",
+  Payment: "border-l-emerald-400",
+  Document: "border-l-amber-400",
   "Follow-up": "border-l-pink-400",
-  Other:       "border-l-slate-400",
+  Other: "border-l-slate-400",
 };
 
 const PRIORITY_PILL: Record<Priority, string> = {
-  High:   "bg-red-100   text-red-700",
+  High: "bg-red-100   text-red-700",
   Medium: "bg-amber-100 text-amber-700",
-  Low:    "bg-emerald-100 text-emerald-700",
+  Low: "bg-emerald-100 text-emerald-700",
 };
 
 const PRIORITY_DOT: Record<Priority, string> = {
-  High:   "bg-red-500",
+  High: "bg-red-500",
   Medium: "bg-amber-500",
-  Low:    "bg-emerald-500",
+  Low: "bg-emerald-500",
 };
-
 
 const TASK_TYPES: TaskType[] = ["Call", "Email", "Payment", "Document", "Follow-up", "Other"];
 const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
 
 /* ─── Helpers ────────────────────────────────────────── */
 function initials(name: string) {
-  return name.split(" ").map((w) => w[0]).join("").toUpperCase().slice(0, 2);
+  return name
+    .split(" ")
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
 }
-const AVATAR_COLORS = [
-  "bg-blue-500", "bg-violet-500", "bg-rose-500", "bg-teal-500",
-];
+const AVATAR_COLORS = ["bg-blue-500", "bg-violet-500", "bg-rose-500", "bg-teal-500"];
 function avatarColor(name: string) {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
@@ -102,28 +114,43 @@ function avatarColor(name: string) {
 }
 
 function formatDate(d: string) {
-  return new Date(d + "T00:00:00").toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+  return new Date(d + "T00:00:00").toLocaleDateString("en-IN", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 /* ─── Sub-components ─────────────────────────────────── */
-function StatCard({ label, value, total, color, icon, onClick, active }: {
-  label: string; value: number; total: number; color: string; icon: React.ReactNode;
-  onClick?: () => void; active?: boolean;
+function StatCard({
+  label,
+  value,
+  total,
+  color,
+  icon,
+  onClick,
+  active,
+}: {
+  label: string;
+  value: number;
+  total: number;
+  color: string;
+  icon: React.ReactNode;
+  onClick?: () => void;
+  active?: boolean;
 }) {
   const pct = total > 0 ? Math.round((value / total) * 100) : 0;
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`rounded-2xl border bg-card p-5 shadow-card transition-all duration-200 ${
         onClick ? "cursor-pointer hover:shadow-md hover:-translate-y-0.5 select-none" : ""
-      } ${
-        active 
-          ? "border-primary ring-2 ring-primary/20 scale-[1.01]" 
-          : "border-border"
-      }`}
+      } ${active ? "border-primary ring-2 ring-primary/20 scale-[1.01]" : "border-border"}`}
     >
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
         <span className={`grid h-8 w-8 place-items-center rounded-xl ${color}`}>{icon}</span>
       </div>
       <p className="mt-3 font-display text-4xl font-bold">{value}</p>
@@ -143,19 +170,27 @@ function formatNoteDate(isoString: string) {
   try {
     const d = new Date(isoString);
     if (isNaN(d.getTime())) return "";
-    return d.toLocaleDateString("en-IN", {
-      day: "numeric",
-      month: "short",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: true,
-    }).replace(",", "");
+    return d
+      .toLocaleDateString("en-IN", {
+        day: "numeric",
+        month: "short",
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: true,
+      })
+      .replace(",", "");
   } catch {
     return "";
   }
 }
 
-function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
+function TaskCard({
+  task,
+  isAdmin,
+  onToggle,
+  onDelete,
+  onEditNote,
+}: {
   task: Task;
   isAdmin: boolean;
   onToggle: () => void;
@@ -165,7 +200,7 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
   const Icon = TYPE_ICONS[task.type];
   const isOverdue = task.status === "Pending" && task.dueDate < today;
   const isDone = task.status === "Done";
-  
+
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [editNoteText, setEditNoteText] = useState("");
 
@@ -191,13 +226,17 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
         className="mt-0.5 shrink-0 transition-transform hover:scale-110 active:scale-95"
         aria-label={isDone ? "Mark pending" : "Mark done"}
       >
-        {isDone
-          ? <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-          : <Circle className="h-5 w-5 text-muted-foreground/60 hover:text-primary transition-colors" />}
+        {isDone ? (
+          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+        ) : (
+          <Circle className="h-5 w-5 text-muted-foreground/60 hover:text-primary transition-colors" />
+        )}
       </button>
 
       {/* Type icon badge */}
-      <span className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-bold ${TYPE_COLORS[task.type]}`}>
+      <span
+        className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-bold ${TYPE_COLORS[task.type]}`}
+      >
         <Icon className="h-4 w-4" />
       </span>
 
@@ -205,11 +244,17 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
       <div className="min-w-0 flex-1 space-y-1.5">
         {/* Title row */}
         <div className="flex flex-wrap items-start gap-2">
-          <p className={`text-sm font-semibold leading-snug ${isDone ? "line-through text-muted-foreground" : ""}`}>
+          <p
+            className={`text-sm font-semibold leading-snug ${isDone ? "line-through text-muted-foreground" : ""}`}
+          >
             {task.title}
           </p>
-          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${PRIORITY_PILL[task.priority]}`}>
-            <span className={`inline-block h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`} />
+          <span
+            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${PRIORITY_PILL[task.priority]}`}
+          >
+            <span
+              className={`inline-block h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`}
+            />
             {task.priority}
           </span>
           {isOverdue && (
@@ -246,7 +291,10 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
               const noteText = isString ? note : note.text;
               const noteTime = isString ? "" : formatNoteDate(note.createdAt);
               return (
-                <div key={idx} className="text-xs text-muted-foreground/80 italic leading-relaxed flex flex-wrap items-baseline gap-x-1.5">
+                <div
+                  key={idx}
+                  className="text-xs text-muted-foreground/80 italic leading-relaxed flex flex-wrap items-baseline gap-x-1.5"
+                >
                   <span className="text-muted-foreground/60">•</span>
                   <span>{noteText}</span>
                   {noteTime && (
@@ -271,13 +319,39 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
               className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
             />
             <div className="flex gap-2 mt-2">
-              <Button size="sm" variant="outline" className="h-7 text-xs rounded-full px-4" onClick={() => { setIsEditingNote(false); setEditNoteText(""); }}>Cancel</Button>
-              <Button size="sm" className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90" style={{ background: "var(--gradient-brand)" }} onClick={() => { if (editNoteText.trim()) { onEditNote(editNoteText.trim()); } setIsEditingNote(false); setEditNoteText(""); }}>Add</Button>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs rounded-full px-4"
+                onClick={() => {
+                  setIsEditingNote(false);
+                  setEditNoteText("");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90"
+                style={{ background: "var(--gradient-brand)" }}
+                onClick={() => {
+                  if (editNoteText.trim()) {
+                    onEditNote(editNoteText.trim());
+                  }
+                  setIsEditingNote(false);
+                  setEditNoteText("");
+                }}
+              >
+                Add
+              </Button>
             </div>
           </div>
         ) : (
-          <button 
-            onClick={() => { setEditNoteText(""); setIsEditingNote(true); }} 
+          <button
+            onClick={() => {
+              setEditNoteText("");
+              setIsEditingNote(true);
+            }}
             className="text-xs text-blue-500 hover:text-blue-600 hover:underline mt-1.5 flex items-center gap-1"
           >
             + Add Note
@@ -286,7 +360,9 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
 
         {/* Assigned Profile Card */}
         <div className="mt-3 pt-3 border-t border-border border-dashed w-full block">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Assigned To</p>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+            Assigned To
+          </p>
           <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
             <EmployeeProfileCard employeeName={task.assignee} />
           </div>
@@ -294,7 +370,9 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
       </div>
 
       {/* Type pill (right side) */}
-      <span className={`hidden shrink-0 rounded-lg px-2 py-1 text-xs font-semibold sm:inline-block ${TYPE_COLORS[task.type]}`}>
+      <span
+        className={`hidden shrink-0 rounded-lg px-2 py-1 text-xs font-semibold sm:inline-block ${TYPE_COLORS[task.type]}`}
+      >
         {task.type}
       </span>
 
@@ -314,25 +392,39 @@ function TaskCard({ task, isAdmin, onToggle, onDelete, onEditNote }: {
 }
 
 /* ─── Modal ──────────────────────────────────────────── */
-function AddTaskModal({ assignees, onClose, onAdd }: {
+function AddTaskModal({
+  assignees,
+  onClose,
+  onAdd,
+}: {
   assignees: string[];
   onClose: () => void;
   onAdd: (task: Omit<Task, "id" | "status">) => void;
 }) {
   const [form, setForm] = useState<Omit<Task, "id" | "status">>({
-    title: "", type: "Call", priority: "Medium",
-    assignee: assignees[0] || "Riya Bansal", dueDate: "", note: "", lead: "",
+    title: "",
+    type: "Call",
+    priority: "Medium",
+    assignee: assignees[0] || "Riya Bansal",
+    dueDate: "",
+    note: "",
+    lead: "",
   });
   const titleRef = useRef<HTMLInputElement>(null);
-  useEffect(() => { titleRef.current?.focus(); }, []);
+  useEffect(() => {
+    titleRef.current?.focus();
+  }, []);
 
   const canSubmit = form.title.trim() !== "" && form.dueDate !== "";
-  const fieldCls = "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
+  const fieldCls =
+    "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
     >
       {/* Sheet on mobile, dialog on sm+ */}
       <div
@@ -345,7 +437,10 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
         {/* Header */}
         <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
           <div className="flex items-center gap-3">
-            <span className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground" style={{ background: "var(--gradient-brand)" }}>
+            <span
+              className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground"
+              style={{ background: "var(--gradient-brand)" }}
+            >
               <Plus className="h-4 w-4" />
             </span>
             <div>
@@ -374,7 +469,9 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
               placeholder="e.g. Call Ananya about Bali visa"
               value={form.title}
               onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              onKeyDown={(e) => { if (e.key === "Enter" && canSubmit) onAdd(form); }}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" && canSubmit) onAdd(form);
+              }}
               className="rounded-xl"
             />
           </div>
@@ -397,7 +494,8 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
                         : "border-border bg-background text-muted-foreground hover:bg-secondary"
                     }`}
                   >
-                    <Ic className="h-3 w-3" />{t}
+                    <Ic className="h-3 w-3" />
+                    {t}
                   </button>
                 );
               })}
@@ -436,7 +534,9 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
                 onChange={(e) => setForm((f) => ({ ...f, assignee: e.target.value }))}
                 className={fieldCls}
               >
-                {assignees.map((a) => <option key={a}>{a}</option>)}
+                {assignees.map((a) => (
+                  <option key={a}>{a}</option>
+                ))}
               </select>
             </div>
             <div>
@@ -455,7 +555,9 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
 
           {/* Lead */}
           <div>
-            <label className="mb-1.5 block text-sm font-semibold">Lead / Customer <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <label className="mb-1.5 block text-sm font-semibold">
+              Lead / Customer <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
             <Input
               id="task-lead-input"
               placeholder="e.g. Ananya Verma"
@@ -467,7 +569,9 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
 
           {/* Note */}
           <div>
-            <label className="mb-1.5 block text-sm font-semibold">Note <span className="text-muted-foreground font-normal">(optional)</span></label>
+            <label className="mb-1.5 block text-sm font-semibold">
+              Note <span className="text-muted-foreground font-normal">(optional)</span>
+            </label>
             <textarea
               id="task-note-input"
               placeholder="Context or reminder details..."
@@ -500,7 +604,15 @@ function AddTaskModal({ assignees, onClose, onAdd }: {
 }
 
 /* ─── Filter pill ─────────────────────────────────────── */
-function Pill({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+function Pill({
+  active,
+  onClick,
+  children,
+}: {
+  active: boolean;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
   return (
     <button
       onClick={onClick}
@@ -521,11 +633,9 @@ function TasksPage() {
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
-  const assignees = Array.from(new Set([
-    ...(employees.map((e: any) => e.name)),
-    ...(auth?.name ? [auth.name] : []),
-    "Other"
-  ]));
+  const assignees = Array.from(
+    new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
+  );
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const userAssigneeName = auth?.name || "";
 
@@ -538,9 +648,12 @@ function TasksPage() {
 
   // Persist every time tasks change
 
-
   const toggle = (id: string) =>
-    setTasks((prev) => prev.map((t) => t.id === id ? { ...t, status: t.status === "Done" ? "Pending" : "Done" } as Task : t));
+    setTasks((prev) =>
+      prev.map((t) =>
+        t.id === id ? ({ ...t, status: t.status === "Done" ? "Pending" : "Done" } as Task) : t,
+      ),
+    );
 
   const remove = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
 
@@ -550,8 +663,8 @@ function TasksPage() {
     setShowModal(false);
   };
 
-  const visibleTasks = isAdmin 
-    ? tasks 
+  const visibleTasks = isAdmin
+    ? tasks
     : tasks.filter((t) => t.assignee.toLowerCase() === userAssigneeName.toLowerCase());
 
   const filtered = visibleTasks.filter((t) => {
@@ -566,15 +679,20 @@ function TasksPage() {
     return true;
   });
 
-  const pending  = visibleTasks.filter((t) => t.status === "Pending").length;
-  const done     = visibleTasks.filter((t) => t.status === "Done").length;
-  const overdue  = visibleTasks.filter((t) => t.status === "Pending" && t.dueDate < today).length;
-  const total    = visibleTasks.length;
+  const pending = visibleTasks.filter((t) => t.status === "Pending").length;
+  const done = visibleTasks.filter((t) => t.status === "Done").length;
+  const overdue = visibleTasks.filter((t) => t.status === "Pending" && t.dueDate < today).length;
+  const total = visibleTasks.length;
 
   /* Keyboard shortcut: N → open modal */
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
-      if (e.key === "n" && !showModal && (e.target as HTMLElement).tagName !== "INPUT" && (e.target as HTMLElement).tagName !== "TEXTAREA") {
+      if (
+        e.key === "n" &&
+        !showModal &&
+        (e.target as HTMLElement).tagName !== "INPUT" &&
+        (e.target as HTMLElement).tagName !== "TEXTAREA"
+      ) {
         setShowModal(true);
       }
       if (e.key === "Escape" && showModal) setShowModal(false);
@@ -606,30 +724,30 @@ function TasksPage() {
 
         {/* ── Stat cards ── */}
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard 
-            label="Pending"   
-            value={pending}  
-            total={total} 
-            color="bg-amber-100  text-amber-600"   
-            icon={<Clock className="h-4 w-4" />} 
+          <StatCard
+            label="Pending"
+            value={pending}
+            total={total}
+            color="bg-amber-100  text-amber-600"
+            icon={<Clock className="h-4 w-4" />}
             onClick={() => setFilterStatus(filterStatus === "Pending" ? "All" : "Pending")}
             active={filterStatus === "Pending"}
           />
-          <StatCard 
-            label="Completed" 
-            value={done}     
-            total={total} 
-            color="bg-emerald-100 text-emerald-600" 
-            icon={<CheckCircle2 className="h-4 w-4" />} 
+          <StatCard
+            label="Completed"
+            value={done}
+            total={total}
+            color="bg-emerald-100 text-emerald-600"
+            icon={<CheckCircle2 className="h-4 w-4" />}
             onClick={() => setFilterStatus(filterStatus === "Done" ? "All" : "Done")}
             active={filterStatus === "Done"}
           />
-          <StatCard 
-            label="Overdue"   
-            value={overdue}  
-            total={total} 
-            color="bg-red-100    text-red-600"      
-            icon={<AlertCircle className="h-4 w-4" />} 
+          <StatCard
+            label="Overdue"
+            value={overdue}
+            total={total}
+            color="bg-red-100    text-red-600"
+            icon={<AlertCircle className="h-4 w-4" />}
             onClick={() => setFilterStatus(filterStatus === "Overdue" ? "All" : "Overdue")}
             active={filterStatus === "Overdue"}
           />
@@ -641,16 +759,28 @@ function TasksPage() {
             <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
 
             {/* Status */}
-            <Pill active={filterStatus === "All"} onClick={() => setFilterStatus("All")}>All</Pill>
-            <Pill active={filterStatus === "Pending"} onClick={() => setFilterStatus("Pending")}>⏳ Pending</Pill>
-            <Pill active={filterStatus === "Done"} onClick={() => setFilterStatus("Done")}>✅ Done</Pill>
-            <Pill active={filterStatus === "Overdue"} onClick={() => setFilterStatus("Overdue")}>🚨 Overdue</Pill>
+            <Pill active={filterStatus === "All"} onClick={() => setFilterStatus("All")}>
+              All
+            </Pill>
+            <Pill active={filterStatus === "Pending"} onClick={() => setFilterStatus("Pending")}>
+              ⏳ Pending
+            </Pill>
+            <Pill active={filterStatus === "Done"} onClick={() => setFilterStatus("Done")}>
+              ✅ Done
+            </Pill>
+            <Pill active={filterStatus === "Overdue"} onClick={() => setFilterStatus("Overdue")}>
+              🚨 Overdue
+            </Pill>
 
             <span className="mx-1 h-4 w-px bg-border" />
 
             {/* Priority */}
             {PRIORITIES.map((p) => (
-              <Pill key={p} active={filterPriority === p} onClick={() => setFilterPriority(filterPriority === p ? "All" : p)}>
+              <Pill
+                key={p}
+                active={filterPriority === p}
+                onClick={() => setFilterPriority(filterPriority === p ? "All" : p)}
+              >
                 <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[p]}`} />
                 {p}
               </Pill>
@@ -662,8 +792,13 @@ function TasksPage() {
             {TASK_TYPES.map((t) => {
               const Ic = TYPE_ICONS[t];
               return (
-                <Pill key={t} active={filterType === t} onClick={() => setFilterType(filterType === t ? "All" : t)}>
-                  <Ic className="mr-1 inline h-3 w-3" />{t}
+                <Pill
+                  key={t}
+                  active={filterType === t}
+                  onClick={() => setFilterType(filterType === t ? "All" : t)}
+                >
+                  <Ic className="mr-1 inline h-3 w-3" />
+                  {t}
                 </Pill>
               );
             })}
@@ -671,13 +806,20 @@ function TasksPage() {
             <span className="mx-1 h-4 w-px bg-border" />
 
             {/* Assignee */}
-            {isAdmin && assignees.map((a) => (
-              <Pill key={a} active={filterAssignee === a} onClick={() => setFilterAssignee(filterAssignee === a ? "All" : a)}>
-                {a.split(" ")[0]}
-              </Pill>
-            ))}
+            {isAdmin &&
+              assignees.map((a) => (
+                <Pill
+                  key={a}
+                  active={filterAssignee === a}
+                  onClick={() => setFilterAssignee(filterAssignee === a ? "All" : a)}
+                >
+                  {a.split(" ")[0]}
+                </Pill>
+              ))}
 
-            <span className="ml-auto text-xs text-muted-foreground">{filtered.length} task{filtered.length !== 1 ? "s" : ""}</span>
+            <span className="ml-auto text-xs text-muted-foreground">
+              {filtered.length} task{filtered.length !== 1 ? "s" : ""}
+            </span>
           </div>
         </div>
 
@@ -688,12 +830,18 @@ function TasksPage() {
               <div>
                 <ListChecks className="mx-auto h-12 w-12 text-primary/25" />
                 <p className="mt-4 font-semibold text-foreground/70">All clear here!</p>
-                <p className="mt-1 text-sm text-muted-foreground">No tasks match the current filters.</p>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  No tasks match the current filters.
+                </p>
                 <Button
                   variant="outline"
                   size="sm"
                   className="mt-4 rounded-xl"
-                  onClick={() => { setFilterStatus("All"); setFilterPriority("All"); setFilterType("All"); }}
+                  onClick={() => {
+                    setFilterStatus("All");
+                    setFilterPriority("All");
+                    setFilterType("All");
+                  }}
                 >
                   Clear filters
                 </Button>
@@ -706,23 +854,34 @@ function TasksPage() {
                 task={t}
                 isAdmin={isAdmin}
                 onToggle={() => {
-                  const newTasks = tasks.map(x => x.id === t.id ? { ...x, status: x.status === "Pending" ? "Done" as TaskStatus : "Pending" as TaskStatus } : x);
+                  const newTasks = tasks.map((x) =>
+                    x.id === t.id
+                      ? {
+                          ...x,
+                          status:
+                            x.status === "Pending"
+                              ? ("Done" as TaskStatus)
+                              : ("Pending" as TaskStatus),
+                        }
+                      : x,
+                  );
                   setTasks(newTasks);
-
                 }}
                 onEditNote={(newNote) => {
-                  const newTasks = tasks.map(x => {
+                  const newTasks = tasks.map((x) => {
                     if (x.id === t.id) {
                       const currentNotes = x.notes || [];
                       return {
                         ...x,
-                        notes: [...currentNotes, { text: newNote, createdAt: new Date().toISOString() }]
+                        notes: [
+                          ...currentNotes,
+                          { text: newNote, createdAt: new Date().toISOString() },
+                        ],
                       };
                     }
                     return x;
                   });
                   setTasks(newTasks);
-
                 }}
                 onDelete={() => {
                   setDeleteConfirmId(t.id);
@@ -740,7 +899,10 @@ function TasksPage() {
               <div className="h-2 w-full overflow-hidden rounded-full bg-border">
                 <div
                   className="h-full rounded-full transition-all duration-700"
-                  style={{ width: `${total > 0 ? Math.round((done / total) * 100) : 0}%`, background: "var(--gradient-brand)" }}
+                  style={{
+                    width: `${total > 0 ? Math.round((done / total) * 100) : 0}%`,
+                    background: "var(--gradient-brand)",
+                  }}
                 />
               </div>
             </div>
@@ -765,17 +927,21 @@ function TasksPage() {
               Are you sure you want to delete this task? This action cannot be undone.
             </p>
             <div className="mt-6 flex justify-end gap-3">
-              <Button variant="ghost" onClick={() => setDeleteConfirmId(null)} className="rounded-xl">
+              <Button
+                variant="ghost"
+                onClick={() => setDeleteConfirmId(null)}
+                className="rounded-xl"
+              >
                 Cancel
               </Button>
-              <Button 
-                variant="destructive" 
+              <Button
+                variant="destructive"
                 onClick={() => {
-                  const newTasks = tasks.filter(x => x.id !== deleteConfirmId);
+                  const newTasks = tasks.filter((x) => x.id !== deleteConfirmId);
                   setTasks(newTasks);
 
                   setDeleteConfirmId(null);
-                }} 
+                }}
                 className="rounded-xl"
               >
                 Delete

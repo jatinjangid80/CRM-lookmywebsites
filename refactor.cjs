@@ -1,8 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+const fs = require("fs");
+const path = require("path");
 
-const dir = path.join(__dirname, 'src', 'routes');
-const files = fs.readdirSync(dir).filter(f => f.endsWith('.tsx'));
+const dir = path.join(__dirname, "src", "routes");
+const files = fs.readdirSync(dir).filter((f) => f.endsWith(".tsx"));
 
 const tableMap = {
   '"crm_leads_v2"': '"leads"',
@@ -22,28 +22,28 @@ const tableMap = {
   '"crm_reviews_v1"': '"reviews"',
   '"crm_payroll_v1"': '"payroll"',
   '"crm_assets_v1"': '"assets"',
-  '"crm_certificates_v1"': '"certificates"'
+  '"crm_certificates_v1"': '"certificates"',
 };
 
-files.forEach(file => {
+files.forEach((file) => {
   const filePath = path.join(dir, file);
-  let content = fs.readFileSync(filePath, 'utf8');
-  
-  if (content.includes('useLocalStorage')) {
+  let content = fs.readFileSync(filePath, "utf8");
+
+  if (content.includes("useLocalStorage")) {
     // Add import for useSupabaseTable
-    if (!content.includes('useSupabaseTable')) {
+    if (!content.includes("useSupabaseTable")) {
       content = content.replace(
         /import \{ useLocalStorage \} from "@\/lib\/use-local-storage";/,
-        'import { useLocalStorage } from "@/lib/use-local-storage";\nimport { useSupabaseTable } from "@/hooks/useSupabaseTable";'
+        'import { useLocalStorage } from "@/lib/use-local-storage";\nimport { useSupabaseTable } from "@/hooks/useSupabaseTable";',
       );
     }
 
     // Replace useLocalStorage with useSupabaseTable for the mapped keys
     for (const [key, table] of Object.entries(tableMap)) {
-      const regex = new RegExp(`useLocalStorage(<[^>]+>)?\\(${key}`, 'g');
+      const regex = new RegExp(`useLocalStorage(<[^>]+>)?\\(${key}`, "g");
       content = content.replace(regex, `useSupabaseTable$1(${table}`);
     }
-    
+
     fs.writeFileSync(filePath, content);
     console.log(`Updated ${file}`);
   }

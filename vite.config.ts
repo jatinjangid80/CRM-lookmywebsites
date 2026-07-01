@@ -14,17 +14,17 @@ export default defineConfig({
         behavior: "error",
         client: {
           files: ["**/server/**"],
-          specifiers: ["server-only"]
-        }
+          specifiers: ["server-only"],
+        },
       },
       server: {
         entry: "server",
-        preset: "vercel"
-      }
+        preset: "vercel",
+      },
     }),
     viteReact(),
     nitro({
-      preset: "vercel"
-    })
-  ]
+      preset: "vercel",
+    }),
+  ],
 });

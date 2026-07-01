@@ -19,7 +19,9 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
     try {
       if (typeof window !== "undefined") {
         window.localStorage.setItem(key, JSON.stringify(storedValue));
-        window.dispatchEvent(new CustomEvent('local-storage', { detail: { key, newValue: storedValue } }));
+        window.dispatchEvent(
+          new CustomEvent("local-storage", { detail: { key, newValue: storedValue } }),
+        );
       }
     } catch (error) {
       console.error("Error setting localStorage", error);
@@ -32,7 +34,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
         setStoredValue(JSON.parse(e.newValue));
       }
     };
-    
+
     const handleCustomChange = (e: CustomEvent) => {
       if (e.detail.key === key) {
         setStoredValue(e.detail.newValue);
@@ -41,7 +43,7 @@ export function useLocalStorage<T>(key: string, initialValue: T) {
 
     window.addEventListener("storage", handleStorageChange);
     window.addEventListener("local-storage", handleCustomChange as EventListener);
-    
+
     return () => {
       window.removeEventListener("storage", handleStorageChange);
       window.removeEventListener("local-storage", handleCustomChange as EventListener);

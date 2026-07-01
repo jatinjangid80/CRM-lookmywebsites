@@ -1,10 +1,57 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, X, Upload, FileText, FileSpreadsheet, FileImage, File, Download, Trash2, Table2, Briefcase } from "lucide-react";
+import {
+  Plus,
+  X,
+  Upload,
+  FileText,
+  FileSpreadsheet,
+  FileImage,
+  File,
+  Download,
+  Trash2,
+  Table2,
+  Briefcase,
+  Plane,
+  Train,
+  Building2,
+  Map,
+  Car,
+  ShieldCheck,
+  Bus,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  XCircle,
+  Undo2,
+  CreditCard,
+} from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+  LineChart,
+  Line,
+  CartesianGrid,
+  Legend,
+} from "recharts";
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { ImportModal } from "@/components/ui/import-modal";
 import { bookings as initialBookings, formatINR, type Booking } from "@/lib/mock-data";
 import { useLocalStorage } from "@/lib/use-local-storage";
@@ -50,42 +97,152 @@ function BookingsPage() {
   const allBookings = useMemo(() => {
     const derived = leads
       .filter((l: any) => l.bookingReference || l.status === "Booked" || l.status === "Completed")
-      .map((l: any) => ({
-        id: "LD-" + l.id.replace("L-", ""),
-        bookingType: (l.service || "Holiday Package") as BookingType,
-        supplier: l.vendorName || "Not Assigned",
-        bookingDate: l.createdAt,
-        customer: l.name,
-        mobileNumber: l.phone,
-        bookedBy: l.assignedTo || "Admin",
-        company: l.clientCompany || "",
-        reference: l.bookingReference || "",
-        saleInvoiceNo: "",
-        purchaseInvoiceNo: "",
-        remarks: l.notes || "",
-        sellingPrice: l.totalAmount || 0,
-        purchasePrice: 0,
-        profit: 0,
-        margin: 0,
-        amount: l.totalAmount || 0,
-        paid: l.amountPaid || 0,
-        paymentMode: "Card",
-        transactionId: "",
-        status: (l.paymentStatus || "Pending"),
-        package: l.destination || "Unknown",
-        travelDate: l.travelDate || "TBD",
-      } as ExtBooking));
+      .map(
+        (l: any) =>
+          ({
+            id: "LD-" + l.id.replace("L-", ""),
+            bookingType: (l.service || "Holiday Package") as BookingType,
+            supplier: l.vendorName || "Not Assigned",
+            bookingDate: l.createdAt,
+            customer: l.name,
+            mobileNumber: l.phone,
+            bookedBy: l.assignedTo || "Admin",
+            company: l.clientCompany || "",
+            reference: l.bookingReference || "",
+            saleInvoiceNo: "",
+            purchaseInvoiceNo: "",
+            remarks: l.notes || "",
+            sellingPrice: l.totalAmount || 0,
+            purchasePrice: 0,
+            profit: 0,
+            margin: 0,
+            amount: l.totalAmount || 0,
+            paid: l.amountPaid || 0,
+            paymentMode: "Card",
+            transactionId: "",
+            status: l.paymentStatus || "Pending",
+            package: l.destination || "Unknown",
+            travelDate: l.travelDate || "TBD",
+          }) as ExtBooking,
+      );
     return [...bookingList, ...derived];
   }, [leads, bookingList]);
+
+  // --- Dashboard Data Aggregation ---
+  const dashboardData = useMemo(() => {
+    let totalRevenue = 0;
+    let totalProfit = 0;
+
+    let confirmedCount = 0;
+    let pendingCount = 0;
+    let cancelledCount = 0;
+    let refundedCount = 0;
+
+    const serviceCounts = {
+      "Air Ticket": 0,
+      "Train Ticket": 0,
+      Hotel: 0,
+      "Holiday Package": 0,
+      Taxi: 0,
+      Visa: 0,
+      "Travel Insurance": 0,
+      "Bus Ticket": 0,
+    };
+
+    const monthlyRev: Record<string, number> = {};
+
+    allBookings.forEach((b) => {
+      // Service Counts
+      const type = b.bookingType as keyof typeof serviceCounts;
+      if (serviceCounts[type] !== undefined) {
+        serviceCounts[type]++;
+      } else {
+        serviceCounts["Holiday Package"]++; // Fallback
+      }
+
+      // Status
+      if (b.status === "Confirmed" || b.status === "Completed" || b.status === "Paid")
+        confirmedCount++;
+      else if (b.status === "Pending" || b.status === "Partial") pendingCount++;
+      else if (b.status === "Cancelled") cancelledCount++;
+      else if (b.status === "Refunded") refundedCount++;
+
+      // Revenue & Profit
+      if (b.status !== "Cancelled" && b.status !== "Refunded") {
+        totalRevenue += b.amount || 0;
+        totalProfit += b.profit || 0;
+
+        // Monthly
+        const monthMatch = (b.bookingDate || b.travelDate || "").match(/^\d{4}-(\d{2})-\d{2}$/);
+        if (monthMatch) {
+          const monthIdx = parseInt(monthMatch[1], 10) - 1;
+          const monthNames = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+          const month = monthNames[monthIdx];
+          monthlyRev[month] = (monthlyRev[month] || 0) + (b.amount || 0);
+        }
+      }
+    });
+
+    const margin = totalRevenue > 0 ? ((totalProfit / totalRevenue) * 100).toFixed(1) : "0.0";
+    const avgValue = confirmedCount > 0 ? totalRevenue / confirmedCount : 0;
+
+    const monthlyData = Object.keys(monthlyRev).map((k) => ({ name: k, revenue: monthlyRev[k] }));
+
+    const serviceData = [
+      { name: "Air", value: serviceCounts["Air Ticket"] },
+      { name: "Train", value: serviceCounts["Train Ticket"] },
+      { name: "Hotel", value: serviceCounts["Hotel"] },
+      { name: "Holiday", value: serviceCounts["Holiday Package"] },
+      { name: "Taxi", value: serviceCounts["Taxi"] },
+      { name: "Visa", value: serviceCounts["Visa"] },
+      { name: "Insurance", value: serviceCounts["Travel Insurance"] },
+      { name: "Bus", value: serviceCounts["Bus Ticket"] },
+    ]
+      .filter((d) => d.value > 0)
+      .sort((a, b) => b.value - a.value);
+
+    const statusData = [
+      { name: "Confirmed", value: confirmedCount, color: "#10b981" },
+      { name: "Pending", value: pendingCount, color: "#f59e0b" },
+      { name: "Cancelled", value: cancelledCount, color: "#f43f5e" },
+      { name: "Refunded", value: refundedCount, color: "#a855f7" },
+    ].filter((d) => d.value > 0);
+
+    return {
+      totalBookings: allBookings.length,
+      serviceCounts,
+      totalRevenue,
+      totalProfit,
+      margin,
+      avgValue,
+      statusCounts: { confirmedCount, pendingCount, cancelledCount, refundedCount },
+      serviceData,
+      monthlyData,
+      statusData,
+    };
+  }, [allBookings]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
-  
+
   // Tab state for filtering
   const [activeTab, setActiveTab] = useState<BookingType | "All">("All");
-  
+
   // Success popup state
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -103,18 +260,28 @@ function BookingsPage() {
 
   // Export: Excel / CSV
   const exportToExcel = () => {
-    const headers = ["ID", "Customer", "Package", "Travel Date", "Amount (₹)", "Paid (₹)", "Status"];
+    const headers = [
+      "ID",
+      "Customer",
+      "Package",
+      "Travel Date",
+      "Amount (₹)",
+      "Paid (₹)",
+      "Status",
+    ];
     const csvRows = [
       headers.join(","),
-      ...allBookings.map(b => [
-        `"${b.id}"`,
-        `"${b.customer.replace(/"/g, '""')}"`,
-        `"${b.package.replace(/"/g, '""')}"`,
-        `"${b.travelDate}"`,
-        b.amount,
-        b.paid,
-        `"${b.status}"`
-      ].join(","))
+      ...allBookings.map((b) =>
+        [
+          `"${b.id}"`,
+          `"${b.customer.replace(/"/g, '""')}"`,
+          `"${b.package.replace(/"/g, '""')}"`,
+          `"${b.travelDate}"`,
+          b.amount,
+          b.paid,
+          `"${b.status}"`,
+        ].join(","),
+      ),
     ];
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
@@ -128,10 +295,14 @@ function BookingsPage() {
 
   // Export: Word (.doc)
   const exportToWord = () => {
-    const tableHeader = "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = allBookings.map(b =>
-      `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`
-    ).join("");
+    const tableHeader =
+      "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
+    const tableRows = allBookings
+      .map(
+        (b) =>
+          `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`,
+      )
+      .join("");
     const htmlString = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
       <head><title>Bookings Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
@@ -152,10 +323,14 @@ function BookingsPage() {
   const exportToPDF = () => {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    const tableHeader = "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = allBookings.map(b =>
-      `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>\u20b9${b.amount}</td><td>\u20b9${b.paid}</td><td>${b.status}</td></tr>`
-    ).join("");
+    const tableHeader =
+      "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
+    const tableRows = allBookings
+      .map(
+        (b) =>
+          `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>\u20b9${b.amount}</td><td>\u20b9${b.paid}</td><td>${b.status}</td></tr>`,
+      )
+      .join("");
     const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
     const styleEl = printWindow.document.createElement("style");
     styleEl.textContent = css;
@@ -168,7 +343,8 @@ function BookingsPage() {
     wrapper.innerHTML = bodyHtml;
     printWindow.document.body.appendChild(wrapper);
     const script = printWindow.document.createElement("script");
-    script.textContent = "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
     printWindow.document.body.appendChild(script);
     printWindow.document.close();
   };
@@ -197,7 +373,7 @@ function BookingsPage() {
   const handleAddFile = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!uploadFile || !managingBooking) return;
-    
+
     setUploading(true);
     try {
       const dataUrl = await readAsDataUrl(uploadFile);
@@ -212,10 +388,10 @@ function BookingsPage() {
 
       const updatedBooking: ExtBooking = {
         ...managingBooking,
-        files: [...(managingBooking.files || []), newFile]
+        files: [...(managingBooking.files || []), newFile],
       };
 
-      setBookingList(prev => prev.map(b => b.id === managingBooking.id ? updatedBooking : b));
+      setBookingList((prev) => prev.map((b) => (b.id === managingBooking.id ? updatedBooking : b)));
       setManagingBooking(updatedBooking);
       setUploadFile(null);
       setUploadPriority("Medium");
@@ -233,15 +409,15 @@ function BookingsPage() {
     if (!managingBooking) return;
     const updatedBooking = {
       ...managingBooking,
-      files: (managingBooking.files || []).filter(f => f.name !== fileName)
+      files: (managingBooking.files || []).filter((f) => f.name !== fileName),
     };
-    setBookingList(prev => prev.map(b => b.id === managingBooking.id ? updatedBooking : b));
+    setBookingList((prev) => prev.map((b) => (b.id === managingBooking.id ? updatedBooking : b)));
     setManagingBooking(updatedBooking);
   };
 
   const handleDeleteBooking = () => {
     if (!deleteTarget) return;
-    setBookingList(prev => prev.filter(b => b.id !== deleteTarget.id));
+    setBookingList((prev) => prev.filter((b) => b.id !== deleteTarget.id));
     setDeleteTarget(null);
   };
 
@@ -250,10 +426,21 @@ function BookingsPage() {
     if (type === "application/pdf" || lowercaseName.endsWith(".pdf")) {
       return <FileText className="h-4 w-4 text-rose-500" />;
     }
-    if (type.includes("sheet") || type.includes("excel") || lowercaseName.endsWith(".xlsx") || lowercaseName.endsWith(".xls") || lowercaseName.endsWith(".csv")) {
+    if (
+      type.includes("sheet") ||
+      type.includes("excel") ||
+      lowercaseName.endsWith(".xlsx") ||
+      lowercaseName.endsWith(".xls") ||
+      lowercaseName.endsWith(".csv")
+    ) {
       return <FileSpreadsheet className="h-4 w-4 text-emerald-500" />;
     }
-    if (type.includes("word") || type.includes("document") || lowercaseName.endsWith(".docx") || lowercaseName.endsWith(".doc")) {
+    if (
+      type.includes("word") ||
+      type.includes("document") ||
+      lowercaseName.endsWith(".docx") ||
+      lowercaseName.endsWith(".doc")
+    ) {
       return <FileText className="h-4 w-4 text-blue-500" />;
     }
     if (type.startsWith("image/")) {
@@ -271,56 +458,88 @@ function BookingsPage() {
   const priorityColor = {
     High: "bg-red-50 text-red-700 border-red-200",
     Medium: "bg-amber-50 text-amber-700 border-amber-200",
-    Low: "bg-blue-50 text-blue-700 border-blue-200"
+    Low: "bg-blue-50 text-blue-700 border-blue-200",
   };
 
   const handleImportBookings = (data: any[]) => {
-    const importedBookings = data.map(row => ({
-      id: `BK-${1000 + Math.floor(Math.random() * 9000)}`,
-      bookingType: "Legacy" as Booking["bookingType"],
-      supplier: row["Supplier"] || "Unknown",
-      bookingDate: new Date().toISOString().slice(0, 10),
-      customer: row["Customer"] || row["customer"] || row["Name"] || "Unknown",
-      mobileNumber: "",
-      bookedBy: "",
-      company: "",
-      reference: "",
-      saleInvoiceNo: "",
-      purchaseInvoiceNo: "",
-      remarks: "",
-      sellingPrice: parseInt(row["Amount"] || row["amount"] || row["Total"]) || 0,
-      purchasePrice: 0,
-      profit: 0,
-      margin: 0,
-      package: row["Package"] || row["package"] || row["Service"] || "Custom Package",
-      travelDate: row["Travel Date"] || row["travelDate"] || row["Date"] || new Date().toISOString().slice(0, 10),
-      status: (row["Status"] || row["status"] || "Pending") as Booking["status"],
-      amount: parseInt(row["Amount"] || row["amount"] || row["Total"]) || 0,
-      paid: parseInt(row["Paid"] || row["paid"]) || 0,
-      paymentMode: "Cash" as Booking["paymentMode"],
-      transactionId: "",
-    }));
-    setBookingList(prev => [...importedBookings, ...prev]);
+    let currentMaxId = bookingList.reduce((max, b) => {
+      const numStr = String(b.id || "").replace(/BK-?/i, "");
+      const num = parseInt(numStr, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+
+    const importedBookings = data.map((row) => {
+      currentMaxId++;
+      return {
+        id: `BK-${String(currentMaxId).padStart(3, "0")}`,
+        bookingType: "Legacy" as Booking["bookingType"],
+        supplier: row["Supplier"] || "Unknown",
+        bookingDate: new Date().toISOString().slice(0, 10),
+        customer: row["Customer"] || row["customer"] || row["Name"] || "Unknown",
+        mobileNumber: "",
+        bookedBy: "",
+        company: "",
+        reference: "",
+        saleInvoiceNo: "",
+        purchaseInvoiceNo: "",
+        remarks: "",
+        sellingPrice: parseInt(row["Amount"] || row["amount"] || row["Total"]) || 0,
+        purchasePrice: 0,
+        profit: 0,
+        margin: 0,
+        package: row["Package"] || row["package"] || row["Service"] || "Custom Package",
+        travelDate:
+          row["Travel Date"] ||
+          row["travelDate"] ||
+          row["Date"] ||
+          new Date().toISOString().slice(0, 10),
+        status: (row["Status"] || row["status"] || "Pending") as Booking["status"],
+        amount: parseInt(row["Amount"] || row["amount"] || row["Total"]) || 0,
+        paid: parseInt(row["Paid"] || row["paid"]) || 0,
+        paymentMode: "Cash" as Booking["paymentMode"],
+        transactionId: "",
+      };
+    });
+    setBookingList((prev) => [...importedBookings, ...prev]);
   };
 
   const handleAddBookingSave = (booking: Booking) => {
-    setBookingList([booking, ...bookingList]);
-    setSuccessBooking(booking);
+    const currentMaxId = bookingList.reduce((max, b) => {
+      const numStr = String(b.id || "").replace(/BK-?/i, "");
+      const num = parseInt(numStr, 10);
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+    const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
+    const newBooking = { ...booking, id: nextId };
+
+    setBookingList([newBooking, ...bookingList]);
+    setSuccessBooking(newBooking);
     setShowSuccess(true);
   };
-  
-  const filteredBookings = allBookings.filter(b => activeTab === "All" || b.bookingType === activeTab || (activeTab === "Holiday Package" && !b.bookingType)); // Fallback for legacy items
+
+  const filteredBookings = allBookings.filter(
+    (b) =>
+      activeTab === "All" ||
+      b.bookingType === activeTab ||
+      (activeTab === "Holiday Package" && !b.bookingType),
+  ); // Fallback for legacy items
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h1 className="font-display text-3xl font-bold">Bookings</h1>
-          <p className="text-sm text-muted-foreground">Packages, flights, hotels, visas and transfers — all in one place.</p>
+          <p className="text-sm text-muted-foreground">
+            Packages, flights, hotels, visas and transfers — all in one place.
+          </p>
         </div>
-        
+
         <div className="flex gap-2">
-          <Button variant="outline" className="gap-2 rounded-xl" onClick={() => setIsExportOpen(true)}>
+          <Button
+            variant="outline"
+            className="gap-2 rounded-xl"
+            onClick={() => setIsExportOpen(true)}
+          >
             <Download className="h-4 w-4" /> Export Bookings
           </Button>
           <Button variant="outline" className="gap-2" onClick={() => setIsImportOpen(true)}>
@@ -329,17 +548,264 @@ function BookingsPage() {
           <Button className="btn-hero" onClick={() => setIsAddOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> New booking
           </Button>
-          <AddBookingModal 
-            open={isAddOpen} 
-            onOpenChange={setIsAddOpen} 
-            onSave={handleAddBookingSave} 
+          <AddBookingModal
+            open={isAddOpen}
+            onOpenChange={setIsAddOpen}
+            onSave={handleAddBookingSave}
           />
         </div>
       </div>
-      
+
+      {/* ===== Dashboard Section ===== */}
+      <div className="space-y-6 bg-secondary/10 p-6 rounded-2xl border border-border">
+        {/* Row 1: KPI Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Briefcase className="h-4 w-4 text-blue-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Total</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.totalBookings}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Plane className="h-4 w-4 text-sky-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Air</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Air Ticket"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Train className="h-4 w-4 text-purple-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Train</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Train Ticket"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Building2 className="h-4 w-4 text-orange-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Hotels</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Hotel"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Map className="h-4 w-4 text-emerald-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Holiday</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Holiday Package"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Car className="h-4 w-4 text-yellow-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Taxi</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Taxi"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <FileText className="h-4 w-4 text-indigo-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Visa</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Visa"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <ShieldCheck className="h-4 w-4 text-teal-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Insurance</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Travel Insurance"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Bus className="h-4 w-4 text-pink-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Bus</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["Bus Ticket"]}</p>
+          </div>
+        </div>
+
+        {/* Row 2: Revenue Analytics */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp className="h-16 w-16 text-primary" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Total Revenue
+            </p>
+            <p className="text-3xl font-display font-bold text-foreground">
+              {formatINR(dashboardData.totalRevenue)}
+            </p>
+          </div>
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp className="h-16 w-16 text-emerald-600" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Total Profit
+            </p>
+            <p className="text-3xl font-display font-bold text-emerald-600">
+              {formatINR(dashboardData.totalProfit)}
+            </p>
+          </div>
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <CheckCircle2 className="h-16 w-16 text-blue-600" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Avg Booking Value
+            </p>
+            <p className="text-3xl font-display font-bold text-blue-600">
+              {formatINR(dashboardData.avgValue)}
+            </p>
+          </div>
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Briefcase className="h-16 w-16 text-amber-600" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Profit Margin
+            </p>
+            <p className="text-3xl font-display font-bold text-amber-600">
+              {dashboardData.margin}%
+            </p>
+          </div>
+        </div>
+
+        {/* Row 3: Status Summary */}
+        <div className="grid grid-cols-4 gap-3 bg-card p-2 rounded-xl border border-border">
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-emerald-50 text-emerald-700">
+            <div className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Confirmed</span>
+            </div>
+            <span className="text-2xl font-bold mt-1">
+              {dashboardData.statusCounts.confirmedCount}
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-amber-50 text-amber-700">
+            <div className="flex items-center gap-1.5">
+              <Clock className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Pending</span>
+            </div>
+            <span className="text-2xl font-bold mt-1">
+              {dashboardData.statusCounts.pendingCount}
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-rose-50 text-rose-700">
+            <div className="flex items-center gap-1.5">
+              <XCircle className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Cancelled</span>
+            </div>
+            <span className="text-2xl font-bold mt-1">
+              {dashboardData.statusCounts.cancelledCount}
+            </span>
+          </div>
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-purple-50 text-purple-700">
+            <div className="flex items-center gap-1.5">
+              <Undo2 className="h-4 w-4" />
+              <span className="text-xs font-bold uppercase tracking-wider">Refunded</span>
+            </div>
+            <span className="text-2xl font-bold mt-1">
+              {dashboardData.statusCounts.refundedCount}
+            </span>
+          </div>
+        </div>
+
+        {/* Row 4: Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
+          {/* Bookings by Service */}
+          <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">
+              Bookings by Service
+            </h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={dashboardData.serviceData}
+                  layout="vertical"
+                  margin={{ top: 0, right: 20, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
+                  <XAxis type="number" hide />
+                  <YAxis
+                    dataKey="name"
+                    type="category"
+                    axisLine={false}
+                    tickLine={false}
+                    tick={{ fontSize: 12, fill: "#6b7280" }}
+                    width={80}
+                  />
+                  <Tooltip
+                    cursor={{ fill: "rgba(0,0,0,0.05)" }}
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          {/* Booking Status */}
+          <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">
+              Booking Status
+            </h3>
+            <div className="h-[250px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={dashboardData.statusData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={60}
+                    outerRadius={80}
+                    paddingAngle={5}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {dashboardData.statusData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    contentStyle={{
+                      borderRadius: "12px",
+                      border: "none",
+                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
+                    }}
+                  />
+                  <Legend
+                    verticalAlign="bottom"
+                    height={36}
+                    iconType="circle"
+                    wrapperStyle={{ fontSize: "12px" }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+
       {/* Tabbed Navigation */}
       <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide border-b border-border">
-        {["All", "Air Ticket", "Train Ticket", "Hotel", "Holiday Package", "Taxi", "Visa", "Travel Insurance", "Bus Ticket"].map((tab) => (
+        {[
+          "All",
+          "Air Ticket",
+          "Train Ticket",
+          "Hotel",
+          "Holiday Package",
+          "Taxi",
+          "Visa",
+          "Travel Insurance",
+          "Bus Ticket",
+        ].map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab as BookingType | "All")}
@@ -373,63 +839,86 @@ function BookingsPage() {
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">No bookings found for {activeTab}.</td>
+                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                    No bookings found for {activeTab}.
+                  </td>
                 </tr>
-              ) : filteredBookings.map((b) => (
-                <tr key={b.id} className="border-t border-border hover:bg-secondary/30">
-                  <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">{b.id}</td>
-                  <td className="px-4 py-3 font-semibold">{b.customer}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col">
-                      <span className="font-semibold text-xs text-foreground/80">{b.bookingType || "Holiday Package"}</span>
-                      <span className="text-xs text-muted-foreground truncate max-w-[150px]" title={b.package}>{b.package}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-sm">{b.travelDate}</td>
-                  <td className="px-4 py-3 font-medium">{formatINR(b.amount || 0)}</td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col">
-                      <span className={b.profit > 0 ? "text-emerald-600 font-semibold text-xs" : "text-muted-foreground text-xs"}>
-                        {formatINR(b.profit || 0)}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground">{b.margin || 0}%</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <span className={`rounded-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}>
-                      {b.status}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3">
-                    {b.files && b.files.length > 0 ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold border border-blue-100">
-                        📄 {b.files.length} file{b.files.length !== 1 ? "s" : ""}
-                      </span>
-                    ) : (
-                      <span className="text-muted-foreground/50 text-xs">—</span>
-                    )}
-                  </td>
-                  <td className="px-4 py-3 text-right">
-                    <div className="flex items-center justify-end gap-1.5">
-                      <Button size="sm" variant="ghost" onClick={() => handleManageBooking(b)}>Manage</Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
-                        onClick={() => setDeleteTarget(b)}
-                        title="Delete Booking"
+              ) : (
+                filteredBookings.map((b) => (
+                  <tr key={b.id} className="border-t border-border hover:bg-secondary/30">
+                    <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">
+                      {b.id}
+                    </td>
+                    <td className="px-4 py-3 font-semibold">{b.customer}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span className="font-semibold text-xs text-foreground/80">
+                          {b.bookingType || "Holiday Package"}
+                        </span>
+                        <span
+                          className="text-xs text-muted-foreground truncate max-w-[150px]"
+                          title={b.package}
+                        >
+                          {b.package}
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-sm">{b.travelDate}</td>
+                    <td className="px-4 py-3 font-medium">{formatINR(b.amount || 0)}</td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col">
+                        <span
+                          className={
+                            b.profit > 0
+                              ? "text-emerald-600 font-semibold text-xs"
+                              : "text-muted-foreground text-xs"
+                          }
+                        >
+                          {formatINR(b.profit || 0)}
+                        </span>
+                        <span className="text-[10px] text-muted-foreground">{b.margin || 0}%</span>
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}
                       >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </td>
-                </tr>
-              ))}
+                        {b.status}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {b.files && b.files.length > 0 ? (
+                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold border border-blue-100">
+                          📄 {b.files.length} file{b.files.length !== 1 ? "s" : ""}
+                        </span>
+                      ) : (
+                        <span className="text-muted-foreground/50 text-xs">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <Button size="sm" variant="ghost" onClick={() => handleManageBooking(b)}>
+                          Manage
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
+                          onClick={() => setDeleteTarget(b)}
+                          title="Delete Booking"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
       </div>
-      
+
       <ImportModal
         open={isImportOpen}
         onOpenChange={setIsImportOpen}
@@ -441,7 +930,9 @@ function BookingsPage() {
       <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
         <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-6 shadow-2xl bg-card">
           <DialogHeader>
-            <DialogTitle className="font-display text-lg font-bold">Manage Booking Details</DialogTitle>
+            <DialogTitle className="font-display text-lg font-bold">
+              Manage Booking Details
+            </DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
               Upload visa documents, tickets, hotel vouchers, and set document priorities.
             </DialogDescription>
@@ -452,8 +943,12 @@ function BookingsPage() {
               {/* Booking Info Card */}
               <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-2.5">
                 <div className="flex justify-between items-center">
-                  <span className="font-mono text-xs font-semibold text-primary">{managingBooking.id}</span>
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor[managingBooking.status]}`}>
+                  <span className="font-mono text-xs font-semibold text-primary">
+                    {managingBooking.id}
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor[managingBooking.status]}`}
+                  >
                     {managingBooking.status}
                   </span>
                 </div>
@@ -483,14 +978,18 @@ function BookingsPage() {
 
               {/* Upload Document Form */}
               <form onSubmit={handleAddFile} className="space-y-4 border-t border-border pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Attach Document</h3>
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Attach Document
+                </h3>
                 <div className="grid grid-cols-3 gap-3">
                   {/* File Selector */}
                   <div className="col-span-2 space-y-1">
-                    <Label htmlFor="booking-doc-file" className="text-xs">Document File (.pdf, .xlsx, .doc, image)</Label>
-                    <Input 
-                      id="booking-doc-file" 
-                      type="file" 
+                    <Label htmlFor="booking-doc-file" className="text-xs">
+                      Document File (.pdf, .xlsx, .doc, image)
+                    </Label>
+                    <Input
+                      id="booking-doc-file"
+                      type="file"
                       required
                       accept=".pdf,.xls,.xlsx,.doc,.docx,image/*"
                       onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
@@ -500,11 +999,15 @@ function BookingsPage() {
 
                   {/* Priority Selector */}
                   <div className="space-y-1">
-                    <Label htmlFor="booking-doc-priority" className="text-xs">File Priority</Label>
-                    <select 
-                      id="booking-doc-priority" 
-                      value={uploadPriority} 
-                      onChange={(e) => setUploadPriority(e.target.value as "High" | "Medium" | "Low")} 
+                    <Label htmlFor="booking-doc-priority" className="text-xs">
+                      File Priority
+                    </Label>
+                    <select
+                      id="booking-doc-priority"
+                      value={uploadPriority}
+                      onChange={(e) =>
+                        setUploadPriority(e.target.value as "High" | "Medium" | "Low")
+                      }
                       className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
                     >
                       <option value="High">🔴 High</option>
@@ -514,9 +1017,9 @@ function BookingsPage() {
                   </div>
                 </div>
 
-                <Button 
-                  type="submit" 
-                  disabled={uploading || !uploadFile} 
+                <Button
+                  type="submit"
+                  disabled={uploading || !uploadFile}
                   className="w-full h-9 rounded-lg text-xs gap-1.5"
                   style={{ background: "var(--gradient-brand)" }}
                 >
@@ -527,8 +1030,10 @@ function BookingsPage() {
 
               {/* Uploaded Documents List */}
               <div className="border-t border-border pt-4 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Attached Files</h3>
-                
+                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Attached Files
+                </h3>
+
                 {!managingBooking.files || managingBooking.files.length === 0 ? (
                   <div className="text-center py-6 text-xs text-muted-foreground border border-dashed rounded-xl p-4 bg-secondary/15">
                     No documents attached yet. Upload flights, hotels, or visa documents.
@@ -536,21 +1041,28 @@ function BookingsPage() {
                 ) : (
                   <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
                     {managingBooking.files.map((file) => (
-                      <div key={file.name} className="flex items-center justify-between rounded-xl border border-border p-3 bg-secondary/10 hover:bg-secondary/20 transition-all text-xs">
+                      <div
+                        key={file.name}
+                        className="flex items-center justify-between rounded-xl border border-border p-3 bg-secondary/10 hover:bg-secondary/20 transition-all text-xs"
+                      >
                         <div className="flex items-center gap-2.5 min-w-0 flex-1">
                           {getFileIcon(file.type, file.name)}
                           <div className="min-w-0 flex-1">
                             <p className="font-semibold truncate text-foreground">{file.name}</p>
-                            <p className="text-[10px] text-muted-foreground">{fmtSize(file.size)}</p>
+                            <p className="text-[10px] text-muted-foreground">
+                              {fmtSize(file.size)}
+                            </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2.5 ml-3 shrink-0">
-                          <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold ${priorityColor[file.priority]}`}>
+                          <span
+                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold ${priorityColor[file.priority]}`}
+                          >
                             {file.priority}
                           </span>
-                          <a 
-                            href={file.dataUrl} 
+                          <a
+                            href={file.dataUrl}
                             download={file.name}
                             className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
                             title="Download file"
@@ -577,7 +1089,12 @@ function BookingsPage() {
           )}
 
           <DialogFooter className="border-t border-border pt-4">
-            <Button type="button" variant="outline" className="rounded-xl" onClick={() => setIsManageOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsManageOpen(false)}
+            >
               Close
             </Button>
           </DialogFooter>
@@ -589,14 +1106,18 @@ function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Bookings</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {allBookings.length} bookings in your preferred file format.
+              Export the current list of {allBookings.length} bookings in your preferred file
+              format.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-3 gap-3 py-6">
             <button
               type="button"
-              onClick={() => { exportToPDF(); setIsExportOpen(false); }}
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
               className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
             >
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
@@ -607,7 +1128,10 @@ function BookingsPage() {
 
             <button
               type="button"
-              onClick={() => { exportToExcel(); setIsExportOpen(false); }}
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
               className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
             >
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
@@ -618,7 +1142,10 @@ function BookingsPage() {
 
             <button
               type="button"
-              onClick={() => { exportToWord(); setIsExportOpen(false); }}
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
               className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
             >
               <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
@@ -629,7 +1156,12 @@ function BookingsPage() {
           </div>
 
           <DialogFooter className="border-t border-border pt-4">
-            <Button type="button" variant="outline" className="rounded-xl" onClick={() => setIsExportOpen(false)}>
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
               Cancel
             </Button>
           </DialogFooter>
@@ -653,7 +1185,9 @@ function BookingsPage() {
             {/* Confetti gradient top bar */}
             <div
               className="h-2 w-full"
-              style={{ background: "linear-gradient(90deg, #f43f5e, #f59e0b, #10b981, #3b82f6, #a855f7)" }}
+              style={{
+                background: "linear-gradient(90deg, #f43f5e, #f59e0b, #10b981, #3b82f6, #a855f7)",
+              }}
             />
 
             {/* Close button */}
@@ -685,30 +1219,46 @@ function BookingsPage() {
               {/* Booking details card */}
               <div className="w-full rounded-2xl bg-secondary/40 border border-border p-4 text-left space-y-2.5">
                 <div className="flex items-center justify-between">
-                  <span className="font-mono text-xs font-bold text-primary">{successBooking.id}</span>
+                  <span className="font-mono text-xs font-bold text-primary">
+                    {successBooking.id}
+                  </span>
                   <span className="rounded-full bg-emerald-100 text-emerald-700 px-2 py-0.5 text-[10px] font-bold">
                     {successBooking.status}
                   </span>
                 </div>
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Customer</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Customer
+                    </p>
                     <p className="font-semibold text-foreground">{successBooking.customer}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Travel Date</p>
-                    <p className="font-semibold text-foreground">{successBooking.travelDate || "—"}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Travel Date
+                    </p>
+                    <p className="font-semibold text-foreground">
+                      {successBooking.travelDate || "—"}
+                    </p>
                   </div>
                   <div className="col-span-2">
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Package</p>
-                    <p className="font-semibold text-foreground truncate">{successBooking.package}</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Package
+                    </p>
+                    <p className="font-semibold text-foreground truncate">
+                      {successBooking.package}
+                    </p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Total Amount</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Total Amount
+                    </p>
                     <p className="font-bold text-primary">{formatINR(successBooking.amount)}</p>
                   </div>
                   <div>
-                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">Paid</p>
+                    <p className="text-[10px] text-muted-foreground uppercase tracking-wide">
+                      Paid
+                    </p>
                     <p className="font-bold text-emerald-600">{formatINR(successBooking.paid)}</p>
                   </div>
                 </div>
@@ -744,7 +1294,9 @@ function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Delete Booking</DialogTitle>
             <DialogDescription className="text-sm text-muted-foreground mt-2">
-              Are you sure you want to delete the booking for <strong className="text-foreground">{deleteTarget?.customer}</strong> ({deleteTarget?.id})? This action cannot be undone.
+              Are you sure you want to delete the booking for{" "}
+              <strong className="text-foreground">{deleteTarget?.customer}</strong> (
+              {deleteTarget?.id})? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-0 mt-4">

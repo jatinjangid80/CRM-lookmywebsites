@@ -106,7 +106,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-02": {
     department: "Insurance & Travel",
@@ -121,7 +121,13 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     certifications: ["HR Management Professional"],
     reportingManager: "Manvendra Singhal (LMH-01)",
     teamLead: "Suman Yadav",
-    directReports: ["Nikita Birwa (LMH-03)", "Aman Sharma (LMH-04)", "Pushplata Kriplani (LMH-05)", "Deepak Yogi (LMH-06)", "Jatin Jangid (LMH-07)"],
+    directReports: [
+      "Nikita Birwa (LMH-03)",
+      "Aman Sharma (LMH-04)",
+      "Pushplata Kriplani (LMH-05)",
+      "Deepak Yogi (LMH-06)",
+      "Jatin Jangid (LMH-07)",
+    ],
     dob: "1993-01-01",
     gender: "Female",
     nationality: "Indian",
@@ -141,7 +147,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-03": {
     department: "Insurance",
@@ -176,7 +182,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-04": {
     department: "Accounting",
@@ -211,7 +217,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-05": {
     department: "Travel",
@@ -246,7 +252,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-06": {
     department: "Visa Exctive",
@@ -281,7 +287,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   },
   "LMH-07": {
     department: "Internship",
@@ -316,11 +322,17 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
-  }
+    familyInformation: [],
+  },
 };
 
-export function createDefaultEmployeeDetails(empId: string, name: string, role: string, email: string, phone: string): EmployeeDetails {
+export function createDefaultEmployeeDetails(
+  empId: string,
+  name: string,
+  role: string,
+  email: string,
+  phone: string,
+): EmployeeDetails {
   return {
     department: "Operations",
     designation: role,
@@ -354,6 +366,6 @@ export function createDefaultEmployeeDetails(empId: string, name: string, role: 
     verificationStatus: "Verified",
     careerHistory: [],
     academicBackground: [],
-    familyInformation: []
+    familyInformation: [],
   };
 }

@@ -20,8 +20,7 @@ export type Package = {
   itinerary: { day: number; title: string; description: string }[];
 };
 
-const img = (q: string) =>
-  `https://images.unsplash.com/${q}?auto=format&fit=crop&w=1400&q=80`;
+const img = (q: string) => `https://images.unsplash.com/${q}?auto=format&fit=crop&w=1400&q=80`;
 
 export const packages: Package[] = [];
 
@@ -40,7 +39,17 @@ export type Lead = {
   destination: string;
   budget: number;
   travelDate: string;
-  status: "New Lead" | "Contacted" | "Quotation Sent" | "Negotiation" | "Booked" | "Completed" | "Lost";
+  status:
+    | "New Lead"
+    | "Contacted"
+    | "Quotation Sent"
+    | "Negotiation"
+    | "Confirmed"
+    | "Payment Pending"
+    | "Booked"
+    | "Travel Completed"
+    | "Review Collected"
+    | "Lost";
   source: string;
   reference?: string;
   createdAt: string;
@@ -56,9 +65,130 @@ export type Lead = {
   expiryDate?: string;
   notes?: string;
   noteDate?: string;
+  // Extended fields
+  whatsapp?: string;
+  adults?: number;
+  children?: number;
+  lastFollowUp?: string;
+  nextFollowUp?: string;
 };
 
-export const leads: Lead[] = [];
+const todayStr = new Date().toISOString().slice(0, 10);
+const yesterdayStr = new Date(Date.now() - 86400000).toISOString().slice(0, 10);
+const in3DaysStr = new Date(Date.now() + 86400000 * 3).toISOString().slice(0, 10);
+const in5DaysStr = new Date(Date.now() + 86400000 * 5).toISOString().slice(0, 10);
+
+export const leads: Lead[] = [
+  {
+    id: "L-1001",
+    name: "Aarav Mehta",
+    phone: "9876543210",
+    whatsapp: "9876543210",
+    email: "aarav.mehta@gmail.com",
+    destination: "Dubai",
+    budget: 52000,
+    travelDate: in5DaysStr,
+    status: "New Lead",
+    source: "Instagram",
+    createdAt: todayStr,
+    service: "International Package",
+    priority: "High",
+    pax: 2,
+    packageType: "Luxury",
+    assignedTo: "Nikita Bairwa",
+    adults: 2,
+    children: 0,
+    nextFollowUp: todayStr,
+    notes: "Client requested Burj Khalifa tickets and premium transfers.",
+  },
+  {
+    id: "L-1002",
+    name: "Ishita Sharma",
+    phone: "9123456789",
+    whatsapp: "9123456789",
+    email: "ishita@yahoo.com",
+    destination: "Thailand",
+    budget: 45000,
+    travelDate: "2026-08-10",
+    status: "Contacted",
+    source: "Website",
+    createdAt: yesterdayStr,
+    service: "International Package",
+    priority: "Medium",
+    pax: 3,
+    packageType: "Family",
+    assignedTo: "Pushplata Kriplani",
+    adults: 2,
+    children: 1,
+    nextFollowUp: in3DaysStr,
+    notes: "Contacted via call. Sending family resort packages in Phuket.",
+  },
+  {
+    id: "L-1003",
+    name: "Rohan Gupta",
+    phone: "8888888888",
+    whatsapp: "8888888888",
+    email: "rohan.g@gmail.com",
+    destination: "Kashmir",
+    budget: 35000,
+    travelDate: in3DaysStr,
+    status: "Quotation Sent",
+    source: "Referral",
+    createdAt: yesterdayStr,
+    service: "Domestic Package",
+    priority: "High",
+    pax: 2,
+    packageType: "Honeymoon",
+    assignedTo: "Nikita Bairwa",
+    adults: 2,
+    children: 0,
+    nextFollowUp: todayStr,
+    notes: "Sent luxury houseboat quote. Follow-up today for confirmation.",
+  },
+  {
+    id: "L-1004",
+    name: "Preeti Patel",
+    phone: "9999999999",
+    whatsapp: "9999999999",
+    email: "preeti@outlook.com",
+    destination: "Goa",
+    budget: 28000,
+    travelDate: "2026-07-20",
+    status: "Negotiation",
+    source: "Facebook",
+    createdAt: yesterdayStr,
+    service: "Domestic Package",
+    priority: "Low",
+    pax: 4,
+    packageType: "Group",
+    assignedTo: "Pushplata Kriplani",
+    adults: 4,
+    children: 0,
+    nextFollowUp: in5DaysStr,
+    notes: "Negotiating on hotel rating. Wants 4-star instead of 3-star.",
+  },
+  {
+    id: "L-1005",
+    name: "Karan Johar",
+    phone: "7777777777",
+    whatsapp: "7777777777",
+    email: "karan@dharmaprod.com",
+    destination: "Maldives",
+    budget: 120000,
+    travelDate: in5DaysStr,
+    status: "Booked",
+    source: "Ads",
+    createdAt: yesterdayStr,
+    service: "International Package",
+    priority: "High",
+    pax: 2,
+    packageType: "Luxury",
+    assignedTo: "Nikita Bairwa",
+    adults: 2,
+    children: 0,
+    notes: "Booking confirmed. Fully paid.",
+  },
+];
 
 export type Customer = {
   id: string;
@@ -72,7 +202,16 @@ export type Customer = {
 
 export const customers: Customer[] = [];
 
-export type BookingType = "Air Ticket" | "Train Ticket" | "Hotel" | "Holiday Package" | "Taxi" | "Visa" | "Travel Insurance" | "Bus Ticket" | "Legacy";
+export type BookingType =
+  | "Air Ticket"
+  | "Train Ticket"
+  | "Hotel"
+  | "Holiday Package"
+  | "Taxi"
+  | "Visa"
+  | "Travel Insurance"
+  | "Bus Ticket"
+  | "Legacy";
 export type PaymentMode = "Cash" | "UPI" | "Card" | "Bank Transfer" | "Cheque" | "";
 export type PaymentStatus = "Pending" | "Partial" | "Paid" | "Refunded";
 
@@ -101,10 +240,10 @@ export type Booking = {
   margin: number;
   refundDate?: string;
   refundAmount?: number;
-  
+
   // Payment Section
   amount: number; // maps to Selling Price (Total Amount)
-  paid: number;   // Amount Paid
+  paid: number; // Amount Paid
   paymentMode: PaymentMode;
   transactionId: string;
   status: "Confirmed" | "Pending" | "Cancelled" | "Completed" | PaymentStatus; // Merged for backward compat
@@ -120,11 +259,11 @@ export type Booking = {
     sector?: string;
     passengerName?: string;
     pnr?: string;
-    
+
     // Train / Air
     trainName?: string;
     airline?: string;
-    
+
     // Hotel
     checkIn?: string;
     checkOut?: string;
@@ -132,14 +271,14 @@ export type Booking = {
     hotelName?: string;
     mealPlan?: string;
     leaderName?: string;
-    
+
     // Holiday Package
     travelFrom?: string;
     travelTo?: string;
     destination?: string;
     packageType?: string;
     noOfPax?: number;
-    
+
     // Taxi
     cityRoute?: string;
     vehicleType?: string;
@@ -158,18 +297,107 @@ export type Booking = {
     processDate?: string;
     applicationStatus?: string;
     insuranceType?: string;
-    
+
     // Bus
     busOperator?: string;
   };
 };
 
-export const bookings: Booking[] = [];
+export const bookings: Booking[] = [
+  {
+    id: "BK-001",
+    bookingType: "Holiday Package",
+    supplier: "RezLive",
+    bookingDate: todayStr,
+    customer: "Karan Johar",
+    mobileNumber: "7777777777",
+    bookedBy: "Nikita Bairwa",
+    company: "Dharma Prod",
+    reference: "REF-777",
+    saleInvoiceNo: "SAL-5001",
+    purchaseInvoiceNo: "PUR-5001",
+    remarks: "Premium overwater villa booked",
+    sellingPrice: 120000,
+    purchasePrice: 105000,
+    profit: 15000,
+    margin: 12.5,
+    amount: 120000,
+    paid: 120000,
+    paymentMode: "UPI",
+    transactionId: "TXN1029384",
+    status: "Confirmed",
+    package: "Maldives Luxury Escape",
+    travelDate: in5DaysStr,
+    details: {
+      travelFrom: "Delhi",
+      travelTo: "Male",
+      destination: "Maldives",
+      packageType: "Luxury",
+      noOfPax: 2,
+      hotelName: "Soneva Jani",
+      mealPlan: "All Inclusive",
+      pnr: "PNR-MAL-992",
+    },
+  },
+  {
+    id: "BK-002",
+    bookingType: "Holiday Package",
+    supplier: "GTA Holidays",
+    bookingDate: yesterdayStr,
+    customer: "Aarav Mehta",
+    mobileNumber: "9876543210",
+    bookedBy: "Nikita Bairwa",
+    company: "",
+    reference: "",
+    saleInvoiceNo: "SAL-5002",
+    purchaseInvoiceNo: "PUR-5002",
+    remarks: "Dubai package pending balance",
+    sellingPrice: 52000,
+    purchasePrice: 46000,
+    profit: 6000,
+    margin: 11.5,
+    amount: 52000,
+    paid: 30000,
+    paymentMode: "Bank Transfer",
+    transactionId: "TXN58392",
+    status: "Pending",
+    package: "Dubai City & Safari",
+    travelDate: in5DaysStr,
+    details: {
+      travelFrom: "Mumbai",
+      travelTo: "Dubai",
+      destination: "Dubai",
+      packageType: "Luxury",
+      noOfPax: 2,
+      hotelName: "Atlantis The Palm",
+      mealPlan: "Half Board",
+      pnr: "PNR-DXB-112",
+    },
+  },
+];
 
-export const revenueByMonth: any[] = [];
+export const revenueByMonth: any[] = [
+  { month: "Jan", revenue: 4.2 },
+  { month: "Feb", revenue: 5.8 },
+  { month: "Mar", revenue: 8.5 },
+  { month: "Apr", revenue: 7.9 },
+  { month: "May", revenue: 12.4 },
+  { month: "Jun", revenue: 15.6 },
+];
 
-export const destinationPerformance: any[] = [];
+export const destinationPerformance: any[] = [
+  { name: "Dubai", sales: 12 },
+  { name: "Thailand", sales: 18 },
+  { name: "Maldives", sales: 8 },
+  { name: "Kashmir", sales: 15 },
+  { name: "Bali", sales: 9 },
+  { name: "Goa", sales: 22 },
+];
 
 export function formatINR(n: number) {
-  return new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(n);
+  return new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    maximumFractionDigits: 0,
+  }).format(n);
 }

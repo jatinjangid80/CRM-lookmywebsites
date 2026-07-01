@@ -28,7 +28,9 @@ export function DeleteConfirmModal({
     <AlertDialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <AlertDialogContent className="sm:max-w-[420px]">
         <AlertDialogHeader>
-          <AlertDialogTitle className="text-xl font-semibold text-foreground">{title}</AlertDialogTitle>
+          <AlertDialogTitle className="text-xl font-semibold text-foreground">
+            {title}
+          </AlertDialogTitle>
           <AlertDialogDescription className="text-muted-foreground mt-2">
             {description}
           </AlertDialogDescription>

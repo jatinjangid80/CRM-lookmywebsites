@@ -4,7 +4,7 @@ export type UserRole = "admin" | "manager" | "employee";
 export interface AuthUser {
   role: UserRole;
   name: string;
-  empId?: string;   // set for employees
+  empId?: string; // set for employees
   avatar?: string;
   email?: string;
   phone?: string;
@@ -141,9 +141,7 @@ export function clearAuth(): void {
 
 export function login(username: string, password: string): AuthUser | null {
   const match = MOCK_USERS.find(
-    (u) =>
-      u.username.toLowerCase() === username.trim().toLowerCase() &&
-      u.password === password
+    (u) => u.username.toLowerCase() === username.trim().toLowerCase() && u.password === password,
   );
   if (match) {
     setAuth(match.user);
@@ -159,10 +157,14 @@ export function login(username: string, password: string): AuthUser | null {
         (emp: any) =>
           emp.username &&
           emp.username.toLowerCase() === username.trim().toLowerCase() &&
-          emp.password === password
+          emp.password === password,
       );
       if (dynamicMatch) {
-        const accessRole = dynamicMatch.accessRole ? dynamicMatch.accessRole.toLowerCase() : (dynamicMatch.role === "HR & Admin Manager" || dynamicMatch.role === "admin" ? "admin" : "employee");
+        const accessRole = dynamicMatch.accessRole
+          ? dynamicMatch.accessRole.toLowerCase()
+          : dynamicMatch.role === "HR & Admin Manager" || dynamicMatch.role === "admin"
+            ? "admin"
+            : "employee";
         const user: AuthUser = {
           role: accessRole as UserRole,
           name: dynamicMatch.name,

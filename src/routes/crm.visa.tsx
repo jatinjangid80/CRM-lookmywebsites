@@ -2,6 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { toast } from "sonner";
 import {
   FileText,
   Clock,
@@ -552,10 +553,8 @@ function VisaPage() {
   const [appCustomer, setAppCustomer] = useState("");
   const [appCountry, setAppCountry] = useState("");
   const [appVisaType, setAppVisaType] = useState("");
-  const [appAppliedOn, setAppAppliedOn] = useState(new Date().toISOString().slice(0, 10));
+
   const [appTravelDate, setAppTravelDate] = useState("");
-  const [appStatus, setAppStatus] = useState<VisaStatus>("Pending Documents");
-  const [appEmbassyRef, setAppEmbassyRef] = useState("");
 
   const getFlagEmoji = (countryName: string) => {
     const flags: Record<string, string> = {
@@ -619,10 +618,19 @@ function VisaPage() {
       country: appCountry,
       flag: getFlagEmoji(appCountry),
       visaType: appVisaType,
-      appliedOn: appAppliedOn || new Date().toISOString().slice(0, 10),
+      appliedOn: new Date()
+        .toLocaleString("en-GB", {
+          day: "2-digit",
+          month: "2-digit",
+          year: "numeric",
+          hour: "2-digit",
+          minute: "2-digit",
+          hour12: true,
+        })
+        .toUpperCase(),
       travelDate: appTravelDate,
-      status: appStatus,
-      embassyRef: appEmbassyRef || undefined,
+      status: "Pending Documents",
+      embassyRef: undefined,
       docs: initialDocs,
     };
 
@@ -633,10 +641,8 @@ function VisaPage() {
     setAppCustomer("");
     setAppCountry("");
     setAppVisaType("");
-    setAppAppliedOn(new Date().toISOString().slice(0, 10));
+
     setAppTravelDate("");
-    setAppStatus("Pending Documents");
-    setAppEmbassyRef("");
   };
 
   // Requirement configuration states
@@ -1559,11 +1565,9 @@ function VisaPage() {
                     >
                       {/* Main row */}
                       <div className="flex flex-wrap items-center gap-4 px-5 py-4">
-                        <img
-                          src={app.avatar}
-                          alt={app.customer}
-                          className="h-10 w-10 rounded-full object-cover border border-border"
-                        />
+                        <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
+                          {app.customer.charAt(0).toUpperCase()}
+                        </div>
                         <div className="min-w-0 flex-1">
                           <div className="flex flex-wrap items-center gap-2">
                             <p className="font-semibold">{app.customer}</p>
@@ -1632,35 +1636,63 @@ function VisaPage() {
                                 Application Details
                               </p>
 
-                              <div className="space-y-2.5 text-sm">
-                                <div className="flex justify-between gap-2">
-                                  <span className="text-muted-foreground">Visa Type:</span>
-                                  <span className="font-semibold text-right">{app.visaType}</span>
+                              <div className="space-y-3 text-sm">
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-xs font-semibold text-muted-foreground">
+                                    Visa Type
+                                  </label>
+                                  <Input
+                                    value={app.visaType}
+                                    onChange={(e) => {
+                                      setApps(
+                                        apps.map((a) =>
+                                          a.id === app.id ? { ...a, visaType: e.target.value } : a,
+                                        ),
+                                      );
+                                    }}
+                                    className="h-8 text-sm rounded-lg bg-background"
+                                  />
                                 </div>
-                                <div className="flex justify-between border-t border-border pt-2">
-                                  <span className="text-muted-foreground">Applied On:</span>
-                                  <span className="font-semibold">{app.appliedOn}</span>
-                                </div>
-                                <div className="flex justify-between border-t border-border pt-2">
-                                  <span className="text-muted-foreground">Travel Date:</span>
-                                  <span className="font-semibold">{app.travelDate}</span>
-                                </div>
-                                <div className="flex justify-between border-t border-border pt-2">
-                                  <span className="text-muted-foreground">Embassy Ref:</span>
-                                  <span className="font-mono text-xs">
-                                    {app.embassyRef || "N/A"}
-                                  </span>
+                                <div className="flex flex-col gap-1.5">
+                                  <label className="text-xs font-semibold text-muted-foreground">
+                                    Travel Date
+                                  </label>
+                                  <Input
+                                    type="date"
+                                    value={app.travelDate}
+                                    onChange={(e) => {
+                                      setApps(
+                                        apps.map((a) =>
+                                          a.id === app.id
+                                            ? { ...a, travelDate: e.target.value }
+                                            : a,
+                                        ),
+                                      );
+                                    }}
+                                    className="h-8 text-sm rounded-lg bg-background"
+                                  />
                                 </div>
                               </div>
 
-                              <div className="border-t border-border pt-3">
+                              <div className="flex gap-2 border-t border-border pt-4 mt-2">
                                 <Button
-                                  variant="destructive"
+                                  variant="outline"
                                   size="sm"
-                                  className="w-full gap-2 rounded-xl text-xs font-semibold"
+                                  className="flex-1 rounded-xl text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
                                   onClick={() => setDeleteAppTargetId(app.id)}
                                 >
-                                  <Trash2 className="h-3.5 w-3.5" /> Delete Application
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="flex-[4] rounded-xl text-xs font-semibold shadow-sm"
+                                  style={{ background: "var(--gradient-brand)" }}
+                                  onClick={() => {
+                                    toast.success("Application saved successfully");
+                                    setExpanded(null);
+                                  }}
+                                >
+                                  Save Changes
                                 </Button>
                               </div>
                             </div>
@@ -1985,19 +2017,7 @@ function VisaPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Applied On
-                </label>
-                <Input
-                  type="date"
-                  value={appAppliedOn}
-                  onChange={(e) => setAppAppliedOn(e.target.value)}
-                  className="rounded-xl bg-background border-border"
-                />
-              </div>
-
+            <div className="grid grid-cols-1 gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Travel Date <span className="text-red-500">*</span>
@@ -2007,37 +2027,6 @@ function VisaPage() {
                   value={appTravelDate}
                   onChange={(e) => setAppTravelDate(e.target.value)}
                   required
-                  className="rounded-xl bg-background border-border"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-3">
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Status
-                </label>
-                <select
-                  value={appStatus}
-                  onChange={(e) => setAppStatus(e.target.value as VisaStatus)}
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="Pending Documents">Pending Documents</option>
-                  <option value="Submitted">Submitted</option>
-                  <option value="Under Review">Under Review</option>
-                  <option value="Approved">Approved</option>
-                  <option value="Rejected">Rejected</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Embassy Ref #
-                </label>
-                <Input
-                  placeholder="e.g. SCH-IN-12345"
-                  value={appEmbassyRef}
-                  onChange={(e) => setAppEmbassyRef(e.target.value)}
                   className="rounded-xl bg-background border-border"
                 />
               </div>

@@ -128,7 +128,11 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
   }
-  h1, h2, h3, h4, h5 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5 {
     font-family: var(--font-display);
     letter-spacing: -0.02em;
   }
@@ -152,7 +156,9 @@
   background: var(--gradient-brand);
   color: white;
   box-shadow: var(--shadow-premium);
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  transition:
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
 }
 @utility btn-hero {
   &:hover {
@@ -161,7 +167,15 @@
 }
 
 @keyframes float-up {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
-.animate-float-up { animation: float-up 0.6s ease-out both; }
+.animate-float-up {
+  animation: float-up 0.6s ease-out both;
+}

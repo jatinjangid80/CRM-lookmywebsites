@@ -104,8 +104,16 @@ const SOURCE_COLORS: Record<string, string> = {
 };
 // DESTINATIONS kept for potential future use
 const _DESTINATIONS = [
-  "Bali", "Dubai", "Maldives", "Europe", "Thailand",
-  "Singapore", "Kerala", "Rajasthan", "Japan", "Sri Lanka",
+  "Bali",
+  "Dubai",
+  "Maldives",
+  "Europe",
+  "Thailand",
+  "Singapore",
+  "Kerala",
+  "Rajasthan",
+  "Japan",
+  "Sri Lanka",
 ];
 void _DESTINATIONS;
 
@@ -159,12 +167,7 @@ const SERVICE_ICONS: Record<string, string> = SERVICES.reduce(
   {} as Record<string, string>,
 );
 
-const _LEADS_INIT: ExtLead[] = SEED_LEADS.map((l, i) => ({
-  ...l,
-  avatar: AVATARS[i % AVATARS.length],
-  notes: "",
-}));
-void _LEADS_INIT;
+const _LEADS_INIT: ExtLead[] = [];
 
 /* ─── Status config ─── */
 type LeadStatus = Lead["status"];
@@ -173,8 +176,11 @@ const STATUSES: LeadStatus[] = [
   "Contacted",
   "Quotation Sent",
   "Negotiation",
+  "Confirmed",
+  "Payment Pending",
   "Booked",
-  "Completed",
+  "Travel Completed",
+  "Review Collected",
   "Lost",
 ];
 
@@ -183,9 +189,12 @@ const STATUS_PILL: Record<LeadStatus, string> = {
   Contacted: "bg-amber-100 text-amber-700",
   "Quotation Sent": "bg-cyan-100 text-cyan-700",
   Negotiation: "bg-purple-100 text-purple-700",
+  Confirmed: "bg-teal-100 text-teal-700",
+  "Payment Pending": "bg-rose-100 text-rose-700",
   Booked: "bg-indigo-100 text-indigo-700",
-  Completed: "bg-emerald-100 text-emerald-700",
-  Lost: "bg-rose-100 text-rose-700",
+  "Travel Completed": "bg-emerald-100 text-emerald-700",
+  "Review Collected": "bg-pink-100 text-pink-700",
+  Lost: "bg-slate-100 text-slate-700",
 };
 
 const STATUS_ACCENT: Record<LeadStatus, string> = {
@@ -193,9 +202,12 @@ const STATUS_ACCENT: Record<LeadStatus, string> = {
   Contacted: "border-l-amber-400",
   "Quotation Sent": "border-l-cyan-400",
   Negotiation: "border-l-purple-400",
+  Confirmed: "border-l-teal-400",
+  "Payment Pending": "border-l-rose-400",
   Booked: "border-l-indigo-400",
-  Completed: "border-l-emerald-400",
-  Lost: "border-l-rose-400",
+  "Travel Completed": "border-l-emerald-400",
+  "Review Collected": "border-l-pink-400",
+  Lost: "border-l-slate-400",
 };
 
 const STATUS_DOT: Record<LeadStatus, string> = {
@@ -203,9 +215,12 @@ const STATUS_DOT: Record<LeadStatus, string> = {
   Contacted: "bg-amber-500",
   "Quotation Sent": "bg-cyan-500",
   Negotiation: "bg-purple-500",
+  Confirmed: "bg-teal-500",
+  "Payment Pending": "bg-rose-500",
   Booked: "bg-indigo-500",
-  Completed: "bg-emerald-500",
-  Lost: "bg-rose-500",
+  "Travel Completed": "bg-emerald-500",
+  "Review Collected": "bg-pink-500",
+  Lost: "bg-slate-500",
 };
 
 const PRIORITY_BADGE: Record<string, string> = {
@@ -258,6 +273,11 @@ const EMPTY_FORM = {
   totalAmount: "",
   amountPaid: "",
   vendorName: "",
+  whatsapp: "",
+  adults: "2",
+  children: "0",
+  lastFollowUp: "",
+  nextFollowUp: "",
 };
 
 function AddLeadModal({
@@ -273,11 +293,7 @@ function AddLeadModal({
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
   const assignees = Array.from(
-    new Set([
-      ...employees.map((e: any) => e.name),
-      ...(auth?.name ? [auth.name] : []),
-      "Other",
-    ]),
+    new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
   );
 
   const [form, setForm] = useState({ ...EMPTY_FORM, assignedTo: assignees[0] || "" });
@@ -340,6 +356,11 @@ function AddLeadModal({
       totalAmount: form.totalAmount ? Number(form.totalAmount) : undefined,
       amountPaid: form.amountPaid ? Number(form.amountPaid) : undefined,
       vendorName: form.vendorName || undefined,
+      whatsapp: form.whatsapp || form.phone,
+      adults: Number(form.adults) || 2,
+      children: Number(form.children) || 0,
+      lastFollowUp: form.lastFollowUp || undefined,
+      nextFollowUp: form.nextFollowUp || undefined,
     });
   };
 
@@ -351,13 +372,13 @@ function AddLeadModal({
       }}
     >
       <div
-        className="w-full sm:max-w-2xl rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl animate-float-up"
+        className="w-full sm:max-w-2xl flex flex-col overflow-hidden max-h-[90vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl animate-float-up"
         style={{ animationDuration: "0.25s" }}
       >
         <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border sm:hidden" />
 
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 pt-5 pb-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-border px-6 pt-5 pb-4">
           <div className="flex items-center gap-3">
             <span
               className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground"
@@ -375,7 +396,7 @@ function AddLeadModal({
           </button>
         </div>
 
-        <div className="grid gap-4 px-6 pt-5 pb-6 sm:grid-cols-2">
+        <div className="grid gap-4 px-6 pt-5 pb-6 sm:grid-cols-2 overflow-y-auto">
           {/* Name */}
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-semibold">
@@ -402,6 +423,17 @@ function AddLeadModal({
               className="rounded-xl"
             />
           </div>
+          {/* WhatsApp */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">WhatsApp</label>
+            <Input
+              id="lead-whatsapp"
+              placeholder="+91 98200 00000"
+              value={form.whatsapp}
+              onChange={set("whatsapp")}
+              className="rounded-xl"
+            />
+          </div>
           {/* Email */}
           <div>
             <label className="mb-1.5 block text-sm font-semibold">Email</label>
@@ -411,6 +443,42 @@ function AddLeadModal({
               placeholder="name@example.com"
               value={form.email}
               onChange={set("email")}
+              className="rounded-xl"
+            />
+          </div>
+          {/* Travelers details */}
+          {!isInsurance && (
+            <div className="grid grid-cols-2 gap-2">
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold">Adults</label>
+                <Input
+                  id="lead-adults"
+                  type="number"
+                  value={form.adults}
+                  onChange={set("adults")}
+                  className="rounded-xl"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-sm font-semibold">Children</label>
+                <Input
+                  id="lead-children"
+                  type="number"
+                  value={form.children}
+                  onChange={set("children")}
+                  className="rounded-xl"
+                />
+              </div>
+            </div>
+          )}
+          {/* Next Follow-up */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">Next Follow-up</label>
+            <Input
+              id="lead-next-follow"
+              type="date"
+              value={form.nextFollowUp}
+              onChange={set("nextFollowUp")}
               className="rounded-xl"
             />
           </div>
@@ -649,7 +717,7 @@ function AddLeadModal({
               ))}
             </div>
           </div>
-          
+
           {/* Booking / Payment Details */}
           {["Booked", "Completed"].includes(form.status) && (
             <div className="sm:col-span-2 grid gap-4 rounded-xl border border-border p-4 bg-secondary/30 sm:grid-cols-3">
@@ -900,7 +968,17 @@ function LeadDetail({
                     {
                       icon: <Users className="h-4 w-4 text-primary" />,
                       label: "Travellers",
-                      val: `${lead.pax} pax`,
+                      val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
+                    },
+                    {
+                      icon: <Phone className="h-4 w-4 text-primary" />,
+                      label: "WhatsApp",
+                      val: lead.whatsapp || lead.phone,
+                    },
+                    {
+                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                      label: "Next Follow-up",
+                      val: lead.nextFollowUp || "Not scheduled",
                     },
                     {
                       icon: <Globe className="h-4 w-4 text-primary" />,
@@ -1210,6 +1288,66 @@ function LeadDetail({
             </div>
           ) : null}
 
+          {/* WhatsApp Quick Actions */}
+          <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
+            <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
+              💬 WhatsApp Customer Share
+            </p>
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={() => {
+                  const url = window.location.origin + `/crm/portal?leadId=${lead.id}`;
+                  const msg = `Hello ${lead.name},\n\nWe are excited to share your customized itinerary & quotation details for ${lead.destination}. You can view the details here:\n${url}\n\nWarm regards,\nLook My Holidays`;
+                  window.open(
+                    `https://wa.me/${lead.whatsapp || lead.phone}?text=${encodeURIComponent(msg)}`,
+                    "_blank",
+                  );
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-[10px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors cursor-pointer"
+              >
+                Send Itinerary
+              </button>
+              <button
+                onClick={() => {
+                  const url = window.location.origin + `/crm/portal?leadId=${lead.id}`;
+                  const msg = `Dear ${lead.name},\n\nThis is a friendly reminder for the pending payment balance on your booking for ${lead.destination}. Please find booking invoice details at: ${url}`;
+                  window.open(
+                    `https://wa.me/${lead.whatsapp || lead.phone}?text=${encodeURIComponent(msg)}`,
+                    "_blank",
+                  );
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-[10px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors cursor-pointer"
+              >
+                Remind Payment
+              </button>
+              <button
+                onClick={() => {
+                  const url = window.location.origin + `/crm/portal?leadId=${lead.id}`;
+                  const msg = `Hello ${lead.name},\n\nYour travel vouchers for ${lead.destination} are ready! Please download vouchers here: ${url}`;
+                  window.open(
+                    `https://wa.me/${lead.whatsapp || lead.phone}?text=${encodeURIComponent(msg)}`,
+                    "_blank",
+                  );
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-[10px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors cursor-pointer"
+              >
+                Send Vouchers
+              </button>
+              <button
+                onClick={() => {
+                  const msg = `Welcome back ${lead.name}! We hope you had a wonderful trip to ${lead.destination}. Please leave us feedback at: https://g.page/lookmyholidays/review`;
+                  window.open(
+                    `https://wa.me/${lead.whatsapp || lead.phone}?text=${encodeURIComponent(msg)}`,
+                    "_blank",
+                  );
+                }}
+                className="flex items-center justify-center gap-1.5 rounded-xl border border-emerald-500/20 bg-emerald-500/10 hover:bg-emerald-500/20 py-2 text-[10px] font-semibold text-emerald-800 dark:text-emerald-200 transition-colors cursor-pointer"
+              >
+                Request Review
+              </button>
+            </div>
+          </div>
+
           {/* Move stage */}
           <div>
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -1402,7 +1540,7 @@ function KanbanCol({
 
 /* ─── Main Page ─── */
 function LeadsPage() {
-  const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", []);
+  const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", _LEADS_INIT);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const [newNote, setNewNote] = useState("");
@@ -1419,11 +1557,7 @@ function LeadsPage() {
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
 
   const assignees = Array.from(
-    new Set([
-      ...employees.map((e: any) => e.name),
-      ...(auth?.name ? [auth.name] : []),
-      "Other",
-    ]),
+    new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
   );
 
   const exportToExcel = () => {
@@ -1525,7 +1659,8 @@ function LeadsPage() {
     wrapper.innerHTML = bodyHtml;
     printWindow.document.body.appendChild(wrapper);
     const script = printWindow.document.createElement("script");
-    script.textContent = "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
     printWindow.document.body.appendChild(script);
     printWindow.document.close();
   };
@@ -1554,7 +1689,9 @@ function LeadsPage() {
       email: String(row["Email"] || row["email"] || ""),
       destination: String(row["Destination"] || row["destination"] || "Unknown"),
       budget: parseInt(String(row["Budget"] || row["budget"])) || 0,
-      travelDate: String(row["Travel Date"] || row["travelDate"] || new Date().toISOString().slice(0, 10)),
+      travelDate: String(
+        row["Travel Date"] || row["travelDate"] || new Date().toISOString().slice(0, 10),
+      ),
       source: String(row["Source"] || row["source"] || SOURCES[0]),
       reference: String(row["Reference"] || row["reference"] || ""),
       status: "New Lead" as LeadStatus,
@@ -1564,7 +1701,7 @@ function LeadsPage() {
       avatar: "",
       createdAt: new Date().toISOString().slice(0, 10),
       service: String(row["Service"] || row["service"] || "International Package"),
-      priority: (String(row["Priority"] || row["priority"] || "Medium")) as "High" | "Medium" | "Low",
+      priority: String(row["Priority"] || row["priority"] || "Medium") as "High" | "Medium" | "Low",
       packageType: String(row["PackageType"] || row["package type"] || ""),
     }));
     setLeads((prev) => [...importedLeads, ...prev]);
@@ -1578,7 +1715,6 @@ function LeadsPage() {
         l.destination?.toLowerCase().includes(q.toLowerCase()) ||
         l.id?.toLowerCase().includes(q.toLowerCase())),
   );
-  
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);
@@ -1925,7 +2061,9 @@ function LeadsPage() {
           isAdmin={isAdmin}
           onEditNote={(id, newNote) => {
             const noteDate = new Date().toISOString();
-            const newLeads = leads.map((x) => (x.id === id ? { ...x, notes: newNote, noteDate } : x));
+            const newLeads = leads.map((x) =>
+              x.id === id ? { ...x, notes: newNote, noteDate } : x,
+            );
             setLeads(newLeads);
             setSelected(newLeads.find((x) => x.id === id) || null);
           }}

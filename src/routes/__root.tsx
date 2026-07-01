@@ -139,9 +139,9 @@ function RootComponent() {
           "crm_vendors_v2",
           "crm_packages",
           "crm_visa_apps_v2",
-          "crm_visa_requirements"
+          "crm_visa_requirements",
         ];
-        keysToClear.forEach(key => window.localStorage.removeItem(key));
+        keysToClear.forEach((key) => window.localStorage.removeItem(key));
         window.localStorage.setItem("crm_data_cleared_v1", "true");
         window.location.reload();
         return;
@@ -151,10 +151,12 @@ function RootComponent() {
       if (stored) {
         const appearance = JSON.parse(stored);
         const root = window.document.documentElement;
-        
+
         root.classList.remove("light", "dark");
         if (appearance.theme === "system") {
-          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+          const systemTheme = window.matchMedia("(prefers-color-scheme: dark)").matches
+            ? "dark"
+            : "light";
           if (systemTheme === "dark") root.classList.add("dark");
         } else if (appearance.theme === "dark") {
           root.classList.add("dark");
@@ -170,7 +172,7 @@ function RootComponent() {
           "#10b981": "0.65 0.15 150",
           "#8b5cf6": "0.6 0.18 290",
           "#f59e0b": "0.7 0.2 45",
-          "#06b6d4": "0.7 0.12 210"
+          "#06b6d4": "0.7 0.12 210",
         };
         if (appearance.accentColor && colorMap[appearance.accentColor]) {
           root.style.setProperty("--primary", `oklch(${colorMap[appearance.accentColor]})`);
@@ -185,7 +187,9 @@ function RootComponent() {
 
   // Use a placeholder clientId so GoogleOAuthProvider never receives an empty string
   // (which causes useGoogleLogin to throw). Real Google Drive login requires VITE_GOOGLE_DRIVE_CLIENT_ID.
-  const googleClientId = (import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID as string | undefined) || "placeholder-not-configured.apps.googleusercontent.com";
+  const googleClientId =
+    (import.meta.env.VITE_GOOGLE_DRIVE_CLIENT_ID as string | undefined) ||
+    "placeholder-not-configured.apps.googleusercontent.com";
 
   return (
     <GoogleOAuthProvider clientId={googleClientId}>

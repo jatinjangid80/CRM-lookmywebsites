@@ -18,6 +18,8 @@ import { Route as CrmVendorsRouteImport } from './routes/crm.vendors'
 import { Route as CrmTasksRouteImport } from './routes/crm.tasks'
 import { Route as CrmSettingsRouteImport } from './routes/crm.settings'
 import { Route as CrmReportsRouteImport } from './routes/crm.reports'
+import { Route as CrmQuotationsRouteImport } from './routes/crm.quotations'
+import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPaymentsRouteImport } from './routes/crm.payments'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
@@ -71,6 +73,16 @@ const CrmReportsRoute = CrmReportsRouteImport.update({
   path: '/reports',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmQuotationsRoute = CrmQuotationsRouteImport.update({
+  id: '/quotations',
+  path: '/quotations',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmPortalRoute = CrmPortalRouteImport.update({
+  id: '/portal',
+  path: '/portal',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmPaymentsRoute = CrmPaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -118,6 +130,8 @@ export interface FileRoutesByFullPath {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payments': typeof CrmPaymentsRoute
+  '/crm/portal': typeof CrmPortalRoute
+  '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
@@ -135,6 +149,8 @@ export interface FileRoutesByTo {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payments': typeof CrmPaymentsRoute
+  '/crm/portal': typeof CrmPortalRoute
+  '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
@@ -154,6 +170,8 @@ export interface FileRoutesById {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payments': typeof CrmPaymentsRoute
+  '/crm/portal': typeof CrmPortalRoute
+  '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
@@ -174,6 +192,8 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payments'
+    | '/crm/portal'
+    | '/crm/quotations'
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
@@ -191,6 +211,8 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payments'
+    | '/crm/portal'
+    | '/crm/quotations'
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
@@ -209,6 +231,8 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payments'
+    | '/crm/portal'
+    | '/crm/quotations'
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
@@ -288,6 +312,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmReportsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/quotations': {
+      id: '/crm/quotations'
+      path: '/quotations'
+      fullPath: '/crm/quotations'
+      preLoaderRoute: typeof CrmQuotationsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/portal': {
+      id: '/crm/portal'
+      path: '/portal'
+      fullPath: '/crm/portal'
+      preLoaderRoute: typeof CrmPortalRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/payments': {
       id: '/crm/payments'
       path: '/payments'
@@ -348,6 +386,8 @@ interface CrmRouteChildren {
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
   CrmPaymentsRoute: typeof CrmPaymentsRoute
+  CrmPortalRoute: typeof CrmPortalRoute
+  CrmQuotationsRoute: typeof CrmQuotationsRoute
   CrmReportsRoute: typeof CrmReportsRoute
   CrmSettingsRoute: typeof CrmSettingsRoute
   CrmTasksRoute: typeof CrmTasksRoute
@@ -364,6 +404,8 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmLeadsRoute: CrmLeadsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
   CrmPaymentsRoute: CrmPaymentsRoute,
+  CrmPortalRoute: CrmPortalRoute,
+  CrmQuotationsRoute: CrmQuotationsRoute,
   CrmReportsRoute: CrmReportsRoute,
   CrmSettingsRoute: CrmSettingsRoute,
   CrmTasksRoute: CrmTasksRoute,
