@@ -1811,6 +1811,16 @@ function LeadsPage() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
   const [tableEditNoteText, setTableEditNoteText] = useState("");
+  const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
+
+  const toggleNotes = (id: string) => {
+    setExpandedNotes(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const auth = getAuth();
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
@@ -2197,8 +2207,23 @@ function LeadsPage() {
                         </Select>
                       </td>
                       <td className="px-3 py-2.5">
-                        <div className="text-xs font-semibold whitespace-nowrap">{l.name}</div>
-                        {l.clientCompany && <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{l.clientCompany}</div>}
+                        <div className="flex items-center gap-1.5">
+                          <div className="text-xs font-semibold whitespace-nowrap">{l.name}</div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleNotes(l.id);
+                            }}
+                            className="flex items-center gap-1 rounded px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+                          >
+                            {expandedNotes.has(l.id) ? (
+                              <><ChevronUp className="h-3 w-3" /> Hide Notes</>
+                            ) : (
+                              <><ChevronDown className="h-3 w-3" /> Show Notes</>
+                            )}
+                          </button>
+                        </div>
+                        {l.clientCompany && <div className="text-[10px] text-muted-foreground truncate max-w-[120px] mt-0.5">{l.clientCompany}</div>}
                       </td>
                       <td className="px-3 py-2.5 whitespace-nowrap">
                         <div className="text-xs font-medium">{l.createdAt}</div>
@@ -2234,8 +2259,9 @@ function LeadsPage() {
                       <td className="px-3 py-2.5 text-xs whitespace-nowrap">{l.assignedTo || "-"}</td>
                     </tr>
                     {/* Notes row */}
-                    <tr>
-                      <td colSpan={7} className="px-5 pb-4 pt-1 border-b border-border bg-card/50">
+                    {expandedNotes.has(l.id) && (
+                      <tr>
+                        <td colSpan={7} className="px-5 pb-4 pt-1 border-b border-border bg-card/50">
                           <div className="pl-3 border-l-[3px] border-[#e8dfd5] py-1 ml-4 mt-1 space-y-3">
                             <div className="space-y-3">
                               {l.allNotes && l.allNotes.length > 0 ? (
@@ -2329,6 +2355,7 @@ function LeadsPage() {
                           </div>
                         </td>
                       </tr>
+                    )}
                     </React.Fragment>
                   ))}
                 </tbody>
