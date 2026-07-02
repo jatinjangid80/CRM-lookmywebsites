@@ -45,8 +45,10 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
   if (!employee) {
     return (
       <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-4">
-        <div className="h-12 w-12 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-          <User className="h-6 w-6 text-gray-400" />
+        <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+          <span className="text-xl font-bold text-primary">
+            {employeeName ? employeeName.charAt(0).toUpperCase() : "?"}
+          </span>
         </div>
         <div>
           <p className="font-bold text-gray-900">{employeeName}</p>
@@ -69,8 +71,10 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col sm:flex-row items-center sm:justify-start gap-4">
       {imgError || !employee.avatar ? (
-        <div className="h-16 w-16 rounded-2xl bg-gray-100 border border-gray-200 ring-4 ring-[#FF6B00]/10 flex items-center justify-center shrink-0">
-          <User className="h-8 w-8 text-gray-400" />
+        <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 ring-4 ring-[#FF6B00]/10 flex items-center justify-center shrink-0">
+          <span className="text-2xl font-bold text-primary">
+            {employee.name ? employee.name.charAt(0).toUpperCase() : "?"}
+          </span>
         </div>
       ) : (
         <img

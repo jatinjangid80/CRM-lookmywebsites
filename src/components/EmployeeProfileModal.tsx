@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   MapPin,
@@ -279,18 +280,11 @@ export function EmployeeProfileModal({
     setExpandedSection(null);
     // Load existing credentials for this employee
     try {
-      const raw = localStorage.getItem("crm_employees_v3");
-      if (raw) {
-        const list = JSON.parse(raw);
-        const emp = list.find((e: any) => e.id === employee.id);
-        setCredUsername(emp?.username || "");
-        setCredPassword(emp?.password || "");
-        setCredConfirm(emp?.password || "");
-      } else {
-        setCredUsername("");
-        setCredPassword("");
-        setCredConfirm("");
-      }
+      const username = employee.profile_details?.username || "";
+      const password = employee.profile_details?.password || "";
+      setCredUsername(username);
+      setCredPassword(password);
+      setCredConfirm(password);
     } catch {
       setCredUsername("");
       setCredPassword("");
@@ -299,7 +293,7 @@ export function EmployeeProfileModal({
     setCredSaved(false);
     setCredError("");
     setShowCredModal(false);
-  }, [employee.id, open]);
+  }, [employee.id, open, employee.profile_details]);
 
   const handleStartEdit = () => {
     setEditCore({
@@ -322,7 +316,7 @@ export function EmployeeProfileModal({
     setEditDetails(null);
   };
 
-  const handleSaveCredentials = () => {
+  const handleSaveCredentials = async () => {
     setCredError("");
     if (!credUsername.trim()) {
       setCredError("Username is required.");
@@ -337,23 +331,23 @@ export function EmployeeProfileModal({
       return;
     }
     try {
-      const raw = localStorage.getItem("crm_employees_v3");
-      const list = raw ? JSON.parse(raw) : [];
-      const idx = list.findIndex((e: any) => e.id === employee.id);
-      if (idx !== -1) {
-        list[idx] = { ...list[idx], username: credUsername.trim(), password: credPassword };
-      } else {
-        list.push({
-          id: employee.id,
-          name: employee.name,
-          username: credUsername.trim(),
-          password: credPassword,
-        });
-      }
-      localStorage.setItem("crm_employees_v3", JSON.stringify(list));
+      const newProfileDetails = {
+        ...employee.profile_details,
+        username: credUsername.trim(),
+        password: credPassword,
+      };
+
+      const { error } = await supabase
+        .from("employees")
+        .update({ profile_details: newProfileDetails })
+        .eq("id", employee.id);
+
+      if (error) throw error;
+      
       setCredSaved(true);
       setTimeout(() => setCredSaved(false), 3000);
     } catch (err) {
+      console.error(err);
       setCredError("Failed to save credentials.");
     }
   };
@@ -569,11 +563,19 @@ export function EmployeeProfileModal({
               <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
                 {/* Profile photo — clickable upload when editing */}
                 <div className="relative shrink-0 group">
-                  <img
-                    src={editAvatar || employee.avatar}
-                    alt={employee.name}
-                    className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-[#FF6B00]/10"
-                  />
+                  {(editAvatar || employee.avatar) ? (
+                    <img
+                      src={editAvatar || employee.avatar}
+                      alt={employee.name || "Employee"}
+                      className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-primary/10"
+                    />
+                  ) : (
+                    <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 ring-4 ring-primary/10">
+                      <span className="text-4xl font-bold text-primary">
+                        {(employee.name || "?").charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   {isEditing && (
                     <label
                       htmlFor={`avatar-upload-${employee.id}`}

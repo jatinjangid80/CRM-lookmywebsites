@@ -30,27 +30,26 @@ const tierColor: Record<string, string> = {
 function CustomersPage() {
   const [customerList, setCustomerList] = useSupabaseTable<Customer[]>("customers", []);
   const [isAddOpen, setIsAddOpen] = useState(false);
-  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", email: "" });
+  const [newCustomer, setNewCustomer] = useState({ name: "", phone: "", email: "", dob: "", relationship: "" });
 
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
   const [dialogType, setDialogType] = useState<"profile" | "history" | "delete" | null>(null);
 
-  // Editable records for profile
-  const [editPassport, setEditPassport] = useState("");
-  const [editExpiry, setEditExpiry] = useState("");
-  const [editVisa, setEditVisa] = useState("");
 
-  useEffect(() => {
-    if (selectedCustomer) {
-      setEditPassport(selectedCustomer.passportNumber || "");
-      setEditExpiry(selectedCustomer.passportExpiry || "");
-      setEditVisa(selectedCustomer.visaStatus || "Not Applied");
-    }
-  }, [selectedCustomer]);
 
   const handleAddCustomer = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newCustomer.name || !newCustomer.phone) return;
+
+    const isDuplicate = customerList.some(
+      (c) =>
+        c.phone === newCustomer.phone ||
+        (newCustomer.email && c.email?.toLowerCase() === newCustomer.email.toLowerCase())
+    );
+    if (isDuplicate) {
+      alert("A customer with this phone number or email already exists.");
+      return;
+    }
 
     const currentMaxId = customerList.reduce((max, c) => {
       const num = parseInt(c.id.replace("CRN", ""));
@@ -63,6 +62,8 @@ function CustomersPage() {
       name: newCustomer.name,
       phone: newCustomer.phone,
       email: newCustomer.email,
+      dob: newCustomer.dob,
+      relationship: newCustomer.relationship,
       trips: 0,
       totalSpend: 0,
       tier: "Silver",
@@ -70,7 +71,7 @@ function CustomersPage() {
 
     setCustomerList([customer, ...customerList]);
     setIsAddOpen(false);
-    setNewCustomer({ name: "", phone: "", email: "" });
+    setNewCustomer({ name: "", phone: "", email: "", dob: "", relationship: "" });
   };
 
   return (
@@ -122,6 +123,24 @@ function CustomersPage() {
                   placeholder="e.g. rahul@example.com"
                   value={newCustomer.email}
                   onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="dob">Date of Birth</Label>
+                <Input
+                  id="dob"
+                  type="date"
+                  value={newCustomer.dob}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, dob: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="relationship">Relationship</Label>
+                <Input
+                  id="relationship"
+                  placeholder="e.g. Self, Spouse, Child"
+                  value={newCustomer.relationship}
+                  onChange={(e) => setNewCustomer({ ...newCustomer, relationship: e.target.value })}
                 />
               </div>
               <DialogFooter>
@@ -261,69 +280,7 @@ function CustomersPage() {
                       </div>
                     </div>
 
-                    {/* Passport & Visa Records */}
-                    <div className="space-y-3 border-t border-border pt-4">
-                      <h4 className="font-bold text-xs uppercase tracking-wider text-muted-foreground">
-                        Passport & Visa Records
-                      </h4>
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <Label htmlFor="passport">Passport Number</Label>
-                          <Input
-                            id="passport"
-                            value={editPassport}
-                            onChange={(e) => setEditPassport(e.target.value)}
-                            placeholder="e.g. Z1234567"
-                            className="h-9 text-xs mt-1"
-                          />
-                        </div>
-                        <div>
-                          <Label htmlFor="expiry">Passport Expiry</Label>
-                          <Input
-                            id="expiry"
-                            type="date"
-                            value={editExpiry}
-                            onChange={(e) => setEditExpiry(e.target.value)}
-                            className="h-9 text-xs mt-1"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <Label htmlFor="visa">Visa Status</Label>
-                        <select
-                          id="visa"
-                          value={editVisa}
-                          onChange={(e) => setEditVisa(e.target.value)}
-                          className="flex h-9 w-full rounded-md border border-input bg-background px-3 py-2 text-xs focus:outline-none focus:ring-2 focus:ring-ring mt-1"
-                        >
-                          <option value="Not Applied">Not Applied</option>
-                          <option value="Applied / In Process">Applied / In Process</option>
-                          <option value="Visa Approved">Visa Approved</option>
-                          <option value="Visa Rejected">Visa Rejected</option>
-                        </select>
-                      </div>
-                      <Button
-                        size="sm"
-                        className="w-full mt-2"
-                        onClick={() => {
-                          setCustomerList((prev) =>
-                            prev.map((c) =>
-                              c.id === selectedCustomer.id
-                                ? {
-                                    ...c,
-                                    passportNumber: editPassport,
-                                    passportExpiry: editExpiry,
-                                    visaStatus: editVisa,
-                                  }
-                                : c,
-                            ),
-                          );
-                          setDialogType(null);
-                        }}
-                      >
-                        Save Records
-                      </Button>
-                    </div>
+
                   </div>
                 </>
               );

@@ -290,12 +290,12 @@ function VendorsPage() {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground">Category:</span>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground font-medium">Category:</span>
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold focus:outline-none"
+              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="All">All Categories</option>
               <option value="Hotel">Hotel</option>
@@ -307,12 +307,12 @@ function VendorsPage() {
             </select>
           </div>
 
-          <div className="flex items-center gap-1 text-xs">
-            <span className="text-muted-foreground">Status:</span>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground font-medium">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-8 rounded-lg border border-gray-200 bg-white px-2 py-1 text-xs font-semibold focus:outline-none"
+              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active Only</option>

@@ -146,8 +146,11 @@ function Dashboard() {
     return diff >= 0 && diff <= 7;
   }).length;
 
-  const averageRating = 4.8;
-  const reviewsCount = customersList.length * 4 + 12;
+  const convertedLeadsList = leadsList.filter(
+    (l) => l.status === "Booked" || l.status === "Travel Completed" || l.status === "Completed"
+  );
+  const conversionRate = leadsList.length > 0 ? ((convertedLeadsList.length / leadsList.length) * 100).toFixed(1) : "0.0";
+  const convertedNames = convertedLeadsList.length > 0 ? convertedLeadsList.map((l) => l.name).join(", ") : "No conversions yet";
   const monthlyRevenueTotal = bookingsList.reduce((sum, b) => sum + (b.paid || 0), 0);
 
   // 2. Chart data aggregations
@@ -380,13 +383,14 @@ function Dashboard() {
       color: "text-cyan-600",
     },
     {
-      label: "Customer Reviews",
-      value: `${averageRating} ★`,
-      icon: Star,
-      trend: `${reviewsCount} reviews`,
+      label: "Conversion Rate",
+      value: `${conversionRate}%`,
+      icon: TrendingUp,
+      trend: "overall",
       bg: "bg-pink-500/10",
       border: "border-pink-500/20",
       color: "text-pink-600",
+      tooltip: convertedNames,
     },
     {
       label: "Monthly Revenue",
@@ -406,6 +410,7 @@ function Dashboard() {
         {kpis.map((s) => (
           <div
             key={s.label}
+            title={s.tooltip}
             className={`group relative overflow-hidden rounded-2xl border ${s.border} bg-card p-5 shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300`}
           >
             <div className="flex items-center justify-between">

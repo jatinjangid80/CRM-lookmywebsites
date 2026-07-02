@@ -1,4 +1,5 @@
 /* ─── Auth types ─── */
+import { supabase } from "./supabase";
 export type UserRole = "admin" | "manager" | "employee";
 
 export interface AuthUser {
@@ -47,7 +48,7 @@ export const MOCK_USERS: MockCredential[] = [
     username: "suman",
     password: "emp123",
     user: {
-      role: "admin",
+      role: "manager",
       name: "Suman Yadav",
       empId: "LMH-02",
       avatar: "",
@@ -61,7 +62,7 @@ export const MOCK_USERS: MockCredential[] = [
     user: {
       role: "employee",
       name: "Nikita Birwa",
-      empId: "LMH-03",
+      empId: "LMH-04",
       avatar: "",
       email: "info.insurance58@gmail.com",
       phone: "9783395483",
@@ -73,7 +74,7 @@ export const MOCK_USERS: MockCredential[] = [
     user: {
       role: "manager",
       name: "Aman Sharma",
-      empId: "LMH-04",
+      empId: "LMH-03",
       avatar: "",
       email: "Accounts@lookmyholidays.in",
       phone: "9660095483",
@@ -139,7 +140,7 @@ export function clearAuth(): void {
   localStorage.removeItem(AUTH_KEY);
 }
 
-export function login(username: string, password: string): AuthUser | null {
+export async function login(username: string, password: string): Promise<AuthUser | null> {
   const match = MOCK_USERS.find(
     (u) => u.username.toLowerCase() === username.trim().toLowerCase() && u.password === password,
   );
@@ -148,16 +149,15 @@ export function login(username: string, password: string): AuthUser | null {
     return match.user;
   }
 
-  // Check dynamic employees from localStorage
+  // Check dynamic employees from Supabase
   try {
-    const raw = localStorage.getItem("crm_employees_v3");
-    if (raw) {
-      const list = JSON.parse(raw);
-      const dynamicMatch = list.find(
+    const { data } = await supabase.from("employees").select("*");
+    if (data) {
+      const dynamicMatch = data.find(
         (emp: any) =>
-          emp.username &&
-          emp.username.toLowerCase() === username.trim().toLowerCase() &&
-          emp.password === password,
+          emp.profile_details?.username &&
+          emp.profile_details.username.toLowerCase() === username.trim().toLowerCase() &&
+          emp.profile_details.password === password,
       );
       if (dynamicMatch) {
         const accessRole = dynamicMatch.accessRole
@@ -178,7 +178,7 @@ export function login(username: string, password: string): AuthUser | null {
       }
     }
   } catch (e) {
-    console.error("Error reading crm_employees_v3 for login", e);
+    console.error("Error reading employees from Supabase for login", e);
   }
 
   return null;

@@ -87,16 +87,58 @@ const statusColor: Record<Booking["status"], string> = {
   Refunded: "bg-purple-100 text-purple-700",
 };
 
+const SERVICES = [
+  {
+    group: "Travel Services",
+    items: [
+      { label: "Air Ticket", icon: "✈️" },
+      { label: "Hotel Booking", icon: "🏨" },
+      { label: "Visa", icon: "🛂" },
+      { label: "Cruise Booking", icon: "🚢" },
+      { label: "Passport Assistance", icon: "📘" },
+      { label: "Forex Exchange", icon: "💱" },
+      { label: "Airport Transfer", icon: "🚕" },
+      { label: "Car Rental", icon: "🚗" },
+      { label: "Train Ticket", icon: "🚆" },
+      { label: "Bus Ticket", icon: "🚌" },
+      { label: "Taxi Booking", icon: "🚕" },
+      { label: "Travel Insurance", icon: "🛡️" },
+    ],
+  },
+  {
+    group: "Holiday Packages",
+    items: [
+      { label: "International Package", icon: "🌍" },
+      { label: "Domestic Package", icon: "🏝" },
+      { label: "Honeymoon Package", icon: "💖" },
+      { label: "Family Package", icon: "👨‍👩‍👧‍👦" },
+      { label: "Group Tour", icon: "🚌" },
+      { label: "Corporate Tour", icon: "🏢" },
+      { label: "Luxury Tour", icon: "✨" },
+      { label: "Adventure Tour", icon: "🧗" },
+    ],
+  },
+  {
+    group: "Business",
+    items: [
+      { label: "Corporate Travel", icon: "💼" },
+      { label: "MICE Events", icon: "🎤" },
+      { label: "Conference Booking", icon: "🎟" },
+    ],
+  },
+  { group: "Insurance Services", items: [{ label: "General Insurance", icon: "🛡️" }] },
+];
+
 function BookingsPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
 
   const [bookingList, setBookingList] = useSupabaseTable<ExtBooking[]>("bookings", initialBookings);
-  const [leads] = useSupabaseTable<any[]>("leads", []);
+  const [leads, setLeads] = useSupabaseTable<any[]>("leads", []);
 
   const allBookings = useMemo(() => {
     const derived = leads
-      .filter((l: any) => l.bookingReference || l.status === "Booked" || l.status === "Completed")
+      .filter((l: any) => l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status))
       .map(
         (l: any) =>
           ({
@@ -112,11 +154,11 @@ function BookingsPage() {
             saleInvoiceNo: "",
             purchaseInvoiceNo: "",
             remarks: l.notes || "",
-            sellingPrice: l.totalAmount || 0,
+            sellingPrice: l.totalAmount || Number(l.budget) || 0,
             purchasePrice: 0,
             profit: 0,
             margin: 0,
-            amount: l.totalAmount || 0,
+            amount: l.totalAmount || Number(l.budget) || 0,
             paid: l.amountPaid || 0,
             paymentMode: "Card",
             transactionId: "",
@@ -241,7 +283,7 @@ function BookingsPage() {
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
 
   // Tab state for filtering
-  const [activeTab, setActiveTab] = useState<BookingType | "All">("All");
+  const [activeTab, setActiveTab] = useState<string>("All");
 
   // Success popup state
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
@@ -354,11 +396,44 @@ function BookingsPage() {
   const [uploadPriority, setUploadPriority] = useState<"High" | "Medium" | "Low">("Medium");
   const [uploading, setUploading] = useState(false);
 
+  // Edit state
+  const [isEditing, setIsEditing] = useState(false);
+  const [editForm, setEditForm] = useState<Partial<ExtBooking>>({});
+
   const handleManageBooking = (booking: ExtBooking) => {
     setManagingBooking(booking);
+    setEditForm(booking);
+    setIsEditing(false);
     setIsManageOpen(true);
     setUploadFile(null);
     setUploadPriority("Medium");
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!managingBooking) return;
+
+    if (managingBooking.id.startsWith("LD-")) {
+      setLeads((prev) => prev.map(l => {
+        if ("LD-" + l.id.replace("L-", "") === managingBooking.id) {
+          return {
+            ...l,
+            name: editForm.customer,
+            travelDate: editForm.travelDate,
+            destination: editForm.package,
+            service: editForm.bookingType,
+            totalAmount: editForm.amount,
+            amountPaid: editForm.paid
+          };
+        }
+        return l;
+      }));
+    } else {
+      setBookingList((prev) => prev.map(b => b.id === managingBooking.id ? { ...b, ...editForm } as ExtBooking : b));
+    }
+    
+    setManagingBooking({ ...managingBooking, ...editForm } as ExtBooking);
+    setIsEditing(false);
   };
 
   function readAsDataUrl(file: File): Promise<string> {
@@ -504,6 +579,17 @@ function BookingsPage() {
   };
 
   const handleAddBookingSave = (booking: Booking) => {
+    const isDuplicate = bookingList.some(
+      (b) =>
+        b.customer.toLowerCase() === booking.customer.toLowerCase() &&
+        b.bookingType === booking.bookingType &&
+        b.date === booking.date
+    );
+    if (isDuplicate) {
+      alert("A booking for this customer on this date with this type already exists.");
+      return;
+    }
+
     const currentMaxId = bookingList.reduce((max, b) => {
       const numStr = String(b.id || "").replace(/BK-?/i, "");
       const num = parseInt(numStr, 10);
@@ -517,12 +603,24 @@ function BookingsPage() {
     setShowSuccess(true);
   };
 
-  const filteredBookings = allBookings.filter(
-    (b) =>
-      activeTab === "All" ||
-      b.bookingType === activeTab ||
-      (activeTab === "Holiday Package" && !b.bookingType),
-  ); // Fallback for legacy items
+  const filteredBookings = allBookings.filter((b) => {
+    if (activeTab === "All") return true;
+    if (b.bookingType === activeTab) return true;
+
+    // Legacy mappings for AddBookingModal & Mock Data
+    if (activeTab === "Hotel Booking" && b.bookingType === "Hotel") return true;
+    
+    const isHolidayPackageTab = [
+      "International Package",
+      "Domestic Package",
+      "Honeymoon Package",
+      "Weekend Getaways"
+    ].includes(activeTab);
+    
+    if (isHolidayPackageTab && (b.bookingType === "Holiday Package" || !b.bookingType)) return true;
+
+    return false;
+  });
 
   return (
     <div className="space-y-6">
@@ -793,31 +891,25 @@ function BookingsPage() {
         </div>
       </div>
 
-      {/* Tabbed Navigation */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-hide border-b border-border">
-        {[
-          "All",
-          "Air Ticket",
-          "Train Ticket",
-          "Hotel",
-          "Holiday Package",
-          "Taxi",
-          "Visa",
-          "Travel Insurance",
-          "Bus Ticket",
-        ].map((tab) => (
-          <button
-            key={tab}
-            onClick={() => setActiveTab(tab as BookingType | "All")}
-            className={`whitespace-nowrap px-4 py-2 rounded-t-lg text-sm font-semibold transition-colors ${
-              activeTab === tab
-                ? "bg-card text-primary border-b-2 border-primary"
-                : "text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
-            }`}
-          >
-            {tab}
-          </button>
-        ))}
+      {/* Category Dropdown Navigation */}
+      <div className="flex justify-end items-center gap-2 py-4 text-sm">
+        <span className="text-muted-foreground font-medium">Category:</span>
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value)}
+          className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+        >
+          <option value="All">All Categories</option>
+          {SERVICES.map((g) => (
+            <optgroup key={g.group} label={g.group}>
+              {g.items.map((i) => (
+                <option key={i.label} value={i.label}>
+                  {i.icon} {i.label}
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
@@ -946,34 +1038,90 @@ function BookingsPage() {
                   <span className="font-mono text-xs font-semibold text-primary">
                     {managingBooking.id}
                   </span>
-                  <span
-                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor[managingBooking.status]}`}
-                  >
-                    {managingBooking.status}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-xs text-muted-foreground">Customer</p>
-                    <p className="font-semibold">{managingBooking.customer}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Travel Date</p>
-                    <p className="font-semibold">{managingBooking.travelDate}</p>
-                  </div>
-                  <div className="col-span-2">
-                    <p className="text-xs text-muted-foreground">Package / Service</p>
-                    <p className="font-semibold text-muted-foreground">{managingBooking.package}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Total Budget</p>
-                    <p className="font-bold text-primary">{formatINR(managingBooking.amount)}</p>
-                  </div>
-                  <div>
-                    <p className="text-xs text-muted-foreground">Amount Paid</p>
-                    <p className="font-bold text-emerald-700">{formatINR(managingBooking.paid)}</p>
+                  <div className="flex items-center gap-2">
+                    <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)} className="h-7 text-xs">
+                      {isEditing ? "Cancel" : "Edit"}
+                    </Button>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor[managingBooking.status]}`}
+                    >
+                      {managingBooking.status}
+                    </span>
                   </div>
                 </div>
+                {isEditing ? (
+                  <form onSubmit={handleSaveEdit} className="grid grid-cols-2 gap-4 text-sm mt-2">
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Customer</Label>
+                      <Input value={editForm.customer || ""} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="rounded-3xl px-4" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Travel Date</Label>
+                      <Input type="date" value={editForm.travelDate || ""} onChange={e => setEditForm({...editForm, travelDate: e.target.value})} className="rounded-3xl px-4" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Service <span className="text-red-500">*</span></Label>
+                      <select
+                        value={editForm.bookingType || ""}
+                        onChange={e => setEditForm({...editForm, bookingType: e.target.value as any})}
+                        className="w-full rounded-3xl border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                      >
+                        <option value="">Select a service</option>
+                        {SERVICES.map((g) => (
+                          <optgroup key={g.group} label={g.group}>
+                            {g.items.map((i) => (
+                              <option key={i.label} value={i.label}>
+                                {i.icon} {i.label}
+                              </option>
+                            ))}
+                          </optgroup>
+                        ))}
+                      </select>
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Destination <span className="text-red-500">*</span></Label>
+                      <Input placeholder="e.g. Bali, Paris..." value={editForm.package || ""} onChange={e => setEditForm({...editForm, package: e.target.value})} className="rounded-3xl px-4" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Total Budget (₹)</Label>
+                      <Input type="number" placeholder="e.g. 85000" value={editForm.amount || 0} onChange={e => setEditForm({...editForm, amount: Number(e.target.value)})} className="rounded-3xl px-4" />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-sm font-semibold">Amount Paid (₹)</Label>
+                      <Input type="number" value={editForm.paid || 0} onChange={e => setEditForm({...editForm, paid: Number(e.target.value)})} className="rounded-3xl px-4" />
+                    </div>
+                    <div className="col-span-2 flex justify-end mt-2">
+                      <Button type="submit" className="rounded-full px-6 bg-rose-500 hover:bg-rose-600 text-white font-semibold">Save Changes</Button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="grid grid-cols-2 gap-4 text-sm mt-2">
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Customer</p>
+                      <p className="font-semibold">{managingBooking.customer}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Travel Date</p>
+                      <p className="font-semibold">{managingBooking.travelDate}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Service</p>
+                      <p className="font-semibold text-muted-foreground">{managingBooking.bookingType}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Destination</p>
+                      <p className="font-semibold text-muted-foreground">{managingBooking.package}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Total Budget</p>
+                      <p className="font-bold text-primary">{formatINR(managingBooking.amount)}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs text-muted-foreground mb-1">Amount Paid</p>
+                      <p className="font-bold text-emerald-700">{formatINR(managingBooking.paid)}</p>
+                    </div>
+                  </div>
+                )}
               </div>
 
               {/* Upload Document Form */}

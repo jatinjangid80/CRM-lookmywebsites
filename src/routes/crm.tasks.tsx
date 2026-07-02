@@ -229,7 +229,7 @@ function TaskCard({
         {isDone ? (
           <CheckCircle2 className="h-5 w-5 text-emerald-500" />
         ) : (
-          <Circle className="h-5 w-5 text-muted-foreground/60 hover:text-primary transition-colors" />
+          <CheckCircle2 className="h-5 w-5 text-muted-foreground/30 hover:text-emerald-500 transition-colors" />
         )}
       </button>
 
@@ -369,24 +369,27 @@ function TaskCard({
         </div>
       </div>
 
-      {/* Type pill (right side) */}
-      <span
-        className={`hidden shrink-0 rounded-lg px-2 py-1 text-xs font-semibold sm:inline-block ${TYPE_COLORS[task.type]}`}
-      >
-        {task.type}
-      </span>
-
-      {/* Delete */}
-      {isAdmin && (
-        <button
-          id={`delete-${task.id}`}
-          onClick={onDelete}
-          className="absolute right-3 top-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
-          aria-label="Delete task"
+      {/* Right side actions & pills */}
+      <div className="flex shrink-0 items-start gap-2 -mt-1 -mr-1">
+        {/* Type pill (right side) */}
+        <span
+          className={`hidden rounded-lg px-2 py-1 text-xs font-semibold sm:inline-block ${TYPE_COLORS[task.type]}`}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-      )}
+          {task.type}
+        </span>
+
+        {/* Delete */}
+        {isAdmin && (
+          <button
+            id={`delete-${task.id}`}
+            onClick={onDelete}
+            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
+            aria-label="Delete task"
+          >
+            <Trash2 className="h-4 w-4" />
+          </button>
+        )}
+      </div>
     </div>
   );
 }
@@ -755,71 +758,74 @@ function TasksPage() {
 
         {/* ── Filters ── */}
         <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
-          <div className="flex flex-wrap items-center gap-2">
-            <Filter className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
-
-            {/* Status */}
-            <Pill active={filterStatus === "All"} onClick={() => setFilterStatus("All")}>
-              All
-            </Pill>
-            <Pill active={filterStatus === "Pending"} onClick={() => setFilterStatus("Pending")}>
-              ⏳ Pending
-            </Pill>
-            <Pill active={filterStatus === "Done"} onClick={() => setFilterStatus("Done")}>
-              ✅ Done
-            </Pill>
-            <Pill active={filterStatus === "Overdue"} onClick={() => setFilterStatus("Overdue")}>
-              🚨 Overdue
-            </Pill>
-
-            <span className="mx-1 h-4 w-px bg-border" />
-
-            {/* Priority */}
-            {PRIORITIES.map((p) => (
-              <Pill
-                key={p}
-                active={filterPriority === p}
-                onClick={() => setFilterPriority(filterPriority === p ? "All" : p)}
-              >
-                <span className={`mr-1 inline-block h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[p]}`} />
-                {p}
-              </Pill>
-            ))}
-
-            <span className="mx-1 h-4 w-px bg-border" />
-
-            {/* Type */}
-            {TASK_TYPES.map((t) => {
-              const Ic = TYPE_ICONS[t];
-              return (
-                <Pill
-                  key={t}
-                  active={filterType === t}
-                  onClick={() => setFilterType(filterType === t ? "All" : t)}
-                >
-                  <Ic className="mr-1 inline h-3 w-3" />
-                  {t}
-                </Pill>
-              );
-            })}
-
-            <span className="mx-1 h-4 w-px bg-border" />
-
-            {/* Assignee */}
-            {isAdmin &&
-              assignees.map((a) => (
-                <Pill
-                  key={a}
-                  active={filterAssignee === a}
-                  onClick={() => setFilterAssignee(filterAssignee === a ? "All" : a)}
-                >
-                  {a.split(" ")[0]}
-                </Pill>
-              ))}
-
-            <span className="ml-auto text-xs text-muted-foreground">
+          <div className="flex flex-wrap items-center justify-end gap-4">
+            <span className="mr-auto text-sm font-medium text-muted-foreground">
               {filtered.length} task{filtered.length !== 1 ? "s" : ""}
             </span>
+
+            <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+
+            {/* Status */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">Status:</span>
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value as "All" | TaskStatus | "Overdue")}
+                className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              >
+                <option value="All">All Statuses</option>
+                <option value="Pending">⏳ Pending</option>
+                <option value="Done">✅ Done</option>
+                <option value="Overdue">🚨 Overdue</option>
+              </select>
+            </div>
+
+            {/* Priority */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">Priority:</span>
+              <select
+                value={filterPriority}
+                onChange={(e) => setFilterPriority(e.target.value as TaskPriority | "All")}
+                className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              >
+                <option value="All">All Priorities</option>
+                {PRIORITIES.map((p) => (
+                  <option key={p} value={p}>{p}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Type */}
+            <div className="flex items-center gap-2 text-sm">
+              <span className="text-muted-foreground font-medium">Type:</span>
+              <select
+                value={filterType}
+                onChange={(e) => setFilterType(e.target.value as TaskType | "All")}
+                className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              >
+                <option value="All">All Types</option>
+                {TASK_TYPES.map((t) => (
+                  <option key={t} value={t}>{t}</option>
+                ))}
+              </select>
+            </div>
+
+            {/* Assignee */}
+            {isAdmin && (
+              <div className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground font-medium">Assignee:</span>
+                <select
+                  value={filterAssignee}
+                  onChange={(e) => setFilterAssignee(e.target.value)}
+                  className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+                >
+                  <option value="All">All Assignees</option>
+                  {assignees.map((a) => (
+                    <option key={a} value={a}>{a.split(" ")[0]}</option>
+                  ))}
+                </select>
+              </div>
+            )}
           </div>
         </div>
 

@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
+import React, { useState } from "react";
 import { getAuth } from "@/lib/auth";
 import {
   Plus,
@@ -70,6 +70,7 @@ interface ExtLead extends Lead {
   totalAmount?: number;
   amountPaid?: number;
   paymentStatus?: "Pending" | "Partial" | "Paid";
+  createdTime?: string;
 }
 
 const AVATARS = [""];
@@ -305,15 +306,24 @@ function AddLeadModal({
 
   const set =
     (k: keyof typeof EMPTY_FORM) =>
-    (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
-      setForm((f) => ({ ...f, [k]: e.target.value }));
+      (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
+        setForm((f) => ({ ...f, [k]: e.target.value }));
 
   const fieldCls =
     "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
 
   const submit = () => {
     if (!canSubmit) return;
-    const lmhLeads = existingLeads.filter((l) => l.id?.startsWith("LMH-"));
+    const isDuplicate = existingLeads.some(
+      (l) =>
+        l.phone === form.phone ||
+        (form.email && l.email?.toLowerCase() === form.email.toLowerCase())
+    );
+    if (isDuplicate) {
+      alert("A lead with this phone number or email already exists.");
+      return;
+    }
+    const lmhLeads = existingLeads.filter((l) => l.id?.startsWith("T-"));
     let nextNum = 1;
     if (lmhLeads.length > 0) {
       const nums = lmhLeads.map((l) => {
@@ -328,7 +338,7 @@ function AddLeadModal({
       while (s.length < size) s = "0" + s;
       return s;
     };
-    const id = `LMH-${pad(nextNum, 3)}`;
+    const id = `T-${pad(nextNum, 3)}`;
     onAdd({
       id,
       name: form.name,
@@ -341,6 +351,7 @@ function AddLeadModal({
       source: form.source,
       reference: form.reference,
       createdAt: new Date().toISOString().slice(0, 10),
+      createdTime: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
       avatar: "",
       assignedTo: form.assignedTo,
       notes: form.notes,
@@ -417,9 +428,13 @@ function AddLeadModal({
             </label>
             <Input
               id="lead-phone"
+              type="tel"
               placeholder="+91 98200 00000"
               value={form.phone}
-              onChange={set("phone")}
+              onChange={(e) => {
+                const val = e.target.value.replace(/[^0-9+\s-]/g, "");
+                setForm((f) => ({ ...f, phone: val }));
+              }}
               className="rounded-xl"
             />
           </div>
@@ -471,17 +486,7 @@ function AddLeadModal({
               </div>
             </div>
           )}
-          {/* Next Follow-up */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Next Follow-up</label>
-            <Input
-              id="lead-next-follow"
-              type="date"
-              value={form.nextFollowUp}
-              onChange={set("nextFollowUp")}
-              className="rounded-xl"
-            />
-          </div>
+
           {isInsurance ? (
             <>
               {/* Expiry Date */}
@@ -580,19 +585,7 @@ function AddLeadModal({
                   className="rounded-xl"
                 />
               </div>
-              {/* Pax */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Travellers</label>
-                <Input
-                  id="lead-pax"
-                  type="number"
-                  min={1}
-                  max={50}
-                  value={form.pax}
-                  onChange={set("pax")}
-                  className="rounded-xl"
-                />
-              </div>
+
             </>
           )}
           {/* Source */}
@@ -696,27 +689,7 @@ function AddLeadModal({
               />
             </div>
           )}
-          {/* Status */}
-          <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-semibold">Status</label>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.map((s) => (
-                <button
-                  key={s}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, status: s }))}
-                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    form.status === s
-                      ? `${STATUS_PILL[s]} border-transparent shadow-sm`
-                      : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[s]}`} />
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+
 
           {/* Booking / Payment Details */}
           {["Booked", "Completed"].includes(form.status) && (
@@ -828,16 +801,42 @@ function LeadDetail({
     paymentStatus: lead.paymentStatus || "Pending",
   });
 
+  const [isEditingContact, setIsEditingContact] = useState(false);
+  const [contactDetails, setContactDetails] = useState({
+    phone: lead.phone || "",
+    email: lead.email || "",
+  });
+
+  const [isEditingTrip, setIsEditingTrip] = useState(false);
+  const [tripDetails, setTripDetails] = useState({
+    destination: lead.destination || "",
+    budget: lead.budget || 0,
+    travelDate: lead.travelDate || "",
+    pax: lead.pax || 2,
+    adults: lead.adults || 2,
+    children: lead.children || 0,
+    whatsapp: lead.whatsapp || lead.phone || "",
+    nextFollowUp: lead.nextFollowUp || "",
+    source: lead.source || "Direct",
+    service: lead.service || "International Package",
+    priority: lead.priority || "Medium",
+    expiryDate: lead.expiryDate || "",
+    policyType: lead.policyType || "",
+    queryType: lead.queryType || "",
+    clientCompany: lead.clientCompany || "",
+    reference: lead.reference || "",
+    packageType: lead.packageType || "",
+  });
+
   return (
     <div
-      className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
     >
       <div
-        className="flex h-full w-full max-w-md flex-col overflow-y-auto bg-background shadow-2xl animate-float-up"
-        style={{ animationDuration: "0.2s", animationName: "slide-in" }}
+        className="flex w-full max-w-2xl max-h-[90vh] flex-col overflow-y-auto bg-background shadow-2xl rounded-2xl animate-in zoom-in-95 duration-200"
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
@@ -866,150 +865,413 @@ function LeadDetail({
                 {lead.id} · Created {lead.createdAt}
               </p>
               <div className="mt-2">
-                <span
-                  className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_PILL[lead.status]}`}
+                <Select
+                  value={lead.status}
+                  onValueChange={(val: LeadStatus) => onStatusChange(lead.id, val)}
                 >
-                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[lead.status]}`} />
-                  {lead.status}
-                </span>
+                  <SelectTrigger
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[lead.status]}`}
+                  >
+                    <div className="flex items-center gap-1.5">
+                      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[lead.status]}`} />
+                      <SelectValue />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {STATUSES.map((s) => (
+                      <SelectItem key={s} value={s} className="text-xs">
+                        {s}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
 
           {/* Contact info */}
           <div className="grid gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Contact
-            </p>
-            <div className="flex items-center gap-3 text-sm">
-              <Phone className="h-4 w-4 text-primary" />
-              <a href={`tel:${lead.phone}`} className="hover:underline">
-                {lead.phone}
-              </a>
+            <div className="flex justify-between items-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                Contact
+              </p>
+              {isAdmin && onUpdateLead && !isEditingContact && (
+                <button
+                  onClick={() => setIsEditingContact(true)}
+                  className="text-[10px] text-blue-500 hover:underline"
+                >
+                  Edit
+                </button>
+              )}
             </div>
-            <div className="flex items-center gap-3 text-sm">
-              <Mail className="h-4 w-4 text-primary" />
-              <a href={`mailto:${lead.email}`} className="hover:underline">
-                {lead.email || "—"}
-              </a>
-            </div>
+
+            {isEditingContact ? (
+              <div className="space-y-4 animate-in fade-in">
+                <div className="space-y-3">
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase text-muted-foreground">Phone</label>
+                    <Input
+                      type="tel"
+                      value={contactDetails.phone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9+\s-]/g, "");
+                        setContactDetails({ ...contactDetails, phone: val });
+                      }}
+                      className="h-8 mt-1 text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase text-muted-foreground">Email</label>
+                    <Input
+                      type="email"
+                      value={contactDetails.email}
+                      onChange={(e) => setContactDetails({ ...contactDetails, email: e.target.value })}
+                      className="h-8 mt-1 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-border/50">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs flex-1 rounded-lg"
+                    onClick={() => setIsEditingContact(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs flex-1 rounded-lg"
+                    onClick={() => {
+                      onUpdateLead?.(lead.id, contactDetails);
+                      setIsEditingContact(false);
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center gap-3 text-sm">
+                  <Phone className="h-4 w-4 text-primary" />
+                  <a href={`tel:${lead.phone}`} className="hover:underline">
+                    {lead.phone}
+                  </a>
+                </div>
+                <div className="flex items-center gap-3 text-sm">
+                  <Mail className="h-4 w-4 text-primary" />
+                  <a href={`mailto:${lead.email}`} className="hover:underline">
+                    {lead.email || "—"}
+                  </a>
+                </div>
+              </>
+            )}
           </div>
 
           {/* Trip details */}
           <div className="grid gap-3 rounded-2xl border border-border bg-secondary/30 p-4">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              {lead.service?.toLowerCase().includes("insurance")
-                ? "Insurance Details"
-                : "Trip Details"}
-            </p>
-            <div className="grid grid-cols-2 gap-3">
+            <div className="flex justify-between items-center">
+              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                {lead.service?.toLowerCase().includes("insurance")
+                  ? "Insurance Details"
+                  : "Trip Details"}
+              </p>
+              {isAdmin && onUpdateLead && !isEditingTrip && (
+                <button
+                  onClick={() => setIsEditingTrip(true)}
+                  className="text-[10px] text-blue-500 hover:underline"
+                >
+                  Edit Details
+                </button>
+              )}
+            </div>
+
+            {isEditingTrip ? (
+              <div className="space-y-4 animate-in fade-in">
+                <div className="space-y-3">
+                  {!lead.service?.toLowerCase().includes("insurance") && (
+                    <>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">Destination</label>
+                        <Input
+                          value={tripDetails.destination}
+                          onChange={(e) => setTripDetails({ ...tripDetails, destination: e.target.value })}
+                          className="h-8 mt-1 text-xs"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Budget</label>
+                          <Input
+                            type="number"
+                            value={tripDetails.budget}
+                            onChange={(e) => setTripDetails({ ...tripDetails, budget: Number(e.target.value) })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Travel Date</label>
+                          <Input
+                            type="date"
+                            value={tripDetails.travelDate}
+                            onChange={(e) => setTripDetails({ ...tripDetails, travelDate: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Adults</label>
+                          <Input
+                            type="number"
+                            value={tripDetails.adults}
+                            onChange={(e) => setTripDetails({ ...tripDetails, adults: Number(e.target.value), pax: Number(e.target.value) + Number(tripDetails.children) })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Children</label>
+                          <Input
+                            type="number"
+                            value={tripDetails.children}
+                            onChange={(e) => setTripDetails({ ...tripDetails, children: Number(e.target.value), pax: Number(tripDetails.adults) + Number(e.target.value) })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Package Type</label>
+                          <Input
+                            value={tripDetails.packageType}
+                            onChange={(e) => setTripDetails({ ...tripDetails, packageType: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Service</label>
+                          <select
+                            value={tripDetails.service}
+                            onChange={(e) => setTripDetails({ ...tripDetails, service: e.target.value })}
+                            className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                          >
+                            {Object.keys(SERVICE_ICONS).map((s) => (
+                              <option key={s} value={s}>{s}</option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {lead.service?.toLowerCase().includes("insurance") && (
+                    <>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Expiry Date</label>
+                          <Input
+                            type="date"
+                            value={tripDetails.expiryDate}
+                            onChange={(e) => setTripDetails({ ...tripDetails, expiryDate: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Policy Type</label>
+                          <Input
+                            value={tripDetails.policyType}
+                            onChange={(e) => setTripDetails({ ...tripDetails, policyType: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Query Type</label>
+                          <Input
+                            value={tripDetails.queryType}
+                            onChange={(e) => setTripDetails({ ...tripDetails, queryType: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">Client/Company</label>
+                          <Input
+                            value={tripDetails.clientCompany}
+                            onChange={(e) => setTripDetails({ ...tripDetails, clientCompany: e.target.value })}
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">Priority</label>
+                      <select
+                        value={tripDetails.priority}
+                        onChange={(e) => setTripDetails({ ...tripDetails, priority: e.target.value as "High" | "Medium" | "Low" })}
+                        className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="High">High</option>
+                        <option value="Medium">Medium</option>
+                        <option value="Low">Low</option>
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">Source</label>
+                      <select
+                        value={tripDetails.source}
+                        onChange={(e) => setTripDetails({ ...tripDetails, source: e.target.value })}
+                        className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        {Object.keys(SOURCE_ICONS).map((s) => (
+                          <option key={s} value={s}>{s}</option>
+                        ))}
+                      </select>
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-semibold uppercase text-muted-foreground">Next Follow-up</label>
+                    <Input
+                      type="date"
+                      value={tripDetails.nextFollowUp}
+                      onChange={(e) => setTripDetails({ ...tripDetails, nextFollowUp: e.target.value })}
+                      className="h-8 mt-1 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="flex gap-2 pt-2 border-t border-border/50">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-8 text-xs flex-1 rounded-lg"
+                    onClick={() => setIsEditingTrip(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    size="sm"
+                    className="h-8 text-xs flex-1 rounded-lg"
+                    onClick={() => {
+                      onUpdateLead?.(lead.id, tripDetails);
+                      setIsEditingTrip(false);
+                    }}
+                  >
+                    Save Changes
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-3">
               {lead.service?.toLowerCase().includes("insurance")
                 ? [
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Expiry Date",
-                      val: lead.expiryDate || "—",
-                    },
-                    {
-                      icon: <Shield className="h-4 w-4 text-primary" />,
-                      label: "Policy Type",
-                      val: lead.policyType || "—",
-                    },
-                    {
-                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                      label: "Query Type",
-                      val: lead.queryType || "—",
-                    },
-                    {
-                      icon: <Building2 className="h-4 w-4 text-primary" />,
-                      label: "Client / Company",
-                      val: lead.clientCompany || "—",
-                    },
-                    {
-                      icon: <UserCheck className="h-4 w-4 text-primary" />,
-                      label: "Reference",
-                      val: lead.reference || "—",
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Source",
-                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                    },
-                    {
-                      icon: <Briefcase className="h-4 w-4 text-primary" />,
-                      label: "Service",
-                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                    },
-                  ].map((r) => (
-                    <div key={r.label} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0">{r.icon}</span>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{r.label}</p>
-                        <p className="text-sm font-semibold">{r.val}</p>
-                      </div>
+                  {
+                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                    label: "Expiry Date",
+                    val: lead.expiryDate || "—",
+                  },
+                  {
+                    icon: <Shield className="h-4 w-4 text-primary" />,
+                    label: "Policy Type",
+                    val: lead.policyType || "—",
+                  },
+                  {
+                    icon: <AlertCircle className="h-4 w-4 text-primary" />,
+                    label: "Query Type",
+                    val: lead.queryType || "—",
+                  },
+                  {
+                    icon: <Building2 className="h-4 w-4 text-primary" />,
+                    label: "Client / Company",
+                    val: lead.clientCompany || "—",
+                  },
+                  {
+                    icon: <UserCheck className="h-4 w-4 text-primary" />,
+                    label: "Reference",
+                    val: lead.reference || "—",
+                  },
+                  {
+                    icon: <Globe className="h-4 w-4 text-primary" />,
+                    label: "Source",
+                    val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
+                  },
+                  {
+                    icon: <Briefcase className="h-4 w-4 text-primary" />,
+                    label: "Service",
+                    val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
+                  },
+                ].map((r) => (
+                  <div key={r.label} className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{r.label}</p>
+                      <p className="text-sm font-semibold">{r.val}</p>
                     </div>
-                  ))
+                  </div>
+                ))
                 : [
-                    {
-                      icon: <MapPin className="h-4 w-4 text-primary" />,
-                      label: "Destination",
-                      val: lead.destination,
-                    },
-                    {
-                      icon: <IndianRupee className="h-4 w-4 text-primary" />,
-                      label: "Budget",
-                      val: formatINR(lead.budget),
-                    },
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Travel Date",
-                      val: lead.travelDate,
-                    },
-                    {
-                      icon: <Users className="h-4 w-4 text-primary" />,
-                      label: "Travellers",
-                      val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
-                    },
-                    {
-                      icon: <Phone className="h-4 w-4 text-primary" />,
-                      label: "WhatsApp",
-                      val: lead.whatsapp || lead.phone,
-                    },
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Next Follow-up",
-                      val: lead.nextFollowUp || "Not scheduled",
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Source",
-                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                    },
-                    {
-                      icon: <Briefcase className="h-4 w-4 text-primary" />,
-                      label: "Service",
-                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                    },
-                    {
-                      icon: <Package className="h-4 w-4 text-primary" />,
-                      label: "Package",
-                      val: lead.packageType || "—",
-                    },
-                    {
-                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                      label: "Priority",
-                      val: PRIORITY_BADGE[lead.priority] || lead.priority,
-                    },
-                  ].map((r) => (
-                    <div key={r.label} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0">{r.icon}</span>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{r.label}</p>
-                        <p className="text-sm font-semibold">{r.val}</p>
-                      </div>
+                  {
+                    icon: <MapPin className="h-4 w-4 text-primary" />,
+                    label: "Destination",
+                    val: lead.destination,
+                  },
+                  {
+                    icon: <IndianRupee className="h-4 w-4 text-primary" />,
+                    label: "Budget",
+                    val: formatINR(lead.budget),
+                  },
+                  {
+                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                    label: "Travel Date",
+                    val: lead.travelDate,
+                  },
+                  {
+                    icon: <Users className="h-4 w-4 text-primary" />,
+                    label: "Travellers",
+                    val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
+                  },
+                  {
+                    icon: <Phone className="h-4 w-4 text-primary" />,
+                    label: "WhatsApp",
+                    val: lead.whatsapp || lead.phone,
+                  },
+                  {
+                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                    label: "Next Follow-up",
+                    val: lead.nextFollowUp || "Not scheduled",
+                  },
+                  {
+                    icon: <Globe className="h-4 w-4 text-primary" />,
+                    label: "Source",
+                    val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
+                  },
+                  {
+                    icon: <Briefcase className="h-4 w-4 text-primary" />,
+                    label: "Service",
+                    val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
+                  },
+                  {
+                    icon: <Package className="h-4 w-4 text-primary" />,
+                    label: "Package",
+                    val: lead.packageType || "—",
+                  },
+                  {
+                    icon: <AlertCircle className="h-4 w-4 text-primary" />,
+                    label: "Priority",
+                    val: PRIORITY_BADGE[lead.priority] || lead.priority,
+                  },
+                ].map((r) => (
+                  <div key={r.label} className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{r.label}</p>
+                      <p className="text-sm font-semibold">{r.val}</p>
                     </div>
-                  ))}
-            </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Booking & Payment Details */}
@@ -1017,277 +1279,293 @@ function LeadDetail({
             lead.status === "Completed" ||
             lead.bookingReference ||
             isEditingBooking) && (
-            <div className="space-y-2">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Booking & Payment
-                </p>
-                {isAdmin && onUpdateLead && !isEditingBooking && (
-                  <button
-                    onClick={() => setIsEditingBooking(true)}
-                    className="text-[10px] text-blue-500 hover:underline"
-                  >
-                    Edit Details
-                  </button>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    Booking & Payment
+                  </p>
+                  {isAdmin && onUpdateLead && !isEditingBooking && (
+                    <button
+                      onClick={() => setIsEditingBooking(true)}
+                      className="text-[10px] text-blue-500 hover:underline"
+                    >
+                      Edit Details
+                    </button>
+                  )}
+                </div>
+
+                {isEditingBooking ? (
+                  <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-4 animate-in fade-in">
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                          Vendor Name
+                        </label>
+                        <Input
+                          value={bookingDetails.vendorName}
+                          onChange={(e) =>
+                            setBookingDetails({ ...bookingDetails, vendorName: e.target.value })
+                          }
+                          className="h-8 mt-1 text-xs"
+                          placeholder="e.g. MakeMyTrip"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                          Booking Ref / PNR
+                        </label>
+                        <Input
+                          value={bookingDetails.bookingReference}
+                          onChange={(e) =>
+                            setBookingDetails({ ...bookingDetails, bookingReference: e.target.value })
+                          }
+                          className="h-8 mt-1 text-xs"
+                          placeholder="e.g. PNR12345"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                          Hotel Details
+                        </label>
+                        <Input
+                          value={bookingDetails.hotelDetails}
+                          onChange={(e) =>
+                            setBookingDetails({ ...bookingDetails, hotelDetails: e.target.value })
+                          }
+                          className="h-8 mt-1 text-xs"
+                          placeholder="e.g. Taj Hotel, 3 Nights"
+                        />
+                      </div>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                            Total Amount
+                          </label>
+                          <Input
+                            type="number"
+                            value={bookingDetails.totalAmount}
+                            onChange={(e) =>
+                              setBookingDetails({
+                                ...bookingDetails,
+                                totalAmount: Number(e.target.value),
+                              })
+                            }
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                            Amount Paid
+                          </label>
+                          <Input
+                            type="number"
+                            value={bookingDetails.amountPaid}
+                            onChange={(e) =>
+                              setBookingDetails({
+                                ...bookingDetails,
+                                amountPaid: Number(e.target.value),
+                              })
+                            }
+                            className="h-8 mt-1 text-xs"
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
+                          Payment Status
+                        </label>
+                        <select
+                          value={bookingDetails.paymentStatus}
+                          onChange={(e) =>
+                            setBookingDetails({
+                              ...bookingDetails,
+                              paymentStatus: e.target.value as "Pending" | "Partial" | "Paid",
+                            })
+                          }
+                          className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                        >
+                          <option value="Pending">Pending</option>
+                          <option value="Partial">Partial</option>
+                          <option value="Paid">Paid</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 pt-2 border-t border-border/50">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-8 text-xs flex-1 rounded-lg"
+                        onClick={() => setIsEditingBooking(false)}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-8 text-xs flex-1 rounded-lg"
+                        onClick={() => {
+                          onUpdateLead?.(lead.id, bookingDetails);
+                          setIsEditingBooking(false);
+                        }}
+                      >
+                        Save Details
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="rounded-2xl border border-border p-4 space-y-3 bg-secondary/10">
+                    <div className="grid grid-cols-2 gap-y-3 gap-x-2">
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Vendor
+                        </p>
+                        <p className="text-xs font-medium mt-0.5">{lead.vendorName || "—"}</p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Ref / PNR
+                        </p>
+                        <p className="text-xs font-medium mt-0.5">{lead.bookingReference || "—"}</p>
+                      </div>
+                      <div className="col-span-2">
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Hotel
+                        </p>
+                        <p className="text-xs font-medium mt-0.5">{lead.hotelDetails || "—"}</p>
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-3 mt-1 grid grid-cols-3 gap-2">
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Total
+                        </p>
+                        <p className="text-xs font-semibold mt-0.5">
+                          {formatINR(lead.totalAmount || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Paid
+                        </p>
+                        <p className="text-xs font-semibold text-emerald-600 mt-0.5">
+                          {formatINR(lead.amountPaid || 0)}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
+                          Status
+                        </p>
+                        <div className="mt-1">
+                          <span
+                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${lead.paymentStatus === "Paid"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : lead.paymentStatus === "Partial"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-rose-100 text-rose-700"
+                              }`}
+                          >
+                            {lead.paymentStatus || "Pending"}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
                 )}
               </div>
+            )}
 
-              {isEditingBooking ? (
-                <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-4 animate-in fade-in">
-                  <div className="space-y-3">
-                    <div>
-                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                        Vendor Name
-                      </label>
-                      <Input
-                        value={bookingDetails.vendorName}
-                        onChange={(e) =>
-                          setBookingDetails({ ...bookingDetails, vendorName: e.target.value })
-                        }
-                        className="h-8 mt-1 text-xs"
-                        placeholder="e.g. MakeMyTrip"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                        Booking Ref / PNR
-                      </label>
-                      <Input
-                        value={bookingDetails.bookingReference}
-                        onChange={(e) =>
-                          setBookingDetails({ ...bookingDetails, bookingReference: e.target.value })
-                        }
-                        className="h-8 mt-1 text-xs"
-                        placeholder="e.g. PNR12345"
-                      />
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                        Hotel Details
-                      </label>
-                      <Input
-                        value={bookingDetails.hotelDetails}
-                        onChange={(e) =>
-                          setBookingDetails({ ...bookingDetails, hotelDetails: e.target.value })
-                        }
-                        className="h-8 mt-1 text-xs"
-                        placeholder="e.g. Taj Hotel, 3 Nights"
-                      />
-                    </div>
-                    <div className="grid grid-cols-2 gap-2">
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Total Amount
-                        </label>
-                        <Input
-                          type="number"
-                          value={bookingDetails.totalAmount}
-                          onChange={(e) =>
-                            setBookingDetails({
-                              ...bookingDetails,
-                              totalAmount: Number(e.target.value),
-                            })
-                          }
-                          className="h-8 mt-1 text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Amount Paid
-                        </label>
-                        <Input
-                          type="number"
-                          value={bookingDetails.amountPaid}
-                          onChange={(e) =>
-                            setBookingDetails({
-                              ...bookingDetails,
-                              amountPaid: Number(e.target.value),
-                            })
-                          }
-                          className="h-8 mt-1 text-xs"
-                        />
-                      </div>
-                    </div>
-                    <div>
-                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                        Payment Status
-                      </label>
-                      <select
-                        value={bookingDetails.paymentStatus}
-                        onChange={(e) =>
-                          setBookingDetails({
-                            ...bookingDetails,
-                            paymentStatus: e.target.value as "Pending" | "Partial" | "Paid",
-                          })
-                        }
-                        className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-                      >
-                        <option value="Pending">Pending</option>
-                        <option value="Partial">Partial</option>
-                        <option value="Paid">Paid</option>
-                      </select>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 pt-2 border-t border-border/50">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="h-8 text-xs flex-1 rounded-lg"
-                      onClick={() => setIsEditingBooking(false)}
-                    >
-                      Cancel
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="h-8 text-xs flex-1 rounded-lg"
-                      onClick={() => {
-                        onUpdateLead?.(lead.id, bookingDetails);
-                        setIsEditingBooking(false);
-                      }}
-                    >
-                      Save Details
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <div className="rounded-2xl border border-border p-4 space-y-3 bg-secondary/10">
-                  <div className="grid grid-cols-2 gap-y-3 gap-x-2">
-                    <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Vendor
-                      </p>
-                      <p className="text-xs font-medium mt-0.5">{lead.vendorName || "—"}</p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Ref / PNR
-                      </p>
-                      <p className="text-xs font-medium mt-0.5">{lead.bookingReference || "—"}</p>
-                    </div>
-                    <div className="col-span-2">
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Hotel
-                      </p>
-                      <p className="text-xs font-medium mt-0.5">{lead.hotelDetails || "—"}</p>
-                    </div>
-                  </div>
-
-                  <div className="border-t border-border pt-3 mt-1 grid grid-cols-3 gap-2">
-                    <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Total
-                      </p>
-                      <p className="text-xs font-semibold mt-0.5">
-                        {formatINR(lead.totalAmount || 0)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Paid
-                      </p>
-                      <p className="text-xs font-semibold text-emerald-600 mt-0.5">
-                        {formatINR(lead.amountPaid || 0)}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                        Status
-                      </p>
-                      <div className="mt-1">
-                        <span
-                          className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${
-                            lead.paymentStatus === "Paid"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : lead.paymentStatus === "Partial"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-rose-100 text-rose-700"
-                          }`}
-                        >
-                          {lead.paymentStatus || "Pending"}
+          <div className="mt-4 pt-4 border-t border-border">
+            <div className="pl-3 border-l-[3px] border-[#e8dfd5] py-1 mt-2 space-y-3">
+              <div className="space-y-3">
+                {lead.allNotes && lead.allNotes.length > 0 ? (
+                  lead.allNotes.map((n, i) => (
+                    <div key={i} className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="text-muted-foreground/60">•</span>
+                      <span>{n.text}</span>
+                      {n.date && (
+                        <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
+                          ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
                         </span>
-                      </div>
+                      )}
+                    </div>
+                  ))
+                ) : lead.notes ? (
+                    <div className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
+                      <span className="text-muted-foreground/60">•</span>
+                      <span>{lead.notes}</span>
+                      {lead.noteDate && (
+                        <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
+                          ({new Date(lead.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                        </span>
+                      )}
+                    </div>
+                ) : null}
+              </div>
+
+              {/* Add New Note Section */}
+              {isAdmin && onEditNote && (
+                isEditingNote ? (
+                  <div className="mt-2 w-full max-w-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                    <textarea
+                      autoFocus
+                      placeholder="Type your note here..."
+                      value={editNoteText}
+                      onChange={(e) => setEditNoteText(e.target.value)}
+                      rows={2}
+                      className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                    />
+                    <div className="flex gap-2 mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs rounded-full px-4"
+                        onClick={() => {
+                          setIsEditingNote(false);
+                          setEditNoteText("");
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        size="sm"
+                        className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90"
+                        style={{ background: "var(--gradient-brand)" }}
+                        onClick={() => {
+                          if (editNoteText.trim()) {
+                            onEditNote(lead.id, editNoteText.trim());
+                          }
+                          setIsEditingNote(false);
+                          setEditNoteText("");
+                        }}
+                      >
+                        Add Note
+                      </Button>
                     </div>
                   </div>
-                </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setEditNoteText("");
+                      setIsEditingNote(true);
+                    }}
+                    className="mt-1 flex items-center gap-1.5 self-start text-[14px] font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                  >
+                    + Add Note
+                  </button>
+                )
               )}
             </div>
-          )}
-
-          {/* Assignee Card */}
-          <div className="space-y-2">
-            <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Assignee
-            </p>
-            <EmployeeProfileCard employeeName={lead.assignedTo} />
           </div>
 
-          {/* Notes */}
-          {isEditingNote ? (
-            <div className="rounded-2xl border border-border bg-secondary/30 p-4 animate-in fade-in slide-in-from-top-2 duration-200">
-              <label className="mb-1.5 block text-xs font-semibold text-foreground uppercase tracking-wider">
-                Note{" "}
-                <span className="text-muted-foreground font-normal normal-case">(optional)</span>
-              </label>
-              <textarea
-                autoFocus
-                placeholder="Context or reminder details..."
-                value={editNoteText}
-                onChange={(e) => setEditNoteText(e.target.value)}
-                rows={2}
-                className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-              />
-              <div className="flex gap-2 mt-3">
-                <Button
-                  size="sm"
-                  variant="outline"
-                  className="h-8 text-xs rounded-lg px-4"
-                  onClick={() => {
-                    setIsEditingNote(false);
-                    setEditNoteText(lead.notes || "");
-                  }}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  size="sm"
-                  className="h-8 text-xs rounded-lg px-4"
-                  onClick={() => {
-                    onEditNote?.(lead.id, editNoteText);
-                    setIsEditingNote(false);
-                  }}
-                >
-                  Save Note
-                </Button>
+            {/* Assignee Card */}
+            <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                Assigned To
+              </p>
+              <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
+                <EmployeeProfileCard employeeName={lead.assignedTo} />
               </div>
             </div>
-          ) : lead.notes ? (
-            <div className="rounded-2xl border border-border bg-secondary/30 p-4 group/note relative">
-              <div className="flex items-center justify-between mb-2">
-                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notes
-                </p>
-                {lead.noteDate && (
-                  <span className="text-[10px] text-muted-foreground">
-                    {new Date(lead.noteDate).toLocaleString()}
-                  </span>
-                )}
-              </div>
-              <p className="text-sm text-muted-foreground italic">"{lead.notes}"</p>
-            </div>
-          ) : isAdmin && onEditNote ? (
-            <div className="rounded-2xl border border-border border-dashed p-4 flex items-center justify-center">
-              <button
-                onClick={() => {
-                  setEditNoteText("");
-                  setIsEditingNote(true);
-                }}
-                className="text-xs text-blue-500 hover:underline"
-              >
-                + New Note
-              </button>
-            </div>
-          ) : null}
-
           {/* WhatsApp Quick Actions */}
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
@@ -1348,28 +1626,7 @@ function LeadDetail({
             </div>
           </div>
 
-          {/* Move stage */}
-          <div>
-            <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-              Move to stage
-            </p>
-            <div className="flex flex-wrap gap-2">
-              {STATUSES.map((s) => (
-                <button
-                  key={s}
-                  onClick={() => onStatusChange(lead.id, s)}
-                  className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                    lead.status === s
-                      ? `${STATUS_PILL[s]} border-transparent shadow-sm`
-                      : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[s]}`} />
-                  {s}
-                </button>
-              ))}
-            </div>
-          </div>
+
         </div>
 
         {/* Footer actions */}
@@ -1552,6 +1809,8 @@ function LeadsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selected, setSelected] = useState<ExtLead | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
+  const [tableEditNoteText, setTableEditNoteText] = useState("");
 
   const auth = getAuth();
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
@@ -1666,7 +1925,7 @@ function LeadsPage() {
   };
 
   const handleImportLeads = (data: any[]) => {
-    const lmhLeads = leads.filter((l) => l.id.startsWith("LMH-"));
+    const lmhLeads = leads.filter((l) => l.id.startsWith("T-"));
     let nextNum = 1;
     if (lmhLeads.length > 0) {
       const nums = lmhLeads.map((l) => {
@@ -1683,7 +1942,7 @@ function LeadsPage() {
     };
 
     const importedLeads: ExtLead[] = data.map((row, idx) => ({
-      id: `LMH-${pad(nextNum + idx, 3)}`,
+      id: `T-${pad(nextNum + idx, 3)}`,
       name: String(row["Name"] || row["name"] || "Unknown"),
       phone: String(row["Phone"] || row["phone"] || ""),
       email: String(row["Email"] || row["email"] || ""),
@@ -1700,6 +1959,7 @@ function LeadsPage() {
       notes: "",
       avatar: "",
       createdAt: new Date().toISOString().slice(0, 10),
+      createdTime: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
       service: String(row["Service"] || row["service"] || "International Package"),
       priority: String(row["Priority"] || row["priority"] || "Medium") as "High" | "Medium" | "Low",
       packageType: String(row["PackageType"] || row["package type"] || ""),
@@ -1855,27 +2115,22 @@ function LeadsPage() {
               className="pl-9 rounded-xl"
             />
           </div>
-          <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <div className="flex flex-wrap gap-1.5">
-            {(["All", ...STATUSES] as const).map((s) => (
-              <button
-                key={s}
-                onClick={() => setFilterStatus(s as typeof filterStatus)}
-                className={`flex items-center gap-1 rounded-full border px-3 py-1.5 text-xs font-semibold transition-all ${
-                  filterStatus === s
-                    ? "border-primary bg-primary text-primary-foreground shadow-sm"
-                    : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                }`}
-              >
-                {s !== "All" && (
-                  <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[s as LeadStatus]}`} />
-                )}
-                {s}
-              </button>
-            ))}
+          <div className="flex items-center gap-2 text-sm ml-auto">
+            <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+            <span className="text-muted-foreground font-medium">Status:</span>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
+              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+            >
+              <option value="All">All Statuses</option>
+              {STATUSES.map((s) => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
           </div>
           {/* View toggle */}
-          <div className="ml-auto flex rounded-xl border border-border overflow-hidden">
+          <div className="flex rounded-xl border border-border overflow-hidden">
             <button
               onClick={() => setView("table")}
               className={`flex items-center gap-1.5 px-3 py-2 text-xs font-semibold transition-colors ${view === "table" ? "bg-primary text-primary-foreground" : "hover:bg-secondary"}`}
@@ -1897,106 +2152,184 @@ function LeadsPage() {
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                <thead className="bg-primary text-left text-[11px] uppercase tracking-wider text-white">
                   <tr>
-                    <th className="px-5 py-3">Lead</th>
-                    <th className="px-5 py-3">Destination / Company</th>
-                    <th className="px-5 py-3">Service</th>
-                    <th className="px-5 py-3">Budget</th>
-                    <th className="px-5 py-3">Priority</th>
-                    <th className="px-5 py-3">Assignee</th>
-                    <th className="px-5 py-3">Status</th>
-                    <th className="px-5 py-3">Created</th>
-                    <th className="px-5 py-3" />
+                    <th className="px-3 py-3 font-medium">Status</th>
+                    <th className="px-3 py-3 font-medium">Name</th>
+                    <th className="px-3 py-3 font-medium whitespace-nowrap">Create Date & Time</th>
+                    <th className="px-3 py-3 font-medium">Des. / Service</th>
+                    <th className="px-3 py-3 font-medium whitespace-nowrap">Travel Date / Budget</th>
+                    <th className="px-3 py-3 font-medium">Priority</th>
+                    <th className="px-3 py-3 font-medium">Assigned To</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="py-12 text-center text-muted-foreground text-sm">
+                      <td colSpan={7} className="py-12 text-center text-muted-foreground text-sm">
                         No leads match your filters.
                       </td>
                     </tr>
                   )}
                   {filtered.map((l) => (
+                    <React.Fragment key={l.id}>
                     <tr
-                      key={l.id}
-                      className={`border-t border-border hover:bg-secondary/30 transition-colors border-l-4 ${STATUS_ACCENT[l.status]}`}
+                      className="border-t border-border hover:bg-secondary/30 transition-colors cursor-pointer"
+                      onClick={() => setSelected(l)}
                     >
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-3">
-                          {l.avatar ? (
-                            <img
-                              src={l.avatar}
-                              alt={l.name}
-                              className="h-9 w-9 rounded-xl object-cover shrink-0"
-                            />
-                          ) : (
-                            <div className="h-9 w-9 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-                              <User className="h-5 w-5 text-gray-400" />
-                            </div>
-                          )}
-                          <div>
-                            <p className="font-semibold">{l.name}</p>
-                            <p className="text-xs text-muted-foreground">{l.id}</p>
-                          </div>
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1.5">
-                          {l.service?.toLowerCase().includes("insurance") ? (
-                            <>
-                              <Building2 className="h-3.5 w-3.5 text-primary shrink-0" />
-                              <span>{l.clientCompany || l.destination || "Insurance"}</span>
-                            </>
-                          ) : (
-                            <>
-                              <MapPin className="h-3.5 w-3.5 text-primary shrink-0" />
-                              <span>{l.destination}</span>
-                            </>
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-secondary/50 px-2 py-1 text-xs font-semibold">
-                          <span>{SERVICE_ICONS[l.service]}</span>
-                          {l.service}
-                        </span>
-                      </td>
-                      <td className="px-5 py-3.5 font-semibold text-primary">
-                        {formatINR(l.budget)}
-                      </td>
-                      <td className="px-5 py-3.5 text-xs">{PRIORITY_BADGE[l.priority]}</td>
-                      <td className="px-5 py-3.5">
-                        <div className="flex items-center gap-1.5 text-xs">
-                          <span className="grid h-5 w-5 place-items-center rounded-full bg-primary text-primary-foreground text-[9px] font-bold">
-                            {initials(l.assignedTo)}
-                          </span>
-                          {l.assignedTo?.split(" ")[0]}
-                        </div>
-                      </td>
-                      <td className="px-5 py-3.5">
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_PILL[l.status]}`}
+                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={l.status}
+                          onValueChange={(val: LeadStatus) => {
+                            setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
+                          }}
                         >
-                          <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[l.status]}`} />
-                          {l.status}
-                        </span>
+                          <SelectTrigger className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
+                            <SelectValue />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {STATUSES.map((s) => (
+                              <SelectItem key={s} value={s} className="text-xs">
+                                {s}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
-                      <td className="px-5 py-3.5 text-muted-foreground text-xs whitespace-nowrap">
-                        {l.createdAt}
+                      <td className="px-3 py-2.5">
+                        <div className="text-xs font-semibold whitespace-nowrap">{l.name}</div>
+                        {l.clientCompany && <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">{l.clientCompany}</div>}
                       </td>
-                      <td className="px-5 py-3.5 text-right">
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="rounded-xl gap-1 text-xs"
-                          onClick={() => setSelected(l)}
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-xs font-medium">{l.createdAt}</div>
+                        <div className="text-[10px] text-muted-foreground">{l.createdTime || "-"}</div>
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <div className="text-xs max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
+                        <div className="text-[10px] font-semibold text-muted-foreground">{l.service || "-"}</div>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        <div className="text-xs font-medium">{l.travelDate || "-"}</div>
+                        <div className="text-[10px] text-emerald-600 font-medium">{l.budget ? `₹${l.budget}` : "-"}</div>
+                      </td>
+                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                        <Select
+                          value={l.priority || "Medium"}
+                          onValueChange={(val: "High" | "Medium" | "Low") => {
+                            setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
+                          }}
                         >
-                          View <ChevronRight className="h-3 w-3" />
-                        </Button>
+                          <SelectTrigger className="inline-flex items-center px-0 py-0 text-xs whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
+                            <SelectValue placeholder="-" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {["High", "Medium", "Low"].map((p) => (
+                              <SelectItem key={p} value={p} className="text-xs">
+                                {p}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
                       </td>
+                      <td className="px-3 py-2.5 text-xs whitespace-nowrap">{l.assignedTo || "-"}</td>
                     </tr>
+                    {/* Notes row */}
+                    <tr>
+                      <td colSpan={7} className="px-5 pb-4 pt-1 border-b border-border bg-card/50">
+                          <div className="pl-3 border-l-[3px] border-[#e8dfd5] py-1 ml-4 mt-1 space-y-3">
+                            <div className="space-y-3">
+                              {l.allNotes && l.allNotes.length > 0 ? (
+                                l.allNotes.map((n, i) => (
+                                  <div key={i} className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
+                                    <span className="text-muted-foreground/60">•</span>
+                                    <span>{n.text}</span>
+                                    {n.date && (
+                                      <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
+                                        ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                      </span>
+                                    )}
+                                  </div>
+                                ))
+                              ) : l.notes ? (
+                                  <div className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
+                                    <span className="text-muted-foreground/60">•</span>
+                                    <span>{l.notes}</span>
+                                    {l.noteDate && (
+                                      <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
+                                        ({new Date(l.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                      </span>
+                                    )}
+                                  </div>
+                              ) : null}
+                            </div>
+
+                            {isAdmin && (
+                              editingTableNoteId === l.id ? (
+                                <div className="mt-2 w-full max-w-lg animate-in fade-in slide-in-from-top-2 duration-200">
+                                  <textarea
+                                    autoFocus
+                                    placeholder="Type your note here..."
+                                    value={tableEditNoteText}
+                                    onChange={(e) => setTableEditNoteText(e.target.value)}
+                                    rows={2}
+                                    className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                                  />
+                                  <div className="flex gap-2 mt-2">
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      className="h-7 text-xs rounded-full px-4"
+                                      onClick={() => {
+                                        setEditingTableNoteId(null);
+                                        setTableEditNoteText("");
+                                      }}
+                                    >
+                                      Cancel
+                                    </Button>
+                                    <Button
+                                      size="sm"
+                                      className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90"
+                                      style={{ background: "var(--gradient-brand)" }}
+                                      onClick={() => {
+                                        if (tableEditNoteText.trim()) {
+                                          const noteDate = new Date().toISOString();
+                                          setLeads(leads.map(x => {
+                                            if (x.id === l.id) {
+                                              let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                                              if (x.notes && currentNotes.length === 0) {
+                                                currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
+                                              }
+                                              currentNotes.push({ text: tableEditNoteText.trim(), date: noteDate });
+                                              return { ...x, notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
+                                            }
+                                            return x;
+                                          }));
+                                        }
+                                        setEditingTableNoteId(null);
+                                        setTableEditNoteText("");
+                                      }}
+                                    >
+                                      Add Note
+                                    </Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTableNoteId(l.id);
+                                    setTableEditNoteText("");
+                                  }}
+                                  className="mt-1 flex items-center gap-1.5 self-start text-[14px] font-medium text-blue-500 hover:text-blue-600 transition-colors"
+                                >
+                                  + Add Note
+                                </button>
+                              )
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    </React.Fragment>
                   ))}
                 </tbody>
               </table>
@@ -2061,9 +2394,17 @@ function LeadsPage() {
           isAdmin={isAdmin}
           onEditNote={(id, newNote) => {
             const noteDate = new Date().toISOString();
-            const newLeads = leads.map((x) =>
-              x.id === id ? { ...x, notes: newNote, noteDate } : x,
-            );
+            const newLeads = leads.map((x) => {
+              if (x.id === id) {
+                let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                if (x.notes && currentNotes.length === 0) {
+                  currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
+                }
+                currentNotes.push({ text: newNote, date: noteDate });
+                return { ...x, notes: newNote, noteDate, allNotes: currentNotes };
+              }
+              return x;
+            });
             setLeads(newLeads);
             setSelected(newLeads.find((x) => x.id === id) || null);
           }}

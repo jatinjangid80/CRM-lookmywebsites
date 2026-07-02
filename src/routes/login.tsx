@@ -2,6 +2,7 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Plane, Lock, User, Shield, UserCheck, AlertCircle } from "lucide-react";
 import { login, getAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logoImg from "../assets/lookmyholidays.jpeg";
@@ -22,17 +23,16 @@ function LoginPage() {
     { label: string; username: string; password: string }[]
   >([]);
 
-  const loadDynamicHints = () => {
+  const loadDynamicHints = async () => {
     try {
-      const raw = localStorage.getItem("crm_employees_v3");
-      if (raw) {
-        const list = JSON.parse(raw);
-        const hints = list
-          .filter((emp: any) => emp.username && emp.password)
+      const { data } = await supabase.from("employees").select("*");
+      if (data) {
+        const hints = data
+          .filter((emp: any) => emp.profile_details?.username && emp.profile_details?.password)
           .map((emp: any) => ({
             label: emp.name,
-            username: emp.username,
-            password: emp.password,
+            username: emp.profile_details.username,
+            password: emp.profile_details.password,
           }));
         setDynamicHints(hints);
       }
@@ -43,12 +43,6 @@ function LoginPage() {
 
   useEffect(() => {
     loadDynamicHints();
-    // Also listen for storage changes from other tabs/windows
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "crm_employees_v3") loadDynamicHints();
-    };
-    window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
   }, []);
 
   // Reload hints whenever the role tab switches
@@ -61,29 +55,28 @@ function LoginPage() {
     if (getAuth()) navigate({ to: "/crm" });
   }, [navigate]);
 
-  function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setError("");
     setLoading(true);
 
-    setTimeout(() => {
-      const user = login(username, password);
-      if (!user) {
-        setError("Invalid username or password. Please try again.");
-        setLoading(false);
-        return;
-      }
-      if (user.role !== role) {
-        setError(
-          role === "admin"
-            ? "This account is an Employee account. Please select Employee role."
-            : "This account is an Admin account. Please select Admin role.",
-        );
-        setLoading(false);
-        return;
-      }
-      navigate({ to: "/crm" });
-    }, 600); // small delay for UX
+    const user = await login(username, password);
+    if (!user) {
+      setError("Invalid username or password. Please try again.");
+      setLoading(false);
+      return;
+    }
+    const isAllowed = role === "admin" ? user.role === "admin" : (user.role === "employee" || user.role === "manager");
+    if (!isAllowed) {
+      setError(
+        role === "admin"
+          ? "This account is an Employee account. Please select Employee role."
+          : "This account is an Admin account. Please select Admin role.",
+      );
+      setLoading(false);
+      return;
+    }
+    navigate({ to: "/crm" });
   }
 
   const hintUsers =

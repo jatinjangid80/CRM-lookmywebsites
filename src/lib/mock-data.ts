@@ -65,6 +65,7 @@ export type Lead = {
   expiryDate?: string;
   notes?: string;
   noteDate?: string;
+  allNotes?: { text: string; date: string }[];
   // Extended fields
   whatsapp?: string;
   adults?: number;
@@ -91,6 +92,7 @@ export const leads: Lead[] = [
     status: "New Lead",
     source: "Instagram",
     createdAt: todayStr,
+    createdTime: "10:30 AM",
     service: "International Package",
     priority: "High",
     pax: 2,
@@ -113,6 +115,7 @@ export const leads: Lead[] = [
     status: "Contacted",
     source: "Website",
     createdAt: yesterdayStr,
+    createdTime: "02:15 PM",
     service: "International Package",
     priority: "Medium",
     pax: 3,
@@ -135,6 +138,7 @@ export const leads: Lead[] = [
     status: "Quotation Sent",
     source: "Referral",
     createdAt: yesterdayStr,
+    createdTime: "09:45 AM",
     service: "Domestic Package",
     priority: "High",
     pax: 2,
@@ -157,6 +161,7 @@ export const leads: Lead[] = [
     status: "Negotiation",
     source: "Facebook",
     createdAt: yesterdayStr,
+    createdTime: "04:20 PM",
     service: "Domestic Package",
     priority: "Low",
     pax: 4,
@@ -179,6 +184,7 @@ export const leads: Lead[] = [
     status: "Booked",
     source: "Ads",
     createdAt: yesterdayStr,
+    createdTime: "11:10 AM",
     service: "International Package",
     priority: "High",
     pax: 2,
@@ -198,6 +204,8 @@ export type Customer = {
   trips: number;
   totalSpend: number;
   tier: "Silver" | "Gold" | "Platinum";
+  dob?: string;
+  relationship?: string;
 };
 
 export const customers: Customer[] = [];

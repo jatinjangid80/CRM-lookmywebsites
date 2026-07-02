@@ -22,6 +22,7 @@ import {
   Check,
   ChevronsUpDown,
   Download,
+  Filter,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +50,7 @@ const BRAND_STYLE = { background: "var(--gradient-brand)" };
 export const Route = createFileRoute("/crm/visa")({ component: VisaPage });
 
 /* ─── Types ─── */
-type VisaStatus = "Pending Documents" | "Submitted" | "Under Review" | "Approved" | "Rejected";
+type VisaStatus = "Pending Documents" | "Documents Complete" | "Submitted" | "Under Review" | "Approved" | "Rejected";
 
 interface VisaDoc {
   name: string;
@@ -103,6 +104,7 @@ const INITIAL_REQUIREMENTS: VisaRequirement[] = [];
 
 const STATUS_STYLE: Record<VisaStatus, string> = {
   "Pending Documents": "bg-amber-100 text-amber-700",
+  "Documents Complete": "bg-cyan-100 text-cyan-700",
   Submitted: "bg-blue-100 text-blue-700",
   "Under Review": "bg-violet-100 text-violet-700",
   Approved: "bg-emerald-100 text-emerald-700",
@@ -111,6 +113,7 @@ const STATUS_STYLE: Record<VisaStatus, string> = {
 
 const STATUS_ICON: Record<VisaStatus, React.ReactNode> = {
   "Pending Documents": <AlertTriangle className="h-3.5 w-3.5" />,
+  "Documents Complete": <ShieldCheck className="h-3.5 w-3.5" />,
   Submitted: <Clock className="h-3.5 w-3.5" />,
   "Under Review": <FileText className="h-3.5 w-3.5" />,
   Approved: <CheckCircle2 className="h-3.5 w-3.5" />,
@@ -119,6 +122,7 @@ const STATUS_ICON: Record<VisaStatus, React.ReactNode> = {
 
 const ALL_STATUSES: VisaStatus[] = [
   "Pending Documents",
+  "Documents Complete",
   "Submitted",
   "Under Review",
   "Approved",
@@ -536,6 +540,7 @@ const CURRENCY_LIST = ["INR", "USD", "EUR", "AED", "SGD", "THB", "GBP", "IDR"];
 
 function VisaPage() {
   const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa_apps", APPS);
+  const [customers] = useSupabaseTable<any[]>("customers", []);
   const [requirements, setRequirements] = useLocalStorage<VisaRequirement[]>(
     "crm_visa_requirements",
     INITIAL_REQUIREMENTS,
@@ -611,8 +616,11 @@ function VisaPage() {
           { name: "Hotel bookings", received: false },
         ];
 
+    const nextNumber = (apps?.length || 0) + 1;
+    const newIdStr = String(nextNumber).padStart(3, '0');
+
     const newApp: VisaApp = {
-      id: `V-${2200 + Math.floor(Math.random() * 1000)}`,
+      id: `V-${newIdStr}`,
       customer: appCustomer,
       avatar: getRandomAvatar(),
       country: appCountry,
@@ -882,11 +890,23 @@ function VisaPage() {
     setApps(
       apps.map((app) => {
         if (app.id === appId) {
+          const newDocs = app.docs.map((doc) =>
+            doc.name === docName ? { name: doc.name, received: !doc.received } : doc,
+          );
+          
+          const allDocsReceived = newDocs.every((d) => d.received);
+          let newStatus = app.status;
+          
+          if (allDocsReceived && app.status === "Pending Documents") {
+            newStatus = "Documents Complete";
+          } else if (!allDocsReceived && app.status === "Documents Complete") {
+            newStatus = "Pending Documents";
+          }
+          
           return {
             ...app,
-            docs: app.docs.map((doc) =>
-              doc.name === docName ? { name: doc.name, received: !doc.received } : doc,
-            ),
+            docs: newDocs,
+            status: newStatus,
           };
         }
         return app;
@@ -1484,13 +1504,19 @@ function VisaPage() {
           {activeSubTab === "applications" ? (
             <>
               {/* Stat strip */}
-              <div className="grid gap-3 grid-cols-2 sm:grid-cols-5">
+              <div className="grid gap-3 grid-cols-2 sm:grid-cols-6">
                 {[
                   {
                     label: "Pending Docs",
                     count: counts["Pending Documents"],
                     color: "text-amber-600",
                     bg: "bg-amber-50",
+                  },
+                  {
+                    label: "Docs Complete",
+                    count: counts["Documents Complete"],
+                    color: "text-cyan-600",
+                    bg: "bg-cyan-50",
                   },
                   {
                     label: "Submitted",
@@ -1540,16 +1566,20 @@ function VisaPage() {
                     className="pl-9 rounded-xl"
                   />
                 </div>
-                <div className="flex flex-wrap gap-1.5">
-                  {(["All", ...ALL_STATUSES] as const).map((s) => (
-                    <button
-                      key={s}
-                      onClick={() => setFilter(s as typeof filter)}
-                      className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${filter === s ? "bg-primary text-primary-foreground shadow-sm" : "bg-secondary text-foreground hover:bg-secondary/80"}`}
-                    >
-                      {s} {counts[s] !== undefined ? `(${counts[s]})` : ""}
-                    </button>
-                  ))}
+                <div className="flex items-center gap-2 text-sm ml-auto">
+                  <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
+                  <span className="text-muted-foreground font-medium">Status:</span>
+                  <select
+                    value={filter}
+                    onChange={(e) => setFilter(e.target.value as typeof filter)}
+                    className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+                  >
+                    {["All", ...ALL_STATUSES].map((s) => (
+                      <option key={s} value={s}>
+                        {s} {counts[s] !== undefined ? `(${counts[s]})` : ""}
+                      </option>
+                    ))}
+                  </select>
                 </div>
               </div>
 
@@ -1968,13 +1998,19 @@ function VisaPage() {
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Customer Name <span className="text-red-500">*</span>
               </label>
-              <Input
-                placeholder="e.g. Ananya Verma"
+              <select
                 value={appCustomer}
                 onChange={(e) => setAppCustomer(e.target.value)}
                 required
-                className="rounded-xl bg-background border-border"
-              />
+                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+              >
+                <option value="">Select a customer</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
 
             <div className="grid grid-cols-2 gap-3">

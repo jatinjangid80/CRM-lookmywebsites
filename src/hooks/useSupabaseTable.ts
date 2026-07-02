@@ -88,6 +88,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.adults;
       delete newRow.children;
       delete newRow.lastFollowUp;
+      delete newRow.createdTime;
+      delete newRow.paymentStatus;
     }
     if (tableName === "employees") delete newRow.closedDeals;
     if (tableName === "certificates" && newRow.date) {
@@ -120,6 +122,41 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       newRow.employeeId = newRow.empId;
       delete newRow.empId;
     }
+    
+    // Serialize custom fields into existing columns so they store in Supabase
+    // without requiring manual SQL schema migrations.
+    const customFields: any = {};
+    if (newRow.allNotes !== undefined) customFields.allNotes = newRow.allNotes;
+    if (newRow.dob !== undefined) customFields.dob = newRow.dob;
+    if (newRow.relationship !== undefined) customFields.relationship = newRow.relationship;
+
+    const hasCustomFields = Object.keys(customFields).length > 0;
+
+    if (tableName === "leads") {
+      if (hasCustomFields) {
+        const existingNotes = newRow.notes || "";
+        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, ...customFields });
+      }
+    } else if (tableName === "bookings") {
+      if (hasCustomFields) {
+        const existingRemarks = newRow.remarks || "";
+        newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...customFields });
+      }
+    } else if (tableName === "customers") {
+      if (hasCustomFields) {
+        newRow.name = `${newRow.name}---META---${JSON.stringify(customFields)}`;
+      }
+    } else if (tableName === "employees") {
+      if (hasCustomFields) {
+        const existingDesc = newRow.description || "";
+        newRow.description = JSON.stringify({ _isMeta: true, text: existingDesc, ...customFields });
+      }
+    }
+
+    delete newRow.allNotes;
+    delete newRow.dob;
+    delete newRow.relationship;
+
     return newRow;
   }
 
@@ -152,6 +189,54 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (tableName === "reviews" && newRow.employeeId) {
       newRow.empId = newRow.employeeId;
     }
+    
+    if (tableName === "leads" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.notes);
+        if (parsed._isMeta) {
+          newRow.notes = parsed.text;
+          if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
+          if (parsed.dob !== undefined) newRow.dob = parsed.dob;
+          if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+        }
+      } catch (e) {}
+    }
+
+    if (tableName === "bookings" && typeof newRow.remarks === "string" && newRow.remarks.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.remarks);
+        if (parsed._isMeta) {
+          newRow.remarks = parsed.text;
+          if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
+          if (parsed.dob !== undefined) newRow.dob = parsed.dob;
+          if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+        }
+      } catch (e) {}
+    }
+
+    if (tableName === "customers" && typeof newRow.name === "string" && newRow.name.includes("---META---")) {
+      try {
+        const parts = newRow.name.split("---META---");
+        newRow.name = parts[0];
+        const parsed = JSON.parse(parts[1]);
+        if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
+        if (parsed.dob !== undefined) newRow.dob = parsed.dob;
+        if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+      } catch (e) {}
+    }
+
+    if (tableName === "employees" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.description);
+        if (parsed._isMeta) {
+          newRow.description = parsed.text;
+          if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
+          if (parsed.dob !== undefined) newRow.dob = parsed.dob;
+          if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+        }
+      } catch (e) {}
+    }
+
     return newRow;
   }
 

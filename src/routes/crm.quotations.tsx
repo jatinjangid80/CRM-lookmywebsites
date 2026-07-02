@@ -26,6 +26,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { generateWhatsAppLink, whatsappTemplates } from "@/lib/whatsapp";
 import logoImg from "../assets/lookmyholidays.jpeg";
 
@@ -597,6 +604,15 @@ function QuotationsPage() {
                   />
                 </div>
               ))}
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="w-full rounded-xl border-dashed border-2 mt-2"
+                onClick={() => setForm(f => ({ ...f, durationDays: Number(f.durationDays) + 1 }))}
+              >
+                <Plus className="h-4 w-4 mr-2" /> Add Another Day
+              </Button>
             </div>
           </div>
         </div>
@@ -706,32 +722,35 @@ function QuotationsPage() {
       </div>
 
       {/* Branded A4 PDF & Share Preview Panel */}
-      {(previewOpen || savedQuoteId) && (
-        <div className="rounded-3xl border border-border bg-card p-6 shadow-xl space-y-6 print:border-none print:shadow-none print:p-0">
-          <div className="flex items-center justify-between border-b border-border pb-4 print:hidden">
-            <div>
-              <h3 className="font-display font-bold text-lg">Quotation Preview & Sharing</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">
-                Share directly with client or download offline PDF invoice format
-              </p>
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border shadow-2xl bg-card print:max-w-none print:w-full print:shadow-none print:border-none print:bg-white print:overflow-visible">
+          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border print:hidden sticky top-0 bg-card z-10">
+            <div className="flex items-center justify-between">
+              <div className="text-left">
+                <DialogTitle className="font-display font-bold text-lg">Quotation Preview & Sharing</DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Share directly with client or download offline PDF invoice format
+                </DialogDescription>
+              </div>
+              <div className="flex gap-2">
+                <Button variant="outline" className="rounded-xl gap-2 text-xs" onClick={handlePrint}>
+                  <Printer className="h-4 w-4" /> Print / Save PDF
+                </Button>
+                <Button
+                  style={{ background: "var(--gradient-brand)" }}
+                  className="rounded-xl gap-2 text-xs text-primary-foreground shadow-md"
+                  onClick={shareOnWhatsApp}
+                >
+                  <Share2 className="h-4 w-4" /> Share WhatsApp
+                </Button>
+              </div>
             </div>
-            <div className="flex gap-2">
-              <Button variant="outline" className="rounded-xl gap-2 text-xs" onClick={handlePrint}>
-                <Printer className="h-4 w-4" /> Print / Save PDF
-              </Button>
-              <Button
-                style={{ background: "var(--gradient-brand)" }}
-                className="rounded-xl gap-2 text-xs text-primary-foreground shadow-md"
-                onClick={shareOnWhatsApp}
-              >
-                <Share2 className="h-4 w-4" /> Share WhatsApp
-              </Button>
-            </div>
-          </div>
+          </DialogHeader>
 
-          {/* Printable branded A4 block */}
-          <div className="border border-border/80 rounded-2xl bg-white p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
-            {/* Branded Header */}
+          <div className="p-8 bg-muted/30 print:p-0 print:bg-white">
+            {/* Printable branded A4 block */}
+            <div className="border border-border/80 rounded-2xl bg-white p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
+              {/* Branded Header */}
             <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
               <div className="flex items-center gap-3">
                 <img
@@ -913,9 +932,10 @@ function QuotationsPage() {
                 Thank you for letting us plan your holidays! ✈️
               </p>
             </div>
+            </div>
           </div>
-        </div>
-      )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

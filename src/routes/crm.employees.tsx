@@ -192,7 +192,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-02"],
   },
   {
-    id: "LMH-03",
+    id: "LMH-04",
     name: "Nikita Birwa",
     avatar: "",
     role: "Insurance Sales",
@@ -208,10 +208,10 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     description: "Telecaller Sales & Marketing",
     department: "Insurance",
     accessRole: "Employee",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-03"],
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-04"],
   },
   {
-    id: "LMH-04",
+    id: "LMH-03",
     name: "Aman Sharma",
     avatar: "",
     role: "Accounts Manager",
@@ -227,7 +227,7 @@ export const INITIAL_EMPLOYEES: Employee[] = [
     description: "",
     department: "Accounting",
     accessRole: "Manager",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-04"],
+    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-03"],
   },
   {
     id: "LMH-05",
@@ -316,16 +316,17 @@ const formatINR = (n: number) =>
     maximumFractionDigits: 0,
   }).format(n);
 
-function StarRating({ rating }: { rating: number }) {
+function StarRating({ rating = 0 }: { rating?: number }) {
+  const validRating = Number(rating) || 0;
   return (
     <div className="flex items-center gap-1">
       {[1, 2, 3, 4, 5].map((i) => (
         <Star
           key={i}
-          className={`h-3 w-3 ${i <= Math.round(rating) ? "fill-amber-400 text-amber-400" : "text-border"}`}
+          className={`h-3 w-3 ${i <= Math.round(validRating) ? "fill-amber-400 text-amber-400" : "text-border"}`}
         />
       ))}
-      <span className="ml-1 text-xs font-semibold">{rating.toFixed(1)}</span>
+      <span className="ml-1 text-xs font-semibold">{validRating.toFixed(1)}</span>
     </div>
   );
 }
@@ -1028,6 +1029,17 @@ function EmployeesPage() {
     )
       return;
 
+    const isDuplicate = employees.some(
+      (emp) =>
+        emp.email.toLowerCase() === newEmployee.email.toLowerCase() ||
+        emp.username.toLowerCase() === newEmployee.username.toLowerCase() ||
+        emp.id.toLowerCase() === newEmployee.id.toLowerCase()
+    );
+    if (isDuplicate) {
+      alert("An employee with this email, username, or Employee ID already exists.");
+      return;
+    }
+
     const employee: Employee = {
       id: newEmployee.id,
       name: newEmployee.name,
@@ -1259,32 +1271,30 @@ function EmployeesPage() {
           </div>
 
           {/* Filter */}
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
-            <div className="relative max-w-xs flex-1">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-card overflow-hidden">
+            <div className="relative w-full md:max-w-md flex-1 shrink-0">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search by name or email..."
-                className="pl-9 rounded-xl"
+                className="pl-9 rounded-xl w-full"
               />
             </div>
-            <div className="flex flex-wrap gap-1.5">
-              <button
-                onClick={() => setRoleFilter("All")}
-                className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${roleFilter === "All" ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80"}`}
+            <div className="flex items-center gap-2 text-sm w-full md:w-auto md:ml-auto">
+              <span className="text-muted-foreground font-medium shrink-0">Category:</span>
+              <select
+                value={roleFilter}
+                onChange={(e) => setRoleFilter(e.target.value)}
+                className="h-9 w-full md:w-auto cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
               >
-                All
-              </button>
-              {allRoles.map((r) => (
-                <button
-                  key={r}
-                  onClick={() => setRoleFilter(r)}
-                  className={`rounded-full px-3 py-1.5 text-xs font-semibold transition-all ${roleFilter === r ? "bg-primary text-primary-foreground" : "bg-secondary text-foreground hover:bg-secondary/80"}`}
-                >
-                  {r}
-                </button>
-              ))}
+                <option value="All">All Categories</option>
+                {allRoles.map((r) => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
@@ -1296,27 +1306,20 @@ function EmployeesPage() {
                 onClick={() => setSelectedEmployee(emp)}
                 className="group relative rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
               >
-                {isAdmin && (
-                  <button
-                    onClick={(e) => handleDeleteEmployee(e, emp.id)}
-                    className="absolute right-3 top-3 rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100 z-10"
-                    title="Delete Employee"
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </button>
-                )}
                 {/* Top section */}
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-center gap-3">
                     {emp.avatar ? (
                       <img
                         src={emp.avatar}
-                        alt={emp.name}
+                        alt={emp.name || "Employee"}
                         className="h-12 w-12 rounded-2xl object-cover shrink-0"
                       />
                     ) : (
-                      <div className="h-12 w-12 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
-                        <User className="h-6 w-6 text-gray-400" />
+                      <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <span className="text-xl font-bold text-primary">
+                          {(emp.name || "?").charAt(0).toUpperCase()}
+                        </span>
                       </div>
                     )}
                     <div>
@@ -1324,11 +1327,22 @@ function EmployeesPage() {
                       <p className="text-xs text-muted-foreground">{emp.id}</p>
                     </div>
                   </div>
-                  <span
-                    className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[emp.status]}`}
-                  >
-                    {emp.status}
-                  </span>
+                  <div className="flex items-center gap-1.5 -mr-1.5 -mt-1.5">
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[emp.status]}`}
+                    >
+                      {emp.status}
+                    </span>
+                    {isAdmin && (
+                      <button
+                        onClick={(e) => handleDeleteEmployee(e, emp.id)}
+                        className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
+                        title="Delete Employee"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 {/* Role */}
@@ -1610,11 +1624,19 @@ function EmployeesPage() {
                   {/* Top Info Banner / Profile Overview */}
                   <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
-                      <img
-                        src={cur.avatar}
-                        alt={cur.name}
-                        className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-[#FF6B00]/10 shrink-0"
-                      />
+                      {cur.avatar ? (
+                        <img
+                          src={cur.avatar}
+                          alt={cur.name || "Employee"}
+                          className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-primary/10 shrink-0"
+                        />
+                      ) : (
+                        <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 ring-4 ring-primary/10">
+                          <span className="text-4xl font-bold text-primary">
+                            {(cur.name || "?").charAt(0).toUpperCase()}
+                          </span>
+                        </div>
+                      )}
 
                       {profileIsEditing && profileEditDetails ? (
                         <div className="space-y-3 w-full md:max-w-md">

@@ -122,8 +122,8 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     reportingManager: "Manvendra Singhal (LMH-01)",
     teamLead: "Suman Yadav",
     directReports: [
-      "Nikita Birwa (LMH-03)",
-      "Aman Sharma (LMH-04)",
+      "Nikita Birwa (LMH-04)",
+      "Aman Sharma (LMH-03)",
       "Pushplata Kriplani (LMH-05)",
       "Deepak Yogi (LMH-06)",
       "Jatin Jangid (LMH-07)",
@@ -149,7 +149,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     academicBackground: [],
     familyInformation: [],
   },
-  "LMH-03": {
+  "LMH-04": {
     department: "Insurance",
     designation: "Insurance Sales",
     employmentType: "Permanent",
@@ -184,7 +184,7 @@ export const INITIAL_EMPLOYEE_DETAILS: Record<string, EmployeeDetails> = {
     academicBackground: [],
     familyInformation: [],
   },
-  "LMH-04": {
+  "LMH-03": {
     department: "Accounting",
     designation: "Accounts Manager",
     employmentType: "Permanent",

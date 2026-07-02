@@ -11,7 +11,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
-import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator } from "lucide-react";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X } from "lucide-react";
 
 interface AddBookingModalProps {
   open: boolean;
@@ -20,18 +21,20 @@ interface AddBookingModalProps {
 }
 
 const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
-  { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
-  { type: "Train Ticket", icon: Train, label: "Train Ticket" },
-  { type: "Hotel", icon: Hotel, label: "Hotel" },
   { type: "Holiday Package", icon: Map, label: "Holiday Package" },
-  { type: "Taxi", icon: Car, label: "Taxi" },
+  { type: "Hotel", icon: Hotel, label: "Hotel" },
   { type: "Visa", icon: FileText, label: "Visa" },
   { type: "Travel Insurance", icon: Shield, label: "Travel Insurance" },
+  { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
+  { type: "Train Ticket", icon: Train, label: "Train Ticket" },
+  { type: "Taxi", icon: Car, label: "Taxi" },
   { type: "Bus Ticket", icon: Bus, label: "Bus Ticket" },
 ];
 
 export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalProps) {
   const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
+  const [customers] = useSupabaseTable<any[]>("customers", []);
+  const [packages] = useSupabaseTable<any[]>("packages", []);
 
   // Common Header
   const [supplier, setSupplier] = useState("");
@@ -102,6 +105,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
   };
 
   // Calculations
+  useEffect(() => {
+    setSellingPrice((purchasePrice || 0) + (serviceCharges || 0));
+  }, [purchasePrice, serviceCharges]);
+
   const profit = useMemo(() => {
     return (sellingPrice || 0) - (purchasePrice || 0);
   }, [sellingPrice, purchasePrice]);
@@ -239,12 +246,26 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
             </div>
             <div className="space-y-2">
               <Label>Customer Name *</Label>
-              <Input
+              <select
                 required
                 value={customer}
-                onChange={(e) => setCustomer(e.target.value)}
-                placeholder="e.g. John Doe"
-              />
+                onChange={(e) => {
+                  const selectedName = e.target.value;
+                  setCustomer(selectedName);
+                  const found = customers.find(c => c.name === selectedName);
+                  if (found && found.phone) {
+                    setMobileNumber(found.phone);
+                  }
+                }}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a customer...</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Mobile Number *</Label>
@@ -264,14 +285,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                 placeholder="Agent/Employee name"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Company</Label>
-              <Input
-                value={company}
-                onChange={(e) => setCompany(e.target.value)}
-                placeholder="Company name"
-              />
-            </div>
+
             <div className="space-y-2">
               <Label>Reference</Label>
               <Input
@@ -280,22 +294,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                 placeholder="Ref ID"
               />
             </div>
-            <div className="space-y-2">
-              <Label>Sale Invoice No.</Label>
-              <Input
-                value={saleInvoiceNo}
-                onChange={(e) => setSaleInvoiceNo(e.target.value)}
-                placeholder="INV-001"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Purchase Invoice No.</Label>
-              <Input
-                value={purchaseInvoiceNo}
-                onChange={(e) => setPurchaseInvoiceNo(e.target.value)}
-                placeholder="PINV-001"
-              />
-            </div>
+
 
             {renderSectionHeader("Booking Details")}
 
@@ -409,7 +408,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Leader Name *</Label>
+                  <Label>Lead Passenger Name *</Label>
                   <Input
                     required
                     value={details.leaderName || ""}
@@ -417,11 +416,82 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     placeholder="Guest Name"
                   />
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
 
             {bookingType === "Holiday Package" && (
               <>
+                <div className="col-span-1 md:col-span-2 mb-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Auto-fill from Packages</Label>
+                  <select
+                    className="w-full mt-2 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => {
+                      const pkg = packages.find(p => p.id === e.target.value);
+                      if (pkg) {
+                        setDetails(prev => ({
+                          ...prev,
+                          destination: pkg.destination || "",
+                          packageType: pkg.title || "",
+                        }));
+                        const basePrice = pkg.priceNum || parseInt((pkg.price || "").replace(/[^\d]/g, "")) || 0;
+                        if (basePrice > 0) {
+                          setSellingPrice(basePrice);
+                        }
+                      }
+                    }}
+                  >
+                    <option value="">-- Select Package --</option>
+                    {packages.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Travel From *</Label>
                   <Input
@@ -469,7 +539,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Leader Name *</Label>
+                  <Label>Lead Passenger Name *</Label>
                   <Input
                     required
                     value={details.leaderName || ""}
@@ -477,11 +547,81 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     placeholder="Guest Name"
                   />
                 </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="sm" 
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
               </>
             )}
 
             {bookingType === "Taxi" && (
               <>
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex p-1 bg-secondary/30 rounded-lg w-full mb-4 border">
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("taxiPricingMode", "day")}
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${
+                        details.taxiPricingMode !== "km"
+                          ? "bg-background shadow text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      Day Wise Pricing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("taxiPricingMode", "km")}
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${
+                        details.taxiPricingMode === "km"
+                          ? "bg-background shadow text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                      }`}
+                    >
+                      KM Wise Pricing
+                    </button>
+                  </div>
+                </div>
+
                 <div className="space-y-2">
                   <Label>Travel Date *</Label>
                   <Input
@@ -492,7 +632,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>City / Route *</Label>
+                  <Label>Location / City Route *</Label>
                   <Input
                     required
                     value={details.cityRoute || ""}
@@ -510,16 +650,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Days *</Label>
-                  <Input
-                    type="number"
-                    required
-                    value={details.days || ""}
-                    onChange={(e) => updateDetail("days", Number(e.target.value))}
-                    placeholder="3"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Vehicle No.</Label>
                   <Input
                     value={details.vehicleNo || ""}
@@ -527,59 +657,260 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     placeholder="DL 1C AA 1111"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Driver Name</Label>
-                  <Input
-                    value={details.driverName || ""}
-                    onChange={(e) => updateDetail("driverName", e.target.value)}
-                    placeholder="Driver Name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Driver Mobile</Label>
-                  <Input
-                    type="tel"
-                    value={details.driverMobile || ""}
-                    onChange={(e) => updateDetail("driverMobile", e.target.value)}
-                    placeholder="Mobile"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Total KM</Label>
-                  <Input
-                    type="number"
-                    value={details.totalKm || ""}
-                    onChange={(e) => updateDetail("totalKm", Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Night Charges (₹)</Label>
-                  <Input
-                    type="number"
-                    value={details.nightCharges || ""}
-                    onChange={(e) => updateDetail("nightCharges", Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Toll Tax (₹)</Label>
-                  <Input
-                    type="number"
-                    value={details.tollTax || ""}
-                    onChange={(e) => updateDetail("tollTax", Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Rate (₹)</Label>
-                  <Input
-                    type="number"
-                    value={details.rate || ""}
-                    onChange={(e) => updateDetail("rate", Number(e.target.value))}
-                    placeholder="0"
-                  />
-                </div>
+
+                {details.taxiPricingMode !== "km" ? (
+                  /* DAY WISE MODE */
+                  <>
+                    <div className="space-y-2">
+                      <Label>Rate per Day *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.ratePerDay || ""}
+                        onChange={(e) => updateDetail("ratePerDay", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>No. of Days  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.days || ""}
+                        onChange={(e) => updateDetail("days", Number(e.target.value))}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Extra Hrs Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.extraHrsCharge || ""}
+                        onChange={(e) => updateDetail("extraHrsCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nights Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.nightsCharge || ""}
+                        onChange={(e) => updateDetail("nightsCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Driver Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.driverCharge || ""}
+                        onChange={(e) => updateDetail("driverCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parking Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.parkingCharge || ""}
+                        onChange={(e) => updateDetail("parkingCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Other Charges </Label>
+                      <Input
+                        type="number"
+                        value={details.otherCharges || ""}
+                        onChange={(e) => updateDetail("otherCharges", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                      <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                        Pricing Estimate
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="border-t border-border pt-4 mt-2 space-y-2">
+                          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Base Rate ({details.ratePerDay || 0} × {details.days || 0} days):</span>
+                            <span>₹ {(details.ratePerDay || 0) * (details.days || 0)}</span>
+                          </div>
+                          {(details.extraHrsCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Extra Hrs Charge:</span>
+                              <span>₹ {details.extraHrsCharge}</span>
+                            </div>
+                          )}
+                          {(details.nightsCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Nights Charge:</span>
+                              <span>₹ {details.nightsCharge}</span>
+                            </div>
+                          )}
+                          {(details.driverCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Driver Charge:</span>
+                              <span>₹ {details.driverCharge}</span>
+                            </div>
+                          )}
+                          {(details.parkingCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Parking Charge:</span>
+                              <span>₹ {details.parkingCharge}</span>
+                            </div>
+                          )}
+                          {(details.otherCharges || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Other Charges:</span>
+                              <span>₹ {details.otherCharges}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
+                            <span>Total Cost:</span>
+                            <span>₹ {((details.ratePerDay || 0) * (details.days || 0)) + (details.extraHrsCharge || 0) + (details.nightsCharge || 0) + (details.driverCharge || 0) + (details.parkingCharge || 0) + (details.otherCharges || 0)}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          className="w-full mt-4"
+                          onClick={() => {
+                            const total = ((details.ratePerDay || 0) * (details.days || 0)) + (details.extraHrsCharge || 0) + (details.nightsCharge || 0) + (details.driverCharge || 0) + (details.parkingCharge || 0) + (details.otherCharges || 0);
+                            setSellingPrice(total);
+                          }}
+                        >
+                          Apply to Total Amount
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* KM WISE MODE */
+                  <>
+                    <div className="space-y-2">
+                      <Label>Rate per KM  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.ratePerKm || ""}
+                        onChange={(e) => updateDetail("ratePerKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total KM  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.totalKm || ""}
+                        onChange={(e) => updateDetail("totalKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Night Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.nightChargeKm || ""}
+                        onChange={(e) => updateDetail("nightChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Driver Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.driverChargeKm || ""}
+                        onChange={(e) => updateDetail("driverChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parking Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.parkingChargeKm || ""}
+                        onChange={(e) => updateDetail("parkingChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Toll Tax </Label>
+                      <Input
+                        type="number"
+                        value={details.tollTaxKm || ""}
+                        onChange={(e) => updateDetail("tollTaxKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Other Charges </Label>
+                      <Input
+                        type="number"
+                        value={details.otherChargesKm || ""}
+                        onChange={(e) => updateDetail("otherChargesKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                      <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                        Pricing Estimate
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="border-t border-border pt-4 mt-2 space-y-2">
+                          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Base Rate ({details.ratePerKm || 0} × {details.totalKm || 0} km):</span>
+                            <span>₹ {(details.ratePerKm || 0) * (details.totalKm || 0)}</span>
+                          </div>
+                          {(details.nightChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Night Charge:</span>
+                              <span>₹ {details.nightChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.driverChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Driver Charge:</span>
+                              <span>₹ {details.driverChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.parkingChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Parking Charge:</span>
+                              <span>₹ {details.parkingChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.tollTaxKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Toll Tax:</span>
+                              <span>₹ {details.tollTaxKm}</span>
+                            </div>
+                          )}
+                          {(details.otherChargesKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Other Charges:</span>
+                              <span>₹ {details.otherChargesKm}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
+                            <span>Total Cost:</span>
+                            <span>₹ {((details.ratePerKm || 0) * (details.totalKm || 0)) + (details.nightChargeKm || 0) + (details.driverChargeKm || 0) + (details.parkingChargeKm || 0) + (details.tollTaxKm || 0) + (details.otherChargesKm || 0)}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          className="w-full mt-4"
+                          onClick={() => {
+                            const total = ((details.ratePerKm || 0) * (details.totalKm || 0)) + (details.nightChargeKm || 0) + (details.driverChargeKm || 0) + (details.parkingChargeKm || 0) + (details.tollTaxKm || 0) + (details.otherChargesKm || 0);
+                            setSellingPrice(total);
+                          }}
+                        >
+                          Apply to Total Amount
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
               </>
             )}
 
@@ -670,6 +1001,14 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     placeholder="Passenger Name"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Policy No.</Label>
+                  <Input
+                    value={details.policyNo || ""}
+                    onChange={(e) => updateDetail("policyNo", e.target.value)}
+                    placeholder="Policy Number"
+                  />
+                </div>
               </>
             )}
 
@@ -724,20 +1063,17 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
             {renderSectionHeader("Financial Details")}
 
-            {bookingType === "Bus Ticket" && (
+            <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label>Ticket Amount (₹)</Label>
+                <Label>Purchase Price (₹)</Label>
                 <Input
                   type="number"
-                  value={ticketAmount || ""}
-                  onChange={(e) => setTicketAmount(Number(e.target.value))}
+                  required
+                  value={purchasePrice || ""}
+                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
                 />
               </div>
-            )}
 
-            {(bookingType === "Train Ticket" ||
-              bookingType === "Air Ticket" ||
-              bookingType === "Bus Ticket") && (
               <div className="space-y-2">
                 <Label>Service Charges (₹)</Label>
                 <Input
@@ -746,146 +1082,39 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                   onChange={(e) => setServiceCharges(Number(e.target.value))}
                 />
               </div>
-            )}
 
-            {(bookingType === "Train Ticket" || bookingType === "Bus Ticket") && (
               <div className="space-y-2">
-                <Label>GST Amount (₹)</Label>
+                <Label>Selling Price (Auto) (₹)</Label>
                 <Input
                   type="number"
-                  value={gstAmount || ""}
-                  onChange={(e) => setGstAmount(Number(e.target.value))}
+                  disabled
+                  className="bg-secondary/50 font-semibold text-muted-foreground"
+                  value={sellingPrice}
                 />
               </div>
-            )}
 
-            <div className="space-y-2">
-              <Label>Selling Price (₹)</Label>
-              <Input
-                type="number"
-                required
-                value={sellingPrice || ""}
-                onChange={(e) => setSellingPrice(Number(e.target.value))}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Purchase Price (₹)</Label>
-              <Input
-                type="number"
-                required
-                value={purchasePrice || ""}
-                onChange={(e) => setPurchasePrice(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Refund Date</Label>
-              <Input
-                type="date"
-                value={refundDate}
-                onChange={(e) => setRefundDate(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Refund Amount (₹)</Label>
-              <Input
-                type="number"
-                value={refundAmount || ""}
-                onChange={(e) => setRefundAmount(Number(e.target.value))}
-              />
-            </div>
-
-            {/* Calculations Box */}
-            <div className="col-span-full mt-2 rounded-xl bg-secondary/30 p-4 border border-border flex flex-wrap gap-6 items-center">
-              <div className="flex items-center gap-2">
-                <Calculator className="h-4 w-4 text-muted-foreground" />
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Auto-Calc:
-                </span>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[10px] uppercase text-muted-foreground font-bold">Profit</p>
-                <p
-                  className={`font-mono font-bold ${profit > 0 ? "text-emerald-600" : profit < 0 ? "text-red-500" : "text-gray-700"}`}
-                >
-                  ₹{profit.toLocaleString()}
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[10px] uppercase text-muted-foreground font-bold">Margin %</p>
-                <p
-                  className={`font-mono font-bold ${margin > 0 ? "text-emerald-600" : margin < 0 ? "text-red-500" : "text-gray-700"}`}
-                >
-                  {margin}%
-                </p>
-              </div>
-              <div className="space-y-0.5">
-                <p className="text-[10px] uppercase text-muted-foreground font-bold">
-                  Pending Amount
-                </p>
-                <p className="font-mono font-bold text-orange-600">
-                  ₹{pendingAmount.toLocaleString()}
-                </p>
+              <div className="flex items-center justify-between w-full h-full rounded-xl bg-secondary/30 p-4 border border-border">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Profit</p>
+                  <p className={`font-mono font-bold ${profit > 0 ? "text-emerald-600" : profit < 0 ? "text-red-500" : "text-gray-700"}`}>
+                    ₹{profit.toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Margin %</p>
+                  <p className={`font-mono font-bold ${margin > 0 ? "text-emerald-600" : margin < 0 ? "text-red-500" : "text-gray-700"}`}>
+                    {margin}%
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Pending Amount</p>
+                  <p className="font-mono font-bold text-orange-600">
+                    ₹{pendingAmount.toLocaleString()}
+                  </p>
+                </div>
               </div>
             </div>
 
-            {renderSectionHeader("Payment Details")}
-
-            <div className="space-y-2">
-              <Label>Total Amount (₹)</Label>
-              <Input
-                disabled
-                value={sellingPrice}
-                className="bg-secondary/50 font-mono font-semibold"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Amount Paid (₹)</Label>
-              <Input
-                type="number"
-                required
-                value={amountPaid || ""}
-                onChange={(e) => setAmountPaid(Number(e.target.value))}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Payment Mode</Label>
-              <select
-                value={paymentMode}
-                onChange={(e) => setPaymentMode(e.target.value as PaymentMode)}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <option value="Cash">Cash</option>
-                <option value="UPI">UPI</option>
-                <option value="Card">Card</option>
-                <option value="Bank Transfer">Bank Transfer</option>
-                <option value="Cheque">Cheque</option>
-              </select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Payment Status</Label>
-              <select
-                value={paymentStatus}
-                onChange={(e) => setPaymentStatus(e.target.value as PaymentStatus)}
-                className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
-              >
-                <option value="Pending">Pending</option>
-                <option value="Partial">Partial</option>
-                <option value="Paid">Paid</option>
-                <option value="Refunded">Refunded</option>
-              </select>
-            </div>
-
-            <div className="space-y-2 col-span-1 md:col-span-2">
-              <Label>Transaction ID</Label>
-              <Input
-                value={transactionId}
-                onChange={(e) => setTransactionId(e.target.value)}
-                placeholder="TXN..."
-              />
-            </div>
 
             {renderSectionHeader("Remarks")}
             <div className="space-y-2 col-span-full">
