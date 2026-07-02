@@ -471,7 +471,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     onChange={(e) => {
                       const pkg = packages.find(p => p.id === e.target.value);
                       if (pkg) {
-                        setDetails(prev => ({
+                        setDetails((prev: any) => ({
                           ...prev,
                           destination: pkg.destination || "",
                           packageType: pkg.title || "",

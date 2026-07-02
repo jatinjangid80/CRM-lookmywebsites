@@ -583,7 +583,7 @@ function BookingsPage() {
       (b) =>
         b.customer.toLowerCase() === booking.customer.toLowerCase() &&
         b.bookingType === booking.bookingType &&
-        b.date === booking.date
+        b.bookingDate === booking.bookingDate
     );
     if (isDuplicate) {
       alert("A booking for this customer on this date with this type already exists.");
