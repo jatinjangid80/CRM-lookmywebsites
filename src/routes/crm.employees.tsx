@@ -149,6 +149,7 @@ interface Employee {
   department?: string;
   accessRole?: AccessRole;
   profile_details?: EmployeeDetails;
+  notes?: { text: string; createdAt: string }[];
 }
 
 /* ─── Mock data ─── */
@@ -630,6 +631,8 @@ function EmployeesPage() {
     INITIAL_EMPLOYEES,
   );
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [editingEmployeeNoteId, setEditingEmployeeNoteId] = useState<string | null>(null);
+  const [employeeEditNoteText, setEmployeeEditNoteText] = useState("");
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const employeesDetails = useMemo(() => {
     const map: Record<string, EmployeeDetails> = {};
@@ -1387,6 +1390,58 @@ function EmployeesPage() {
                     </div>
                   </div>
                 )}
+
+                {/* Notes */}
+                <div className="mt-4 pt-4 border-t border-border">
+                  <div className="flex items-center justify-between mb-3">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                      Notes
+                    </p>
+                  </div>
+                  <div className="space-y-1.5 mb-3 max-h-[120px] overflow-y-auto pr-1 scrollbar-thin">
+                    {(emp.notes || []).map((note, idx) => (
+                      <div key={idx} className="flex gap-2 text-[13px] text-muted-foreground">
+                        <span className="text-[16px] leading-none text-muted-foreground/50 mt-[1px] shrink-0">•</span>
+                        <span>{note.text}</span>
+                        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/60 shrink-0 mt-[3px]">
+                          ({formatNoteDate(note.createdAt)})
+                        </span>
+                      </div>
+                    ))}
+                    {!(emp.notes || []).length && (
+                      <p className="text-xs text-muted-foreground/60 italic pb-1">No notes added.</p>
+                    )}
+                  </div>
+                  {editingEmployeeNoteId === emp.id ? (
+                    <div className="w-full animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                      <textarea
+                        autoFocus
+                        placeholder="Add a new note..."
+                        value={employeeEditNoteText}
+                        onChange={(e) => setEmployeeEditNoteText(e.target.value)}
+                        rows={1}
+                        className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                      />
+                      <div className="flex gap-2 mt-2">
+                        <Button size="sm" variant="outline" className="h-7 text-xs rounded-full px-4" onClick={(e) => { e.stopPropagation(); setEditingEmployeeNoteId(null); setEmployeeEditNoteText(""); }}>Cancel</Button>
+                        <Button size="sm" className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90" style={{ background: "var(--gradient-brand)" }} onClick={(e) => {
+                          e.stopPropagation();
+                          if (employeeEditNoteText.trim()) {
+                            const newNotes = [...(emp.notes || []), { text: employeeEditNoteText.trim(), createdAt: new Date().toISOString() }];
+                            const updatedEmployees = employees.map(e => e.id === emp.id ? { ...e, notes: newNotes } : e);
+                            setEmployees(updatedEmployees);
+                          }
+                          setEditingEmployeeNoteId(null);
+                          setEmployeeEditNoteText("");
+                        }}>Save Note</Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <button onClick={(e) => { e.stopPropagation(); setEditingEmployeeNoteId(emp.id); setEmployeeEditNoteText(""); }} className="flex items-center gap-1.5 self-start text-[14px] font-medium text-blue-500 hover:text-blue-600 transition-colors">
+                      + Add Note
+                    </button>
+                  )}
+                </div>
 
                 {/* Tasks */}
                 {(() => {
