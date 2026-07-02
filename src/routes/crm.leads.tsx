@@ -18,6 +18,11 @@ import {
   Filter,
   LayoutGrid,
   Table2,
+  ListChecks,
+  CheckCircle2,
+  Circle,
+  ChevronUp,
+  ChevronDown,
   Sparkles,
   Upload,
   Briefcase,
@@ -1813,6 +1818,10 @@ function LeadsPage() {
   const [tableEditNoteText, setTableEditNoteText] = useState("");
   const [expandedNotes, setExpandedNotes] = useState<Set<string>>(new Set());
 
+  const [allTasks, setAllTasks] = useSupabaseTable<any[]>("tasks", []);
+  const [tableEditTaskText, setTableEditTaskText] = useState("");
+  const [editingTaskLeadId, setEditingTaskLeadId] = useState<string | null>(null);
+
   const toggleNotes = (id: string) => {
     setExpandedNotes(prev => {
       const next = new Set(prev);
@@ -2353,6 +2362,88 @@ function LeadsPage() {
                               )
                             )}
                           </div>
+                          
+                          {/* Tasks Section */}
+                          <div className="mt-4 pt-3 border-t border-border border-dashed w-full block ml-4 pl-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-3 flex items-center gap-1.5">
+                              <ListChecks className="h-3.5 w-3.5" />
+                              Tasks
+                            </p>
+                            <div className="space-y-2.5">
+                              {allTasks.filter(t => t.lead === l.name).length > 0 ? (
+                                allTasks.filter(t => t.lead === l.name).map((t, idx) => (
+                                  <div key={t.id || idx} className="flex items-start gap-2.5 text-[13px] text-muted-foreground">
+                                    <button 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        const updatedTasks = allTasks.map(task => task.id === t.id ? { ...task, status: task.status === 'Done' ? 'Pending' : 'Done' } : task);
+                                        setAllTasks(updatedTasks);
+                                      }}
+                                      className="mt-0.5 hover:text-primary transition-colors"
+                                    >
+                                      {t.status === "Done" ? <CheckCircle2 className="h-4 w-4 text-emerald-500" /> : <Circle className="h-4 w-4" />}
+                                    </button>
+                                    <span className={t.status === "Done" ? "line-through opacity-60" : "font-medium"}>{t.title}</span>
+                                  </div>
+                                ))
+                              ) : (
+                                <p className="text-[12px] text-muted-foreground/60 italic pb-1">No tasks for this lead.</p>
+                              )}
+                            </div>
+                            
+                            {isAdmin && (
+                              editingTaskLeadId === l.id ? (
+                                <div className="mt-3 w-full max-w-lg animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                                  <textarea
+                                    autoFocus
+                                    placeholder="Type a new task..."
+                                    value={tableEditTaskText}
+                                    onChange={(e) => setTableEditTaskText(e.target.value)}
+                                    rows={1}
+                                    className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+                                  />
+                                  <div className="flex gap-2 mt-2">
+                                    <Button size="sm" variant="outline" className="h-7 text-xs rounded-full px-4" onClick={(e) => { e.stopPropagation(); setEditingTaskLeadId(null); setTableEditTaskText(""); }}>Cancel</Button>
+                                    <Button size="sm" className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90" style={{ background: "var(--gradient-brand)" }} onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (tableEditTaskText.trim()) {
+                                        const newTask = {
+                                          id: Math.random().toString(36).substr(2, 9),
+                                          title: tableEditTaskText.trim(),
+                                          type: "Other",
+                                          priority: "Medium",
+                                          assignee: l.assignedTo || "",
+                                          dueDate: new Date().toISOString().slice(0,10),
+                                          status: "Pending",
+                                          note: "",
+                                          notes: [],
+                                          lead: l.name
+                                        };
+                                        setAllTasks([...allTasks, newTask]);
+                                      }
+                                      setEditingTaskLeadId(null);
+                                      setTableEditTaskText("");
+                                    }}>Add Task</Button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button onClick={(e) => { e.stopPropagation(); setEditingTaskLeadId(l.id); setTableEditTaskText(""); }} className="mt-2.5 flex items-center gap-1.5 self-start text-[14px] font-medium text-blue-500 hover:text-blue-600 transition-colors">
+                                  + Add Task
+                                </button>
+                              )
+                            )}
+                          </div>
+                          
+                          {/* Assignee Card */}
+                          <div className="mt-4 pt-3 border-t border-border border-dashed w-full block ml-4 pl-3">
+                            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+                              Assigned To
+                            </p>
+                            <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
+                              <EmployeeProfileCard employeeName={l.assignedTo} />
+                            </div>
+                          </div>
+                          
                         </td>
                       </tr>
                     )}
