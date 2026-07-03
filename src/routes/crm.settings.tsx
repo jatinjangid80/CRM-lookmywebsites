@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth, setAuth } from "@/lib/auth";
 import {
@@ -122,7 +121,7 @@ const ToggleRow = ({
       className={`relative h-6 w-11 rounded-full border transition-all ${checked ? "bg-primary border-primary" : "bg-secondary border-border"}`}
     >
       <span
-        className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-white shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0"}`}
+        className={`absolute top-1 left-1 h-4 w-4 rounded-full bg-card text-card-foreground shadow transition-transform ${checked ? "translate-x-5" : "translate-x-0"}`}
       />
     </button>
   </div>
@@ -138,8 +137,8 @@ function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(auth?.avatar || null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const [localLiveEmps] = useSupabaseTable("employees", INITIAL_EMPLOYEES);
-  const liveEmps = localLiveEmps?.length ? localLiveEmps : INITIAL_EMPLOYEES;
+  const [localLiveEmps] = useSupabaseTable("employees", []);
+  const liveEmps = localLiveEmps?.length ? localLiveEmps : [];
 
   const showToast = (msg: string) => {
     setToast(msg);
@@ -157,26 +156,14 @@ function SettingsPage() {
     };
     setAuth(newAuth);
     setLocalAuth(newAuth);
-    // Also update the employees list if it exists
-    try {
-      const storedEmps = localStorage.getItem("crm_employees_v3");
-      if (storedEmps) {
-        const emps = JSON.parse(storedEmps);
-        const updated = emps.map((e: any) =>
-          e.id === auth.empId
-            ? {
-                ...e,
-                name: profile.name,
-                email: profile.email || e.email,
-                phone: profile.phone || e.phone,
-                avatar: avatarPreview || e.avatar,
-              }
-            : e,
-        );
-        localStorage.setItem("crm_employees_v3", JSON.stringify(updated));
-      }
-    } catch {
-      /* employee list sync is non-critical; profile was already saved */
+    // Also update the employee record in Supabase
+    if (auth.empId) {
+      supabase.from("employees").update({
+        name: profile.name,
+        email: profile.email || auth.email,
+        phone: profile.phone || auth.phone,
+        ...(avatarPreview ? { avatar: avatarPreview } : {})
+      }).eq("id", auth.empId).then();
     }
     showToast("✅ Profile saved successfully!");
   };
@@ -290,6 +277,14 @@ function SettingsPage() {
 
   // Apply appearance to DOM
   useEffect(() => {
+    // Sync appearance to local storage so crm.tsx (Sidebar) can react immediately
+    window.localStorage.setItem("crm-appearance", JSON.stringify(appearance));
+    window.dispatchEvent(
+      new CustomEvent("local-storage", {
+        detail: { key: "crm-appearance", newValue: appearance },
+      }),
+    );
+
     const root = window.document.documentElement;
     root.classList.remove("light", "dark");
     if (appearance.theme === "system") {

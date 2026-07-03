@@ -604,7 +604,7 @@ function FolderDetail({
         <div
           className={`flex items-center gap-2 rounded-xl border px-4 py-3 text-sm animate-in fade-in duration-300 ${
             isZoho
-              ? "border-[#FF6B00]/30 bg-green-50 text-[#0F9D58]"
+              ? "border-primary/30 bg-green-50 text-[#0F9D58]"
               : "border-emerald-200 bg-emerald-50 text-emerald-700"
           }`}
         >
@@ -1079,11 +1079,11 @@ function FoldersPage() {
       >
         <div className="space-y-4">
           <div className="flex items-center gap-4 bg-green-50 border border-green-100 p-4 rounded-xl">
-            <div className="bg-white p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
+            <div className="bg-card text-card-foreground p-2 rounded-xl shadow-sm border border-gray-100 flex items-center justify-center">
               <Cloud className="h-6 w-6 text-[#0F9D58]" />
             </div>
             <div>
-              <p className="font-bold text-gray-900 text-sm">Google Drive Workspace</p>
+              <p className="font-bold text-foreground text-sm">Google Drive Workspace</p>
               <p className="text-xs text-muted-foreground">
                 {isZohoConnected ? "Status: Connected & Synchronized" : "Status: Not Connected"}
               </p>

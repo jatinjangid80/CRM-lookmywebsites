@@ -45,7 +45,6 @@ import {
 } from "@/lib/mock-data";
 import { getAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { SEED_PACKAGES } from "./crm.packages";
@@ -54,7 +53,7 @@ export const Route = createFileRoute("/crm/")({
   component: Dashboard,
 });
 
-const COLORS = ["#FF6B00", "#FF8A33", "#FFA666", "#FFC299", "#FFD9BF", "#FFE9D9"];
+const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFD9BF", "#FFE9D9"];
 
 const AVATARS = ["", "", "", "", "", "", ""];
 
@@ -397,7 +396,7 @@ function Dashboard() {
       value: formatLakhs(monthlyRevenueTotal),
       icon: TrendingUp,
       trend: "MTD ledger",
-      bg: "bg-orange-500/10",
+      bg: "bg-primary/100/10",
       border: "border-orange-500/20",
       color: "text-orange-600",
     },
@@ -459,9 +458,9 @@ function Dashboard() {
                 <Line
                   type="monotone"
                   dataKey="revenue"
-                  stroke="#FF6B00"
+                  stroke="var(--primary)"
                   strokeWidth={3}
-                  dot={{ r: 5, fill: "#FF6B00", strokeWidth: 2 }}
+                  dot={{ r: 5, fill: "var(--primary)", strokeWidth: 2 }}
                   activeDot={{ r: 7 }}
                 />
               </LineChart>
@@ -536,7 +535,7 @@ function Dashboard() {
                 />
                 <YAxis stroke="#888" fontSize={11} tickLine={false} axisLine={false} />
                 <Tooltip cursor={{ fill: "rgba(255,107,0,0.05)" }} />
-                <Bar dataKey="value" fill="#FF6B00" radius={[6, 6, 0, 0]}>
+                <Bar dataKey="value" fill="var(--primary)" radius={[6, 6, 0, 0]}>
                   {destinationSalesData.map((_, i) => (
                     <Cell key={i} fill={COLORS[i % COLORS.length]} />
                   ))}
@@ -595,7 +594,7 @@ function Dashboard() {
                             className="h-10 w-10 rounded-xl object-cover border border-border"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-xl bg-gray-100 border border-gray-200 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-xl bg-gray-100 border border-border flex items-center justify-center">
                             <User className="h-5 w-5 text-gray-400" />
                           </div>
                         )}
@@ -743,9 +742,9 @@ function Dashboard() {
                     allowDecimals={false}
                   />
                   <Tooltip cursor={{ fill: "rgba(255,107,0,0.05)" }} />
-                  <Bar dataKey="count" fill="#FF6B00" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]}>
                     {[0, 1, 2, 3, 4].map((index) => (
-                      <Cell key={`cell-${index}`} fill={index === 4 ? "#FF6B00" : "#FFA666"} />
+                      <Cell key={`cell-${index}`} fill={index === 4 ? "var(--primary)" : "#FFA666"} />
                     ))}
                   </Bar>
                 </BarChart>

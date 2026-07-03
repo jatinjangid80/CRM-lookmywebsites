@@ -42,13 +42,30 @@ import {
   type FamilyItem,
 } from "@/lib/employee-profile-defaults";
 
-export function EmployeeProfileModal({
+export function EmployeeProfileModal(props: {
+  employee: any;
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  onEmployeeUpdated?: () => void;
+  onAssignTask?: (employeeName: string) => void;
+  onApproveLeave?: () => void;
+  initialScrollToId?: string | null;
+}) {
+  return (
+    <Dialog open={props.open} onOpenChange={props.onOpenChange}>
+      {props.employee && <EmployeeProfileModalInner {...props} />}
+    </Dialog>
+  );
+}
+
+function EmployeeProfileModalInner({
   employee,
   open,
   onOpenChange,
   onEmployeeUpdated,
   onAssignTask,
   onApproveLeave,
+  initialScrollToId,
 }: {
   employee: any;
   open: boolean;
@@ -56,9 +73,8 @@ export function EmployeeProfileModal({
   onEmployeeUpdated?: () => void;
   onAssignTask?: (employeeName: string) => void;
   onApproveLeave?: () => void;
+  initialScrollToId?: string | null;
 }) {
-  if (!employee) return null;
-
   // Load profile details or generate default
   const empDetails: EmployeeDetails =
     employee.profile_details ||
@@ -234,6 +250,19 @@ export function EmployeeProfileModal({
     },
   ]);
 
+  // Scroll to section when modal opens
+  useEffect(() => {
+    if (open && initialScrollToId) {
+      // Small timeout to allow DOM to render inside the dialog
+      setTimeout(() => {
+        const el = document.getElementById(initialScrollToId);
+        if (el) {
+          el.scrollIntoView({ behavior: "smooth", block: "start" });
+        }
+      }, 150);
+    }
+  }, [open, initialScrollToId]);
+
   // Form states for adding new records in the details section
   const [addLeaveType, setAddLeaveType] = useState("Casual Leave");
   const [addLeaveFrom, setAddLeaveFrom] = useState("");
@@ -355,30 +384,25 @@ export function EmployeeProfileModal({
   const handleSave = () => {
     if (!editDetails) return;
 
-    // Sync core properties and details to directory crm_employees_v3 list
+    // Sync to Supabase directly so realtime catches it
     try {
-      const stored = localStorage.getItem("crm_employees_v3");
-      const list = stored ? JSON.parse(stored) : [];
-      const updatedList = list.map((e: any) => {
-        if (e.id === employee.id) {
-          return {
-            ...e,
-            name: editCore.name,
-            role: editCore.role,
-            email: editCore.email,
-            phone: editCore.phone,
-            status: editCore.status,
-            joinDate: editCore.joinDate,
-            department: editCore.department,
-            accessRole: editCore.accessRole,
-            description: editDetails.bio,
-            profile_details: editDetails,
-            ...(editAvatar ? { avatar: editAvatar } : {}),
-          };
-        }
-        return e;
+      const supabasePayload = {
+        name: editCore.name,
+        role: editCore.role,
+        email: editCore.email,
+        phone: editCore.phone,
+        status: editCore.status,
+        description: JSON.stringify({
+          _isMeta: true,
+          text: editDetails.bio || "",
+          profile_details: editDetails
+        })
+      };
+      supabase.from("employees").update(supabasePayload).eq("id", employee.id).then(({ error }) => {
+        if (error) console.error("Error updating employee profile in Supabase:", error);
+        else if (onEmployeeUpdated) onEmployeeUpdated();
       });
-      localStorage.setItem("crm_employees_v3", JSON.stringify(updatedList));
+
 
       // Also update avatar in crm_auth_v1 if current user
       const authStored = localStorage.getItem("crm_auth_v1");
@@ -549,7 +573,6 @@ export function EmployeeProfileModal({
 
   return (
     <>
-      <Dialog open={open} onOpenChange={onOpenChange}>
         <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto p-0 gap-0 bg-[#F9FAFB] text-[#111827]">
           <DialogTitle className="sr-only">Company CRM Employee Profile</DialogTitle>
           <DialogDescription className="sr-only">
@@ -563,9 +586,9 @@ export function EmployeeProfileModal({
               <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
                 {/* Profile photo — clickable upload when editing */}
                 <div className="relative shrink-0 group">
-                  {(editAvatar || employee.avatar) ? (
+                  {editAvatar ? (
                     <img
-                      src={editAvatar || employee.avatar}
+                      src={editAvatar}
                       alt={employee.name || "Employee"}
                       className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-primary/10"
                     />
@@ -2839,7 +2862,6 @@ export function EmployeeProfileModal({
             </div>
           </div>
         </DialogContent>
-      </Dialog>
 
       {/* ── Login Credentials Modal ── */}
       {showCredModal && (
@@ -2950,7 +2972,7 @@ export function EmployeeProfileModal({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
+    <div id={title} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
       <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">{title}</h3>
       <div>{children}</div>
     </div>

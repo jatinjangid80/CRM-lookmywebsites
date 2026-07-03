@@ -54,7 +54,6 @@ import {
 } from "@/components/ui/dialog";
 import { ImportModal } from "@/components/ui/import-modal";
 import { bookings as initialBookings, formatINR, type Booking } from "@/lib/mock-data";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth } from "@/lib/auth";
 import { AddBookingModal } from "@/components/AddBookingModal";
@@ -897,7 +896,7 @@ function BookingsPage() {
         <select
           value={activeTab}
           onChange={(e) => setActiveTab(e.target.value)}
-          className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+          className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
         >
           <option value="All">All Categories</option>
           {SERVICES.map((g) => (

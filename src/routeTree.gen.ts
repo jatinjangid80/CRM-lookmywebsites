@@ -21,6 +21,7 @@ import { Route as CrmReportsRouteImport } from './routes/crm.reports'
 import { Route as CrmQuotationsRouteImport } from './routes/crm.quotations'
 import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPaymentsRouteImport } from './routes/crm.payments'
+import { Route as CrmPaymentRequestsRouteImport } from './routes/crm.payment-requests'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
@@ -88,6 +89,11 @@ const CrmPaymentsRoute = CrmPaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmPaymentRequestsRoute = CrmPaymentRequestsRouteImport.update({
+  id: '/payment-requests',
+  path: '/payment-requests',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmPackagesRoute = CrmPackagesRouteImport.update({
   id: '/packages',
   path: '/packages',
@@ -129,6 +135,7 @@ export interface FileRoutesByFullPath {
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
@@ -148,6 +155,7 @@ export interface FileRoutesByTo {
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
@@ -169,6 +177,7 @@ export interface FileRoutesById {
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
@@ -191,6 +200,7 @@ export interface FileRouteTypes {
     | '/crm/employees'
     | '/crm/leads'
     | '/crm/packages'
+    | '/crm/payment-requests'
     | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
@@ -210,6 +220,7 @@ export interface FileRouteTypes {
     | '/crm/employees'
     | '/crm/leads'
     | '/crm/packages'
+    | '/crm/payment-requests'
     | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
@@ -230,6 +241,7 @@ export interface FileRouteTypes {
     | '/crm/employees'
     | '/crm/leads'
     | '/crm/packages'
+    | '/crm/payment-requests'
     | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
@@ -333,6 +345,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmPaymentsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/payment-requests': {
+      id: '/crm/payment-requests'
+      path: '/payment-requests'
+      fullPath: '/crm/payment-requests'
+      preLoaderRoute: typeof CrmPaymentRequestsRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/packages': {
       id: '/crm/packages'
       path: '/packages'
@@ -385,6 +404,7 @@ interface CrmRouteChildren {
   CrmEmployeesRoute: typeof CrmEmployeesRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
+  CrmPaymentRequestsRoute: typeof CrmPaymentRequestsRoute
   CrmPaymentsRoute: typeof CrmPaymentsRoute
   CrmPortalRoute: typeof CrmPortalRoute
   CrmQuotationsRoute: typeof CrmQuotationsRoute
@@ -403,6 +423,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmEmployeesRoute: CrmEmployeesRoute,
   CrmLeadsRoute: CrmLeadsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
+  CrmPaymentRequestsRoute: CrmPaymentRequestsRoute,
   CrmPaymentsRoute: CrmPaymentsRoute,
   CrmPortalRoute: CrmPortalRoute,
   CrmQuotationsRoute: CrmQuotationsRoute,

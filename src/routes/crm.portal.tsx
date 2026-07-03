@@ -24,7 +24,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import logoImg from "../assets/lookmyholidays.jpeg";
+import logoImg from "../assets/Logo.svg";
 
 export const Route = createFileRoute("/crm/portal")({
   component: CustomerPortalPage,
@@ -127,13 +127,13 @@ function CustomerPortalPage() {
     <div className="min-h-screen bg-slate-50 dark:bg-slate-950 pb-16 font-sans">
       {/* Premium Gradient Header */}
       <div className="bg-gradient-to-r from-blue-700 via-indigo-800 to-primary text-white py-12 px-6 shadow-xl relative overflow-hidden">
-        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-white/5 blur-3xl" />
+        <div className="absolute top-0 right-0 h-96 w-96 rounded-full bg-card text-card-foreground/5 blur-3xl" />
         <div className="max-w-4xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
           <div className="flex items-center gap-4">
             <img
               src={logoImg}
               alt="Look My Holidays Logo"
-              className="h-16 w-auto rounded-xl bg-white p-1"
+              className="h-16 w-auto rounded-xl bg-card text-card-foreground p-1"
             />
             <div>
               <h1 className="font-display text-2xl md:text-3xl font-extrabold tracking-tight">
@@ -146,7 +146,7 @@ function CustomerPortalPage() {
             </div>
           </div>
           {tripDetails && (
-            <div className="text-left md:text-right bg-white/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl">
+            <div className="text-left md:text-right bg-card text-card-foreground/10 backdrop-blur-md border border-white/20 p-4 rounded-2xl">
               <p className="text-xs uppercase tracking-wider text-blue-200">Trip Destination</p>
               <p className="font-display font-bold text-lg">
                 {tripDetails.destination || "Holiday Getaway"}
@@ -450,7 +450,7 @@ function CustomerPortalPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center p-4 bg-white rounded-xl border border-border/80 text-center text-slate-800">
+                  <div className="flex flex-col items-center justify-center p-4 bg-card text-card-foreground rounded-xl border border-border/80 text-center text-slate-800">
                     <QrCode className="h-28 w-28 text-slate-800" />
                     <p className="font-mono text-[10px] font-bold text-slate-800 mt-2">
                       payments@lookmyholidays

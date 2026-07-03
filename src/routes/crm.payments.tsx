@@ -12,11 +12,12 @@ import {
   FileText,
 } from "lucide-react";
 import { bookings, formatINR } from "@/lib/mock-data";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
+import { useNavigate } from "@tanstack/react-router";
+import { getAuth } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import {
   Dialog,
@@ -28,13 +29,24 @@ import {
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { type Booking } from "@/lib/mock-data";
-import logoImg from "../assets/lookmyholidays.jpeg";
+import logoImg from "../assets/Logo.svg";
 
 export const Route = createFileRoute("/crm/payments")({ component: PaymentsPage });
 
 function PaymentsPage() {
+  const auth = getAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (auth?.role !== "admin") {
+      navigate({ to: "/crm" });
+    }
+  }, [auth, navigate]);
+
   const [payments, setPayments] = useSupabaseTable<Booking[]>("bookings", bookings);
   const [leads] = useSupabaseTable<any[]>("leads", []);
+
+  if (auth?.role !== "admin") return null;
 
   const allPayments = useMemo(() => {
     const derived = leads
@@ -441,7 +453,7 @@ function PaymentsPage() {
               </div>
 
               {/* Printable Invoice */}
-              <div className="bg-white rounded-2xl border border-border p-6 text-slate-800 text-xs print:border-none print:shadow-none print:p-0 print:text-black">
+              <div className="bg-card text-card-foreground rounded-2xl border border-border p-6 text-slate-800 text-xs print:border-none print:shadow-none print:p-0 print:text-black">
                 {/* Header */}
                 <div className="flex justify-between items-center border-b-2 border-primary/20 pb-4">
                   <div className="flex items-center gap-3">
@@ -526,7 +538,7 @@ function PaymentsPage() {
                   </div>
 
                   {/* UPI QR */}
-                  <div className="flex flex-col items-center justify-center p-2 border border-border bg-white rounded-lg text-center">
+                  <div className="flex flex-col items-center justify-center p-2 border border-border bg-card text-card-foreground rounded-lg text-center">
                     <QrCode className="h-12 w-12 text-slate-800" />
                     <p className="text-[8px] font-bold text-slate-800 mt-1">
                       UPI: payments@lookmyholidays

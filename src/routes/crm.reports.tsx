@@ -78,7 +78,7 @@ const leaderboard = [
   },
 ];
 
-const COLORS = ["#FF6B00", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0"];
+const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0"];
 
 const totalRevenue = bookings.reduce((s, b) => s + b.paid, 0);
 const pendingAmount = bookings.reduce((s, b) => s + (b.amount - b.paid), 0);
@@ -190,7 +190,7 @@ function ReportsPage() {
                 type="monotone"
                 dataKey="revenue"
                 name="Revenue (₹L)"
-                stroke="#FF6B00"
+                stroke="var(--primary)"
                 strokeWidth={3}
                 dot={{ r: 5 }}
               />

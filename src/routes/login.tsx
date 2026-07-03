@@ -5,7 +5,7 @@ import { login, getAuth } from "@/lib/auth";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import logoImg from "../assets/lookmyholidays.jpeg";
+import logoImg from "../assets/Logo.svg";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -27,12 +27,25 @@ function LoginPage() {
     try {
       const { data } = await supabase.from("employees").select("*");
       if (data) {
-        const hints = data
+        const parsedData = data.map((emp: any) => {
+          if (typeof emp.description === "string" && emp.description.includes("_isMeta")) {
+            try {
+              const parsed = JSON.parse(emp.description);
+              if (parsed._isMeta) {
+                return { ...emp, profile_details: parsed.profile_details };
+              }
+            } catch (e) {}
+          }
+          return emp;
+        });
+
+        const hints = parsedData
           .filter((emp: any) => emp.profile_details?.username && emp.profile_details?.password)
           .map((emp: any) => ({
             label: emp.name,
             username: emp.profile_details.username,
             password: emp.profile_details.password,
+            accessRole: emp.accessRole,
           }));
         setDynamicHints(hints);
       }
@@ -79,264 +92,191 @@ function LoginPage() {
     navigate({ to: "/crm" });
   }
 
-  const hintUsers =
-    role === "admin"
-      ? [{ label: "Admin (Manvendra Singhal)", username: "admin", password: "admin123" }]
-      : dynamicHints.length > 0
-        ? dynamicHints
-        : [
-            { label: "Nikita Bairwa", username: "nikita", password: "emp123" },
-            { label: "Pushplata Kriplani", username: "pushplata", password: "emp123" },
-            { label: "AMAN SHARMA", username: "aman", password: "emp123" },
-            { label: "Deepak Kumar", username: "deepak", password: "emp123" },
-          ];
-
+  const hintUsers = role === "admin"
+    ? dynamicHints.filter(h => h.accessRole === "Admin" || h.username === "admin")
+    : dynamicHints.filter(h => h.accessRole !== "Admin" && h.username !== "admin");
   return (
-    <div className="relative flex min-h-screen overflow-hidden bg-background">
-      {/* Left panel — branding */}
-      <div
-        className="hidden lg:flex lg:w-[52%] flex-col justify-between p-12 text-white"
-        style={{ background: "var(--gradient-brand)" }}
-      >
-        {/* Logo */}
-        <div className="flex items-center gap-3">
-          <img
-            src={logoImg}
-            alt="LookMyHolidays"
-            className="h-12 w-auto rounded-xl mix-blend-multiply"
-          />
-        </div>
+    <div className="relative flex min-h-screen w-full items-center justify-center lg:justify-between px-6 lg:px-32 overflow-hidden bg-background">
+      {/* Full-screen Background Image */}
+      <div 
+        className="absolute inset-0 z-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000"
+        style={{ 
+          backgroundImage: "url('https://images.unsplash.com/photo-1519046904884-53103b34b206?q=80&w=2070&auto=format&fit=crop')",
+        }}
+      />
+      {/* Dark overlay for readability */}
+      <div className="absolute inset-0 z-0 bg-black/40 lg:bg-black/20" />
 
-        {/* Center copy */}
-        <div className="space-y-6">
-          <h1 className="font-display text-5xl font-extrabold leading-tight">
-            Grand Journeys
-            <br />
-            <span className="opacity-75">CRM Portal</span>
-          </h1>
-          <p className="max-w-md text-lg opacity-85">
-            Manage leads, bookings, visa applications, tasks, and your team — all in one place.
-          </p>
 
-          {/* Feature chips */}
-          <div className="flex flex-wrap gap-3 pt-2">
-            {[
-              "Lead Management",
-              "Task Assignment",
-              "Visa Tracking",
-              "Employee Portal",
-              "Analytics",
-              "Folders",
-            ].map((f) => (
-              <span
-                key={f}
-                className="rounded-full bg-white/15 px-4 py-1.5 text-sm font-medium backdrop-blur"
-              >
-                {f}
-              </span>
-            ))}
-          </div>
-        </div>
-
-        {/* Bottom section */}
-        <div className="flex flex-col gap-6 border-t border-white/20 pt-8">
-          {/* Stat strip */}
-          <div className="grid grid-cols-3 gap-4">
-            {[
-              { n: "10k+", l: "Happy Travellers" },
-              { n: "5k+", l: "Tours Completed" },
-              { n: "100+", l: "Destinations" },
-            ].map((s) => (
-              <div key={s.l}>
-                <p className="font-display text-3xl font-extrabold">{s.n}</p>
-                <p className="mt-1 text-xs opacity-75">{s.l}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className="text-sm font-medium text-white/80">
-            Created by <span className="font-bold text-white">jatin jangid</span>
-          </div>
-        </div>
+      {/* Absolute Logo */}
+      <div className="absolute top-8 left-6 lg:left-12 z-20">
+        <img
+          src={logoImg}
+          alt="LookMyHolidays"
+          className="h-16 md:h-24 w-auto drop-shadow-lg"
+        />
       </div>
 
-      {/* Right panel — login form */}
-      <div className="flex flex-1 flex-col items-center justify-center p-6 sm:p-12">
-        {/* Mobile logo */}
-        <div className="mb-8 flex items-center gap-2 lg:hidden">
-          <img
-            src={logoImg}
-            alt="LookMyHolidays"
-            className="h-10 w-auto rounded-xl mix-blend-multiply"
-          />
+      {/* Left side text (Hidden on small screens) */}
+      <div className="hidden lg:flex relative z-10 flex-col max-w-lg select-none mt-12">
+        <h1 className="text-5xl lg:text-[4.2rem] font-extrabold leading-[1.05] text-white uppercase font-display drop-shadow-xl">
+          TRAVEL<br />BEYOND<br /><span className="text-[#c4f042]">EXPECTATIONS</span>
+        </h1>
+        <p className="mt-6 text-[15px] text-white/90 font-medium leading-relaxed max-w-sm drop-shadow-md">
+          Unlock the world. Let your wanderlust lead you to your dream destinations.
+        </p>
+      </div>
+
+      {/* Right side form card */}
+      <div className="relative z-10 w-full max-w-[440px] rounded-[32px] bg-[#425568]/40 p-10 backdrop-blur-xl border border-white/10 shadow-2xl">
+        
+        {/* Role Selector */}
+        <div className="mb-8 flex rounded-2xl bg-white/10 p-1 backdrop-blur-md border border-white/10 shadow-inner">
+          <button
+            type="button"
+            onClick={() => {
+              setRole("admin");
+              setError("");
+              setUsername("");
+              setPassword("");
+            }}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-300 ${
+              role === "admin"
+                ? "bg-white text-gray-900 shadow-md scale-100"
+                : "text-white/70 hover:text-white scale-95"
+            }`}
+          >
+            <Shield className={`h-3.5 w-3.5 ${role === "admin" ? "text-gray-900" : "opacity-70"}`} />
+            Admin
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setRole("employee");
+              setError("");
+              setUsername("");
+              setPassword("");
+            }}
+            className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-300 ${
+              role === "employee"
+                ? "bg-white text-gray-900 shadow-md scale-100"
+                : "text-white/70 hover:text-white scale-95"
+            }`}
+          >
+            <UserCheck className={`h-3.5 w-3.5 ${role === "employee" ? "text-gray-900" : "opacity-70"}`} />
+            Employee
+          </button>
         </div>
 
-        <div className="w-full max-w-md">
-          <h2 className="font-display text-3xl font-bold">Welcome back</h2>
-          <p className="mt-2 text-sm text-muted-foreground">
-            Sign in to your CRM account to continue.
-          </p>
-
-          {/* Role Selector */}
-          <div className="mt-8 flex rounded-2xl border border-border bg-secondary/40 p-1">
-            <button
-              type="button"
-              onClick={() => {
-                setRole("admin");
+        <form onSubmit={handleLogin} className="space-y-5">
+          {/* Username */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">
+              Username
+            </label>
+            <Input
+              id="login-username"
+              placeholder={role === "admin" ? "Enter admin username" : "Enter employee username"}
+              value={username}
+              onChange={(e) => {
+                setUsername(e.target.value);
                 setError("");
-                setUsername("");
-                setPassword("");
               }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all ${
-                role === "admin"
-                  ? "bg-card shadow-md text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <Shield className="h-4 w-4 text-primary" />
-              Admin
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setRole("employee");
-                setError("");
-                setUsername("");
-                setPassword("");
-              }}
-              className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-3 text-sm font-semibold transition-all ${
-                role === "employee"
-                  ? "bg-card shadow-md text-foreground"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <UserCheck className="h-4 w-4 text-primary" />
-              Employee
-            </button>
+              className="h-12 w-full rounded-xl bg-white px-4 text-[15px] text-gray-900 placeholder:text-gray-400 border-0 focus-visible:ring-2 focus-visible:ring-[#c4f042] transition-shadow shadow-inner"
+              autoComplete="username"
+              autoFocus
+            />
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="mt-6 space-y-4">
-            {/* Username */}
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold">Username</label>
-              <div className="relative">
-                <User className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="login-username"
-                  placeholder={role === "admin" ? "admin" : "e.g. riya"}
-                  value={username}
-                  onChange={(e) => {
-                    setUsername(e.target.value);
-                    setError("");
-                  }}
-                  className="pl-9 rounded-xl"
-                  autoComplete="username"
-                  autoFocus
-                />
-              </div>
-            </div>
-
-            {/* Password */}
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold">Password</label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  id="login-password"
-                  type={showPass ? "text" : "password"}
-                  placeholder="••••••••"
-                  value={password}
-                  onChange={(e) => {
-                    setPassword(e.target.value);
-                    setError("");
-                  }}
-                  className="pl-9 pr-10 rounded-xl"
-                  autoComplete="current-password"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPass((p) => !p)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
-                  tabIndex={-1}
-                >
-                  {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                </button>
-              </div>
-            </div>
-
-            {/* Error */}
-            {error && (
-              <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 animate-in fade-in duration-200">
-                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
-                {error}
-              </div>
-            )}
-
-            {/* Submit */}
-            <Button
-              id="login-submit-btn"
-              type="submit"
-              disabled={loading || !username.trim() || !password}
-              className="mt-2 w-full gap-2 rounded-xl py-5 text-sm font-semibold"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              {loading ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Signing in…
-                </span>
-              ) : (
-                "Sign In"
-              )}
-            </Button>
-          </form>
-
-          {/* Hint credentials */}
-          <div className="mt-8 rounded-2xl border border-border bg-secondary/40 p-4">
-            <div className="flex items-center justify-between mb-3">
-              <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                {role === "employee" ? "Employee Credentials" : "Admin Credentials"}
-              </p>
+          {/* Password */}
+          <div className="space-y-2">
+            <label className="text-[13px] font-bold text-white drop-shadow-sm tracking-wide">
+              Password
+            </label>
+            <div className="relative">
+              <Input
+                id="login-password"
+                type={showPass ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  setError("");
+                }}
+                className="h-12 w-full rounded-xl bg-white pl-4 pr-10 text-[15px] text-gray-900 placeholder:text-gray-400 border-0 focus-visible:ring-2 focus-visible:ring-[#c4f042] transition-shadow shadow-inner"
+                autoComplete="current-password"
+              />
               <button
                 type="button"
-                onClick={loadDynamicHints}
-                className="text-[10px] text-primary font-semibold hover:underline"
+                onClick={() => setShowPass((p) => !p)}
+                className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600 transition-colors"
+                tabIndex={-1}
               >
-                ↻ Refresh
+                {showPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
-            <div className="space-y-2">
-              {hintUsers.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-2">
-                  No employee credentials set yet. Go to an employee profile → "Set Login
-                  Credentials".
-                </p>
-              ) : (
-                hintUsers.map((u) => (
-                  <button
-                    key={u.username}
-                    type="button"
-                    onClick={() => {
-                      setUsername(u.username);
-                      setPassword(u.password);
-                      setError("");
-                    }}
-                    className="flex w-full items-center justify-between rounded-xl border border-border bg-card px-3 py-2 text-xs hover:border-primary/50 hover:bg-primary/5 transition-all"
-                  >
-                    <span className="font-semibold">{u.label}</span>
-                    <span className="text-muted-foreground font-mono">
-                      {u.username} / {u.password}
-                    </span>
-                  </button>
-                ))
-              )}
+            <div className="pt-1 text-right">
+              <a href="#" className="text-[11px] font-semibold text-white/90 hover:text-[#c4f042] transition-colors drop-shadow-sm">
+                Forgot password?
+              </a>
             </div>
-            <p className="mt-3 text-xs text-muted-foreground">
-              Click any row to auto-fill credentials.
-            </p>
           </div>
-        </div>
+
+          {/* Error */}
+          {error && (
+            <div className="flex items-start gap-3 rounded-xl border border-red-500/50 bg-red-500/10 p-3 text-sm text-red-200 animate-in fade-in duration-300 backdrop-blur-md">
+              <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-red-400" />
+              <p className="leading-tight">{error}</p>
+            </div>
+          )}
+
+          {/* Submit */}
+          <Button
+            id="login-submit-btn"
+            type="submit"
+            disabled={loading || !username.trim() || !password}
+            className="w-full h-12 mt-4 rounded-xl bg-[#c4f042] hover:bg-[#b5e032] text-gray-900 font-bold text-[15px] shadow-[0_0_20px_rgba(196,240,66,0.3)] transition-all active:scale-[0.98] border-0"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-900/30 border-t-gray-900" />
+                Signing in…
+              </span>
+            ) : (
+              "Sign in"
+            )}
+          </Button>
+
+          {/* Divider */}
+          <div className="flex items-center gap-4 mt-8 opacity-60">
+             <div className="flex-1 h-px bg-white" />
+             <span className="text-[11px] font-medium text-white uppercase tracking-wider">or</span>
+             <div className="flex-1 h-px bg-white" />
+          </div>
+
+          {/* Social Buttons */}
+          <div className="grid grid-cols-2 gap-4 mt-6">
+            <button type="button" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-gray-50 transition-colors shadow-sm active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 48 48">
+                <path fill="#FFC107" d="M43.611,20.083H42V20H24v8h11.303c-1.649,4.657-6.08,8-11.303,8c-6.627,0-12-5.373-12-12c0-6.627,5.373-12,12-12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C12.955,4,4,12.955,4,24c0,11.045,8.955,20,20,20c11.045,0,20-8.955,20-20C44,22.659,43.862,21.35,43.611,20.083z"/>
+                <path fill="#FF3D00" d="M6.306,14.691l6.571,4.819C14.655,15.108,18.961,12,24,12c3.059,0,5.842,1.154,7.961,3.039l5.657-5.657C34.046,6.053,29.268,4,24,4C16.318,4,9.656,8.337,6.306,14.691z"/>
+                <path fill="#4CAF50" d="M24,44c5.166,0,9.86-1.977,13.409-5.192l-6.19-5.238C29.211,35.091,26.715,36,24,36c-5.202,0-9.619-3.317-11.283-7.946l-6.522,5.025C9.505,39.556,16.227,44,24,44z"/>
+                <path fill="#1976D2" d="M43.611,20.083H42V20H24v8h11.303c-0.792,2.237-2.231,4.166-4.087,5.571c0.001-0.001,0.002-0.001,0.003-0.002l6.19,5.238C36.971,39.205,44,34,44,24C44,22.659,43.862,21.35,43.611,20.083z"/>
+              </svg>
+              Google
+            </button>
+            <button type="button" className="flex items-center justify-center gap-2 h-11 rounded-xl bg-white text-gray-900 font-bold text-xs hover:bg-gray-50 transition-colors shadow-sm active:scale-[0.98]">
+              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+                <path d="M11.182.008C11.148-.03 9.923.023 8.857 1.18c-1.066 1.156-.902 2.482-.878 2.516.024.034 1.52.087 2.475-1.258.955-1.345.752-2.392.728-2.43zm3.314 11.733c-.048-.096-2.325-1.234-2.113-3.422.212-2.189 1.675-2.789 1.698-2.854.023-.065-.597-.79-1.254-1.157a3.692 3.692 0 0 0-1.563-.434c-1.082-.031-1.486.145-2.135.145-.65 0-1.282-.199-2.123-.199-.841 0-1.854.168-2.748.74-1.261.808-2.584 2.464-2.584 4.88 0 2.415 1.571 4.545 2.651 6.079.79 1.127 1.636 2.38 2.809 2.38 1.173 0 1.554-.702 2.973-.702 1.419 0 1.764.702 2.98.702 1.215 0 1.942-1.143 2.766-2.351.823-1.209 1.257-2.457 1.28-2.507z"/>
+              </svg>
+              Apple
+            </button>
+          </div>
+
+          <div className="mt-8 text-center text-xs text-white/80">
+             Don't have an account? <a href="#" className="font-bold text-white hover:underline transition-colors drop-shadow-sm">Sign Up</a>
+          </div>
+        </form>
       </div>
     </div>
   );

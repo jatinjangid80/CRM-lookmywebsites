@@ -21,6 +21,7 @@ import {
   Sparkles,
   QrCode,
   DollarSign,
+  XCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -34,7 +35,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { generateWhatsAppLink, whatsappTemplates } from "@/lib/whatsapp";
-import logoImg from "../assets/lookmyholidays.jpeg";
+import logoImg from "../assets/Logo.svg";
 
 export const Route = createFileRoute("/crm/quotations")({
   component: QuotationsPage,
@@ -723,7 +724,7 @@ function QuotationsPage() {
 
       {/* Branded A4 PDF & Share Preview Panel */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border shadow-2xl bg-card print:max-w-none print:w-full print:shadow-none print:border-none print:bg-white print:overflow-visible">
+        <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border shadow-2xl bg-card print:max-w-none print:w-full print:shadow-none print:border-none print:bg-card text-card-foreground print:overflow-visible">
           <DialogHeader className="px-6 pt-6 pb-4 border-b border-border print:hidden sticky top-0 bg-card z-10">
             <div className="flex items-center justify-between">
               <div className="text-left">
@@ -747,9 +748,9 @@ function QuotationsPage() {
             </div>
           </DialogHeader>
 
-          <div className="p-8 bg-muted/30 print:p-0 print:bg-white">
+          <div className="p-8 bg-muted/30 print:p-0 print:bg-card text-card-foreground">
             {/* Printable branded A4 block */}
-            <div className="border border-border/80 rounded-2xl bg-white p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
+            <div className="border border-border/80 rounded-2xl bg-card text-card-foreground p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
               {/* Branded Header */}
             <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
               <div className="flex items-center gap-3">
@@ -863,8 +864,8 @@ function QuotationsPage() {
             {/* Inclusions & Exclusions details grid */}
             <div className="grid grid-cols-2 gap-6 pt-8 text-xs border-t border-border mt-8">
               <div>
-                <h4 className="font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] mb-2">
-                  ✓ Inclusions
+                <h4 className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] mb-2">
+                  <CheckCircle2 className="h-3.5 w-3.5" /> Inclusions
                 </h4>
                 <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
                   {form.inclusions.split("\n").map((inc, i) => (
@@ -873,8 +874,8 @@ function QuotationsPage() {
                 </ul>
               </div>
               <div>
-                <h4 className="font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider text-[10px] mb-2">
-                  ✗ Exclusions
+                <h4 className="flex items-center gap-1.5 font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider text-[10px] mb-2">
+                  <XCircle className="h-3.5 w-3.5" /> Exclusions
                 </h4>
                 <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
                   {form.exclusions.split("\n").map((exc, i) => (
@@ -911,7 +912,7 @@ function QuotationsPage() {
               </div>
 
               {/* UPI Payment Code */}
-              <div className="flex flex-col items-center justify-center p-3 border border-border bg-white rounded-xl text-center">
+              <div className="flex flex-col items-center justify-center p-3 border border-border bg-card text-card-foreground rounded-xl text-center">
                 <QrCode className="h-16 w-16 text-slate-800" />
                 <p className="font-mono text-[9px] font-bold text-slate-800 mt-1">
                   UPI ID: payments@lookmyholidays

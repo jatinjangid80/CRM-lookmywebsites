@@ -121,11 +121,11 @@ export function CommandPalette() {
       {/* Search trigger helper in header */}
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors w-48 text-left cursor-pointer"
+        className="flex items-center gap-2 rounded-xl border border-border bg-muted/50 px-3 py-1.5 text-xs text-muted-foreground hover:bg-muted/80 transition-colors w-56 text-left cursor-pointer"
       >
         <Search className="h-3.5 w-3.5" />
-        <span>Search workspace...</span>
-        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-auto">
+        <span className="whitespace-nowrap overflow-hidden text-ellipsis">Search workspace...</span>
+        <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-background px-1.5 font-mono text-[10px] font-medium text-muted-foreground ml-auto shrink-0">
           <span className="text-[9px]">⌘</span>K
         </kbd>
       </button>

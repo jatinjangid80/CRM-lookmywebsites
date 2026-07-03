@@ -51,7 +51,7 @@ function EditField({
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+        className="h-8 text-xs focus-visible:ring-primary"
       />
     </div>
   );
@@ -99,7 +99,6 @@ import {
   DialogTrigger,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { EmployeeProfileModal } from "@/components/EmployeeProfileModal";
 import { getAuth } from "@/lib/auth";
@@ -152,163 +151,7 @@ interface Employee {
   notes?: { text: string; createdAt: string }[];
 }
 
-/* ─── Mock data ─── */
-export const INITIAL_EMPLOYEES: Employee[] = [
-  {
-    id: "LMH-01",
-    name: "Manvendra Singhal",
-    avatar: "",
-    role: "Ceo Founder",
-    email: "bookings@lookmyholidays.in",
-    phone: "9413095483",
-    joinDate: "2008-06-01",
-    status: "Active",
-    leads: 0,
-    closedDeals: 0,
-    revenue: 0,
-    rating: 5.0,
-    recentActivity: "Updated company HR policies.",
-    description: "CEO Founder of LookMyHolidays.",
-    department: "Management",
-    accessRole: "Admin",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-01"],
-  },
-  {
-    id: "LMH-02",
-    name: "Suman Yadav",
-    avatar: "",
-    role: "HR & Admin Manager",
-    email: "insurancesolutions58@gmail.com",
-    phone: "9887155570",
-    joinDate: "2017-01-09",
-    status: "Active",
-    leads: 0,
-    closedDeals: 0,
-    revenue: 0,
-    rating: 5.0,
-    recentActivity: "Handled monthly operation logs.",
-    description: "Sales & Marketing",
-    department: "Insurance & Travel",
-    accessRole: "Manager",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-02"],
-  },
-  {
-    id: "LMH-04",
-    name: "Nikita Birwa",
-    avatar: "",
-    role: "Insurance Sales",
-    email: "info.insurance58@gmail.com",
-    phone: "9783395483",
-    joinDate: "2025-11-19",
-    status: "Active",
-    leads: 45,
-    closedDeals: 20,
-    revenue: 1200000,
-    rating: 4.6,
-    recentActivity: "Logged new insurance query.",
-    description: "Telecaller Sales & Marketing",
-    department: "Insurance",
-    accessRole: "Employee",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-04"],
-  },
-  {
-    id: "LMH-03",
-    name: "Aman Sharma",
-    avatar: "",
-    role: "Accounts Manager",
-    email: "Accounts@lookmyholidays.in",
-    phone: "9660095483",
-    joinDate: "2026-01-01",
-    status: "Active",
-    leads: 0,
-    closedDeals: 0,
-    revenue: 0,
-    rating: 5.0,
-    recentActivity: "Processed tax records.",
-    description: "",
-    department: "Accounting",
-    accessRole: "Manager",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-03"],
-  },
-  {
-    id: "LMH-05",
-    name: "Pushplata Kriplani",
-    avatar: "",
-    role: "Sales Executive",
-    email: "resv@lookmyholidays.in",
-    phone: "9928795483",
-    joinDate: "2025-12-22",
-    status: "Active",
-    leads: 32,
-    closedDeals: 15,
-    revenue: 850000,
-    rating: 4.8,
-    recentActivity: "Sent out quotations.",
-    description: "Sales & Marketing",
-    department: "Travel",
-    accessRole: "Employee",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-05"],
-  },
-  {
-    id: "LMH-06",
-    name: "Deepak Yogi",
-    avatar: "",
-    role: "Executive",
-    email: "visa@lookmyholidays.in",
-    phone: "9636305562",
-    joinDate: "2026-05-21",
-    status: "Active",
-    leads: 60,
-    closedDeals: 40,
-    revenue: 800000,
-    rating: 4.7,
-    recentActivity: "Updated visa requirements checklist.",
-    description: "Sales & Marketing",
-    department: "Visa Exctive",
-    accessRole: "Employee",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-06"],
-  },
-  {
-    id: "LMH-07",
-    name: "Jatin Jangid",
-    avatar: "",
-    role: "Web Design Internship",
-    email: "NA",
-    phone: "NA",
-    joinDate: "2026-06-18",
-    status: "Active",
-    leads: 0,
-    closedDeals: 0,
-    revenue: 0,
-    rating: 5.0,
-    recentActivity: "Designed fresh layouts.",
-    description: "",
-    department: "Internship",
-    accessRole: "Employee",
-    profile_details: INITIAL_EMPLOYEE_DETAILS["LMH-07"],
-  },
-];
-
-const ROLE_COLOR: Record<Role, string> = {
-  "Operations Manager": "bg-primary/15 text-primary",
-  "Travel Consultant": "bg-blue-100 text-blue-700",
-  "Visa Executive": "bg-violet-100 text-violet-700",
-  Accounts: "bg-amber-100 text-amber-700",
-  Marketing: "bg-pink-100 text-pink-700",
-  "Sales Executive": "bg-indigo-100 text-indigo-700",
-  Executive: "bg-teal-100 text-teal-700",
-  "HR & Admin Manager": "bg-rose-100 text-rose-700",
-  "Accounts Manager": "bg-amber-100 text-amber-700",
-  "Ceo Founder": "bg-red-100 text-red-700",
-  "Insurance Sales": "bg-orange-100 text-orange-700",
-  "Web Design Internship": "bg-purple-100 text-purple-700",
-};
-
-const STATUS_COLOR: Record<Status, string> = {
-  Active: "bg-emerald-100 text-emerald-700",
-  "On Leave": "bg-amber-100 text-amber-700",
-  Inactive: "bg-slate-100 text-slate-500",
-};
+export const INITIAL_EMPLOYEES: Employee[] = [];
 
 const formatINR = (n: number) =>
   new Intl.NumberFormat("en-IN", {
@@ -331,134 +174,6 @@ function StarRating({ rating = 0 }: { rating?: number }) {
     </div>
   );
 }
-
-/* ─── HRMS Mock Constants ─── */
-const DEFAULT_LEAVES = [
-  {
-    id: "LV-01",
-    empId: "LMH-02",
-    empName: "Nikita Bairwa",
-    type: "Sick Leave",
-    fromDate: "2026-06-25",
-    toDate: "2026-06-26",
-    reason: "Fever and high body temp",
-    status: "Pending",
-  },
-  {
-    id: "LV-02",
-    empId: "LMH-03",
-    empName: "Pushplata Kriplani",
-    type: "Casual Leave",
-    fromDate: "2026-07-02",
-    toDate: "2026-07-03",
-    reason: "Attending cousin's wedding",
-    status: "Approved",
-  },
-  {
-    id: "LV-03",
-    empId: "LMH-04",
-    empName: "AMAN SHARMA",
-    type: "Earned Leave",
-    fromDate: "2026-07-10",
-    toDate: "2026-07-15",
-    reason: "Summer vacation with family",
-    status: "Pending",
-  },
-];
-
-const DEFAULT_FEEDS = [
-  {
-    id: "feed-1",
-    user: "Manvendra Singhal",
-    avatar: "/avatars/manvendra.png",
-    role: "HR & Admin Manager",
-    content:
-      "📣 Welcome to our new HRMS dashboard! Now you can clock in/out, view your profile details, apply for leaves, and track tasks directly inside the Employees portal.",
-    date: "2026-06-19T10:00:00.000Z",
-    likes: 5,
-    likedBy: [],
-  },
-  {
-    id: "feed-2",
-    user: "Nikita Bairwa",
-    avatar: "/avatars/nikita.jpeg",
-    role: "Sales Executive",
-    content:
-      "🎉 Closed a customized package for Dubai (4 Pax, 5 Nights)! Big thanks to the team for support.",
-    date: "2026-06-18T14:30:00.000Z",
-    likes: 8,
-    likedBy: [],
-  },
-  {
-    id: "feed-3",
-    user: "Deepak Kumar",
-    avatar: "/avatars/deepak.jpeg",
-    role: "Visa Executive",
-    content:
-      "🚀 Submitted Schengen visa files for our premium group travelers today! Fingers crossed.",
-    date: "2026-06-17T09:15:00.000Z",
-    likes: 4,
-    likedBy: [],
-  },
-];
-
-const DEFAULT_FILES = [
-  {
-    id: "file-1",
-    name: "Employee_Handbook_2026.pdf",
-    size: "1.2 MB",
-    date: "2026-01-10",
-    uploader: "Manvendra Singhal",
-  },
-  {
-    id: "file-2",
-    name: "Travel_Expense_Guidelines.pdf",
-    size: "840 KB",
-    date: "2026-02-15",
-    uploader: "Manvendra Singhal",
-  },
-  {
-    id: "file-3",
-    name: "Leave_Policy_Manual.pdf",
-    size: "620 KB",
-    date: "2026-03-01",
-    uploader: "Manvendra Singhal",
-  },
-  {
-    id: "file-4",
-    name: "Company_Holidays_2026.pdf",
-    size: "450 KB",
-    date: "2026-01-05",
-    uploader: "Manvendra Singhal",
-  },
-];
-
-const DEFAULT_TIMELOGS = [
-  {
-    id: "log-1",
-    project: "Grand Journeys Itinerary",
-    task: "Dubai Hotel & Flight selection",
-    hours: 4,
-    date: "2026-06-19",
-    employee: "Nikita Bairwa",
-  },
-  {
-    id: "log-2",
-    project: "Visa Processing",
-    task: "Schengen Documents Review",
-    hours: 3.5,
-    date: "2026-06-19",
-    employee: "Deepak Kumar",
-  },
-  {
-    id: "log-3",
-    project: "Accounts Reconciliation",
-    task: "GST filings & payroll prep",
-    hours: 6,
-    date: "2026-06-19",
-    employee: "AMAN SHARMA",
-  },
-];
 
 function formatNoteDate(isoString: string) {
   try {
@@ -627,8 +342,7 @@ function EmployeeTaskCard({
 
 function EmployeesPage() {
   const [localEmployees, setEmployees] = useSupabaseTable<Employee[]>(
-    "employees",
-    INITIAL_EMPLOYEES,
+    "employees"
   );
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingEmployeeNoteId, setEditingEmployeeNoteId] = useState<string | null>(null);
@@ -741,11 +455,11 @@ function EmployeesPage() {
 
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
-  const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", DEFAULT_LEAVES);
+  const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
-  const [feeds, setFeeds] = useSupabaseTable<any[]>("feeds", DEFAULT_FEEDS);
-  const [timeLogs, setTimeLogs] = useSupabaseTable<any[]>("timelogs", DEFAULT_TIMELOGS);
-  const [hrFiles, setHrFiles] = useSupabaseTable<any[]>("hr_files", DEFAULT_FILES);
+  const [feeds, setFeeds] = useSupabaseTable<any[]>("feeds", []);
+  const [timeLogs, setTimeLogs] = useSupabaseTable<any[]>("timelogs", []);
+  const [hrFiles, setHrFiles] = useSupabaseTable<any[]>("hr_files", []);
   const [expandedSection, setExpandedSection] = useState<string | null>(null);
 
   const [reviews, setReviews] = useSupabaseTable<any[]>("reviews", [
@@ -861,6 +575,7 @@ function EmployeesPage() {
       url: "#",
     },
   ]);
+  const [bookings] = useSupabaseTable<any[]>("bookings", []);
 
   // Form states for adding new records in the details section
   const [addLeaveType, setAddLeaveType] = useState("Casual Leave");
@@ -941,7 +656,7 @@ function EmployeesPage() {
     "Accounts Manager",
   ];
 
-  const [activeTab, setActiveTab] = useState(isAdmin ? "Employees" : "Profile");
+  const [activeTab, setActiveTab] = useState(isAdmin ? "Employees" : "Jobs");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
@@ -1002,16 +717,8 @@ function EmployeesPage() {
         e.email.toLowerCase().includes(q.toLowerCase())),
   );
 
-  // Live data: Total Bookings from actual bookings localStorage
-  const totalBookings = (() => {
-    try {
-      const raw = localStorage.getItem("crm_bookings");
-      const list = raw ? JSON.parse(raw) : [];
-      return Array.isArray(list) ? list.length : 0;
-    } catch {
-      return 0;
-    }
-  })();
+  // Live data: Total Bookings from Supabase bookings table
+  const totalBookings = bookings.length;
 
   // Live data: Team Revenue = total salary paid to all employees (from payroll records)
   const totalRevenue = payroll.reduce((sum: number, p: any) => sum + (Number(p.salary) || 0), 0);
@@ -1209,7 +916,7 @@ function EmployeesPage() {
 
       {/* Zoho-style Navigation Tabs */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-px scrollbar-hide">
-        {["Profile", "Jobs", "Employees"]
+        {["Jobs", "Employees"]
           .filter((tab) => {
             if (!isAdmin && tab === "Employees") return false;
             return true;
@@ -1288,7 +995,7 @@ function EmployeesPage() {
               <select
                 value={roleFilter}
                 onChange={(e) => setRoleFilter(e.target.value as any)}
-                className="h-9 w-full md:w-auto cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+                className="h-9 w-full md:w-auto cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
               >
                 <option value="All">All Categories</option>
                 {allRoles.map((r) => (
@@ -1676,13 +1383,13 @@ function EmployeesPage() {
               return (
                 <div className="space-y-6 animate-in fade-in-50 duration-200">
                   {/* Top Info Banner / Profile Overview */}
-                  <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+                  <div className="bg-card text-card-foreground rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
                     <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
                       {cur.avatar ? (
                         <img
                           src={cur.avatar}
                           alt={cur.name || "Employee"}
-                          className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-primary/10 shrink-0"
+                          className="h-20 w-20 rounded-2xl object-cover border border-border ring-4 ring-primary/10 shrink-0"
                         />
                       ) : (
                         <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 ring-4 ring-primary/10">
@@ -1704,7 +1411,7 @@ function EmployeesPage() {
                                 onChange={(e) =>
                                   setProfileEditCore({ ...profileEditCore, name: e.target.value })
                                 }
-                                className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                                className="h-8 text-xs focus-visible:ring-primary"
                               />
                             </div>
                             <div className="space-y-1">
@@ -1716,7 +1423,7 @@ function EmployeesPage() {
                                 onChange={(e) =>
                                   setProfileEditCore({ ...profileEditCore, role: e.target.value })
                                 }
-                                className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                                className="h-8 text-xs focus-visible:ring-primary"
                               />
                             </div>
                           </div>
@@ -1730,7 +1437,7 @@ function EmployeesPage() {
                                 onChange={(e) =>
                                   setProfileEditCore({ ...profileEditCore, email: e.target.value })
                                 }
-                                className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                                className="h-8 text-xs focus-visible:ring-primary"
                               />
                             </div>
                             <div className="space-y-1">
@@ -1754,7 +1461,7 @@ function EmployeesPage() {
                       ) : (
                         <div className="text-center md:text-left space-y-1">
                           <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                            <h2 className="text-2xl font-bold font-display text-gray-900">
+                            <h2 className="text-2xl font-bold font-display text-foreground">
                               {cur.name}
                             </h2>
                             <span
@@ -1763,7 +1470,7 @@ function EmployeesPage() {
                               {cur.status}
                             </span>
                           </div>
-                          <p className="text-[#FF6B00] font-semibold text-sm">
+                          <p className="text-primary font-semibold text-sm">
                             {cur.role} • {empDetails.department}
                           </p>
                           <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
@@ -1780,7 +1487,7 @@ function EmployeesPage() {
 
                     {/* Quick Stats inside Banner */}
                     <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-xl p-3.5 px-5">
-                      <div className="text-center pr-4 border-r border-gray-200">
+                      <div className="text-center pr-4 border-r border-border">
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
                           Employee ID
                         </p>
@@ -1797,7 +1504,7 @@ function EmployeesPage() {
                             onChange={(e) =>
                               setProfileEditCore({ ...profileEditCore, joinDate: e.target.value })
                             }
-                            className="text-xs bg-white border border-gray-200 rounded px-1.5 py-0.5 mt-0.5 focus:outline-none focus:ring-1 focus:ring-[#FF6B00]"
+                            className="text-xs bg-card text-card-foreground border border-border rounded px-1.5 py-0.5 mt-0.5 focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                         ) : (
                           <p className="text-sm font-bold text-gray-800 mt-0.5">
@@ -1816,8 +1523,8 @@ function EmployeesPage() {
                     {/* LEFT COLUMN */}
                     <div className="space-y-6 md:col-span-1">
                       {/* Quick Actions Card */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           {profileIsEditing ? "Actions" : "Quick Actions"}
                         </h3>
                         {profileIsEditing ? (
@@ -1841,7 +1548,7 @@ function EmployeesPage() {
                             <Button
                               variant="outline"
                               onClick={handleStartEdit}
-                              className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
+                              className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                             >
                               <Edit className="h-4 w-4" /> Edit Profile Details
                             </Button>
@@ -1851,7 +1558,7 @@ function EmployeesPage() {
                                 setTaskAssignee(cur.name);
                                 setIsTaskModalOpen(true);
                               }}
-                              className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
+                              className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                             >
                               <Plus className="h-4 w-4" /> Assign Task
                             </Button>
@@ -1861,7 +1568,7 @@ function EmployeesPage() {
                               onClick={() => {
                                 const printWindow = window.open("", "_blank");
                                 if (!printWindow) return;
-                                const css = `body{font-family:sans-serif;padding:40px;color:#333}h1{color:#FF6B00;margin-bottom:5px}.subtitle{color:#666;margin-bottom:30px;font-weight:bold}.section{margin-bottom:25px;border-bottom:1px solid #eee;padding-bottom:15px}.section-title{font-size:18px;color:#FF6B00;margin-bottom:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field{margin-bottom:8px}.label{font-size:11px;text-transform:uppercase;color:#888;font-weight:bold}.value{font-size:14px;font-weight:500;margin-top:2px}`;
+                                const css = `body{font-family:sans-serif;padding:40px;color:#333}h1{color:var(--primary);margin-bottom:5px}.subtitle{color:#666;margin-bottom:30px;font-weight:bold}.section{margin-bottom:25px;border-bottom:1px solid #eee;padding-bottom:15px}.section-title{font-size:18px;color:var(--primary);margin-bottom:10px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:15px}.field{margin-bottom:8px}.label{font-size:11px;text-transform:uppercase;color:#888;font-weight:bold}.value{font-size:14px;font-weight:500;margin-top:2px}`;
                                 const styleEl = printWindow.document.createElement("style");
                                 styleEl.textContent = css;
                                 printWindow.document.head.appendChild(styleEl);
@@ -1882,7 +1589,7 @@ function EmployeesPage() {
                                 printWindow.document.body.appendChild(script);
                                 printWindow.document.close();
                               }}
-                              className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
+                              className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                             >
                               <Download className="h-4 w-4" /> Download Profile
                             </Button>
@@ -1891,8 +1598,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Reporting Structure */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Reporting Structure
                         </h3>
                         {profileIsEditing && profileEditDetails ? (
@@ -1950,7 +1657,7 @@ function EmployeesPage() {
                                 {empDetails.directReports.map((r, i) => (
                                   <span
                                     key={i}
-                                    className="text-xs bg-gray-100 font-semibold px-2 py-0.5 rounded-md text-gray-700"
+                                    className="text-xs bg-gray-100 font-semibold px-2 py-0.5 rounded-md text-muted-foreground"
                                   >
                                     {r}
                                   </span>
@@ -1962,8 +1669,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Verification Details */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Verification Details
                         </h3>
                         {profileIsEditing && profileEditDetails ? (
@@ -2052,15 +1759,15 @@ function EmployeesPage() {
                       </div>
 
                       {/* Documents Center */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Documents Center
                         </h3>
                         <div className="space-y-2 pt-1">
                           {mockPerf.documents.map((doc, i) => (
                             <div
                               key={i}
-                              className="flex items-center justify-between p-2 border border-gray-100 bg-gray-50/50 hover:bg-orange-50/20 rounded-xl transition-colors text-xs"
+                              className="flex items-center justify-between p-2 border border-gray-100 bg-gray-50/50 hover:bg-primary/10/20 rounded-xl transition-colors text-xs"
                             >
                               <div className="flex items-center gap-2 truncate">
                                 <FileText className="h-4 w-4 text-orange-500 shrink-0" />
@@ -2078,7 +1785,7 @@ function EmployeesPage() {
                               </div>
                               <button
                                 onClick={() => alert(`Downloading ${doc.name}...`)}
-                                className="p-1.5 rounded-lg border border-gray-200 text-muted-foreground hover:text-[#FF6B00] hover:bg-white hover:border-[#FF6B00]/40 transition-colors cursor-pointer"
+                                className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-primary hover:bg-card text-card-foreground hover:border-primary/40 transition-colors cursor-pointer"
                               >
                                 <Download className="h-3.5 w-3.5" />
                               </button>
@@ -2091,8 +1798,8 @@ function EmployeesPage() {
                     {/* RIGHT COLUMN */}
                     <div className="space-y-6 md:col-span-2">
                       {/* Performance Summary */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Performance Summary
                         </h3>
                         <div className="grid gap-4 sm:grid-cols-4 pt-1">
@@ -2101,7 +1808,7 @@ function EmployeesPage() {
                               label: "KPI Score",
                               value: `${mockPerf.kpiScore}%`,
                               icon: <Award className="h-4 w-4" />,
-                              color: "bg-orange-50 text-[#FF6B00] border-orange-100",
+                              color: "bg-primary/10 text-primary border-primary/20",
                             },
                             {
                               label: "Attendance %",
@@ -2126,7 +1833,7 @@ function EmployeesPage() {
                               key={stat.label}
                               className={`rounded-xl border p-4 text-center ${stat.color} flex flex-col items-center justify-center`}
                             >
-                              <span className="p-1.5 bg-white/80 rounded-lg shadow-sm border border-inherit mb-2 shrink-0">
+                              <span className="p-1.5 bg-card text-card-foreground/80 rounded-lg shadow-sm border border-inherit mb-2 shrink-0">
                                 {stat.icon}
                               </span>
                               <p className="text-xl font-bold">{stat.value}</p>
@@ -2139,8 +1846,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Active Projects */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Active Projects
                         </h3>
                         <div className="space-y-4 pt-1">
@@ -2164,7 +1871,7 @@ function EmployeesPage() {
                                 <span
                                   className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
                                     p.status === "In Progress"
-                                      ? "bg-orange-50 border-orange-200 text-[#FF6B00]"
+                                      ? "bg-primary/10 border-primary/30 text-primary"
                                       : "bg-blue-50 border-blue-200 text-blue-600"
                                   }`}
                                 >
@@ -2175,11 +1882,11 @@ function EmployeesPage() {
                               <div className="space-y-1">
                                 <div className="flex justify-between text-[10px] font-semibold">
                                   <span className="text-muted-foreground">Progress</span>
-                                  <span className="text-gray-700">{p.progress}%</span>
+                                  <span className="text-muted-foreground">{p.progress}%</span>
                                 </div>
                                 <div className="h-1.5 w-full bg-gray-200 rounded-full overflow-hidden">
                                   <div
-                                    className="h-full bg-[#FF6B00] rounded-full transition-all duration-500"
+                                    className="h-full bg-primary rounded-full transition-all duration-500"
                                     style={{ width: `${p.progress}%` }}
                                   />
                                 </div>
@@ -2190,8 +1897,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Employment Details */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Employment Details
                         </h3>
                         {profileIsEditing && profileEditDetails ? (
@@ -2366,7 +2073,7 @@ function EmployeesPage() {
                                   {empDetails.skills.map((s, i) => (
                                     <span
                                       key={i}
-                                      className="text-[10px] font-bold bg-orange-50 text-[#FF6B00] border border-orange-100 px-1.5 py-0.5 rounded"
+                                      className="text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded"
                                     >
                                       {s}
                                     </span>
@@ -2395,8 +2102,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Personal Profile */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Personal Profile
                         </h3>
                         {profileIsEditing && profileEditDetails ? (
@@ -2517,7 +2224,7 @@ function EmployeesPage() {
                                 <span className="text-muted-foreground text-xs font-medium">
                                   About / Bio
                                 </span>
-                                <span className="col-span-2 text-gray-700 leading-relaxed font-medium">
+                                <span className="col-span-2 text-muted-foreground leading-relaxed font-medium">
                                   {cur.description || "Active system user."}
                                 </span>
                               </div>
@@ -2527,8 +2234,8 @@ function EmployeesPage() {
                       </div>
 
                       {/* Contact Information */}
-                      <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                        <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                      <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                        <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                           Contact Information
                         </h3>
                         {profileIsEditing && profileEditDetails ? (
@@ -2667,13 +2374,13 @@ function EmployeesPage() {
                   {/* FULL WIDTH BOTTOM SECTIONS */}
                   <div className="space-y-6">
                     {/* Career History */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                         Career History
                       </h3>
-                      <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                         <table className="w-full text-sm text-left">
-                          <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                          <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                             <tr>
                               <th className="px-4 py-3">Company</th>
                               <th className="px-4 py-3">Position</th>
@@ -2686,10 +2393,10 @@ function EmployeesPage() {
                               )}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                          <tbody className="divide-y divide-border text-muted-foreground bg-card text-card-foreground">
                             {profileIsEditing && profileEditDetails ? (
                               profileEditDetails.careerHistory.map((h, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-2 py-1.5">
                                     <Input
                                       className="h-7 text-xs"
@@ -2769,7 +2476,7 @@ function EmployeesPage() {
                               </tr>
                             ) : (
                               empDetails.careerHistory.map((h, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-4 py-3.5 font-semibold text-gray-800">
                                     {h.company}
                                   </td>
@@ -2810,7 +2517,7 @@ function EmployeesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                            className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                             onClick={addProfileCareer}
                           >
                             <Plus className="h-3 w-3 mr-1" /> Add Experience Row
@@ -2820,13 +2527,13 @@ function EmployeesPage() {
                     </div>
 
                     {/* Academic Background */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                         Academic Background
                       </h3>
-                      <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                         <table className="w-full text-sm text-left">
-                          <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                          <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                             <tr>
                               <th className="px-4 py-3">Institution</th>
                               <th className="px-4 py-3">Qualification</th>
@@ -2838,10 +2545,10 @@ function EmployeesPage() {
                               )}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                          <tbody className="divide-y divide-border text-muted-foreground bg-card text-card-foreground">
                             {profileIsEditing && profileEditDetails ? (
                               profileEditDetails.academicBackground.map((a, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-2 py-1.5">
                                     <Input
                                       className="h-7 text-xs"
@@ -2910,7 +2617,7 @@ function EmployeesPage() {
                               </tr>
                             ) : (
                               empDetails.academicBackground.map((a, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-4 py-3.5 font-semibold text-gray-800">
                                     {a.institution}
                                   </td>
@@ -2935,7 +2642,7 @@ function EmployeesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                            className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                             onClick={addProfileAcademic}
                           >
                             <Plus className="h-3 w-3 mr-1" /> Add Qualification Row
@@ -2945,13 +2652,13 @@ function EmployeesPage() {
                     </div>
 
                     {/* Family Information */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                         Family Information
                       </h3>
-                      <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                      <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                         <table className="w-full text-sm text-left">
-                          <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                          <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                             <tr>
                               <th className="px-4 py-3">Name</th>
                               <th className="px-4 py-3">Relationship</th>
@@ -2962,10 +2669,10 @@ function EmployeesPage() {
                               )}
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                          <tbody className="divide-y divide-border text-muted-foreground bg-card text-card-foreground">
                             {profileIsEditing && profileEditDetails ? (
                               profileEditDetails.familyInformation.map((f, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-2 py-1.5">
                                     <Input
                                       className="h-7 text-xs"
@@ -3026,7 +2733,7 @@ function EmployeesPage() {
                               </tr>
                             ) : (
                               empDetails.familyInformation.map((f, i) => (
-                                <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                                <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                                   <td className="px-4 py-3.5 font-semibold text-gray-800">
                                     {f.name}
                                   </td>
@@ -3056,7 +2763,7 @@ function EmployeesPage() {
                           <Button
                             variant="outline"
                             size="sm"
-                            className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                            className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                             onClick={addProfileFamily}
                           >
                             <Plus className="h-3 w-3 mr-1" /> Add Dependent Row
@@ -3066,11 +2773,11 @@ function EmployeesPage() {
                     </div>
 
                     {/* Employee Records (Accordion-style) */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                         Employee Records
                       </h3>
-                      <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 overflow-hidden bg-white">
+                      <div className="divide-y divide-border rounded-xl border border-border overflow-hidden bg-card text-card-foreground">
                         {[
                           "Leave Requests",
                           "Attendance History",
@@ -3085,14 +2792,14 @@ function EmployeesPage() {
                             <div key={rec} className="border-b last:border-b-0 border-gray-100">
                               <div
                                 onClick={() => setExpandedSection(isExpanded ? null : rec)}
-                                className="flex items-center justify-between px-4 py-3.5 hover:bg-orange-50/20 cursor-pointer group transition-colors"
+                                className="flex items-center justify-between px-4 py-3.5 hover:bg-primary/10/20 cursor-pointer group transition-colors"
                               >
-                                <span className="font-semibold text-sm text-gray-700 group-hover:text-[#FF6B00] transition-colors">
+                                <span className="font-semibold text-sm text-muted-foreground group-hover:text-primary transition-colors">
                                   {rec}
                                 </span>
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                   {isExpanded ? (
-                                    <ChevronUp className="h-4 w-4 text-[#FF6B00]" />
+                                    <ChevronUp className="h-4 w-4 text-primary" />
                                   ) : (
                                     <ChevronDown className="h-4 w-4" />
                                   )}
@@ -3107,9 +2814,9 @@ function EmployeesPage() {
                                       const empLeaves = leaves.filter((l) => l.empId === cur.id);
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Type</th>
                                                   <th className="p-2.5">Dates</th>
@@ -3118,7 +2825,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empLeaves.map((l) => (
                                                   <tr key={l.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium">{l.type}</td>
@@ -3177,7 +2884,7 @@ function EmployeesPage() {
                                           </div>
 
                                           {/* Add Form */}
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Apply / Log Leave
                                             </p>
@@ -3185,7 +2892,7 @@ function EmployeesPage() {
                                               <select
                                                 value={addLeaveType}
                                                 onChange={(e) => setAddLeaveType(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs focus:ring-1 focus:ring-[#FF6B00] outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs focus:ring-1 focus:ring-primary outline-none"
                                               >
                                                 <option>Sick Leave</option>
                                                 <option>Casual Leave</option>
@@ -3195,20 +2902,20 @@ function EmployeesPage() {
                                                 type="date"
                                                 value={addLeaveFrom}
                                                 onChange={(e) => setAddLeaveFrom(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="date"
                                                 value={addLeaveTo}
                                                 onChange={(e) => setAddLeaveTo(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="text"
                                                 placeholder="Reason"
                                                 value={addLeaveReason}
                                                 onChange={(e) => setAddLeaveReason(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none col-span-1 md:col-span-1"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none col-span-1 md:col-span-1"
                                               />
                                             </div>
                                             <div className="text-right">
@@ -3235,7 +2942,7 @@ function EmployeesPage() {
                                                   setAddLeaveTo("");
                                                   setAddLeaveReason("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Apply Leave
                                               </Button>
@@ -3251,9 +2958,9 @@ function EmployeesPage() {
                                       const empAtt = attendance.filter((a) => a.empId === cur.id);
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Date</th>
                                                   <th className="p-2.5">Clock In</th>
@@ -3263,7 +2970,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empAtt.map((a) => (
                                                   <tr key={a.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium">{a.date}</td>
@@ -3319,7 +3026,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Add Attendance Entry
                                             </p>
@@ -3328,26 +3035,26 @@ function EmployeesPage() {
                                                 type="date"
                                                 value={addAttDate}
                                                 onChange={(e) => setAddAttDate(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="text"
                                                 placeholder="Clock In Time"
                                                 value={addAttIn}
                                                 onChange={(e) => setAddAttIn(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="text"
                                                 placeholder="Clock Out Time"
                                                 value={addAttOut}
                                                 onChange={(e) => setAddAttOut(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <select
                                                 value={addAttLoc}
                                                 onChange={(e) => setAddAttLoc(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               >
                                                 <option>JTM Mall Office</option>
                                                 <option>Work from Home</option>
@@ -3377,7 +3084,7 @@ function EmployeesPage() {
                                                   setAttendance([newA, ...attendance]);
                                                   setAddAttDate("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Add Record
                                               </Button>
@@ -3393,9 +3100,9 @@ function EmployeesPage() {
                                       const empRev = reviews.filter((r) => r.empId === cur.id);
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Period</th>
                                                   <th className="p-2.5">Rating</th>
@@ -3405,7 +3112,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empRev.map((r) => (
                                                   <tr key={r.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium">
@@ -3456,7 +3163,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Add Performance Review
                                             </p>
@@ -3466,12 +3173,12 @@ function EmployeesPage() {
                                                 placeholder="Period (e.g. Q2 2026)"
                                                 value={addReviewPeriod}
                                                 onChange={(e) => setAddReviewPeriod(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <select
                                                 value={addReviewRating}
                                                 onChange={(e) => setAddReviewRating(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               >
                                                 <option>5.0</option>
                                                 <option>4.5</option>
@@ -3486,7 +3193,7 @@ function EmployeesPage() {
                                                 onChange={(e) =>
                                                   setAddReviewFeedback(e.target.value)
                                                 }
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none col-span-2"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none col-span-2"
                                               />
                                             </div>
                                             <div className="text-right">
@@ -3509,7 +3216,7 @@ function EmployeesPage() {
                                                   setAddReviewPeriod("");
                                                   setAddReviewFeedback("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Save Review
                                               </Button>
@@ -3527,9 +3234,9 @@ function EmployeesPage() {
                                       );
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Doc Name</th>
                                                   <th className="p-2.5">Type</th>
@@ -3538,7 +3245,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empDocs.map((d) => (
                                                   <tr key={d.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium flex items-center gap-1.5">
@@ -3578,7 +3285,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Upload / Add Document Record
                                             </p>
@@ -3588,12 +3295,12 @@ function EmployeesPage() {
                                                 placeholder="File Name (e.g. Passport.pdf)"
                                                 value={addDocName}
                                                 onChange={(e) => setAddDocName(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <select
                                                 value={addDocType}
                                                 onChange={(e) => setAddDocType(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               >
                                                 <option>Resume</option>
                                                 <option>Offer Letter</option>
@@ -3605,7 +3312,7 @@ function EmployeesPage() {
                                                 placeholder="File Size (e.g. 500 KB)"
                                                 value={addDocSize}
                                                 onChange={(e) => setAddDocSize(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                             </div>
                                             <div className="text-right">
@@ -3625,7 +3332,7 @@ function EmployeesPage() {
                                                   setHrFiles([...hrFiles, newD]);
                                                   setAddDocName("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Log Document
                                               </Button>
@@ -3641,9 +3348,9 @@ function EmployeesPage() {
                                       const empPay = payroll.filter((p) => p.empId === cur.id);
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Month</th>
                                                   <th className="p-2.5">Net Salary</th>
@@ -3653,7 +3360,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empPay.map((p) => (
                                                   <tr key={p.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium">{p.month}</td>
@@ -3703,7 +3410,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Record Salary Disbursal
                                             </p>
@@ -3713,19 +3420,19 @@ function EmployeesPage() {
                                                 placeholder="Month (e.g. June 2026)"
                                                 value={addPayMonth}
                                                 onChange={(e) => setAddPayMonth(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="number"
                                                 placeholder="Amount (INR)"
                                                 value={addPaySalary}
                                                 onChange={(e) => setAddPaySalary(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <select
                                                 value={addPayStatus}
                                                 onChange={(e) => setAddPayStatus(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               >
                                                 <option>Paid</option>
                                                 <option>Processing</option>
@@ -3749,7 +3456,7 @@ function EmployeesPage() {
                                                   setAddPayMonth("");
                                                   setAddPaySalary("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Disburse Salary
                                               </Button>
@@ -3765,9 +3472,9 @@ function EmployeesPage() {
                                       const empAssets = assets.filter((a) => a.empId === cur.id);
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Asset Name</th>
                                                   <th className="p-2.5">Type</th>
@@ -3776,7 +3483,7 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empAssets.map((a) => (
                                                   <tr key={a.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium">{a.name}</td>
@@ -3821,7 +3528,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Assign Company Asset
                                             </p>
@@ -3831,19 +3538,19 @@ function EmployeesPage() {
                                                 placeholder="Asset Name (e.g. iPhone 13)"
                                                 value={addAssetName}
                                                 onChange={(e) => setAddAssetName(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="text"
                                                 placeholder="Serial / Tag Number"
                                                 value={addAssetSerial}
                                                 onChange={(e) => setAddAssetSerial(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <select
                                                 value={addAssetType}
                                                 onChange={(e) => setAddAssetType(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               >
                                                 <option>Laptop</option>
                                                 <option>Mobile Phone</option>
@@ -3871,7 +3578,7 @@ function EmployeesPage() {
                                                   setAddAssetName("");
                                                   setAddAssetSerial("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Assign Asset
                                               </Button>
@@ -3889,9 +3596,9 @@ function EmployeesPage() {
                                       );
                                       return (
                                         <div className="space-y-3">
-                                          <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                          <div className="overflow-x-auto border border-border rounded-lg bg-card text-card-foreground">
                                             <table className="w-full text-left text-xs">
-                                              <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                              <thead className="bg-gray-50 text-muted-foreground font-bold border-b border-border">
                                                 <tr>
                                                   <th className="p-2.5">Certificate Name</th>
                                                   <th className="p-2.5">Issuer</th>
@@ -3899,11 +3606,11 @@ function EmployeesPage() {
                                                   <th className="p-2.5 text-right">Action</th>
                                                 </tr>
                                               </thead>
-                                              <tbody className="divide-y divide-gray-100">
+                                              <tbody className="divide-y divide-border">
                                                 {empCerts.map((c) => (
                                                   <tr key={c.id} className="hover:bg-gray-50">
                                                     <td className="p-2.5 font-medium flex items-center gap-1.5">
-                                                      <Award className="h-3.5 w-3.5 text-[#FF6B00]" />
+                                                      <Award className="h-3.5 w-3.5 text-primary" />
                                                       <span>{c.name}</span>
                                                     </td>
                                                     <td className="p-2.5 text-muted-foreground">
@@ -3944,7 +3651,7 @@ function EmployeesPage() {
                                             </table>
                                           </div>
 
-                                          <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
+                                          <div className="bg-card text-card-foreground p-3.5 rounded-lg border border-border space-y-2.5">
                                             <p className="text-xs font-bold text-gray-800">
                                               Add Training Certificate
                                             </p>
@@ -3954,14 +3661,14 @@ function EmployeesPage() {
                                                 placeholder="Certificate Name"
                                                 value={addCertName}
                                                 onChange={(e) => setAddCertName(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                               <input
                                                 type="text"
                                                 placeholder="Issuing Authority (e.g. Udemy)"
                                                 value={addCertIssuer}
                                                 onChange={(e) => setAddCertIssuer(e.target.value)}
-                                                className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                                className="h-8 rounded border border-border bg-background px-2 text-xs outline-none"
                                               />
                                             </div>
                                             <div className="text-right">
@@ -3983,7 +3690,7 @@ function EmployeesPage() {
                                                   setAddCertName("");
                                                   setAddCertIssuer("");
                                                 }}
-                                                className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                                className="h-7 text-[11px] px-3 bg-primary text-white hover:bg-primary/90"
                                               >
                                                 Log Certificate
                                               </Button>
@@ -4001,15 +3708,15 @@ function EmployeesPage() {
                     </div>
 
                     {/* Activity Timeline */}
-                    <div className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">
+                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
+                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
                         Activity Timeline
                       </h3>
                       <div className="p-4 space-y-4">
-                        <div className="relative border-l-2 border-orange-100 pl-6 ml-3 space-y-5">
+                        <div className="relative border-l-2 border-primary/20 pl-6 ml-3 space-y-5">
                           {mockPerf.activityTimeline.map((item, i) => (
                             <div key={i} className="relative">
-                              <span className="absolute -left-[31px] top-1 bg-white border-2 border-[#FF6B00] h-3.5 w-3.5 rounded-full flex items-center justify-center shadow-sm"></span>
+                              <span className="absolute -left-[31px] top-1 bg-card text-card-foreground border-2 border-primary h-3.5 w-3.5 rounded-full flex items-center justify-center shadow-sm"></span>
                               <div>
                                 <p className="font-bold text-xs text-gray-800">{item.title}</p>
                                 <p className="text-[11px] text-muted-foreground mt-0.5">
@@ -4176,7 +3883,7 @@ function EmployeesPage() {
                             name: "Independence Day",
                             date: "2026-08-15",
                             day: "Saturday",
-                            color: "bg-orange-500",
+                            color: "bg-primary/100",
                           },
                           {
                             name: "Dussehra",
@@ -5252,10 +4959,7 @@ function EmployeesPage() {
         open={!!selectedEmployee}
         onOpenChange={(open) => !open && setSelectedEmployee(null)}
         onEmployeeUpdated={() => {
-          const stored = localStorage.getItem("crm_employees_v3");
-          if (stored) {
-            setEmployees(JSON.parse(stored));
-          }
+          // Handled by realtime!
         }}
         onAssignTask={(name) => {
           setTaskAssignee(name);

@@ -28,7 +28,6 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 export const Route = createFileRoute("/crm/vendors")({ component: VendorsPage });
@@ -224,7 +223,7 @@ function VendorsPage() {
       {/* Top Banner */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-gray-900 font-display">
+          <h1 className="text-3xl font-extrabold tracking-tight text-foreground font-display">
             Vendor Directory
           </h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -233,7 +232,7 @@ function VendorsPage() {
         </div>
         <Button
           onClick={handleOpenAdd}
-          className="bg-[#FF6B00] text-white hover:bg-[#E05E00] gap-1.5 rounded-xl text-xs font-semibold h-9 shadow-sm px-4"
+          className="bg-primary text-white hover:bg-primary/90 gap-1.5 rounded-xl text-xs font-semibold h-9 shadow-sm px-4"
         >
           <Plus className="h-4 w-4" /> Add New Vendor
         </Button>
@@ -262,13 +261,13 @@ function VendorsPage() {
         ].map((s) => (
           <div
             key={s.label}
-            className={`rounded-2xl border p-5 shadow-sm bg-white ${s.highlight ? "border-[#FF6B00]/30 ring-1 ring-[#FF6B00]/10" : "border-gray-200"}`}
+            className={`rounded-2xl border p-5 shadow-sm bg-card text-card-foreground ${s.highlight ? "border-primary/30 ring-1 ring-primary/10" : "border-border"}`}
           >
             <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
               {s.label}
             </p>
             <p
-              className={`text-2xl font-black mt-2 tracking-tight ${s.highlight ? "text-[#FF6B00]" : "text-gray-900"}`}
+              className={`text-2xl font-black mt-2 tracking-tight ${s.highlight ? "text-primary" : "text-foreground"}`}
             >
               {s.value}
             </p>
@@ -278,14 +277,14 @@ function VendorsPage() {
       </div>
 
       {/* Filters & Actions */}
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border p-4 shadow-sm flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search by name, contact, email or city..."
             value={q}
             onChange={(e) => setQ(e.target.value)}
-            className="pl-9 h-9 text-xs rounded-xl focus-visible:ring-[#FF6B00]"
+            className="pl-9 h-9 text-xs rounded-xl focus-visible:ring-primary"
           />
         </div>
 
@@ -295,7 +294,7 @@ function VendorsPage() {
             <select
               value={categoryFilter}
               onChange={(e) => setCategoryFilter(e.target.value)}
-              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="All">All Categories</option>
               <option value="Hotel">Hotel</option>
@@ -312,7 +311,7 @@ function VendorsPage() {
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="All">All Statuses</option>
               <option value="Active">Active Only</option>
@@ -323,10 +322,10 @@ function VendorsPage() {
       </div>
 
       {/* Vendors Table */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
+      <div className="bg-card text-card-foreground rounded-2xl border border-border shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left text-sm">
-            <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+            <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
               <tr>
                 <th className="px-5 py-4">Vendor details</th>
                 <th className="px-5 py-4">Category</th>
@@ -338,23 +337,23 @@ function VendorsPage() {
                 <th className="px-5 py-4 text-right">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+            <tbody className="divide-y divide-border text-muted-foreground bg-card text-card-foreground">
               {filtered.map((v) => (
-                <tr key={v.id} className="hover:bg-orange-50/5 transition-colors">
-                  <td className="px-5 py-4 font-semibold text-gray-900">
+                <tr key={v.id} className="hover:bg-primary/10/5 transition-colors">
+                  <td className="px-5 py-4 font-semibold text-foreground">
                     <div>
                       <p>{v.name}</p>
                       <p className="text-[10px] text-muted-foreground font-mono mt-0.5">{v.id}</p>
                     </div>
                   </td>
                   <td className="px-5 py-4 text-xs font-medium">
-                    <span className="bg-orange-100/50 text-[#FF6B00] px-2.5 py-0.5 rounded-full border border-orange-200/40">
+                    <span className="bg-primary/15 text-primary px-2.5 py-0.5 rounded-full border border-primary/20">
                       {v.category}
                     </span>
                   </td>
                   <td className="px-5 py-4 text-xs">
                     <div className="space-y-0.5">
-                      <p className="font-semibold text-gray-900">{v.contactPerson}</p>
+                      <p className="font-semibold text-foreground">{v.contactPerson}</p>
                       <p className="text-muted-foreground flex items-center gap-1">
                         <Mail className="h-3 w-3" /> {v.email}
                       </p>
@@ -374,7 +373,7 @@ function VendorsPage() {
                       {v.rating.toFixed(1)}
                     </span>
                   </td>
-                  <td className="px-5 py-4 text-sm font-bold text-gray-900">
+                  <td className="px-5 py-4 text-sm font-bold text-foreground">
                     {formatINR(v.balance)}
                   </td>
                   <td className="px-5 py-4 text-xs">
@@ -403,7 +402,7 @@ function VendorsPage() {
                         variant="outline"
                         size="icon"
                         title="Edit Details"
-                        className="h-8 w-8 text-[#FF6B00] hover:text-[#E05E00] hover:bg-orange-50/50"
+                        className="h-8 w-8 text-primary hover:text-primary/90 hover:bg-primary/5"
                         onClick={() => handleOpenEdit(v)}
                       >
                         <Edit2 className="h-3.5 w-3.5" />
@@ -435,7 +434,7 @@ function VendorsPage() {
 
       {/* ADD MODAL */}
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="max-w-md bg-white text-[#111827]">
+        <DialogContent className="max-w-md bg-card text-card-foreground text-[#111827]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold font-display">
               Add New Supplier / Vendor
@@ -444,17 +443,17 @@ function VendorsPage() {
           </DialogHeader>
           <div className="space-y-3 py-2 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Vendor / Company Name *</label>
+              <label className="font-bold text-muted-foreground">Vendor / Company Name *</label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                className="h-8 text-xs focus-visible:ring-primary"
                 placeholder="Address Beach Resort"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Category</label>
+                <label className="font-bold text-muted-foreground">Category</label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value as VendorCategory)}
@@ -469,7 +468,7 @@ function VendorsPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Contact Person *</label>
+                <label className="font-bold text-muted-foreground">Contact Person *</label>
                 <Input
                   value={formContact}
                   onChange={(e) => setFormContact(e.target.value)}
@@ -480,7 +479,7 @@ function VendorsPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Work Phone *</label>
+                <label className="font-bold text-muted-foreground">Work Phone *</label>
                 <Input
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
@@ -489,7 +488,7 @@ function VendorsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Email Address</label>
+                <label className="font-bold text-muted-foreground">Email Address</label>
                 <Input
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
@@ -499,7 +498,7 @@ function VendorsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Physical Location</label>
+              <label className="font-bold text-muted-foreground">Physical Location</label>
               <Input
                 value={formLocation}
                 onChange={(e) => setFormLocation(e.target.value)}
@@ -509,7 +508,7 @@ function VendorsPage() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Status</label>
+                <label className="font-bold text-muted-foreground">Status</label>
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as VendorStatus)}
@@ -520,7 +519,7 @@ function VendorsPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Initial Balance (INR)</label>
+                <label className="font-bold text-muted-foreground">Initial Balance (INR)</label>
                 <Input
                   type="number"
                   value={formBalance}
@@ -529,7 +528,7 @@ function VendorsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Rating (1.0 - 5.0)</label>
+                <label className="font-bold text-muted-foreground">Rating (1.0 - 5.0)</label>
                 <Input
                   type="number"
                   step="0.1"
@@ -540,7 +539,7 @@ function VendorsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Vendor Notes</label>
+              <label className="font-bold text-muted-foreground">Vendor Notes</label>
               <textarea
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
@@ -559,7 +558,7 @@ function VendorsPage() {
             </Button>
             <Button
               onClick={handleAddVendor}
-              className="bg-[#FF6B00] text-white hover:bg-[#E05E00] h-9 text-xs rounded-xl"
+              className="bg-primary text-white hover:bg-primary/90 h-9 text-xs rounded-xl"
             >
               Save Supplier
             </Button>
@@ -569,7 +568,7 @@ function VendorsPage() {
 
       {/* EDIT MODAL */}
       <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-        <DialogContent className="max-w-md bg-white text-[#111827]">
+        <DialogContent className="max-w-md bg-card text-card-foreground text-[#111827]">
           <DialogHeader>
             <DialogTitle className="text-xl font-bold font-display">
               Edit Vendor Profile
@@ -578,16 +577,16 @@ function VendorsPage() {
           </DialogHeader>
           <div className="space-y-3 py-2 text-xs">
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Vendor / Company Name *</label>
+              <label className="font-bold text-muted-foreground">Vendor / Company Name *</label>
               <Input
                 value={formName}
                 onChange={(e) => setFormName(e.target.value)}
-                className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                className="h-8 text-xs focus-visible:ring-primary"
               />
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Category</label>
+                <label className="font-bold text-muted-foreground">Category</label>
                 <select
                   value={formCategory}
                   onChange={(e) => setFormCategory(e.target.value as VendorCategory)}
@@ -602,7 +601,7 @@ function VendorsPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Contact Person *</label>
+                <label className="font-bold text-muted-foreground">Contact Person *</label>
                 <Input
                   value={formContact}
                   onChange={(e) => setFormContact(e.target.value)}
@@ -612,7 +611,7 @@ function VendorsPage() {
             </div>
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Work Phone *</label>
+                <label className="font-bold text-muted-foreground">Work Phone *</label>
                 <Input
                   value={formPhone}
                   onChange={(e) => setFormPhone(e.target.value)}
@@ -620,7 +619,7 @@ function VendorsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Email Address</label>
+                <label className="font-bold text-muted-foreground">Email Address</label>
                 <Input
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
@@ -629,7 +628,7 @@ function VendorsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Physical Location</label>
+              <label className="font-bold text-muted-foreground">Physical Location</label>
               <Input
                 value={formLocation}
                 onChange={(e) => setFormLocation(e.target.value)}
@@ -638,7 +637,7 @@ function VendorsPage() {
             </div>
             <div className="grid grid-cols-3 gap-2">
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Status</label>
+                <label className="font-bold text-muted-foreground">Status</label>
                 <select
                   value={formStatus}
                   onChange={(e) => setFormStatus(e.target.value as VendorStatus)}
@@ -649,7 +648,7 @@ function VendorsPage() {
                 </select>
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Outstanding Balance (INR)</label>
+                <label className="font-bold text-muted-foreground">Outstanding Balance (INR)</label>
                 <Input
                   type="number"
                   value={formBalance}
@@ -658,7 +657,7 @@ function VendorsPage() {
                 />
               </div>
               <div className="space-y-1">
-                <label className="font-bold text-gray-700">Rating</label>
+                <label className="font-bold text-muted-foreground">Rating</label>
                 <Input
                   type="number"
                   step="0.1"
@@ -669,7 +668,7 @@ function VendorsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Notes</label>
+              <label className="font-bold text-muted-foreground">Notes</label>
               <textarea
                 value={formNotes}
                 onChange={(e) => setFormNotes(e.target.value)}
@@ -687,7 +686,7 @@ function VendorsPage() {
             </Button>
             <Button
               onClick={handleSaveEdit}
-              className="bg-[#FF6B00] text-white hover:bg-[#E05E00] h-9 text-xs rounded-xl"
+              className="bg-primary text-white hover:bg-primary/90 h-9 text-xs rounded-xl"
             >
               Save Changes
             </Button>
@@ -697,7 +696,7 @@ function VendorsPage() {
 
       {/* RECORD PAYMENT MODAL */}
       <Dialog open={isPayOpen} onOpenChange={setIsPayOpen}>
-        <DialogContent className="max-w-sm bg-white text-[#111827]">
+        <DialogContent className="max-w-sm bg-card text-card-foreground text-[#111827]">
           <DialogHeader>
             <DialogTitle className="text-base font-bold font-display flex items-center gap-1.5 text-emerald-600">
               <CreditCard className="h-5 w-5" /> Record Vendor Disbursement
@@ -727,7 +726,7 @@ function VendorsPage() {
               </div>
             </div>
             <div className="space-y-1">
-              <label className="font-bold text-gray-700">Payment Amount (INR) *</label>
+              <label className="font-bold text-muted-foreground">Payment Amount (INR) *</label>
               <Input
                 type="number"
                 value={payAmount}

@@ -17,29 +17,9 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         console.error(`Error fetching ${tableName}:`, error);
         return;
       }
+      
       if (remoteData && remoteData.length > 0) {
         setData(remoteData.map(unSanitizeRow) as T);
-        localStorage.setItem(`seeded_${tableName}`, "true");
-      } else if (
-        initialValue &&
-        initialValue.length > 0 &&
-        !localStorage.getItem(`seeded_${tableName}`)
-      ) {
-        // Seed the database with the initial local data if it's completely empty!
-        console.log(`Seeding ${tableName} with initial data...`);
-        localStorage.setItem(`seeded_${tableName}`, "true");
-        const { error: seedError } = await supabase
-          .from(tableName)
-          .insert(initialValue.map(sanitizeRow));
-        if (seedError) {
-          console.error(`Error seeding ${tableName}:`, seedError);
-        } else {
-          // If seeding succeeds, update data so it doesn't require a reload
-          const { data: newRemoteData } = await supabase.from(tableName).select("*");
-          if (newRemoteData && newRemoteData.length > 0) {
-            setData(newRemoteData.map(unSanitizeRow) as T);
-          }
-        }
       } else {
         setData([] as any);
       }
@@ -129,6 +109,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (newRow.allNotes !== undefined) customFields.allNotes = newRow.allNotes;
     if (newRow.dob !== undefined) customFields.dob = newRow.dob;
     if (newRow.relationship !== undefined) customFields.relationship = newRow.relationship;
+    if (newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
 
     const hasCustomFields = Object.keys(customFields).length > 0;
 
@@ -156,6 +137,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.allNotes;
     delete newRow.dob;
     delete newRow.relationship;
+    delete newRow.profile_details;
 
     return newRow;
   }
@@ -233,6 +215,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+          if (parsed.profile_details !== undefined) newRow.profile_details = parsed.profile_details;
         }
       } catch (e) {}
     }

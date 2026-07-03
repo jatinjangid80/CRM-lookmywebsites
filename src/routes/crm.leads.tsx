@@ -55,7 +55,6 @@ import {
 import { ImportModal } from "@/components/ui/import-modal";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
 import { leads as SEED_LEADS, formatINR, type Lead } from "@/lib/mock-data";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 
@@ -100,7 +99,7 @@ const SOURCE_COLORS: Record<string, string> = {
   Facebook: "bg-blue-600",
   WhatsApp: "bg-emerald-700",
   "Walk-in": "bg-yellow-200",
-  Website: "bg-orange-500",
+  Website: "bg-primary/100",
   Referral: "bg-purple-300",
   Ads: "bg-gray-200",
   BNI: "bg-teal-800",
@@ -861,7 +860,7 @@ function LeadDetail({
                 className="h-16 w-16 rounded-2xl object-cover shrink-0"
               />
             ) : (
-              <div className="h-16 w-16 rounded-2xl bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+              <div className="h-16 w-16 rounded-2xl bg-gray-100 border border-border flex items-center justify-center shrink-0">
                 <User className="h-8 w-8 text-gray-400" />
               </div>
             )}
@@ -1480,88 +1479,7 @@ function LeadDetail({
               </div>
             )}
 
-          <div className="mt-4 pt-4 border-t border-border">
-            <div className="pl-3 border-l-[3px] border-[#e8dfd5] py-1 mt-2 space-y-3">
-              <div className="space-y-3">
-                {lead.allNotes && lead.allNotes.length > 0 ? (
-                  lead.allNotes.map((n, i) => (
-                    <div key={i} className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
-                      <span className="text-muted-foreground/60">•</span>
-                      <span>{n.text}</span>
-                      {n.date && (
-                        <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
-                          ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
-                        </span>
-                      )}
-                    </div>
-                  ))
-                ) : lead.notes ? (
-                    <div className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5">
-                      <span className="text-muted-foreground/60">•</span>
-                      <span>{lead.notes}</span>
-                      {lead.noteDate && (
-                        <span className="text-[12px] text-muted-foreground/60 not-italic ml-1">
-                          ({new Date(lead.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
-                        </span>
-                      )}
-                    </div>
-                ) : null}
-              </div>
 
-              {/* Add New Note Section */}
-              {isAdmin && onEditNote && (
-                isEditingNote ? (
-                  <div className="mt-2 w-full max-w-lg animate-in fade-in slide-in-from-top-2 duration-200">
-                    <textarea
-                      autoFocus
-                      placeholder="Type your note here..."
-                      value={editNoteText}
-                      onChange={(e) => setEditNoteText(e.target.value)}
-                      rows={2}
-                      className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-                    />
-                    <div className="flex gap-2 mt-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-7 text-xs rounded-full px-4"
-                        onClick={() => {
-                          setIsEditingNote(false);
-                          setEditNoteText("");
-                        }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90"
-                        style={{ background: "var(--gradient-brand)" }}
-                        onClick={() => {
-                          if (editNoteText.trim()) {
-                            onEditNote(lead.id, editNoteText.trim());
-                          }
-                          setIsEditingNote(false);
-                          setEditNoteText("");
-                        }}
-                      >
-                        Add Note
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <button
-                    onClick={() => {
-                      setEditNoteText("");
-                      setIsEditingNote(true);
-                    }}
-                    className="mt-1 flex items-center gap-1.5 self-start text-[14px] font-medium text-blue-500 hover:text-blue-600 transition-colors"
-                  >
-                    + Add Note
-                  </button>
-                )
-              )}
-            </div>
-          </div>
 
             {/* Assignee Card */}
             <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
@@ -1765,7 +1683,7 @@ function KanbanCol({
                   className="h-7 w-7 rounded-lg object-cover shrink-0"
                 />
               ) : (
-                <div className="h-7 w-7 rounded-lg bg-gray-100 border border-gray-200 flex items-center justify-center shrink-0">
+                <div className="h-7 w-7 rounded-lg bg-gray-100 border border-border flex items-center justify-center shrink-0">
                   <User className="h-4 w-4 text-gray-400" />
                 </div>
               )}
@@ -2130,7 +2048,7 @@ function LeadsPage() {
             <select
               value={filterStatus}
               onChange={(e) => setFilterStatus(e.target.value as typeof filterStatus)}
-              className="h-9 cursor-pointer appearance-none rounded-full border border-gray-200 bg-white pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+              className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
             >
               <option value="All">All Statuses</option>
               {STATUSES.map((s) => (
@@ -2243,7 +2161,98 @@ function LeadsPage() {
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-3 py-2.5 text-xs whitespace-nowrap">{l.assignedTo || "-"}</td>
+                      <td className="px-3 py-2.5 text-xs align-top min-w-[140px]">
+                        <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
+                        <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5">
+                          {l.allNotes && l.allNotes.length > 0 ? (
+                            l.allNotes.map((n, i) => (
+                              <div key={i} className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                                <span className="text-muted-foreground/60">•</span>
+                                <span className="text-muted-foreground">{n.text}</span>
+                                {n.date && (
+                                  <span className="text-[12px] text-muted-foreground/60 not-italic ml-0.5">
+                                    ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                  </span>
+                                )}
+                              </div>
+                            ))
+                          ) : l.notes ? (
+                            <div className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                              <span className="text-muted-foreground/60">•</span>
+                              <span className="text-muted-foreground">{l.notes}</span>
+                              {l.noteDate && (
+                                <span className="text-[12px] text-muted-foreground/60 not-italic ml-0.5">
+                                  ({new Date(l.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                </span>
+                              )}
+                            </div>
+                          ) : null}
+                          {editingTableNoteId === l.id ? (
+                            <div className="mt-1 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                              <textarea
+                                autoFocus
+                                value={tableEditNoteText}
+                                onChange={(e) => setTableEditNoteText(e.target.value)}
+                                placeholder="Type your note here..."
+                                rows={2}
+                                className="w-full min-w-[160px] max-w-[200px] resize-none rounded-xl border border-border bg-background px-2.5 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                              />
+                              <div className="flex gap-2 mt-1">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 text-[10px] rounded-full px-3"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingTableNoteId(null);
+                                    setTableEditNoteText("");
+                                  }}
+                                >
+                                  Cancel
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  className="h-6 text-[10px] rounded-full px-3 text-white"
+                                  style={{ background: "var(--gradient-brand)" }}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    if (tableEditNoteText.trim()) {
+                                      const noteDate = new Date().toISOString();
+                                      const newLeads = leads.map((x) => {
+                                        if (x.id === l.id) {
+                                          let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                                          if (x.notes && currentNotes.length === 0) {
+                                            currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
+                                          }
+                                          currentNotes.push({ text: tableEditNoteText.trim(), date: noteDate });
+                                          return { ...x, notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
+                                        }
+                                        return x;
+                                      });
+                                      setLeads(newLeads);
+                                    }
+                                    setEditingTableNoteId(null);
+                                    setTableEditNoteText("");
+                                  }}
+                                >
+                                  Add Note
+                                </Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTableNoteId(l.id);
+                                setTableEditNoteText("");
+                              }}
+                              className="text-[14px] text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
+                            >
+                              + Add Note
+                            </button>
+                          )}
+                        </div>
+                      </td>
                     </tr>
                     </React.Fragment>
                   ))}

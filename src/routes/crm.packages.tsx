@@ -31,7 +31,6 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 export const Route = createFileRoute("/crm/packages")({ component: PackagesPage });
@@ -224,7 +223,7 @@ const ALL_TAGS = [
 
 const TAG_COLORS: Record<string, string> = {
   Family: "bg-blue-50 text-blue-700 border-blue-100",
-  Adventure: "bg-orange-50 text-orange-700 border-orange-100",
+  Adventure: "bg-primary/10 text-orange-700 border-primary/20",
   Beach: "bg-cyan-50 text-cyan-700 border-cyan-100",
   Scenic: "bg-teal-50 text-teal-700 border-teal-100",
   Trekking: "bg-lime-50 text-lime-700 border-lime-100",
@@ -632,10 +631,10 @@ function PackagesPage() {
                 <button
                   onClick={() => toggleActive(pkg.id)}
                   title={pkg.active ? "Deactivate" : "Activate"}
-                  className={`absolute top-3 right-3 h-6 w-11 rounded-full border transition-all ${pkg.active ? "bg-emerald-500 border-emerald-400" : "bg-gray-300 border-gray-200"}`}
+                  className={`absolute top-3 right-3 h-6 w-11 rounded-full border transition-all ${pkg.active ? "bg-emerald-500 border-emerald-400" : "bg-gray-300 border-border"}`}
                 >
                   <span
-                    className={`block h-4 w-4 rounded-full bg-white shadow transition-transform mx-1 ${pkg.active ? "translate-x-5" : "translate-x-0"}`}
+                    className={`block h-4 w-4 rounded-full bg-card text-card-foreground shadow transition-transform mx-1 ${pkg.active ? "translate-x-5" : "translate-x-0"}`}
                   />
                 </button>
                 {/* Files Badge */}
@@ -677,14 +676,7 @@ function PackagesPage() {
                   )}
                 </div>
 
-                <div className="mt-auto pt-2 border-t border-border border-dashed">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                    Package Manager
-                  </p>
-                  <div className="scale-90 origin-left -mx-2 -mt-1">
-                    <EmployeeProfileCard employeeName={pkg.assignedTo || "Pushplata Kriplani"} />
-                  </div>
-                </div>
+
 
                 <div className="mt-2 flex items-center justify-between pt-3 border-t border-border">
                   <span className="font-bold text-primary text-lg">{pkg.price}</span>
@@ -858,21 +850,7 @@ function PackagesPage() {
                   onChange={(e) => setInclInput(e.target.value)}
                 />
               </div>
-              <div className="space-y-1 col-span-2">
-                <Label htmlFor="pkg-assigned">Package Manager</Label>
-                <select
-                  id="pkg-assigned"
-                  value={form.assignedTo || "Pushplata Kriplani"}
-                  onChange={(e) => setForm({ ...form, assignedTo: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  <option value="Suman Yadav">Suman Yadav</option>
-                  <option value="Nikita Bairwa">Nikita Bairwa</option>
-                  <option value="Pushplata Kriplani">Pushplata Kriplani</option>
-                  <option value="AMAN SHARMA">AMAN SHARMA</option>
-                  <option value="Deepak Kumar">Deepak Kumar</option>
-                </select>
-              </div>
+
               <div className="space-y-1 col-span-2">
                 <Label htmlFor="pkg-desc">Description</Label>
                 <textarea

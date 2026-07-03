@@ -11,7 +11,7 @@ import { useEffect, type ReactNode } from "react";
 
 import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
-import logoImg from "../assets/lookmyholidays.jpeg";
+import logoImg from "../assets/Logo.svg";
 import { Toaster } from "@/components/ui/sonner";
 import { GoogleOAuthProvider } from "@react-oauth/google";
 
@@ -132,10 +132,10 @@ function RootComponent() {
           "crm_bookings",
           "crm_leads_v2",
           "crm_customers_v2",
-          "crm_employees_v3",
           "crm_tasks_v1",
           "crm_leaves_v1",
           "crm_attendance_v2",
+          "crm_payment_requests_v1",
           "crm_vendors_v2",
           "crm_packages",
           "crm_visa_apps_v2",
