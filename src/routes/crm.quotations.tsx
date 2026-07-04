@@ -912,12 +912,9 @@ function QuotationsPage() {
               </div>
 
               {/* UPI Payment Code */}
-              <div className="flex flex-col items-center justify-center p-3 border border-border bg-card text-card-foreground rounded-xl text-center">
-                <QrCode className="h-16 w-16 text-slate-800" />
-                <p className="font-mono text-[9px] font-bold text-slate-800 mt-1">
-                  UPI ID: payments@lookmyholidays
-                </p>
-                <p className="text-[8px] text-muted-foreground mt-0.5">
+              <div className="flex flex-col items-center justify-center p-3 border border-border bg-card rounded-xl text-center overflow-hidden">
+                <img src="/upi-qr.png" alt="UPI QR Code" className="w-full max-w-[160px] object-contain rounded-md" />
+                <p className="text-[9px] text-muted-foreground mt-2 font-medium">
                   Scan to pay with any UPI App
                 </p>
               </div>

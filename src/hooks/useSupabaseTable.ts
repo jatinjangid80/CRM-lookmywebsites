@@ -71,7 +71,26 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.createdTime;
       delete newRow.paymentStatus;
     }
-    if (tableName === "employees") delete newRow.closedDeals;
+    if (tableName === "employees") {
+      delete newRow.closedDeals; // not a Supabase column
+      delete newRow.notes;       // not a Supabase column
+
+      // Store username & password inside profile_details JSONB
+      if (newRow.username || newRow.password) {
+        const existingDetails = newRow.profile_details || {};
+        newRow.profile_details = {
+          ...existingDetails,
+          username: newRow.username,
+          password: newRow.password,
+        };
+        delete newRow.username;
+        delete newRow.password;
+      }
+
+      // profile_details is a real JSONB column — store it directly
+      // (do NOT pack it into description)
+      // allNotes, dob, relationship are not real columns — skip below
+    }
     if (tableName === "certificates" && newRow.date) {
       newRow.issueDate = newRow.date;
       delete newRow.date;
@@ -102,14 +121,15 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       newRow.employeeId = newRow.empId;
       delete newRow.empId;
     }
-    
+
     // Serialize custom fields into existing columns so they store in Supabase
     // without requiring manual SQL schema migrations.
     const customFields: any = {};
-    if (newRow.allNotes !== undefined) customFields.allNotes = newRow.allNotes;
-    if (newRow.dob !== undefined) customFields.dob = newRow.dob;
-    if (newRow.relationship !== undefined) customFields.relationship = newRow.relationship;
-    if (newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
+    if (newRow.allNotes !== undefined && tableName !== "employees") customFields.allNotes = newRow.allNotes;
+    if (newRow.dob !== undefined && tableName !== "employees") customFields.dob = newRow.dob;
+    if (newRow.relationship !== undefined && tableName !== "employees") customFields.relationship = newRow.relationship;
+    if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
+    if (newRow.leadSection !== undefined) customFields.leadSection = newRow.leadSection;
 
     const hasCustomFields = Object.keys(customFields).length > 0;
 
@@ -128,16 +148,16 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         newRow.name = `${newRow.name}---META---${JSON.stringify(customFields)}`;
       }
     } else if (tableName === "employees") {
-      if (hasCustomFields) {
-        const existingDesc = newRow.description || "";
-        newRow.description = JSON.stringify({ _isMeta: true, text: existingDesc, ...customFields });
-      }
+      // For employees: description stays as plain text
+      // profile_details goes directly into the JSONB column (already set above)
+      // allNotes is a real JSONB column in Supabase
     }
 
     delete newRow.allNotes;
     delete newRow.dob;
     delete newRow.relationship;
-    delete newRow.profile_details;
+    if (tableName !== "employees") delete newRow.profile_details;
+    delete newRow.leadSection;
 
     return newRow;
   }
@@ -149,6 +169,11 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.reference) newRow.whatsapp = newRow.reference;
       if (newRow.pax !== null) newRow.adults = newRow.pax;
       if (newRow.queryType !== null) newRow.children = Number(newRow.queryType) || 0;
+      if (newRow.created_at) {
+        const d = new Date(newRow.created_at);
+        newRow.createdAt = d.toISOString().slice(0, 10);
+        newRow.createdTime = d.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true });
+      }
     }
     if (tableName === "certificates" && newRow.issueDate) {
       newRow.date = newRow.issueDate;
@@ -180,6 +205,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+          if (parsed.leadSection !== undefined) newRow.leadSection = parsed.leadSection;
         }
       } catch (e) {}
     }
@@ -231,14 +257,20 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     // Find Deletions (in old, but not in new)
     const toDelete = oldArray.filter((item: any) => !newIds.has(item.id));
     for (const item of toDelete) {
-      await supabase.from(tableName).delete().eq("id", item.id);
+      const { error } = await supabase.from(tableName).delete().eq("id", item.id);
+      if (error) console.error(`[${tableName}] DELETE error:`, error.message, error.details);
     }
 
     // Find Insertions (in new, but not in old)
     const toInsert = newArray.filter((item: any) => !oldIds.has(item.id)).map(sanitizeRow);
     if (toInsert.length > 0) {
-      // Supabase supports bulk insert
-      await supabase.from(tableName).insert(toInsert);
+      console.log(`[${tableName}] Inserting rows:`, JSON.stringify(toInsert, null, 2));
+      const { error, data } = await supabase.from(tableName).insert(toInsert).select();
+      if (error) {
+        console.error(`[${tableName}] INSERT error:`, error.message, error.details, error.hint);
+      } else {
+        console.log(`[${tableName}] INSERT success:`, data);
+      }
     }
 
     // Find Updates
@@ -251,7 +283,13 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       .map(sanitizeRow);
 
     for (const item of toUpdate) {
-      await supabase.from(tableName).update(item).eq("id", item.id);
+      console.log(`[${tableName}] Updating row:`, JSON.stringify(item, null, 2));
+      const { error, data } = await supabase.from(tableName).update(item).eq("id", item.id).select();
+      if (error) {
+        console.error(`[${tableName}] UPDATE error:`, error.message, error.details, error.hint);
+      } else {
+        console.log(`[${tableName}] UPDATE success:`, data);
+      }
     }
   };
 

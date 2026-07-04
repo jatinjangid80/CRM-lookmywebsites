@@ -33,18 +33,6 @@ export const MOCK_USERS: MockCredential[] = [
     },
   },
   {
-    username: "manvendra",
-    password: "admin123",
-    user: {
-      role: "admin",
-      name: "Manvendra Singhal",
-      empId: "LMH-01",
-      avatar: "",
-      email: "bookings@lookmyholidays.in",
-      phone: "9413095483",
-    },
-  },
-  {
     username: "suman",
     password: "emp123",
     user: {
@@ -56,66 +44,7 @@ export const MOCK_USERS: MockCredential[] = [
       phone: "9887155570",
     },
   },
-  {
-    username: "nikita",
-    password: "emp123",
-    user: {
-      role: "employee",
-      name: "Nikita Birwa",
-      empId: "LMH-04",
-      avatar: "",
-      email: "info.insurance58@gmail.com",
-      phone: "9783395483",
-    },
-  },
-  {
-    username: "aman",
-    password: "emp123",
-    user: {
-      role: "manager",
-      name: "Aman Sharma",
-      empId: "LMH-03",
-      avatar: "",
-      email: "Accounts@lookmyholidays.in",
-      phone: "9660095483",
-    },
-  },
-  {
-    username: "pushplata",
-    password: "emp123",
-    user: {
-      role: "employee",
-      name: "Pushplata Kriplani",
-      empId: "LMH-05",
-      avatar: "",
-      email: "resv@lookmyholidays.in",
-      phone: "9928795483",
-    },
-  },
-  {
-    username: "deepak",
-    password: "emp123",
-    user: {
-      role: "employee",
-      name: "Deepak Yogi",
-      empId: "LMH-06",
-      avatar: "",
-      email: "visa@lookmyholidays.in",
-      phone: "9636305562",
-    },
-  },
-  {
-    username: "jatin",
-    password: "emp123",
-    user: {
-      role: "employee",
-      name: "Jatin Jangid",
-      empId: "LMH-07",
-      avatar: "",
-      email: "NA",
-      phone: "NA",
-    },
-  },
+
 ];
 
 /* ─── Storage key ─── */
@@ -153,7 +82,22 @@ export async function login(username: string, password: string): Promise<AuthUse
   try {
     const { data } = await supabase.from("employees").select("*");
     if (data) {
-      const dynamicMatch = data.find(
+      const parsedData = data.map((emp: any) => {
+        // profile_details is now stored directly as JSONB
+        // But also support old format where it was packed into description
+        let profile_details = emp.profile_details || null;
+        if (!profile_details && typeof emp.description === "string" && emp.description.includes("_isMeta")) {
+          try {
+            const parsed = JSON.parse(emp.description);
+            if (parsed._isMeta && parsed.profile_details) {
+              profile_details = parsed.profile_details;
+            }
+          } catch (e) {}
+        }
+        return { ...emp, profile_details };
+      });
+
+      const dynamicMatch = parsedData.find(
         (emp: any) =>
           emp.profile_details?.username &&
           emp.profile_details.username.toLowerCase() === username.trim().toLowerCase() &&

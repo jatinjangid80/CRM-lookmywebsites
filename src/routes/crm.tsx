@@ -367,9 +367,13 @@ function CrmLayout() {
           </div>
         </header>
 
-        <main className="p-4 sm:p-8">
+        <main className="flex-1 p-4 sm:p-8">
           <Outlet />
         </main>
+
+        <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border/50">
+          Designed and deployed by Jatin Jangid
+        </footer>
       </div>
 
       <EmployeeProfileModal

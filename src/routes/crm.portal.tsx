@@ -118,9 +118,9 @@ function CustomerPortalPage() {
 
   const formattedBalance = invoiceDetails
     ? formatINR(
-        (invoiceDetails.totalAmount || invoiceDetails.amount || 0) -
-          (invoiceDetails.amountPaid || invoiceDetails.paid || 0),
-      )
+      (invoiceDetails.totalAmount || invoiceDetails.amount || 0) -
+      (invoiceDetails.amountPaid || invoiceDetails.paid || 0),
+    )
     : "₹0";
 
   return (
@@ -282,11 +282,10 @@ function CustomerPortalPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`flex-1 text-center py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                    activeTab === tab.id
+                  className={`flex-1 text-center py-2.5 rounded-xl text-xs font-semibold transition-all ${activeTab === tab.id
                       ? "bg-primary text-primary-foreground shadow-sm font-bold"
                       : "text-muted-foreground hover:bg-secondary/40 hover:text-foreground"
-                  }`}
+                    }`}
                 >
                   {tab.label}
                 </button>
@@ -307,53 +306,53 @@ function CustomerPortalPage() {
                 <div className="space-y-6 relative before:absolute before:left-6 before:top-4 before:bottom-4 before:w-[2px] before:bg-slate-200 dark:before:bg-slate-800">
                   {tripDetails.details?.itinerary
                     ? tripDetails.details.itinerary.map((day: any, idx: number) => (
-                        <div key={idx} className="flex gap-4 relative z-10">
-                          <div className="h-12 w-12 rounded-xl bg-primary border-2 border-white dark:border-slate-900 shadow-md text-white font-bold text-xs flex items-center justify-center shrink-0">
-                            Day {day.day}
-                          </div>
-                          <div className="bg-secondary/15 border border-border/80 rounded-2xl p-4 flex-1 space-y-1">
-                            <p className="font-semibold text-sm">{day.title}</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {day.description}
-                            </p>
-                          </div>
+                      <div key={idx} className="flex gap-4 relative z-10">
+                        <div className="h-12 w-12 rounded-xl bg-primary border-2 border-white dark:border-slate-900 shadow-md text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          Day {day.day}
                         </div>
-                      ))
+                        <div className="bg-secondary/15 border border-border/80 rounded-2xl p-4 flex-1 space-y-1">
+                          <p className="font-semibold text-sm">{day.title}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {day.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))
                     : /* Default Fallback Itinerary */
-                      [
-                        {
-                          day: 1,
-                          title: "Arrival & Hotel Transfer",
-                          desc: "Our private chauffeur will meet you at the terminal and drop you at the hotel. Rest of day is at leisure.",
-                        },
-                        {
-                          day: 2,
-                          title: "Scenic Guided Sightseeing Tour",
-                          desc: "Enjoy a complete morning city tour showing landmarks, viewpoints, local heritage, and historic locations.",
-                        },
-                        {
-                          day: 3,
-                          title: "Adventure & Cultural Experience",
-                          desc: "Special day of safari, cruise, or local village excursions. Includes gourmet lunch buffet.",
-                        },
-                        {
-                          day: 4,
-                          title: "Departure",
-                          desc: "Check out of the hotel. Free time for souvenir shopping until your private departure transfer.",
-                        },
-                      ].map((day) => (
-                        <div key={day.day} className="flex gap-4 relative z-10">
-                          <div className="h-12 w-12 rounded-xl bg-primary border-2 border-white dark:border-slate-900 shadow-md text-white font-bold text-xs flex items-center justify-center shrink-0">
-                            Day {day.day}
-                          </div>
-                          <div className="bg-secondary/15 border border-border/80 rounded-2xl p-4 flex-1 space-y-1">
-                            <p className="font-semibold text-sm">{day.title}</p>
-                            <p className="text-xs text-muted-foreground leading-relaxed">
-                              {day.desc}
-                            </p>
-                          </div>
+                    [
+                      {
+                        day: 1,
+                        title: "Arrival & Hotel Transfer",
+                        desc: "Our private chauffeur will meet you at the terminal and drop you at the hotel. Rest of day is at leisure.",
+                      },
+                      {
+                        day: 2,
+                        title: "Scenic Guided Sightseeing Tour",
+                        desc: "Enjoy a complete morning city tour showing landmarks, viewpoints, local heritage, and historic locations.",
+                      },
+                      {
+                        day: 3,
+                        title: "Adventure & Cultural Experience",
+                        desc: "Special day of safari, cruise, or local village excursions. Includes gourmet lunch buffet.",
+                      },
+                      {
+                        day: 4,
+                        title: "Departure",
+                        desc: "Check out of the hotel. Free time for souvenir shopping until your private departure transfer.",
+                      },
+                    ].map((day) => (
+                      <div key={day.day} className="flex gap-4 relative z-10">
+                        <div className="h-12 w-12 rounded-xl bg-primary border-2 border-white dark:border-slate-900 shadow-md text-white font-bold text-xs flex items-center justify-center shrink-0">
+                          Day {day.day}
                         </div>
-                      ))}
+                        <div className="bg-secondary/15 border border-border/80 rounded-2xl p-4 flex-1 space-y-1">
+                          <p className="font-semibold text-sm">{day.title}</p>
+                          <p className="text-xs text-muted-foreground leading-relaxed">
+                            {day.desc}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                 </div>
               </div>
             )}
@@ -450,13 +449,10 @@ function CustomerPortalPage() {
                     </div>
                   </div>
 
-                  <div className="flex flex-col items-center justify-center p-4 bg-card text-card-foreground rounded-xl border border-border/80 text-center text-slate-800">
-                    <QrCode className="h-28 w-28 text-slate-800" />
-                    <p className="font-mono text-[10px] font-bold text-slate-800 mt-2">
-                      payments@lookmyholidays
-                    </p>
-                    <p className="text-[9px] text-muted-foreground mt-0.5">
-                      Open any UPI app (GPay, PhonePe, Paytm) to Scan & Pay
+                  <div className="flex flex-col items-center justify-center p-3 bg-card rounded-xl border border-border/80 text-center overflow-hidden">
+                    <img src="/upi-qr.png" alt="UPI QR Code" className="w-[200px] object-contain rounded-lg" />
+                    <p className="text-[10px] text-muted-foreground mt-2 font-medium">
+                      Scan to pay with any UPI App
                     </p>
                   </div>
                 </div>

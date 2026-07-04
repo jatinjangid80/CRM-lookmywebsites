@@ -278,6 +278,13 @@ function LoginPage() {
           </div>
         </form>
       </div>
+
+      {/* Footer */}
+      <div className="absolute bottom-6 left-0 right-0 w-full text-center z-20 pointer-events-none">
+        <p className="text-sm font-medium text-white/70 drop-shadow-md">
+          Designed and deployed by Jatin Jangid
+        </p>
+      </div>
     </div>
   );
 }

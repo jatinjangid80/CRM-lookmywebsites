@@ -1130,7 +1130,11 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" className="bg-[#FF6B00] hover:bg-[#E05E00] text-white">
+            <Button 
+              type="submit" 
+              className="shadow-md border-0 text-white"
+              style={{ background: "var(--gradient-brand, var(--color-brand, #0f172a))" }}
+            >
               Save Booking
             </Button>
           </div>

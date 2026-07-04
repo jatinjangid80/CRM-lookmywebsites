@@ -52,10 +52,11 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ImportModal } from "@/components/ui/import-modal";
+import { ImportLeadsModal } from "@/components/ui/import-leads-modal";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
 import { leads as SEED_LEADS, formatINR, type Lead } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import type { ExtCustomer } from "./crm.customers";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 
 export const Route = createFileRoute("/crm/leads")({ component: LeadsPage });
@@ -76,6 +77,7 @@ interface ExtLead extends Lead {
   amountPaid?: number;
   paymentStatus?: "Pending" | "Partial" | "Paid";
   createdTime?: string;
+  leadSection?: string;
 }
 
 const AVATARS = [""];
@@ -102,7 +104,6 @@ const SOURCE_COLORS: Record<string, string> = {
   Website: "bg-primary/100",
   Referral: "bg-purple-300",
   Ads: "bg-gray-200",
-  BNI: "bg-teal-800",
   "DD Pharma": "bg-green-200",
   Other: "bg-pink-200",
   "Old Ref": "bg-blue-300",
@@ -263,6 +264,7 @@ const EMPTY_FORM = {
   budget: "",
   travelDate: "",
   source: SOURCES[0],
+  leadSection: "B2C",
   reference: "",
   status: "New Lead" as LeadStatus,
   assignedTo: "",
@@ -620,6 +622,21 @@ function AddLeadModal({
               </SelectContent>
             </Select>
           </div>
+          {/* Lead Section */}
+          <div>
+            <label className="mb-1.5 block text-sm font-semibold">Lead Section</label>
+            <select
+              id="lead-section"
+              value={form.leadSection}
+              onChange={set("leadSection")}
+              className={fieldCls}
+            >
+              <option value="B2C">B2C</option>
+              <option value="B2B">B2B</option>
+              <option value="Corporate">Corporate</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
           {/* Reference */}
           <div>
             <label className="mb-1.5 block text-sm font-semibold">Reference</label>
@@ -831,6 +848,7 @@ function LeadDetail({
     clientCompany: lead.clientCompany || "",
     reference: lead.reference || "",
     packageType: lead.packageType || "",
+    leadSection: lead.leadSection || "",
   });
 
   return (
@@ -1135,6 +1153,19 @@ function LeadDetail({
                         ))}
                       </select>
                     </div>
+                    <div>
+                      <label className="text-[10px] font-semibold uppercase text-muted-foreground">Section</label>
+                      <select
+                        value={tripDetails.leadSection}
+                        onChange={(e) => setTripDetails({ ...tripDetails, leadSection: e.target.value })}
+                        className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
+                      >
+                        <option value="B2C">B2C</option>
+                        <option value="B2B">B2B</option>
+                        <option value="Corporate">Corporate</option>
+                        <option value="Other">Other</option>
+                      </select>
+                    </div>
                   </div>
                   <div>
                     <label className="text-[10px] font-semibold uppercase text-muted-foreground">Next Follow-up</label>
@@ -1202,6 +1233,11 @@ function LeadDetail({
                     val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
                   },
                   {
+                    icon: <Globe className="h-4 w-4 text-primary" />,
+                    label: "Section",
+                    val: lead.leadSection || "—",
+                  },
+                  {
                     icon: <Briefcase className="h-4 w-4 text-primary" />,
                     label: "Service",
                     val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
@@ -1250,6 +1286,11 @@ function LeadDetail({
                     icon: <Globe className="h-4 w-4 text-primary" />,
                     label: "Source",
                     val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
+                  },
+                  {
+                    icon: <Globe className="h-4 w-4 text-primary" />,
+                    label: "Section",
+                    val: lead.leadSection || "—",
                   },
                   {
                     icon: <Briefcase className="h-4 w-4 text-primary" />,
@@ -1724,6 +1765,7 @@ function LeadsPage() {
   const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", _LEADS_INIT);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
+  const [, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [newNote, setNewNote] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -1762,6 +1804,7 @@ function LeadsPage() {
       "Assigned To",
       "Service",
       "Priority",
+      "Section",
       "Created At",
     ];
     const csvRows = [
@@ -1782,6 +1825,7 @@ function LeadsPage() {
           `"${l.assignedTo}"`,
           `"${l.service}"`,
           `"${l.priority}"`,
+          `"${l.leadSection || ""}"`,
           `"${l.createdAt}"`,
         ].join(","),
       ),
@@ -1799,7 +1843,7 @@ function LeadsPage() {
 
   const exportToWord = () => {
     const tableHeader =
-      "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th></tr>";
+      "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
     const tableRows = filtered
       .map(
         (l) =>
@@ -1826,11 +1870,11 @@ function LeadsPage() {
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
     const tableHeader =
-      "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th></tr>";
+      "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
     const tableRows = filtered
       .map(
         (l) =>
-          `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination}</td><td>₹${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td></tr>`,
+          `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination || ""}</td><td>${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td><td>${l.leadSection || ""}</td></tr>`,
       )
       .join("");
     const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
@@ -1870,26 +1914,27 @@ function LeadsPage() {
 
     const importedLeads: ExtLead[] = data.map((row, idx) => ({
       id: `T-${pad(nextNum + idx, 3)}`,
-      name: String(row["Name"] || row["name"] || "Unknown"),
-      phone: String(row["Phone"] || row["phone"] || ""),
-      email: String(row["Email"] || row["email"] || ""),
-      destination: String(row["Destination"] || row["destination"] || "Unknown"),
-      budget: parseInt(String(row["Budget"] || row["budget"])) || 0,
-      travelDate: String(
-        row["Travel Date"] || row["travelDate"] || new Date().toISOString().slice(0, 10),
-      ),
-      source: String(row["Source"] || row["source"] || SOURCES[0]),
-      reference: String(row["Reference"] || row["reference"] || ""),
-      status: "New Lead" as LeadStatus,
-      assignedTo: assignees[0],
-      pax: parseInt(String(row["Pax"] || row["Travellers"] || "2")) || 2,
-      notes: "",
+      name: String(row["Client / Company"] || "Unknown"), // Mapping Client/Company to name for the table
+      clientCompany: String(row["Client / Company"] || "Unknown"),
+      phone: String(row["Phone"] || ""),
+      email: "",
+      destination: "Unknown",
+      budget: 0,
+      travelDate: String(row["Travel Date"] || new Date().toISOString().slice(0, 10)),
+      source: String(row["Source"] || SOURCES[0]),
+      reference: String(row["Reference"] || ""),
+      status: (String(row["Status"]) || "New Lead") as LeadStatus,
+      assignedTo: String(row["Assigned To"] || assignees[0]),
+      pax: parseInt(String(row["Pax"] || "2")) || 2,
+      notes: String(row["Description"] || ""),
       avatar: "",
-      createdAt: new Date().toISOString().slice(0, 10),
-      createdTime: new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true }),
-      service: String(row["Service"] || row["service"] || "International Package"),
-      priority: String(row["Priority"] || row["priority"] || "Medium") as "High" | "Medium" | "Low",
-      packageType: String(row["PackageType"] || row["package type"] || ""),
+      createdAt: String(row["Date"] || new Date().toISOString().slice(0, 10)),
+      createdTime: String(row["Time"] || new Date().toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })),
+      service: "International Package",
+      priority: (String(row["Priority"]) || "Medium") as "High" | "Medium" | "Low",
+      packageType: "",
+      queryType: String(row["Query Type"] || "New"),
+      leadSection: "B2C",
     }));
     setLeads((prev) => [...importedLeads, ...prev]);
   };
@@ -1910,6 +1955,46 @@ function LeadsPage() {
   const updateStatus = (id: string, status: LeadStatus) => {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     setSelected((sel) => (sel ? { ...sel, status } : sel));
+
+    if (["Booked", "Confirmed", "Completed"].includes(status)) {
+      const lead = leads.find((l) => l.id === id);
+      if (lead && lead.phone) {
+        setCustomers((prev) => {
+          const exists = prev.find((c) => c.phone === lead.phone);
+          if (exists) {
+            return prev.map((c) =>
+              c.phone === lead.phone
+                ? { ...c, trips: (c.trips || 0) + 1, totalSpend: (c.totalSpend || 0) + (Number(lead.budget) || 0) }
+                : c
+            );
+          } else {
+            const currentMaxId = prev.reduce((max, c) => {
+              const num = parseInt(c.id.replace("CRN", ""));
+              return !isNaN(num) && num > max ? num : max;
+            }, 0);
+            const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
+            return [
+              {
+                id: nextId,
+                name: lead.name,
+                email: lead.email || "",
+                phone: lead.phone,
+                company: lead.clientCompany || "",
+                city: lead.destination || "", // Using destination as placeholder if city isn't present
+                source: lead.source || "Website",
+                status: "Active",
+                assignedTo: lead.assignedTo || "Unassigned", // Can customize based on feedback later
+                createdAt: new Date().toISOString().slice(0, 10),
+                trips: 1,
+                totalSpend: Number(lead.budget) || 0,
+                tier: "Silver",
+              },
+              ...prev,
+            ];
+          }
+        });
+      }
+    }
   };
 
   const deleteLead = (id: string) => {
@@ -2079,21 +2164,22 @@ function LeadsPage() {
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
-                <thead className="bg-primary text-left text-[11px] uppercase tracking-wider text-white">
+                <thead className="bg-primary text-left text-xs uppercase tracking-wider text-white">
                   <tr>
-                    <th className="px-3 py-3 font-medium">Status</th>
-                    <th className="px-3 py-3 font-medium">Name</th>
-                    <th className="px-3 py-3 font-medium whitespace-nowrap">Create Date & Time</th>
-                    <th className="px-3 py-3 font-medium">Des. / Service</th>
-                    <th className="px-3 py-3 font-medium whitespace-nowrap">Travel Date / Budget</th>
-                    <th className="px-3 py-3 font-medium">Priority</th>
-                    <th className="px-3 py-3 font-medium">Assigned To</th>
+                    <th className="px-4 py-4 font-medium">Status</th>
+                    <th className="px-4 py-4 font-medium">Name</th>
+                    <th className="px-4 py-4 font-medium whitespace-nowrap">Create Date & Time</th>
+                    <th className="px-4 py-4 font-medium">Des. / Service</th>
+                    <th className="px-4 py-4 font-medium whitespace-nowrap">Travel Date / Budget</th>
+                    <th className="px-4 py-4 font-medium">Priority</th>
+                    <th className="px-4 py-4 font-medium">Assigned To</th>
+                    <th className="px-4 py-4 font-medium">Section</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-muted-foreground text-sm">
+                      <td colSpan={8} className="py-12 text-center text-muted-foreground text-sm">
                         No leads match your filters.
                       </td>
                     </tr>
@@ -2104,84 +2190,85 @@ function LeadsPage() {
                       className="border-t border-border hover:bg-secondary/30 transition-colors cursor-pointer"
                       onClick={() => setSelected(l)}
                     >
-                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <Select
                           value={l.status}
                           onValueChange={(val: LeadStatus) => {
                             setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
                           }}
                         >
-                          <SelectTrigger className={`inline-flex items-center rounded-sm px-1.5 py-0.5 text-[10px] font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
+                          <SelectTrigger className={`inline-flex items-center rounded-sm px-2 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
                             <SelectValue />
+                            <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
                           </SelectTrigger>
                           <SelectContent>
                             {STATUSES.map((s) => (
-                              <SelectItem key={s} value={s} className="text-xs">
+                              <SelectItem key={s} value={s} className="text-sm">
                                 {s}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-3 py-2.5">
+                      <td className="px-4 py-3">
                         <div className="flex items-center gap-1.5">
-                          <div className="text-xs font-semibold whitespace-nowrap">{l.name}</div>
-                          
+                          <div className="text-sm font-semibold whitespace-nowrap">{l.name}</div>
                         </div>
-                        {l.clientCompany && <div className="text-[10px] text-muted-foreground truncate max-w-[120px] mt-0.5">{l.clientCompany}</div>}
+                        {l.clientCompany && <div className="text-xs text-muted-foreground truncate max-w-[120px] mt-0.5">{l.clientCompany}</div>}
                       </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="text-xs font-medium">{l.createdAt}</div>
-                        <div className="text-[10px] text-muted-foreground">{l.createdTime || "-"}</div>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium">{l.createdAt}</div>
+                        <div className="text-xs text-muted-foreground">{l.createdTime || "-"}</div>
                       </td>
-                      <td className="px-3 py-2.5">
-                        <div className="text-xs max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
-                        <div className="text-[10px] font-semibold text-muted-foreground">{l.service || "-"}</div>
+                      <td className="px-4 py-3">
+                        <div className="text-sm max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
+                        <div className="text-xs font-semibold text-muted-foreground">{l.service || "-"}</div>
                       </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        <div className="text-xs font-medium">{l.travelDate || "-"}</div>
-                        <div className="text-[10px] text-emerald-600 font-medium">{l.budget ? `₹${l.budget}` : "-"}</div>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <div className="text-sm font-medium">{l.travelDate || "-"}</div>
+                        <div className="text-xs text-emerald-600 font-medium">{l.budget ? `₹${l.budget}` : "-"}</div>
                       </td>
-                      <td className="px-3 py-2.5" onClick={(e) => e.stopPropagation()}>
+                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
                         <Select
                           value={l.priority || "Medium"}
                           onValueChange={(val: "High" | "Medium" | "Low") => {
                             setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
                           }}
                         >
-                          <SelectTrigger className="inline-flex items-center px-0 py-0 text-xs whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
+                          <SelectTrigger className="justify-between rounded-md border border-input ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 inline-flex items-center px-1 py-1 text-sm whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
                             <SelectValue placeholder="-" />
+                            <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
                           </SelectTrigger>
                           <SelectContent>
                             {["High", "Medium", "Low"].map((p) => (
-                              <SelectItem key={p} value={p} className="text-xs">
+                              <SelectItem key={p} value={p} className="text-sm">
                                 {p}
                               </SelectItem>
                             ))}
                           </SelectContent>
                         </Select>
                       </td>
-                      <td className="px-3 py-2.5 text-xs align-top min-w-[140px]">
+                      <td className="px-4 py-3 text-sm align-top min-w-[140px]">
                         <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
                         <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5">
                           {l.allNotes && l.allNotes.length > 0 ? (
                             l.allNotes.map((n, i) => (
-                              <div key={i} className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                              <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
                                 <span className="text-muted-foreground/60">•</span>
                                 <span className="text-muted-foreground">{n.text}</span>
                                 {n.date && (
-                                  <span className="text-[12px] text-muted-foreground/60 not-italic ml-0.5">
+                                  <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
                                     ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
                                   </span>
                                 )}
                               </div>
                             ))
                           ) : l.notes ? (
-                            <div className="text-[13px] text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                            <div className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
                               <span className="text-muted-foreground/60">•</span>
                               <span className="text-muted-foreground">{l.notes}</span>
                               {l.noteDate && (
-                                <span className="text-[12px] text-muted-foreground/60 not-italic ml-0.5">
+                                <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
                                   ({new Date(l.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
                                 </span>
                               )}
@@ -2195,13 +2282,13 @@ function LeadsPage() {
                                 onChange={(e) => setTableEditNoteText(e.target.value)}
                                 placeholder="Type your note here..."
                                 rows={2}
-                                className="w-full min-w-[160px] max-w-[200px] resize-none rounded-xl border border-border bg-background px-2.5 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                                className="w-full min-w-[160px] max-w-[200px] resize-none rounded-xl border border-border bg-background px-2.5 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
                               />
                               <div className="flex gap-2 mt-1">
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  className="h-6 text-[10px] rounded-full px-3"
+                                  className="h-7 text-xs rounded-full px-3"
                                   onClick={(e) => {
                                     e.stopPropagation();
                                     setEditingTableNoteId(null);
@@ -2212,7 +2299,7 @@ function LeadsPage() {
                                 </Button>
                                 <Button
                                   size="sm"
-                                  className="h-6 text-[10px] rounded-full px-3 text-white"
+                                  className="h-7 text-xs rounded-full px-3 text-white"
                                   style={{ background: "var(--gradient-brand)" }}
                                   onClick={(e) => {
                                     e.stopPropagation();
@@ -2246,12 +2333,21 @@ function LeadsPage() {
                                 setEditingTableNoteId(l.id);
                                 setTableEditNoteText("");
                               }}
-                              className="text-[14px] text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
+                              className="text-sm text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
                             >
                               + Add Note
                             </button>
                           )}
                         </div>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap">
+                        {l.leadSection ? (
+                          <div className="inline-flex items-center rounded-full bg-secondary/80 px-3 py-1 text-sm font-semibold text-secondary-foreground shadow-sm">
+                            {l.leadSection}
+                          </div>
+                        ) : (
+                          <span className="text-muted-foreground font-medium text-sm">-</span>
+                        )}
                       </td>
                     </tr>
                     </React.Fragment>
@@ -2293,12 +2389,13 @@ function LeadsPage() {
       </div>
 
       {/* ── Modals ── */}
-      <ImportModal
+      <ImportLeadsModal
         open={isImportOpen}
         onOpenChange={setIsImportOpen}
         onImport={handleImportLeads}
-        title="Import Leads"
-        description="Upload a CSV or Excel file containing your leads. Make sure you have columns like Name, Phone, Email, Destination, etc."
+        allowedStatuses={STATUSES}
+        allowedPriorities={["High", "Medium", "Low"]}
+        allowedAssignees={assignees}
       />
       {showModal && (
         <AddLeadModal

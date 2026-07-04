@@ -632,16 +632,7 @@ function BookingsPage() {
         </div>
 
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl"
-            onClick={() => setIsExportOpen(true)}
-          >
-            <Download className="h-4 w-4" /> Export Bookings
-          </Button>
-          <Button variant="outline" className="gap-2" onClick={() => setIsImportOpen(true)}>
-            <Upload className="h-4 w-4" /> Import Bookings
-          </Button>
+
           <Button className="btn-hero" onClick={() => setIsAddOpen(true)}>
             <Plus className="mr-2 h-4 w-4" /> New booking
           </Button>

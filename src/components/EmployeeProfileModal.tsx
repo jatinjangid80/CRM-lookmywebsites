@@ -58,6 +58,13 @@ export function EmployeeProfileModal(props: {
   );
 }
 
+function safeFormatDate(dateVal: any, locale = "en-IN", options?: Intl.DateTimeFormatOptions) {
+  if (!dateVal) return "NA";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "NA";
+  return d.toLocaleDateString(locale, options);
+}
+
 function EmployeeProfileModalInner({
   employee,
   open,
@@ -76,8 +83,8 @@ function EmployeeProfileModalInner({
   initialScrollToId?: string | null;
 }) {
   // Load profile details or generate default
-  const empDetails: EmployeeDetails =
-    employee.profile_details ||
+  const defaults =
+    INITIAL_EMPLOYEE_DETAILS[employee.id] ||
     createDefaultEmployeeDetails(
       employee.id,
       employee.name,
@@ -85,6 +92,10 @@ function EmployeeProfileModalInner({
       employee.email,
       employee.phone,
     );
+  const empDetails: EmployeeDetails = {
+    ...defaults,
+    ...(employee.profile_details || {}),
+  };
 
   // Editing state
   const [isEditing, setIsEditing] = useState(false);
@@ -724,7 +735,7 @@ function EmployeeProfileModalInner({
                     />
                   ) : (
                     <p className="text-sm font-bold text-gray-800 mt-0.5">
-                      {new Date(employee.joinDate).toLocaleDateString("en-IN", {
+                      {safeFormatDate(employee.joinDate, "en-IN", {
                         day: "numeric",
                         month: "short",
                         year: "numeric",
@@ -1200,7 +1211,7 @@ function EmployeeProfileModalInner({
                         />
                         <EditField
                           label="Skills (Comma-separated)"
-                          value={editDetails.skills.join(", ")}
+                          value={(editDetails.skills || []).join(", ")}
                           onChange={(v) =>
                             setEditDetails({
                               ...editDetails,
@@ -1213,7 +1224,7 @@ function EmployeeProfileModalInner({
                         />
                         <EditField
                           label="Certifications (Comma-separated)"
-                          value={editDetails.certifications.join(", ")}
+                          value={(editDetails.certifications || []).join(", ")}
                           onChange={(v) =>
                             setEditDetails({
                               ...editDetails,
@@ -1300,7 +1311,7 @@ function EmployeeProfileModalInner({
                         <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
                           <span className="text-muted-foreground text-xs font-medium">Skills</span>
                           <div className="col-span-2 flex flex-wrap gap-1">
-                            {empDetails.skills.map((s, i) => (
+                            {(empDetails.skills || []).map((s, i) => (
                               <span
                                 key={i}
                                 className="text-[10px] font-bold bg-orange-50 text-[#FF6B00] border border-orange-100 px-1.5 py-0.5 rounded"
@@ -1316,7 +1327,7 @@ function EmployeeProfileModalInner({
                             Certifications
                           </span>
                           <div className="col-span-2 flex flex-wrap gap-1">
-                            {empDetails.certifications.map((c, i) => (
+                            {(empDetails.certifications || []).map((c, i) => (
                               <span
                                 key={i}
                                 className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded"
@@ -1362,7 +1373,7 @@ function EmployeeProfileModalInner({
                         />
                         <EditField
                           label="Languages (Comma-separated)"
-                          value={editDetails.languages.join(", ")}
+                          value={(editDetails.languages || []).join(", ")}
                           onChange={(v) =>
                             setEditDetails({
                               ...editDetails,
@@ -1395,7 +1406,7 @@ function EmployeeProfileModalInner({
                             Date of Birth
                           </span>
                           <span className="col-span-2 font-semibold text-gray-800">
-                            {new Date(empDetails.dob).toLocaleDateString("en-IN", {
+                            {safeFormatDate(empDetails.dob, "en-IN", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
@@ -1431,7 +1442,7 @@ function EmployeeProfileModalInner({
                             Languages
                           </span>
                           <span className="col-span-2 font-semibold text-gray-800">
-                            {empDetails.languages.join(", ")}
+                            {(empDetails.languages || []).join(", ")}
                           </span>
                         </div>
                         <div className="grid grid-cols-3 gap-2 py-1.5">
@@ -1672,7 +1683,7 @@ function EmployeeProfileModalInner({
                             <td className="px-4 py-3.5 text-xs">{h.position}</td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {h.startDate
-                                ? new Date(h.startDate).toLocaleDateString("en-IN", {
+                                ? safeFormatDate(h.startDate, "en-IN", {
                                     month: "short",
                                     year: "numeric",
                                   })
@@ -1680,7 +1691,7 @@ function EmployeeProfileModalInner({
                             </td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {h.endDate
-                                ? new Date(h.endDate).toLocaleDateString("en-IN", {
+                                ? safeFormatDate(h.endDate, "en-IN", {
                                     month: "short",
                                     year: "numeric",
                                   })
@@ -1901,7 +1912,7 @@ function EmployeeProfileModalInner({
                             </td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {f.dob
-                                ? new Date(f.dob).toLocaleDateString("en-IN", {
+                                ? safeFormatDate(f.dob, "en-IN", {
                                     day: "numeric",
                                     month: "short",
                                     year: "numeric",

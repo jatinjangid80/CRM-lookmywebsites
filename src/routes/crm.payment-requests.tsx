@@ -39,26 +39,34 @@ export type PaymentRequest = {
   supplier: string;
   clientName: string;
   amount: number;
+  paidFor?: string;
   isPaid: boolean;
   status: "Pending" | "Approved" | "Denied";
   remarks: string;
   attachments: string[]; // Base64 or URLs
+  adminNotes?: string;
 };
 
 function PaymentRequestsPage() {
   const auth = getAuth();
   const [requests, setRequests] = useSupabaseTable<PaymentRequest[]>("payment_requests", []);
-  
+  const [employees] = useSupabaseTable<any[]>("employees", []);
+
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | "Pending" | "Approved" | "Denied">("All");
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [viewingRequest, setViewingRequest] = useState<PaymentRequest | null>(null);
+  const [denyTarget, setDenyTarget] = useState<PaymentRequest | null>(null);
+  const [denyReason, setDenyReason] = useState("");
 
   const [form, setForm] = useState<Partial<PaymentRequest>>({
+    date: new Date().toISOString().split("T")[0],
+    submittedBy: auth?.name || "",
     supplier: "",
     clientName: "",
     amount: 0,
+    paidFor: "",
     remarks: "",
     attachments: [],
   });
@@ -85,13 +93,23 @@ function PaymentRequestsPage() {
     e.preventDefault();
     if (!form.supplier || !form.clientName || !form.amount) return;
 
+    const prIds = requests
+      .map((r) => {
+        const match = r.id.match(/^PR-(\d+)$/);
+        return match ? parseInt(match[1], 10) : 0;
+      })
+      .filter((n) => !isNaN(n));
+    const nextIdNumber = prIds.length > 0 ? Math.max(...prIds) + 1 : 1;
+    const nextId = `PR-${String(nextIdNumber).padStart(3, "0")}`;
+
     const newReq: PaymentRequest = {
-      id: `PR-${Math.floor(1000 + Math.random() * 9000)}`,
-      date: new Date().toISOString().split("T")[0],
-      submittedBy: auth?.name || "Unknown",
+      id: nextId,
+      date: form.date || new Date().toISOString().split("T")[0],
+      submittedBy: form.submittedBy || auth?.name || "Unknown",
       supplier: form.supplier,
       clientName: form.clientName,
       amount: Number(form.amount),
+      paidFor: form.paidFor,
       isPaid: false,
       status: "Pending",
       remarks: form.remarks || "",
@@ -100,7 +118,16 @@ function PaymentRequestsPage() {
 
     setRequests([newReq, ...requests]);
     setIsAddOpen(false);
-    setForm({ supplier: "", clientName: "", amount: 0, remarks: "", attachments: [] });
+    setForm({
+      date: new Date().toISOString().split("T")[0],
+      submittedBy: auth?.name || "",
+      supplier: "",
+      clientName: "",
+      amount: 0,
+      paidFor: "",
+      remarks: "",
+      attachments: []
+    });
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,6 +146,20 @@ function PaymentRequestsPage() {
 
   const updateStatus = (id: string, status: "Approved" | "Denied") => {
     setRequests(requests.map((r) => (r.id === id ? { ...r, status } : r)));
+  };
+
+  const confirmDeny = () => {
+    if (denyTarget) {
+      setRequests(
+        requests.map((r) =>
+          r.id === denyTarget.id
+            ? { ...r, status: "Denied", adminNotes: denyReason }
+            : r
+        )
+      );
+      setDenyTarget(null);
+      setDenyReason("");
+    }
   };
 
   const markAsPaid = (id: string, isPaid: boolean) => {
@@ -231,18 +272,18 @@ function PaymentRequestsPage() {
                     <td className="px-6 py-4">
                       <div className="font-semibold">{req.supplier}</div>
                       <div className="text-xs text-muted-foreground mt-0.5">For: {req.clientName}</div>
+                      {req.paidFor && <div className="text-[10px] text-muted-foreground mt-0.5 uppercase tracking-wider">{req.paidFor}</div>}
                     </td>
                     <td className="px-6 py-4 font-bold">{formatINR(req.amount)}</td>
                     <td className="px-6 py-4">
                       <div className="flex flex-col gap-2 items-start">
                         <span
-                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${
-                            req.status === "Approved"
-                              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
-                              : req.status === "Denied"
-                                ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
-                                : "bg-primary/20 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
-                          }`}
+                          className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold ${req.status === "Approved"
+                            ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400"
+                            : req.status === "Denied"
+                              ? "bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400"
+                              : "bg-primary/20 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400"
+                            }`}
                         >
                           {req.status === "Approved" && <CheckCircle2 className="h-3.5 w-3.5" />}
                           {req.status === "Denied" && <XCircle className="h-3.5 w-3.5" />}
@@ -267,7 +308,7 @@ function PaymentRequestsPage() {
                         >
                           <FileText className="h-4 w-4" />
                         </Button>
-                        
+
                         {isAdmin && req.status === "Pending" && (
                           <>
                             <Button
@@ -282,7 +323,10 @@ function PaymentRequestsPage() {
                             <Button
                               variant="ghost"
                               size="icon"
-                              onClick={() => updateStatus(req.id, "Denied")}
+                              onClick={() => {
+                                setDenyTarget(req);
+                                setDenyReason("");
+                              }}
                               className="h-8 w-8 text-rose-600 hover:bg-rose-100 opacity-0 group-hover:opacity-100"
                               title="Deny"
                             >
@@ -331,6 +375,37 @@ function PaymentRequestsPage() {
         description="Are you sure you want to delete this payment request? This action cannot be undone."
       />
 
+      {/* Deny Confirm Modal */}
+      <Dialog open={!!denyTarget} onOpenChange={(open) => !open && setDenyTarget(null)}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Deny Payment Request</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to deny this payment request? Please provide a reason for the employee.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Reason for Denial</Label>
+              <Textarea 
+                placeholder="Explain why this request is being denied..."
+                value={denyReason}
+                onChange={(e) => setDenyReason(e.target.value)}
+                className="h-24"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDenyTarget(null)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={confirmDeny} disabled={!denyReason.trim()}>
+              Deny Request
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* View Request Modal */}
       <Dialog open={!!viewingRequest} onOpenChange={() => setViewingRequest(null)}>
         <DialogContent className="sm:max-w-[600px]">
@@ -359,6 +434,12 @@ function PaymentRequestsPage() {
                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Client Name</p>
                   <p className="font-bold">{viewingRequest.clientName}</p>
                 </div>
+                {viewingRequest.paidFor && (
+                  <div className="bg-secondary/20 p-3 rounded-xl border border-border col-span-2">
+                    <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Paid For</p>
+                    <p className="font-bold">{viewingRequest.paidFor}</p>
+                  </div>
+                )}
               </div>
               <div className="space-y-2 pt-2">
                 <Label>Remarks</Label>
@@ -366,6 +447,18 @@ function PaymentRequestsPage() {
                   {viewingRequest.remarks || "No remarks provided."}
                 </div>
               </div>
+              {viewingRequest.adminNotes && (
+                <div className={`space-y-2 pt-2 ${viewingRequest.status === 'Denied' ? 'text-rose-600' : 'text-primary'}`}>
+                  <Label className={viewingRequest.status === 'Denied' ? 'text-rose-600' : ''}>Admin Notes / Reason</Label>
+                  <div className={`p-3 rounded-xl border min-h-[60px] text-sm whitespace-pre-line ${
+                    viewingRequest.status === 'Denied' 
+                      ? 'bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/30' 
+                      : 'bg-primary/5 border-primary/20'
+                  }`}>
+                    {viewingRequest.adminNotes}
+                  </div>
+                </div>
+              )}
               <div className="space-y-2 pt-2">
                 <Label>Attached Documents ({viewingRequest.attachments.length})</Label>
                 <div className="grid grid-cols-3 gap-4">
@@ -400,7 +493,37 @@ function PaymentRequestsPage() {
           <form onSubmit={handleCreate} className="space-y-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="supplier">Supplier / Vendor</Label>
+                <Label htmlFor="date">Payment Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  required
+                  value={form.date || ""}
+                  onChange={(e) => setForm({ ...form, date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="submittedBy">Submitted By *</Label>
+                <select
+                  id="submittedBy"
+                  required
+                  value={form.submittedBy}
+                  onChange={(e) => setForm({ ...form, submittedBy: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  <option value="">Select Employee</option>
+                  {employees?.map((e) => (
+                    <option key={e.id} value={e.name}>
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="supplier">Supplier/Site *</Label>
                 <Input
                   id="supplier"
                   required
@@ -414,24 +537,36 @@ function PaymentRequestsPage() {
                 <Input
                   id="clientName"
                   required
-                  placeholder="e.g. Rahul Kumar"
+                  placeholder="e.g. jatin jangid"
                   value={form.clientName}
                   onChange={(e) => setForm({ ...form, clientName: e.target.value })}
                 />
               </div>
             </div>
             
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (₹)</Label>
-              <Input
-                id="amount"
-                type="number"
-                min="1"
-                required
-                placeholder="e.g. 25000"
-                value={form.amount || ""}
-                onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  min="1"
+                  required
+                  placeholder="e.g. 25000"
+                  value={form.amount || ""}
+                  onChange={(e) => setForm({ ...form, amount: Number(e.target.value) })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="paidFor">Paid for *</Label>
+                <Input
+                  id="paidFor"
+                  required
+                  placeholder="e.g. Flight Tickets"
+                  value={form.paidFor || ""}
+                  onChange={(e) => setForm({ ...form, paidFor: e.target.value })}
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -497,7 +632,13 @@ function PaymentRequestsPage() {
               <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
                 Cancel
               </Button>
-              <Button type="submit">Submit Request</Button>
+              <Button 
+                type="submit" 
+                className="shadow-md"
+                style={{ background: "var(--gradient-brand)" }}
+              >
+                Submit Request
+              </Button>
             </DialogFooter>
           </form>
         </DialogContent>

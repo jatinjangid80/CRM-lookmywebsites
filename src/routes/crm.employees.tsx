@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import {
   UserCog,
   Phone,
@@ -126,9 +127,33 @@ type Role =
   | "Accounts Manager"
   | "Ceo Founder"
   | "Insurance Sales"
-  | "Web Design Internship";
-type Status = "Active" | "On Leave" | "Inactive";
+  | "Web Design Internship"
+  | "Other";
+type Status = "Active" | "On Leave" | "Inactive" | "Terminate";
 type AccessRole = "Admin" | "Manager" | "Employee";
+
+const STATUS_COLOR: Record<Status, string> = {
+  Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
+  Inactive: "bg-slate-100 text-slate-800 border-slate-200",
+  Terminate: "bg-rose-100 text-rose-800 border-rose-200",
+};
+
+const ROLE_COLOR: Record<string, string> = {
+  "Operations Manager": "bg-blue-100 text-blue-800 border-blue-200",
+  "Travel Consultant": "bg-indigo-100 text-indigo-800 border-indigo-200",
+  "Visa Executive": "bg-purple-100 text-purple-800 border-purple-200",
+  "Accounts": "bg-pink-100 text-pink-800 border-pink-200",
+  "Marketing": "bg-orange-100 text-orange-800 border-orange-200",
+  "Sales Executive": "bg-yellow-100 text-yellow-800 border-yellow-200",
+  "Executive": "bg-gray-100 text-gray-800 border-gray-200",
+  "HR & Admin Manager": "bg-teal-100 text-teal-800 border-teal-200",
+  "Accounts Manager": "bg-rose-100 text-rose-800 border-rose-200",
+  "Ceo Founder": "bg-slate-800 text-white border-slate-900",
+  "Insurance Sales": "bg-cyan-100 text-cyan-800 border-cyan-200",
+  "Web Design Internship": "bg-lime-100 text-lime-800 border-lime-200",
+  "other": "bg-gray-100 text-gray-800 border-gray-200",
+};
 
 interface Employee {
   id: string;
@@ -312,13 +337,12 @@ function EmployeeTaskCard({
           <span className="bg-secondary px-2 py-0.5 rounded-md">{task.type}</span>
           {!isDone && (
             <span
-              className={`px-2 py-0.5 rounded-md ${
-                task.priority === "High"
-                  ? "bg-red-50 text-red-600"
-                  : task.priority === "Medium"
-                    ? "bg-amber-50 text-amber-600"
-                    : "bg-emerald-50 text-emerald-600"
-              }`}
+              className={`px-2 py-0.5 rounded-md ${task.priority === "High"
+                ? "bg-red-50 text-red-600"
+                : task.priority === "Medium"
+                  ? "bg-amber-50 text-amber-600"
+                  : "bg-emerald-50 text-emerald-600"
+                }`}
             >
               {task.priority}
             </span>
@@ -340,9 +364,17 @@ function EmployeeTaskCard({
   );
 }
 
+function safeFormatDate(dateVal: any, locale = "en-IN", options?: Intl.DateTimeFormatOptions) {
+  if (!dateVal) return "NA";
+  const d = new Date(dateVal);
+  if (isNaN(d.getTime())) return "NA";
+  return d.toLocaleDateString(locale, options);
+}
+
 function EmployeesPage() {
   const [localEmployees, setEmployees] = useSupabaseTable<Employee[]>(
-    "employees"
+    "employees",
+    []
   );
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingEmployeeNoteId, setEditingEmployeeNoteId] = useState<string | null>(null);
@@ -351,10 +383,13 @@ function EmployeesPage() {
   const employeesDetails = useMemo(() => {
     const map: Record<string, EmployeeDetails> = {};
     employees.forEach((e: any) => {
-      map[e.id] =
-        e.profile_details ||
+      const defaults =
         INITIAL_EMPLOYEE_DETAILS[e.id] ||
         createDefaultEmployeeDetails(e.id, e.name, e.role, e.email, e.phone);
+      map[e.id] = {
+        ...defaults,
+        ...(e.profile_details || {}),
+      };
     });
     return map;
   }, [employees]);
@@ -656,7 +691,7 @@ function EmployeesPage() {
     "Accounts Manager",
   ];
 
-  const [activeTab, setActiveTab] = useState(isAdmin ? "Employees" : "Jobs");
+  const [activeTab, setActiveTab] = useState("Profile");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
@@ -713,8 +748,8 @@ function EmployeesPage() {
     (e) =>
       (roleFilter === "All" || e.role === roleFilter) &&
       (q === "" ||
-        e.name.toLowerCase().includes(q.toLowerCase()) ||
-        e.email.toLowerCase().includes(q.toLowerCase())),
+        (e.name || "").toLowerCase().includes(q.toLowerCase()) ||
+        (e.email || "").toLowerCase().includes(q.toLowerCase())),
   );
 
   // Live data: Total Bookings from Supabase bookings table
@@ -741,13 +776,23 @@ function EmployeesPage() {
 
     const isDuplicate = employees.some(
       (emp) =>
-        emp.email.toLowerCase() === newEmployee.email.toLowerCase() ||
-        emp.id.toLowerCase() === newEmployee.id.toLowerCase()
+        (emp.email && emp.email.toLowerCase() === newEmployee.email.toLowerCase()) ||
+        (emp.id && emp.id.toLowerCase() === newEmployee.id.toLowerCase())
     );
     if (isDuplicate) {
-      alert("An employee with this email, username, or Employee ID already exists.");
+      toast.error("An employee with this email, username, or Employee ID already exists.");
       return;
     }
+
+    const employeeDetails = createDefaultEmployeeDetails(
+      newEmployee.id,
+      newEmployee.name,
+      newEmployee.role,
+      newEmployee.email,
+      newEmployee.phone
+    );
+    employeeDetails.username = newEmployee.username;
+    employeeDetails.password = newEmployee.password;
 
     const employee: Employee = {
       id: newEmployee.id,
@@ -764,8 +809,10 @@ function EmployeesPage() {
       rating: 0,
       recentActivity: "Newly added to the team",
       description: newEmployee.description || "No description provided.",
+      accessRole: (newEmployee as any).accessRole || "employee",
       username: newEmployee.username,
       password: newEmployee.password,
+      profile_details: employeeDetails,
     } as Employee;
 
     setEmployees([employee, ...employees]);
@@ -803,7 +850,7 @@ function EmployeesPage() {
                   <Input
                     id="id"
                     required
-                    placeholder="e.g. LMH-06"
+                    placeholder="e.g. LMH-01"
                     value={newEmployee.id}
                     onChange={(e) => setNewEmployee({ ...newEmployee, id: e.target.value })}
                   />
@@ -813,7 +860,7 @@ function EmployeesPage() {
                   <Input
                     id="name"
                     required
-                    placeholder="e.g. John Doe"
+                    placeholder="e.g. Jatin Jangid"
                     value={newEmployee.name}
                     onChange={(e) => handleNameChange(e.target.value)}
                   />
@@ -824,7 +871,7 @@ function EmployeesPage() {
                     id="email"
                     type="email"
                     required
-                    placeholder="e.g. john@lmh.in"
+                    placeholder="e.g. jatin@lmh"
                     value={newEmployee.email}
                     onChange={(e) => setNewEmployee({ ...newEmployee, email: e.target.value })}
                   />
@@ -834,7 +881,7 @@ function EmployeesPage() {
                   <Input
                     id="phone"
                     required
-                    placeholder="e.g. +91 98765 43210"
+                    placeholder="e.g. +91 9876543210"
                     value={newEmployee.phone}
                     onChange={(e) => setNewEmployee({ ...newEmployee, phone: e.target.value })}
                   />
@@ -844,7 +891,7 @@ function EmployeesPage() {
                   <Input
                     id="username"
                     required
-                    placeholder="e.g. john"
+                    placeholder="e.g. jatin"
                     value={newEmployee.username}
                     onChange={(e) => setNewEmployee({ ...newEmployee, username: e.target.value })}
                   />
@@ -854,13 +901,13 @@ function EmployeesPage() {
                   <Input
                     id="password"
                     required
-                    placeholder="e.g. emp123"
+                    placeholder="e.g. jatin123@lMH"
                     value={newEmployee.password}
                     onChange={(e) => setNewEmployee({ ...newEmployee, password: e.target.value })}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="role">Role</Label>
+                  <Label htmlFor="role">Job Role</Label>
                   <select
                     id="role"
                     value={newEmployee.role}
@@ -877,6 +924,21 @@ function EmployeesPage() {
                   </select>
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="accessRole">Access Level <span className="text-red-500">*</span></Label>
+                  <select
+                    id="accessRole"
+                    value={(newEmployee as any).accessRole || "employee"}
+                    onChange={(e) =>
+                      setNewEmployee({ ...newEmployee, accessRole: e.target.value } as any)
+                    }
+                    className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    <option value="admin">Admin (Full Access)</option>
+                    <option value="manager">Manager (Mid Access)</option>
+                    <option value="employee">Employee (Limited Access)</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
                   <Label htmlFor="status">Status</Label>
                   <select
                     id="status"
@@ -889,12 +951,13 @@ function EmployeesPage() {
                     <option value="Active">Active</option>
                     <option value="On Leave">On Leave</option>
                     <option value="Inactive">Inactive</option>
+                    <option value="Terminate">Terminate</option>
                   </select>
                 </div>
                 <div className="space-y-2 col-span-2">
-                  <Label htmlFor="description">Description</Label>
+                  <Label htmlFor="Description">Description</Label>
                   <Input
-                    id="description"
+                    id="Description"
                     placeholder="Brief bio or description..."
                     value={newEmployee.description}
                     onChange={(e) =>
@@ -916,7 +979,7 @@ function EmployeesPage() {
 
       {/* Zoho-style Navigation Tabs */}
       <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-px scrollbar-hide">
-        {["Jobs", "Employees"]
+        {["Profile", "Employees"]
           .filter((tab) => {
             if (!isAdmin && tab === "Employees") return false;
             return true;
@@ -1268,8 +1331,17 @@ function EmployeesPage() {
             (() => {
               const cur =
                 employees.find(
-                  (e) => e.name.toLowerCase() === auth?.name?.toLowerCase() || e.id === auth?.empId,
+                  (e) => (e.name && auth?.name && e.name.toLowerCase() === auth.name.toLowerCase()) || e.id === auth?.empId,
                 ) || employees[0];
+
+              if (!cur) {
+                return (
+                  <div className="flex h-64 items-center justify-center rounded-2xl border border-border bg-card p-6 shadow-sm">
+                    <p className="text-sm text-muted-foreground animate-pulse">Loading employee profile...</p>
+                  </div>
+                );
+              }
+
               const empDetails =
                 employeesDetails[cur.id] ||
                 createDefaultEmployeeDetails(cur.id, cur.name, cur.role, cur.email, cur.phone);
@@ -1321,7 +1393,7 @@ function EmployeesPage() {
                     const authObj = JSON.parse(authStored);
                     if (
                       authObj.empId === cur.id ||
-                      authObj.name?.toLowerCase() === profileEditCore.name.toLowerCase()
+                      (authObj.name && profileEditCore.name && authObj.name.toLowerCase() === profileEditCore.name.toLowerCase())
                     ) {
                       authObj.name = profileEditCore.name;
                       authObj.role = profileEditCore.role;
@@ -1508,7 +1580,7 @@ function EmployeesPage() {
                           />
                         ) : (
                           <p className="text-sm font-bold text-gray-800 mt-0.5">
-                            {new Date(cur.joinDate).toLocaleDateString("en-IN", {
+                            {safeFormatDate(cur.joinDate, "en-IN", {
                               day: "numeric",
                               month: "short",
                               year: "numeric",
@@ -1745,11 +1817,10 @@ function EmployeesPage() {
                                 Verification Status
                               </span>
                               <span
-                                className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
-                                  empDetails.verificationStatus === "Verified"
-                                    ? "text-emerald-600 bg-emerald-50 border-emerald-200"
-                                    : "text-amber-600 bg-amber-50 border-amber-200"
-                                }`}
+                                className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${empDetails.verificationStatus === "Verified"
+                                  ? "text-emerald-600 bg-emerald-50 border-emerald-200"
+                                  : "text-amber-600 bg-amber-50 border-amber-200"
+                                  }`}
                               >
                                 <CheckCircle className="h-3 w-3" /> {empDetails.verificationStatus}
                               </span>
@@ -1869,11 +1940,10 @@ function EmployeesPage() {
                                   </p>
                                 </div>
                                 <span
-                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
-                                    p.status === "In Progress"
-                                      ? "bg-primary/10 border-primary/30 text-primary"
-                                      : "bg-blue-50 border-blue-200 text-blue-600"
-                                  }`}
+                                  className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${p.status === "In Progress"
+                                    ? "bg-primary/10 border-primary/30 text-primary"
+                                    : "bg-blue-50 border-blue-200 text-blue-600"
+                                    }`}
                                 >
                                   {p.status}
                                 </span>
@@ -2070,7 +2140,7 @@ function EmployeesPage() {
                                   Skills
                                 </span>
                                 <div className="col-span-2 flex flex-wrap gap-1">
-                                  {empDetails.skills.map((s, i) => (
+                                  {(empDetails.skills || []).map((s, i) => (
                                     <span
                                       key={i}
                                       className="text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded"
@@ -2086,7 +2156,7 @@ function EmployeesPage() {
                                   Certifications
                                 </span>
                                 <div className="col-span-2 flex flex-wrap gap-1">
-                                  {empDetails.certifications.map((c, i) => (
+                                  {(empDetails.certifications || []).map((c, i) => (
                                     <span
                                       key={i}
                                       className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded"
@@ -2143,7 +2213,7 @@ function EmployeesPage() {
                               />
                               <EditField
                                 label="Languages (Comma-separated)"
-                                value={profileEditDetails.languages.join(", ")}
+                                value={(profileEditDetails.languages || []).join(", ")}
                                 onChange={(v) =>
                                   setProfileEditDetails({
                                     ...profileEditDetails,
@@ -2179,7 +2249,7 @@ function EmployeesPage() {
                                   Date of Birth
                                 </span>
                                 <span className="col-span-2 font-semibold text-gray-800">
-                                  {new Date(empDetails.dob).toLocaleDateString("en-IN", {
+                                  {safeFormatDate(empDetails.dob, "en-IN", {
                                     day: "numeric",
                                     month: "short",
                                     year: "numeric",
@@ -2217,7 +2287,7 @@ function EmployeesPage() {
                                   Languages
                                 </span>
                                 <span className="col-span-2 font-semibold text-gray-800">
-                                  {empDetails.languages.join(", ")}
+                                  {(empDetails.languages || []).join(", ")}
                                 </span>
                               </div>
                               <div className="grid grid-cols-3 gap-2 py-1.5">
@@ -2483,18 +2553,18 @@ function EmployeesPage() {
                                   <td className="px-4 py-3.5 text-xs">{h.position}</td>
                                   <td className="px-4 py-3.5 text-xs text-muted-foreground">
                                     {h.startDate
-                                      ? new Date(h.startDate).toLocaleDateString("en-IN", {
-                                          month: "short",
-                                          year: "numeric",
-                                        })
+                                      ? safeFormatDate(h.startDate, "en-IN", {
+                                        month: "short",
+                                        year: "numeric",
+                                      })
                                       : "N/A"}
                                   </td>
                                   <td className="px-4 py-3.5 text-xs text-muted-foreground">
                                     {h.endDate
-                                      ? new Date(h.endDate).toLocaleDateString("en-IN", {
-                                          month: "short",
-                                          year: "numeric",
-                                        })
+                                      ? safeFormatDate(h.endDate, "en-IN", {
+                                        month: "short",
+                                        year: "numeric",
+                                      })
                                       : "Present"}
                                   </td>
                                   <td
@@ -2742,11 +2812,11 @@ function EmployeesPage() {
                                   </td>
                                   <td className="px-4 py-3.5 text-xs text-muted-foreground">
                                     {f.dob
-                                      ? new Date(f.dob).toLocaleDateString("en-IN", {
-                                          day: "numeric",
-                                          month: "short",
-                                          year: "numeric",
-                                        })
+                                      ? safeFormatDate(f.dob, "en-IN", {
+                                        day: "numeric",
+                                        month: "short",
+                                        year: "numeric",
+                                      })
                                       : "N/A"}
                                   </td>
                                   <td className="px-4 py-3.5 text-xs text-gray-800 font-medium">
@@ -2840,13 +2910,12 @@ function EmployeesPage() {
                                                     </td>
                                                     <td className="p-2.5">
                                                       <span
-                                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                          l.status === "Approved"
-                                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                            : l.status === "Rejected"
-                                                              ? "bg-red-50 text-red-700 border border-red-100"
-                                                              : "bg-amber-50 text-amber-700 border border-amber-100"
-                                                        }`}
+                                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${l.status === "Approved"
+                                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                          : l.status === "Rejected"
+                                                            ? "bg-red-50 text-red-700 border border-red-100"
+                                                            : "bg-amber-50 text-amber-700 border border-amber-100"
+                                                          }`}
                                                       >
                                                         {l.status}
                                                       </span>
@@ -2985,11 +3054,10 @@ function EmployeesPage() {
                                                     </td>
                                                     <td className="p-2.5">
                                                       <span
-                                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                                                          a.status === "Present"
-                                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
-                                                            : "bg-red-50 text-red-700 border border-red-100"
-                                                        }`}
+                                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${a.status === "Present"
+                                                          ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                          : "bg-red-50 text-red-700 border border-red-100"
+                                                          }`}
                                                       >
                                                         {a.status}
                                                       </span>
@@ -3740,7 +3808,7 @@ function EmployeesPage() {
             (() => {
               const cur =
                 employees.find(
-                  (e) => e.name.toLowerCase() === auth?.name?.toLowerCase() || e.id === auth?.empId,
+                  (e) => (e.name && auth?.name && e.name.toLowerCase() === auth.name.toLowerCase()) || e.id === auth?.empId,
                 ) || employees[0];
               const myLeaves = leaves.filter((l) => l.empId === cur.id || l.empName === cur.name);
               return (
@@ -3840,13 +3908,12 @@ function EmployeesPage() {
                                 </td>
                                 <td className="px-4 py-3.5 text-right">
                                   <span
-                                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${
-                                      l.status === "Approved"
-                                        ? "bg-emerald-100 text-emerald-700"
-                                        : l.status === "Rejected"
-                                          ? "bg-red-100 text-red-700"
-                                          : "bg-amber-100 text-amber-700"
-                                    }`}
+                                    className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${l.status === "Approved"
+                                      ? "bg-emerald-100 text-emerald-700"
+                                      : l.status === "Rejected"
+                                        ? "bg-red-100 text-red-700"
+                                        : "bg-amber-100 text-amber-700"
+                                      }`}
                                   >
                                     {l.status}
                                   </span>
@@ -3931,7 +3998,7 @@ function EmployeesPage() {
             (() => {
               const cur =
                 employees.find(
-                  (e) => e.name.toLowerCase() === auth?.name?.toLowerCase() || e.id === auth?.empId,
+                  (e) => (e.name && auth?.name && e.name.toLowerCase() === auth.name.toLowerCase()) || e.id === auth?.empId,
                 ) || employees[0];
               const myLogs = attendance.filter((r) => r.empId === cur.id);
               const todayStr = new Date().toISOString().slice(0, 10);
@@ -4126,124 +4193,7 @@ function EmployeesPage() {
               );
             })()}
 
-          {activeTab === "Jobs" &&
-            (() => {
-              const myTasks = isAdmin ? tasks : tasks.filter((t) => t.assignee === auth?.name);
-              const pendingTasks = myTasks.filter((t) => t.status === "Pending");
-              const completedTasks = myTasks.filter((t) => t.status === "Done");
 
-              const handleToggleTask = (id: string) => {
-                const updated = tasks.map((t) =>
-                  t.id === id ? { ...t, status: t.status === "Pending" ? "Done" : "Pending" } : t,
-                );
-                setTasks(updated);
-              };
-
-              return (
-                <div className="space-y-6 animate-in fade-in-50 duration-200">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h3 className="font-semibold text-lg">Task Management</h3>
-                      <p className="text-xs text-muted-foreground">
-                        Track assignments and action items.
-                      </p>
-                    </div>
-                    {true && (
-                      <Button
-                        onClick={() => setIsTaskModalOpen(true)}
-                        className="gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-md"
-                      >
-                        <Plus className="h-4 w-4" /> Add Task
-                      </Button>
-                    )}
-                  </div>
-
-                  <div className="grid gap-6 md:grid-cols-2">
-                    {/* Pending Tasks */}
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm flex items-center justify-between text-amber-600 bg-amber-50 px-3 py-2 rounded-xl">
-                        <span>Pending Tasks</span>
-                        <span className="bg-amber-100 px-2 py-0.5 rounded-md text-xs">
-                          {pendingTasks.length}
-                        </span>
-                      </h4>
-                      <div className="space-y-3 overflow-y-auto max-h-[400px]">
-                        {pendingTasks.map((task) => (
-                          <EmployeeTaskCard
-                            key={task.id}
-                            task={task}
-                            isAdmin={isAdmin}
-                            onToggle={handleToggleTask}
-                            onEditNote={(id, note) => {
-                              const updated = tasks.map((t) => {
-                                if (t.id === id) {
-                                  const currentNotes = t.notes || [];
-                                  return {
-                                    ...t,
-                                    notes: [
-                                      ...currentNotes,
-                                      { text: note, createdAt: new Date().toISOString() },
-                                    ],
-                                  };
-                                }
-                                return t;
-                              });
-                              setTasks(updated);
-                            }}
-                          />
-                        ))}
-                        {pendingTasks.length === 0 && (
-                          <p className="text-center text-muted-foreground text-sm py-8">
-                            🎉 All caught up! No pending tasks.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Completed Tasks */}
-                    <div className="space-y-3">
-                      <h4 className="font-semibold text-sm flex items-center justify-between text-emerald-600 bg-emerald-50 px-3 py-2 rounded-xl">
-                        <span>Completed Tasks</span>
-                        <span className="bg-emerald-100 px-2 py-0.5 rounded-md text-xs">
-                          {completedTasks.length}
-                        </span>
-                      </h4>
-                      <div className="space-y-3 overflow-y-auto max-h-[400px]">
-                        {completedTasks.map((task) => (
-                          <EmployeeTaskCard
-                            key={task.id}
-                            task={task}
-                            isAdmin={isAdmin}
-                            onToggle={handleToggleTask}
-                            onEditNote={(id, note) => {
-                              const updated = tasks.map((t) => {
-                                if (t.id === id) {
-                                  const currentNotes = t.notes || [];
-                                  return {
-                                    ...t,
-                                    notes: [
-                                      ...currentNotes,
-                                      { text: note, createdAt: new Date().toISOString() },
-                                    ],
-                                  };
-                                }
-                                return t;
-                              });
-                              setTasks(updated);
-                            }}
-                          />
-                        ))}
-                        {completedTasks.length === 0 && (
-                          <p className="text-center text-muted-foreground text-sm py-8">
-                            No tasks completed yet.
-                          </p>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              );
-            })()}
 
           {activeTab === "Feeds" &&
             (() => {

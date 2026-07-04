@@ -23,6 +23,8 @@ export interface FamilyItem {
 }
 
 export interface EmployeeDetails {
+  username?: string;
+  password?: string;
   department: string;
   designation: string;
   employmentType: string;
@@ -356,7 +358,7 @@ export function createDefaultEmployeeDetails(
     workPhone: phone || "+91 XXXXXXXXXX",
     personalPhone: "+91 XXXXXXXXXX",
     workEmail: email || "info@lookmyholidays.in",
-    personalEmail: `${name.split(" ")[0].toLowerCase()}@gmail.com`,
+    personalEmail: `${(name || "").split(" ")[0].toLowerCase()}@gmail.com`,
     currentAddress: "Jaipur, Rajasthan, India",
     permanentAddress: "Jaipur, Rajasthan, India",
     emergencyContact: "Emergency - +91 XXXXXXXXXX",

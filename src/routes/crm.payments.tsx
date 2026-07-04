@@ -538,10 +538,10 @@ function PaymentsPage() {
                   </div>
 
                   {/* UPI QR */}
-                  <div className="flex flex-col items-center justify-center p-2 border border-border bg-card text-card-foreground rounded-lg text-center">
-                    <QrCode className="h-12 w-12 text-slate-800" />
-                    <p className="text-[8px] font-bold text-slate-800 mt-1">
-                      UPI: payments@lookmyholidays
+                  <div className="flex flex-col items-center justify-center p-2 border border-border bg-card rounded-lg text-center overflow-hidden">
+                    <img src="/upi-qr.png" alt="UPI QR Code" className="w-[120px] object-contain rounded-md" />
+                    <p className="text-[8px] text-muted-foreground mt-1.5 font-medium">
+                      Scan to pay with any UPI App
                     </p>
                   </div>
                 </div>
