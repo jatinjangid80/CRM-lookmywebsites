@@ -131,6 +131,17 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
     if (newRow.leadSection !== undefined) customFields.leadSection = newRow.leadSection;
 
+    if (tableName === "customers") {
+      if (newRow.company !== undefined) customFields.company = newRow.company;
+      if (newRow.city !== undefined) customFields.city = newRow.city;
+      if (newRow.reference !== undefined) customFields.reference = newRow.reference;
+      if (newRow.source !== undefined) customFields.source = newRow.source;
+      if (newRow.status !== undefined) customFields.status = newRow.status;
+      if (newRow.createdAt !== undefined) customFields.createdAt = newRow.createdAt;
+      if (newRow.lastBookingDate !== undefined) customFields.lastBookingDate = newRow.lastBookingDate;
+      if (newRow.assignedTo !== undefined) customFields.assignedTo = newRow.assignedTo;
+    }
+
     const hasCustomFields = Object.keys(customFields).length > 0;
 
     if (tableName === "leads") {
@@ -158,6 +169,17 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.relationship;
     if (tableName !== "employees") delete newRow.profile_details;
     delete newRow.leadSection;
+
+    if (tableName === "customers") {
+      delete newRow.company;
+      delete newRow.city;
+      delete newRow.reference;
+      delete newRow.source;
+      delete newRow.status;
+      delete newRow.createdAt;
+      delete newRow.lastBookingDate;
+      delete newRow.assignedTo;
+    }
 
     return newRow;
   }
@@ -230,6 +252,14 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
         if (parsed.dob !== undefined) newRow.dob = parsed.dob;
         if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+        if (parsed.company !== undefined) newRow.company = parsed.company;
+        if (parsed.city !== undefined) newRow.city = parsed.city;
+        if (parsed.reference !== undefined) newRow.reference = parsed.reference;
+        if (parsed.source !== undefined) newRow.source = parsed.source;
+        if (parsed.status !== undefined) newRow.status = parsed.status;
+        if (parsed.createdAt !== undefined) newRow.createdAt = parsed.createdAt;
+        if (parsed.lastBookingDate !== undefined) newRow.lastBookingDate = parsed.lastBookingDate;
+        if (parsed.assignedTo !== undefined) newRow.assignedTo = parsed.assignedTo;
       } catch (e) {}
     }
 
