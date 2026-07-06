@@ -297,6 +297,7 @@ function AddLeadModal({
   onAdd: (l: ExtLead) => void;
   existingLeads: ExtLead[];
 }) {
+  const [customers] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
@@ -305,6 +306,25 @@ function AddLeadModal({
   );
 
   const [form, setForm] = useState({ ...EMPTY_FORM, assignedTo: assignees[0] || "" });
+
+  const handleFetchCustomer = () => {
+    const cleanPhone = form.phone.replace(/[^0-9+]/g, "");
+    if (!cleanPhone) {
+      alert("Please enter a phone number to fetch.");
+      return;
+    }
+    const found = customers.find((c) => c.phone && c.phone.replace(/[^0-9+]/g, "").includes(cleanPhone));
+    if (found) {
+      setForm((f) => ({
+        ...f,
+        name: found.name || f.name,
+        email: found.email || f.email,
+        whatsapp: (found as any).whatsapp || f.whatsapp || "",
+      }));
+    } else {
+      alert("No customer found with this phone number.");
+    }
+  };
 
   const isInsurance = form.service?.toLowerCase().includes("insurance");
   const canSubmit = isInsurance
@@ -430,8 +450,15 @@ function AddLeadModal({
           </div>
           {/* Phone */}
           <div>
-            <label className="mb-1.5 block text-sm font-semibold">
-              Phone <span className="text-red-500">*</span>
+            <label className="mb-1.5 flex items-center justify-between text-sm font-semibold">
+              <span>Phone <span className="text-red-500">*</span></span>
+              <button
+                type="button"
+                onClick={handleFetchCustomer}
+                className="text-xs text-primary hover:underline font-normal flex items-center gap-1"
+              >
+                <Search className="h-3 w-3" /> Fetch
+              </button>
             </label>
             <Input
               id="lead-phone"
@@ -1939,7 +1966,11 @@ function LeadsPage() {
     setLeads((prev) => [...importedLeads, ...prev]);
   };
 
-  const filtered = leads.filter(
+  const visibleLeads = isAdmin
+    ? leads
+    : leads.filter((l) => l.assignedTo?.toLowerCase() === auth?.name?.toLowerCase());
+
+  const filtered = visibleLeads.filter(
     (l) =>
       (filterStatus === "All" || l.status === filterStatus) &&
       (q === "" ||

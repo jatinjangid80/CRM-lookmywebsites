@@ -98,7 +98,30 @@ function getNavForUser(auth: AuthUser): NavItem[] {
     return FULL_NAV.filter((n) => ["Vendors", "Settings", "Tasks", "Payment Requests"].includes(n.label));
   }
   if (auth.name.toLowerCase().includes("deepak")) {
-    return FULL_NAV.filter((n) => ["Visa", "Tasks", "Settings"].includes(n.label));
+    return FULL_NAV.filter((n) => [
+      "Leads",
+      "Tasks",
+      "Visa",
+      "Customers",
+      "Bookings",
+      "Documents",
+      "Payment Requests",
+      "Settings"
+    ].includes(n.label));
+  }
+  if (auth.name.toLowerCase().includes("puspa")) {
+    return FULL_NAV.filter((n) => [
+      "Leads",
+      "Tasks",
+      "Customers",
+      "Quotations",
+      "Bookings",
+      "Documents",
+      "Packages",
+      "Vendors",
+      "Payment Requests",
+      "Settings"
+    ].includes(n.label));
   }
 
   return empSpecificNav;
@@ -151,11 +174,11 @@ function CrmLayout() {
   const openProfile = (section?: string) => {
     if (!auth) return;
     if (section) setProfileSection(section);
-    
+
     const found = employees.find(
       (e: any) => e.name.toLowerCase() === auth.name.toLowerCase() || e.id === auth.empId,
     );
-    
+
     if (found) {
       setSelectedEmployee(found);
     } else {
@@ -226,11 +249,10 @@ function CrmLayout() {
                 key={n.to}
                 to={n.to}
                 title={isCompact ? n.label : undefined}
-                className={`flex items-center ${isCompact ? "justify-center p-3" : "gap-3 px-3 py-2.5"} rounded-lg text-sm font-medium transition-colors ${
-                  active
+                className={`flex items-center ${isCompact ? "justify-center p-3" : "gap-3 px-3 py-2.5"} rounded-lg text-sm font-medium transition-colors ${active
                     ? "bg-primary text-primary-foreground shadow-card"
                     : "text-sidebar-foreground hover:bg-sidebar-accent"
-                }`}
+                  }`}
               >
                 <Icon className={isCompact ? "h-6 w-6" : "h-5 w-5"} />
                 {!isCompact && n.label}
@@ -292,7 +314,7 @@ function CrmLayout() {
                     </div>
                   </div>
                 </DropdownMenuLabel>
-                
+
                 <div className="grid grid-cols-2 gap-x-2 gap-y-1">
                   <div className="px-2 py-1.5 col-span-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-1">
                     Profile & Info
@@ -337,7 +359,7 @@ function CrmLayout() {
                     <ShieldCheck className="h-4 w-4 text-teal-500" />
                     <span>Verification Details</span>
                   </DropdownMenuItem>
-                  
+
                   <div className="px-2 py-1.5 col-span-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-2">
                     System
                   </div>
@@ -353,7 +375,7 @@ function CrmLayout() {
                     <span>Settings</span>
                   </DropdownMenuItem>
                 </div>
-                
+
                 <DropdownMenuSeparator className="my-2" />
                 <DropdownMenuItem
                   onClick={handleLogout}

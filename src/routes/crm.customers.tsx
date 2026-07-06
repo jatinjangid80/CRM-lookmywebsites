@@ -487,7 +487,7 @@ function CustomersPage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="reference">Reference Name</Label>
-              <Input id="reference" placeholder="e.g. rahul sharma" value={newCustomer.reference || ""} onChange={(e) => setNewCustomer({ ...newCustomer, reference: e.target.value })} />
+              <Input id="reference" placeholder="e.g. jatin jangid" value={newCustomer.reference || ""} onChange={(e) => setNewCustomer({ ...newCustomer, reference: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="source">Lead Source</Label>

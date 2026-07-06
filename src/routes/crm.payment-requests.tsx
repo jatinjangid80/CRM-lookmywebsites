@@ -387,7 +387,7 @@ function PaymentRequestsPage() {
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label>Reason for Denial</Label>
-              <Textarea 
+              <Textarea
                 placeholder="Explain why this request is being denied..."
                 value={denyReason}
                 onChange={(e) => setDenyReason(e.target.value)}
@@ -450,11 +450,10 @@ function PaymentRequestsPage() {
               {viewingRequest.adminNotes && (
                 <div className={`space-y-2 pt-2 ${viewingRequest.status === 'Denied' ? 'text-rose-600' : 'text-primary'}`}>
                   <Label className={viewingRequest.status === 'Denied' ? 'text-rose-600' : ''}>Admin Notes / Reason</Label>
-                  <div className={`p-3 rounded-xl border min-h-[60px] text-sm whitespace-pre-line ${
-                    viewingRequest.status === 'Denied' 
-                      ? 'bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/30' 
-                      : 'bg-primary/5 border-primary/20'
-                  }`}>
+                  <div className={`p-3 rounded-xl border min-h-[60px] text-sm whitespace-pre-line ${viewingRequest.status === 'Denied'
+                    ? 'bg-rose-50 border-rose-200 dark:bg-rose-950/20 dark:border-rose-900/30'
+                    : 'bg-primary/5 border-primary/20'
+                    }`}>
                     {viewingRequest.adminNotes}
                   </div>
                 </div>
@@ -543,7 +542,7 @@ function PaymentRequestsPage() {
                 />
               </div>
             </div>
-            
+
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="amount">Amount *</Label>
@@ -632,8 +631,8 @@ function PaymentRequestsPage() {
               <Button type="button" variant="outline" onClick={() => setIsAddOpen(false)}>
                 Cancel
               </Button>
-              <Button 
-                type="submit" 
+              <Button
+                type="submit"
                 className="shadow-md"
                 style={{ background: "var(--gradient-brand)" }}
               >

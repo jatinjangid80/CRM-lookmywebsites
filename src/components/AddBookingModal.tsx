@@ -35,6 +35,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
   const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
+  const [vendors] = useSupabaseTable<any[]>("vendors", []);
 
   // Common Header
   const [supplier, setSupplier] = useState("");
@@ -228,12 +229,19 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
             <div className="space-y-2">
               <Label>Supplier *</Label>
-              <Input
+              <select
                 required
                 value={supplier}
                 onChange={(e) => setSupplier(e.target.value)}
-                placeholder="Supplier name"
-              />
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a supplier...</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.name}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="space-y-2">
               <Label>Booking Date *</Label>
