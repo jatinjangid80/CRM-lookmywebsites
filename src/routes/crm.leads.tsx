@@ -825,6 +825,7 @@ function LeadDetail({
   onStatusChange,
   onDelete,
   isAdmin,
+  assignees,
   onEditNote,
   onUpdateLead,
 }: {
@@ -833,6 +834,7 @@ function LeadDetail({
   onStatusChange: (id: string, s: LeadStatus) => void;
   onDelete: (id: string) => void;
   isAdmin: boolean;
+  assignees?: string[];
   onEditNote?: (id: string, newNote: string) => void;
   onUpdateLead?: (id: string, updates: Partial<ExtLead>) => void;
 }) {
@@ -1554,9 +1556,23 @@ function LeadDetail({
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
                 Assigned To
               </p>
-              <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
-                <EmployeeProfileCard employeeName={lead.assignedTo} />
-              </div>
+              {isAdmin && assignees && assignees.length > 0 ? (
+                <select
+                  value={lead.assignedTo}
+                  onChange={(e) => onUpdateLead?.(lead.id, { assignedTo: e.target.value })}
+                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+                >
+                  {assignees.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              ) : (
+                <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
+                  <EmployeeProfileCard employeeName={lead.assignedTo} />
+                </div>
+              )}
             </div>
           {/* WhatsApp Quick Actions */}
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
@@ -2445,6 +2461,7 @@ function LeadsPage() {
           onStatusChange={updateStatus}
           onDelete={deleteLead}
           isAdmin={isAdmin}
+          assignees={assignees}
           onEditNote={(id, newNote) => {
             const noteDate = new Date().toISOString();
             const newLeads = leads.map((x) => {
