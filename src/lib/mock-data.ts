@@ -46,6 +46,7 @@ export type Lead = {
     | "Negotiation"
     | "Confirmed"
     | "Payment Pending"
+    | "on conform"
     | "in process"
     | "Review Collected"
     | "Lost";
@@ -57,6 +58,7 @@ export type Lead = {
   pax: number;
   packageType: string;
   assignedTo: string;
+  createdTime?: string;
   insuranceDate?: string;
   policyType?: string;
   queryType?: string;

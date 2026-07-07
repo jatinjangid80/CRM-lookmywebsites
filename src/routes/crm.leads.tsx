@@ -197,6 +197,7 @@ const STATUS_PILL: Record<LeadStatus, string> = {
   Negotiation: "bg-purple-100 text-purple-700",
   Confirmed: "bg-teal-100 text-teal-700",
   "Payment Pending": "bg-rose-100 text-rose-700",
+  "on conform": "bg-indigo-100 text-indigo-700",
   "in process": "bg-emerald-100 text-emerald-700",
   "Review Collected": "bg-pink-100 text-pink-700",
   Lost: "bg-slate-100 text-slate-700",

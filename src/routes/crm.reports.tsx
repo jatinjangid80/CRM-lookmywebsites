@@ -82,7 +82,7 @@ const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0"];
 
 const totalRevenue = bookings.reduce((s, b) => s + b.paid, 0);
 const pendingAmount = bookings.reduce((s, b) => s + (b.amount - b.paid), 0);
-const wonLeads = leads.filter((l) => l.status === "Booked" || l.status === "Completed").length;
+const wonLeads = leads.filter((l) => l.status === "on conform" || l.status === "in process").length;
 
 function KpiCard({
   label,
