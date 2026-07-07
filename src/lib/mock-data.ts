@@ -46,8 +46,7 @@ export type Lead = {
     | "Negotiation"
     | "Confirmed"
     | "Payment Pending"
-    | "Booked"
-    | "Travel Completed"
+    | "in process"
     | "Review Collected"
     | "Lost";
   source: string;
@@ -181,7 +180,7 @@ export const leads: Lead[] = [
     destination: "Maldives",
     budget: 120000,
     travelDate: in5DaysStr,
-    status: "Booked",
+    status: "on conform",
     source: "Ads",
     createdAt: yesterdayStr,
     createdTime: "11:10 AM",

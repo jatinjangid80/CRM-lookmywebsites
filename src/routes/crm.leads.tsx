@@ -185,8 +185,7 @@ const STATUSES: LeadStatus[] = [
   "Negotiation",
   "Confirmed",
   "Payment Pending",
-  "Booked",
-  "Travel Completed",
+  "in process",
   "Review Collected",
   "Lost",
 ];
@@ -198,8 +197,7 @@ const STATUS_PILL: Record<LeadStatus, string> = {
   Negotiation: "bg-purple-100 text-purple-700",
   Confirmed: "bg-teal-100 text-teal-700",
   "Payment Pending": "bg-rose-100 text-rose-700",
-  Booked: "bg-indigo-100 text-indigo-700",
-  "Travel Completed": "bg-emerald-100 text-emerald-700",
+  "in process": "bg-emerald-100 text-emerald-700",
   "Review Collected": "bg-pink-100 text-pink-700",
   Lost: "bg-slate-100 text-slate-700",
 };
@@ -211,8 +209,8 @@ const STATUS_ACCENT: Record<LeadStatus, string> = {
   Negotiation: "border-l-purple-400",
   Confirmed: "border-l-teal-400",
   "Payment Pending": "border-l-rose-400",
-  Booked: "border-l-indigo-400",
-  "Travel Completed": "border-l-emerald-400",
+  "on conform": "border-l-indigo-400",
+  "in process": "border-l-emerald-400",
   "Review Collected": "border-l-pink-400",
   Lost: "border-l-slate-400",
 };
@@ -224,8 +222,8 @@ const STATUS_DOT: Record<LeadStatus, string> = {
   Negotiation: "bg-purple-500",
   Confirmed: "bg-teal-500",
   "Payment Pending": "bg-rose-500",
-  Booked: "bg-indigo-500",
-  "Travel Completed": "bg-emerald-500",
+  "on conform": "bg-indigo-500",
+  "in process": "bg-emerald-500",
   "Review Collected": "bg-pink-500",
   Lost: "bg-slate-500",
 };
@@ -741,7 +739,7 @@ function AddLeadModal({
 
 
           {/* Booking / Payment Details */}
-          {["Booked", "Completed"].includes(form.status) && (
+          {["on conform", "in process"].includes(form.status) && (
             <div className="sm:col-span-2 grid gap-4 rounded-xl border border-border p-4 bg-secondary/30 sm:grid-cols-3">
               <div>
                 <label className="mb-1.5 block text-sm font-semibold">Vendor Name</label>
@@ -1350,8 +1348,8 @@ function LeadDetail({
           </div>
 
           {/* Booking & Payment Details */}
-          {(lead.status === "Booked" ||
-            lead.status === "Completed" ||
+          {(lead.status === "on conform" ||
+            lead.status === "in process" ||
             lead.bookingReference ||
             isEditingBooking) && (
               <div className="space-y-2">
@@ -2003,7 +2001,7 @@ function LeadsPage() {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     setSelected((sel) => (sel ? { ...sel, status } : sel));
 
-    if (["Booked", "Confirmed", "Completed"].includes(status)) {
+    if (["on conform", "Confirmed", "in process"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
       if (lead && lead.phone) {
         setCustomers((prev) => {
@@ -2051,7 +2049,7 @@ function LeadsPage() {
 
   /* Stats */
   const totalBudget = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
-  const completedLeads = leads.filter((l) => l.status === "Completed").length;
+  const completedLeads = leads.filter((l) => l.status === "in process").length;
   const newToday = leads.filter(
     (l) => l.createdAt === new Date().toISOString().slice(0, 10),
   ).length;
