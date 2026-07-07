@@ -17,6 +17,7 @@ import {
   Map,
   Car,
   ShieldCheck,
+  Shield,
   Bus,
   TrendingUp,
   CheckCircle2,
@@ -187,6 +188,7 @@ function BookingsPage() {
       Taxi: 0,
       Visa: 0,
       "Travel Insurance": 0,
+      "General Insurance": 0,
       "Bus Ticket": 0,
     };
 
@@ -250,6 +252,7 @@ function BookingsPage() {
       { name: "Taxi", value: serviceCounts["Taxi"] },
       { name: "Visa", value: serviceCounts["Visa"] },
       { name: "Insurance", value: serviceCounts["Travel Insurance"] },
+      { name: "Gen Ins", value: serviceCounts["General Insurance"] },
       { name: "Bus", value: serviceCounts["Bus Ticket"] },
     ]
       .filter((d) => d.value > 0)
@@ -703,6 +706,13 @@ function BookingsPage() {
               <span className="text-xs font-semibold uppercase tracking-wider">Insurance</span>
             </div>
             <p className="text-2xl font-bold">{dashboardData.serviceCounts["Travel Insurance"]}</p>
+          </div>
+          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
+            <div className="flex items-center gap-2 text-muted-foreground">
+              <Shield className="h-4 w-4 text-emerald-500" />{" "}
+              <span className="text-xs font-semibold uppercase tracking-wider">Gen Ins</span>
+            </div>
+            <p className="text-2xl font-bold">{dashboardData.serviceCounts["General Insurance"]}</p>
           </div>
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
             <div className="flex items-center gap-2 text-muted-foreground">
