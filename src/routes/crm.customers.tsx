@@ -222,7 +222,11 @@ function CustomersPage() {
           c.reference?.toLowerCase().includes(q.toLowerCase()) ||
           c.company?.toLowerCase().includes(q.toLowerCase()) ||
           c.city?.toLowerCase().includes(q.toLowerCase()))
-    );
+    ).sort((a, b) => {
+      const numA = parseInt(a.id.replace(/\D/g, "")) || 0;
+      const numB = parseInt(b.id.replace(/\D/g, "")) || 0;
+      return numA - numB;
+    });
   }, [customerList, filterStatus, filterCity, filterAssignee, q]);
 
   // Pagination removed - showing all data with scroll
