@@ -217,6 +217,7 @@ export type BookingType =
   | "Taxi"
   | "Visa"
   | "Travel Insurance"
+  | "General Insurance"
   | "Bus Ticket"
   | "Legacy";
 export type PaymentMode = "Cash" | "UPI" | "Card" | "Bank Transfer" | "Cheque" | "";
@@ -304,6 +305,12 @@ export type Booking = {
     processDate?: string;
     applicationStatus?: string;
     insuranceType?: string;
+
+    // General Insurance
+    expiryDate?: string;
+    policyType?: string;
+    queryType?: string;
+    clientCompany?: string;
 
     // Bus
     busOperator?: string;

@@ -25,6 +25,7 @@ const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
   { type: "Hotel", icon: Hotel, label: "Hotel" },
   { type: "Visa", icon: FileText, label: "Visa" },
   { type: "Travel Insurance", icon: Shield, label: "Travel Insurance" },
+  { type: "General Insurance", icon: Shield, label: "General Insurance" },
   { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
   { type: "Train Ticket", icon: Train, label: "Train Ticket" },
   { type: "Taxi", icon: Car, label: "Taxi" },
@@ -1015,6 +1016,58 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     value={details.policyNo || ""}
                     onChange={(e) => updateDetail("policyNo", e.target.value)}
                     placeholder="Policy Number"
+                  />
+                </div>
+              </>
+            )}
+
+            {bookingType === "General Insurance" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Expiry Date</Label>
+                  <Input
+                    type="date"
+                    value={details.expiryDate || ""}
+                    onChange={(e) => updateDetail("expiryDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Policy Type</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={details.policyType || ""}
+                    onChange={(e) => updateDetail("policyType", e.target.value)}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Four Wheeler">Four Wheeler</option>
+                    <option value="Two Wheeler">Two Wheeler</option>
+                    <option value="School Bus">School Bus</option>
+                    <option value="Pickup">Pickup</option>
+                    <option value="Tractor">Tractor</option>
+                    <option value="Health">Health</option>
+                    <option value="LIC">LIC</option>
+                    <option value="Commercial Vehicle">Commercial Vehicle</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Query Type</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    value={details.queryType || ""}
+                    onChange={(e) => updateDetail("queryType", e.target.value)}
+                  >
+                    <option value="">Select...</option>
+                    <option value="New">New</option>
+                    <option value="Renewal">Renewal</option>
+                    <option value="Expired">Expired</option>
+                  </select>
+                </div>
+                <div className="space-y-2 sm:col-span-2">
+                  <Label>Client / Company</Label>
+                  <Input
+                    value={details.clientCompany || ""}
+                    onChange={(e) => updateDetail("clientCompany", e.target.value)}
+                    placeholder="e.g. Acme Corp..."
                   />
                 </div>
               </>
