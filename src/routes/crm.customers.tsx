@@ -225,8 +225,7 @@ function CustomersPage() {
     );
   }, [customerList, filterStatus, filterCity, filterAssignee, q]);
 
-  const totalPages = Math.ceil(filtered.length / itemsPerPage);
-  const paginated = filtered.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
+  // Pagination removed - showing all data with scroll
 
   const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
@@ -313,8 +312,8 @@ function CustomersPage() {
       </div>
 
       {/* Data Table */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
+      <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-220px)]">
+        <div className="flex-1 overflow-auto">
           <table className="w-full text-sm text-left">
             <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground sticky top-0 z-10 border-b border-border">
               <tr>
@@ -327,14 +326,14 @@ function CustomersPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {paginated.length === 0 ? (
+              {filtered.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
                     No customers found matching your criteria.
                   </td>
                 </tr>
               ) : (
-                paginated.map((c) => (
+                filtered.map((c) => (
                   <tr key={c.id} className="hover:bg-secondary/30 transition-colors group">
                     <td className="px-4 py-3 align-top">
                       <div className="flex items-center gap-3">
@@ -412,34 +411,6 @@ function CustomersPage() {
             </tbody>
           </table>
         </div>
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-secondary/20">
-            <p className="text-xs text-muted-foreground font-medium">
-              Showing {(currentPage - 1) * itemsPerPage + 1} to {Math.min(currentPage * itemsPerPage, filtered.length)} of {filtered.length} customers
-            </p>
-            <div className="flex gap-2">
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-                className="h-8 rounded-lg shadow-sm"
-              >
-                Previous
-              </Button>
-              <Button
-                variant="outline"
-                size="sm"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
-                className="h-8 rounded-lg shadow-sm"
-              >
-                Next
-              </Button>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Modals ── */}
