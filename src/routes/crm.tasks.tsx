@@ -236,6 +236,27 @@ function TasksPage() {
 
   const getDisplayId = (t: Task) => {
     if (!t) return "";
+
+    if (t.task_type === "Subtask" && t.parent_id) {
+       const parentTask = tasks.find(x => x.id === t.parent_id);
+       const siblings = tasks.filter(x => x.parent_id === t.parent_id).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+       const idx = siblings.findIndex(x => x.id === t.id);
+       const letter = String.fromCharCode(65 + Math.max(0, idx));
+       
+       let parentBaseStr = "";
+       if (parentTask) {
+         if (parentTask.task_number) {
+           parentBaseStr = `T-${String(parentTask.task_number).padStart(3, '0')}`;
+         } else {
+           const strId = String(parentTask.id || "").toUpperCase();
+           parentBaseStr = (strId.startsWith('T-') || strId.startsWith('TSK-')) ? strId : `T-${strId.slice(0, 4)}`;
+         }
+       } else {
+         parentBaseStr = "T-???";
+       }
+       return `${parentBaseStr}(${letter})`;
+    }
+
     let baseStr = "";
     if (t.task_number) {
       baseStr = `T-${String(t.task_number).padStart(3, '0')}`;
@@ -243,13 +264,7 @@ function TasksPage() {
       const strId = String(t.id || "").toUpperCase();
       baseStr = (strId.startsWith('T-') || strId.startsWith('TSK-')) ? strId : `T-${strId.slice(0, 4)}`;
     }
-
-    if (t.task_type === "Subtask" && t.parent_id) {
-       const siblings = tasks.filter(x => x.parent_id === t.parent_id).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
-       const idx = siblings.findIndex(x => x.id === t.id);
-       const letter = String.fromCharCode(65 + Math.max(0, idx));
-       return `${baseStr}-${letter}`;
-    }
+    
     return baseStr;
   };
 

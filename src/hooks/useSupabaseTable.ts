@@ -181,36 +181,44 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.leadSection;
 
     if (tableName === "tasks") {
-      // Encode extra fields into description
+      // Encode extra fields into notes
       const customFields: any = {};
       if (newRow.task_type) customFields.task_type = newRow.task_type;
       if (newRow.parent_id) customFields.parent_id = newRow.parent_id;
-      if (newRow.notes) customFields.notes = newRow.notes;
+      if (newRow.description) customFields.description = newRow.description;
       if (newRow.attachments) customFields.attachments = newRow.attachments;
+      if (newRow.customer_id) customFields.customer_id = newRow.customer_id;
+      if (newRow.booking_id) customFields.booking_id = newRow.booking_id;
+      if (newRow.progress !== undefined) customFields.progress = newRow.progress;
+      if (newRow.start_date) customFields.start_date = newRow.start_date;
+      if (newRow.completed_at) customFields.completed_at = newRow.completed_at;
+      if (newRow.task_number) customFields.task_number = newRow.task_number;
+      if (newRow.created_by) customFields.created_by = newRow.created_by;
       
-      if (Object.keys(customFields).length > 0) {
-        newRow.description = JSON.stringify({
-          _isMeta: true,
-          text: newRow.description || "",
-          ...customFields
-        });
-      }
+      newRow.notes = JSON.stringify({
+        _isMeta: true,
+        ...customFields
+      });
 
       // Map to Supabase native columns for the dashboard
       if (newRow.task_type !== undefined) newRow.type = newRow.task_type;
       if (newRow.assigned_to !== undefined) newRow.assignee = newRow.assigned_to;
       if (newRow.due_date !== undefined) newRow.dueDate = newRow.due_date;
-
+      
+      // Delete the non-existent columns from Supabase payload
+      delete newRow.description;
       delete newRow.task_type;
-      delete newRow.parent_id;
-      delete newRow.notes;
-      delete newRow.attachments;
-      delete newRow.task_number;
       delete newRow.assigned_to;
       delete newRow.due_date;
-      
-      delete newRow.paidFor;
-      delete newRow.adminNotes;
+      delete newRow.customer_id;
+      delete newRow.booking_id;
+      delete newRow.progress;
+      delete newRow.start_date;
+      delete newRow.completed_at;
+      delete newRow.task_number;
+      delete newRow.created_by;
+      delete newRow.attachments;
+      delete newRow.parent_id;
     }
 
     if (tableName === "customers") {
@@ -336,15 +344,21 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.dueDate !== undefined) newRow.due_date = newRow.dueDate;
     }
 
-    if (tableName === "tasks" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
+    if (tableName === "tasks" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
       try {
-        const parsed = JSON.parse(newRow.description);
+        const parsed = JSON.parse(newRow.notes);
         if (parsed._isMeta) {
-          newRow.description = parsed.text;
+          if (parsed.description !== undefined) newRow.description = parsed.description;
           if (parsed.task_type !== undefined) newRow.task_type = parsed.task_type;
           if (parsed.parent_id !== undefined) newRow.parent_id = parsed.parent_id;
-          if (parsed.notes !== undefined) newRow.notes = parsed.notes;
           if (parsed.attachments !== undefined) newRow.attachments = parsed.attachments;
+          if (parsed.customer_id !== undefined) newRow.customer_id = parsed.customer_id;
+          if (parsed.booking_id !== undefined) newRow.booking_id = parsed.booking_id;
+          if (parsed.progress !== undefined) newRow.progress = parsed.progress;
+          if (parsed.start_date !== undefined) newRow.start_date = parsed.start_date;
+          if (parsed.completed_at !== undefined) newRow.completed_at = parsed.completed_at;
+          if (parsed.task_number !== undefined) newRow.task_number = parsed.task_number;
+          if (parsed.created_by !== undefined) newRow.created_by = parsed.created_by;
         }
       } catch (e) {}
     }
