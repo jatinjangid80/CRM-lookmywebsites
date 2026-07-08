@@ -105,6 +105,7 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Customers",
       "Bookings",
       "Documents",
+      "Vendors",
       "Payment Requests",
       "Settings"
     ].includes(n.label));

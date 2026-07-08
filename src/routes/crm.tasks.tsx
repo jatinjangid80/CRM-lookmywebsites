@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+ import { createFileRoute } from "@tanstack/react-router";
 import React, { useState, useMemo } from "react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
@@ -65,9 +65,9 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 function TasksPage() {
-  const { user } = getAuth();
-  const currentUser = user?.username || "Admin";
-  const isAdmin = user?.role === "admin" || currentUser.toLowerCase().includes("aman");
+  const auth = getAuth();
+  const currentUser = auth?.name || "Admin";
+  const isAdmin = auth?.role === "admin" || currentUser.toLowerCase().includes("aman");
 
   const [tasks, setTasks] = useSupabaseTable<Task[]>("tasks", SEED);
   const [employees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
@@ -111,7 +111,7 @@ function TasksPage() {
   const completedTasks = visibleTasks.filter(t => t.status === "Completed").length;
   const overdueTasks = visibleTasks.filter(t => {
     const d = t.due_date || (t as any).dueDate;
-    return t.status !== "Completed" && t.status !== "Done" && d && new Date(d) < new Date();
+    return t.status !== "Completed" && d && new Date(d) < new Date();
   }).length;
 
   const handleEditTask = (task: Task) => {
@@ -664,7 +664,7 @@ function TasksPage() {
                              )}
                            </div>
                            <div className="flex-1">
-                             <p onClick={() => setViewingTask(t)} className={`cursor-pointer text-sm font-medium ${t.status === "Completed" || t.status === "Done" ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                             <p onClick={() => setViewingTask(t)} className={`cursor-pointer text-sm font-medium ${t.status === "Completed" ? "text-slate-400 line-through" : "text-slate-900"}`}>
                                {t.task_type === "Subtask" && <Badge variant="secondary" className="mr-2 text-[9px] px-1 py-0 h-4 bg-brand/10 text-brand border-brand/20">Sub-Task</Badge>}
                                {t.title}
                              </p>
