@@ -185,9 +185,9 @@ const STATUSES: LeadStatus[] = [
   "Contacted",
   "Quotation Sent",
   "Negotiation",
-  "Confirmed",
   "Payment Pending",
   "in process",
+  "Confirmed",
   "Review Collected",
   "Lost",
 ];

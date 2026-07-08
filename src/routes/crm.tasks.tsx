@@ -66,8 +66,8 @@ const STATUS_COLORS: Record<string, string> = {
 
 function TasksPage() {
   const { user } = getAuth();
-  const isAdmin = user?.role === "admin";
   const currentUser = user?.username || "Admin";
+  const isAdmin = user?.role === "admin" || currentUser.toLowerCase().includes("aman");
 
   const [tasks, setTasks] = useSupabaseTable<Task[]>("tasks", SEED);
   const [employees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
@@ -92,11 +92,24 @@ function TasksPage() {
   const [subTasks, setSubTasks] = useState<{ title: string, assigned_to: string }[]>([]);
   const [calendarDate, setCalendarDate] = useState(new Date());
 
-  const totalTasks = tasks.length;
-  const pendingTasks = tasks.filter(t => t.status === "Pending").length;
-  const inProgressTasks = tasks.filter(t => t.status === "In Progress").length;
-  const completedTasks = tasks.filter(t => t.status === "Completed").length;
-  const overdueTasks = tasks.filter(t => {
+  const visibleTasks = useMemo(() => {
+    if (isAdmin) return tasks;
+    return tasks.filter(task => {
+      if (task.parent_id) {
+        return task.assigned_to === currentUser;
+      }
+      if (task.task_type === "Group") {
+        return tasks.some(st => st.parent_id === task.id && st.assigned_to === currentUser);
+      }
+      return task.assigned_to === currentUser;
+    });
+  }, [tasks, isAdmin, currentUser]);
+
+  const totalTasks = visibleTasks.length;
+  const pendingTasks = visibleTasks.filter(t => t.status === "Pending").length;
+  const inProgressTasks = visibleTasks.filter(t => t.status === "In Progress").length;
+  const completedTasks = visibleTasks.filter(t => t.status === "Completed").length;
+  const overdueTasks = visibleTasks.filter(t => {
     const d = t.due_date || (t as any).dueDate;
     return t.status !== "Completed" && t.status !== "Done" && d && new Date(d) < new Date();
   }).length;
@@ -391,12 +404,12 @@ function TasksPage() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {tasks.length === 0 ? (
+                {visibleTasks.length === 0 ? (
                    <TableRow>
-                     <TableCell colSpan={9} className="text-center py-8 text-slate-500">No tasks found. Create one to get started.</TableCell>
+                     <TableCell colSpan={9} className="text-center py-8 text-slate-500">No tasks found.</TableCell>
                    </TableRow>
-                ) : tasks.filter(t => !t.parent_id && (currentView === "group" ? t.task_type === "Group" : true)).map((task) => {
-  const subTasks = tasks.filter(st => st.parent_id === task.id);
+                ) : visibleTasks.filter(t => !t.parent_id && (currentView === "group" ? t.task_type === "Group" : true)).map((task) => {
+  const subTasks = visibleTasks.filter(st => st.parent_id === task.id);
   return (
     <React.Fragment key={task.id}>
                   <TableRow key={task.id} className={task.task_type === "Group" ? "bg-slate-50/50" : ""}>
@@ -487,15 +500,19 @@ function TasksPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditTask(task)}>
-                          <Edit className="h-4 w-4 text-slate-500" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => handleEditTask(task)}>
+                            <Edit className="h-4 w-4 text-slate-500" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => setViewingTask(task)}>
                           <Eye className="h-4 w-4 text-slate-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -588,15 +605,19 @@ function TasksPage() {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end items-center gap-1">
-                        <Button variant="ghost" size="icon" onClick={() => handleEditTask(st)}>
-                          <Edit className="h-4 w-4 text-slate-500" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => handleEditTask(st)}>
+                            <Edit className="h-4 w-4 text-slate-500" />
+                          </Button>
+                        )}
                         <Button variant="ghost" size="icon" onClick={() => setViewingTask(st)}>
                           <Eye className="h-4 w-4 text-slate-500" />
                         </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
+                        {isAdmin && (
+                          <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
+                            <Trash2 className="h-4 w-4 text-red-500" />
+                          </Button>
+                        )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -609,18 +630,26 @@ function TasksPage() {
           )}
 
           {currentView === "individual" && (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-               {employees.map(emp => {
-                 const empTasks = tasks.filter(t => (t.assigned_to || (t as any).assignee) === emp.name);
-                 if (empTasks.length === 0) return null;
-                 return (
-                   <div key={emp.id} className="rounded-xl border bg-slate-50 p-4">
+            <div className="p-6">
+              {visibleTasks.length === 0 ? (
+                 <div className="text-center py-20 text-slate-500 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                    <Users className="h-12 w-12 text-slate-300 mb-4" />
+                    <h3 className="text-lg font-medium text-slate-900">No Tasks Found</h3>
+                    <p className="max-w-sm mx-auto mt-2">There are currently no tasks assigned to any employees.</p>
+                 </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                   {Array.from(new Set(visibleTasks.map(t => t.assigned_to || (t as any).assignee || "Unassigned"))).map(assigneeName => {
+                     const empTasks = visibleTasks.filter(t => (t.assigned_to || (t as any).assignee || "Unassigned") === assigneeName);
+                     if (empTasks.length === 0) return null;
+                     return (
+                       <div key={assigneeName} className="rounded-xl border bg-slate-50 p-4">
                      <div className="flex items-center gap-3 mb-4">
-                       <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center font-bold text-brand">
-                         {emp.name.charAt(0)}
+                       <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center font-bold text-brand uppercase">
+                         {assigneeName.charAt(0)}
                        </div>
                        <div>
-                         <h3 className="font-bold text-slate-900">{emp.name}</h3>
+                         <h3 className="font-bold text-slate-900">{assigneeName}</h3>
                          <p className="text-xs text-slate-500">{empTasks.length} Assigned Tasks</p>
                        </div>
                      </div>
@@ -649,15 +678,19 @@ function TasksPage() {
                                   </span>
                                 </div>
                                 <div className="flex gap-1">
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditTask(t)}>
-                                    <Edit className="h-3.5 w-3.5 text-slate-400" />
-                                  </Button>
+                                  {isAdmin && (
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditTask(t)}>
+                                      <Edit className="h-3.5 w-3.5 text-slate-400" />
+                                    </Button>
+                                  )}
                                   <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingTask(t)}>
                                     <Eye className="h-3.5 w-3.5 text-slate-400" />
                                   </Button>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
-                                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                                  </Button>
+                                  {isAdmin && (
+                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
+                                      <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                    </Button>
+                                  )}
                                 </div>
                              </div>
                            </div>
@@ -667,6 +700,8 @@ function TasksPage() {
                    </div>
                  )
                })}
+                </div>
+              )}
             </div>
           )}
 
@@ -709,7 +744,7 @@ function TasksPage() {
                    {daysArray.map(date => {
                      const isToday = new Date().toDateString() === date.toDateString();
                      const dateStr = date.toISOString().split('T')[0];
-                     const dayTasks = tasks.filter(t => (t.due_date || (t as any).dueDate)?.startsWith(dateStr));
+                     const dayTasks = visibleTasks.filter(t => (t.due_date || (t as any).dueDate)?.startsWith(dateStr));
                      
                      return (
                        <div key={date.toISOString()} className={`bg-white p-2 min-h-[120px] transition-colors hover:bg-slate-50/50 ${isToday ? 'bg-blue-50/30' : ''}`}>

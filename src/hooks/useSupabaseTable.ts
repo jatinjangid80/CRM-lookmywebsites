@@ -181,14 +181,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.leadSection;
 
     if (tableName === "tasks") {
-      if (typeof newRow.attachments !== "string") {
-        newRow.attachments = JSON.stringify(newRow.attachments || []);
-      }
       // Encode extra fields into description
       const customFields: any = {};
       if (newRow.task_type) customFields.task_type = newRow.task_type;
       if (newRow.parent_id) customFields.parent_id = newRow.parent_id;
       if (newRow.notes) customFields.notes = newRow.notes;
+      if (newRow.attachments) customFields.attachments = newRow.attachments;
       
       if (Object.keys(customFields).length > 0) {
         newRow.description = JSON.stringify({
@@ -198,9 +196,18 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         });
       }
 
+      // Map to Supabase native columns for the dashboard
+      if (newRow.task_type !== undefined) newRow.type = newRow.task_type;
+      if (newRow.assigned_to !== undefined) newRow.assignee = newRow.assigned_to;
+      if (newRow.due_date !== undefined) newRow.dueDate = newRow.due_date;
+
       delete newRow.task_type;
       delete newRow.parent_id;
       delete newRow.notes;
+      delete newRow.attachments;
+      delete newRow.task_number;
+      delete newRow.assigned_to;
+      delete newRow.due_date;
       
       delete newRow.paidFor;
       delete newRow.adminNotes;
@@ -323,6 +330,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       } catch (e) {}
     }
 
+    if (tableName === "tasks") {
+      if (newRow.type !== undefined) newRow.task_type = newRow.type;
+      if (newRow.assignee !== undefined) newRow.assigned_to = newRow.assignee;
+      if (newRow.dueDate !== undefined) newRow.due_date = newRow.dueDate;
+    }
+
     if (tableName === "tasks" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
       try {
         const parsed = JSON.parse(newRow.description);
@@ -331,6 +344,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.task_type !== undefined) newRow.task_type = parsed.task_type;
           if (parsed.parent_id !== undefined) newRow.parent_id = parsed.parent_id;
           if (parsed.notes !== undefined) newRow.notes = parsed.notes;
+          if (parsed.attachments !== undefined) newRow.attachments = parsed.attachments;
         }
       } catch (e) {}
     }
