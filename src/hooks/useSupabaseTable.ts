@@ -154,7 +154,17 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const existingRemarks = newRow.remarks || "";
         newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...customFields });
       }
-    } else if (tableName === "customers") {
+    }
+    if (tableName === "payment_requests") {
+      if (newRow.paidFor !== undefined || newRow.adminNotes !== undefined) {
+         const existingRemarks = newRow.remarks || "";
+         newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, paidFor: newRow.paidFor, adminNotes: newRow.adminNotes });
+      }
+      delete newRow.paidFor;
+      delete newRow.adminNotes;
+    }
+
+    if (tableName === "customers") {
       if (hasCustomFields) {
         newRow.name = `${newRow.name}---META---${JSON.stringify(customFields)}`;
       }
@@ -240,6 +250,17 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+        }
+      } catch (e) {}
+    }
+
+    if (tableName === "payment_requests" && typeof newRow.remarks === "string" && newRow.remarks.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.remarks);
+        if (parsed._isMeta) {
+          newRow.remarks = parsed.text;
+          if (parsed.paidFor !== undefined) newRow.paidFor = parsed.paidFor;
+          if (parsed.adminNotes !== undefined) newRow.adminNotes = parsed.adminNotes;
         }
       } catch (e) {}
     }
