@@ -691,7 +691,7 @@ function EmployeesPage() {
     "Accounts Manager",
   ];
 
-  const [activeTab, setActiveTab] = useState("Profile");
+  const [activeTab, setActiveTab] = useState("Employees");
   const [selectedEmployee, setSelectedEmployee] = useState<Employee | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [newEmployee, setNewEmployee] = useState({
@@ -976,26 +976,7 @@ function EmployeesPage() {
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Zoho-style Navigation Tabs */}
-      <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-px scrollbar-hide">
-        {["Profile", "Employees"]
-          .filter((tab) => {
-            if (!isAdmin && tab === "Employees") return false;
-            return true;
-          })
-          .map((tab) => (
-            <button
-              key={tab}
-              onClick={() => setActiveTab(tab)}
-              className={`whitespace-nowrap px-4 py-2.5 text-sm font-medium transition-colors border-b-2 ${activeTab === tab ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"}`}
-            >
-              {tab}
-            </button>
-          ))}
-      </div>
-
-      {activeTab === "Employees" && isAdmin ? (
+      {activeTab === "Employees" ? (
         <>
           {/* Top stats */}
           <div className="grid gap-4 sm:grid-cols-4">
