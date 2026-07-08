@@ -196,11 +196,13 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.created_by) customFields.created_by = newRow.created_by;
       
       if (Object.keys(customFields).length > 0) {
-        newRow.description = JSON.stringify({
+        newRow.note = JSON.stringify({
           _isMeta: true,
           text: newRow.description || "",
           ...customFields
         });
+      } else if (newRow.description !== undefined) {
+        newRow.note = newRow.description;
       }
 
       // Map to Supabase native columns for the dashboard
@@ -222,6 +224,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.created_by;
       delete newRow.attachments;
       delete newRow.parent_id;
+      delete newRow.description;
     }
 
     if (tableName === "customers") {
@@ -345,6 +348,10 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.type !== undefined) newRow.task_type = newRow.type;
       if (newRow.assignee !== undefined) newRow.assigned_to = newRow.assignee;
       if (newRow.dueDate !== undefined) newRow.due_date = newRow.dueDate;
+      
+      if (newRow.note !== undefined) {
+        newRow.description = newRow.note;
+      }
     }
 
     if (tableName === "tasks" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
