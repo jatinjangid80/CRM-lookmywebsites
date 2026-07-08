@@ -1575,6 +1575,7 @@ function EmployeesPage() {
                   <div className="grid gap-6 md:grid-cols-3">
                     {/* LEFT COLUMN */}
                     <div className="space-y-6 md:col-span-1">
+
                       {/* Quick Actions Card */}
                       <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
                         <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
@@ -1604,16 +1605,6 @@ function EmployeesPage() {
                               className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                             >
                               <Edit className="h-4 w-4" /> Edit Profile Details
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                setTaskAssignee(cur.name);
-                                setIsTaskModalOpen(true);
-                              }}
-                              className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
-                            >
-                              <Plus className="h-4 w-4" /> Assign Task
                             </Button>
 
                             <Button
@@ -3756,30 +3747,7 @@ function EmployeesPage() {
                       </div>
                     </div>
 
-                    {/* Activity Timeline */}
-                    <div className="bg-card text-card-foreground rounded-2xl border border-border p-5 shadow-sm space-y-4">
-                      <h3 className="font-bold text-base text-foreground border-b border-gray-100 pb-2">
-                        Activity Timeline
-                      </h3>
-                      <div className="p-4 space-y-4">
-                        <div className="relative border-l-2 border-primary/20 pl-6 ml-3 space-y-5">
-                          {mockPerf.activityTimeline.map((item, i) => (
-                            <div key={i} className="relative">
-                              <span className="absolute -left-[31px] top-1 bg-card text-card-foreground border-2 border-primary h-3.5 w-3.5 rounded-full flex items-center justify-center shadow-sm"></span>
-                              <div>
-                                <p className="font-bold text-xs text-gray-800">{item.title}</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5">
-                                  {item.desc}
-                                </p>
-                                <p className="text-[10px] font-semibold text-orange-500 mt-1">
-                                  {item.time}
-                                </p>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
+
                   </div>
                 </div>
               );

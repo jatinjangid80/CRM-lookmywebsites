@@ -749,6 +749,7 @@ function EmployeeProfileModalInner({
             <div className="grid gap-6 md:grid-cols-3">
               {/* LEFT COLUMN */}
               <div className="space-y-6 md:col-span-1">
+
                 {/* Quick Actions Card */}
                 <Card title={isEditing ? "Actions" : "Quick Actions"}>
                   {isEditing ? (
@@ -775,12 +776,6 @@ function EmployeeProfileModalInner({
                         className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
                       >
                         <Edit className="h-4 w-4" /> Edit Profile Details
-                      </Button>
-                      <Button
-                        onClick={() => onAssignTask?.(employee.name)}
-                        className="w-full justify-start gap-2 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-md h-9 text-xs font-semibold transition-all hover:shadow-lg hover:-translate-y-0.5"
-                      >
-                        <Plus className="h-4 w-4" /> Add Task
                       </Button>
 
                       <Button
@@ -847,6 +842,7 @@ function EmployeeProfileModalInner({
                     </div>
                   )}
                 </Card>
+
 
                 {/* ── Login Credentials Card (always visible) ── */}
                 <Card title="Login Credentials">
@@ -2851,25 +2847,7 @@ function EmployeeProfileModalInner({
                 </div>
               </Card>
 
-              {/* Activity Timeline */}
-              <Card title="Activity Timeline">
-                <div className="p-4 space-y-4">
-                  <div className="relative border-l-2 border-orange-100 pl-6 ml-3 space-y-5">
-                    {mockPerf.activityTimeline.map((item, i) => (
-                      <div key={i} className="relative">
-                        <span className="absolute -left-[31px] top-1 bg-white border-2 border-[#FF6B00] h-3.5 w-3.5 rounded-full flex items-center justify-center shadow-sm"></span>
-                        <div>
-                          <p className="font-bold text-xs text-gray-800">{item.title}</p>
-                          <p className="text-[11px] text-muted-foreground mt-0.5">{item.desc}</p>
-                          <p className="text-[10px] font-semibold text-orange-500 mt-1">
-                            {item.time}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </Card>
+
             </div>
           </div>
         </DialogContent>

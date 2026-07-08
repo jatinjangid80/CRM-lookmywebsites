@@ -55,6 +55,29 @@ export const Route = createFileRoute("/crm/")({
 
 const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFD9BF", "#FFE9D9"];
 
+const SOURCE_HEX_COLORS: Record<string, string> = {
+  Instagram: "#ec4899", // pink-500
+  Facebook: "#2563eb", // blue-600
+  WhatsApp: "#047857", // emerald-700
+  "Walk-in": "#fde047", // yellow-300
+  Website: "var(--primary)",
+  Referral: "#d8b4fe", // purple-300
+  Ads: "#e5e7eb", // gray-200
+  "DD Pharma": "#bbf7d0", // green-200
+  Other: "#fbcfe8", // pink-200
+  "Old Ref": "#93c5fd", // blue-300
+  "BNI INC": "#4ade80", // green-400
+  BNI: "#22c55e", // green-500
+};
+
+const FUNNEL_COLORS = [
+  "#3b82f6", // 0: New Lead (blue)
+  "#f59e0b", // 1: Contacted (amber)
+  "#06b6d4", // 2: Quotation (cyan)
+  "#a855f7", // 3: Negotiate (purple)
+  "#14b8a6", // 4: Confirmed (teal)
+];
+
 const AVATARS = ["", "", "", "", "", "", ""];
 
 const LEADS_INIT = seedLeads.map((l, i) => ({
@@ -433,7 +456,7 @@ function Dashboard() {
 
       {/* Row 1: Revenue Graph (Line) & Lead Source (Pie) */}
       <div className="grid gap-6 lg:grid-cols-3">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card lg:col-span-2">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 lg:col-span-2">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="font-display text-lg font-bold">Monthly Revenue Trend</h3>
@@ -469,13 +492,13 @@ function Dashboard() {
         </div>
 
         {/* Lead Source Pie Chart */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <h3 className="font-display text-lg font-bold">Lead Source Share</h3>
             <p className="text-xs text-muted-foreground mb-4">
               Distribution of channels acquiring current leads
             </p>
-            <div className="h-56 relative flex items-center justify-center">
+            <div className="h-64 relative flex items-center justify-center">
               {sourceData.length > 0 ? (
                 <ResponsiveContainer>
                   <PieChart>
@@ -484,23 +507,23 @@ function Dashboard() {
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="50%"
+                      cy="42%"
                       innerRadius={45}
                       outerRadius={65}
                       paddingAngle={3}
                       labelLine={false}
                       label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                     >
-                      {sourceData.map((_, i) => (
-                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      {sourceData.map((entry, i) => (
+                        <Cell key={i} fill={SOURCE_HEX_COLORS[entry.name] || COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
                     <Legend
                       verticalAlign="bottom"
-                      height={36}
+                      height={40}
                       iconType="circle"
-                      wrapperStyle={{ fontSize: 10 }}
+                      wrapperStyle={{ fontSize: 10, paddingTop: "20px" }}
                     />
                   </PieChart>
                 </ResponsiveContainer>
@@ -515,7 +538,7 @@ function Dashboard() {
       {/* Row 2: Destination-wise Sales (Bar) & Employee Task Performance */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Destination performance */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0">
           <div>
             <h3 className="font-display text-lg font-bold">Destination Sales Ledger</h3>
             <p className="text-xs text-muted-foreground mb-4">
@@ -546,7 +569,7 @@ function Dashboard() {
         </div>
 
         {/* Employee Task Performance */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -651,7 +674,7 @@ function Dashboard() {
       {/* Row 3: Booking Volume Trend (Bar) & Lead Funnel (Bar) */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Booking Volume Trend */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0">
           <h3 className="font-display text-lg font-bold">Monthly Booking Trend</h3>
           <p className="text-xs text-muted-foreground mb-4">
             Total booking reservations confirmed per month
@@ -682,7 +705,7 @@ function Dashboard() {
         </div>
 
         {/* Lead Funnel */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-1">
               <h3 className="font-display text-lg font-bold">Active Lead Funnel</h3>
@@ -742,9 +765,9 @@ function Dashboard() {
                     allowDecimals={false}
                   />
                   <Tooltip cursor={{ fill: "rgba(255,107,0,0.05)" }} />
-                  <Bar dataKey="count" fill="var(--primary)" radius={[6, 6, 0, 0]}>
+                  <Bar dataKey="count" radius={[6, 6, 0, 0]}>
                     {[0, 1, 2, 3, 4].map((index) => (
-                      <Cell key={`cell-${index}`} fill={index === 4 ? "var(--primary)" : "#FFA666"} />
+                      <Cell key={`cell-${index}`} fill={FUNNEL_COLORS[index]} />
                     ))}
                   </Bar>
                 </BarChart>
@@ -757,7 +780,7 @@ function Dashboard() {
       {/* Row 4: My Pending Tasks & Upcoming Follow-ups */}
       <div className="grid gap-6 lg:grid-cols-2">
         {/* My Pending Tasks */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -819,7 +842,7 @@ function Dashboard() {
         </div>
 
         {/* Upcoming Follow-ups */}
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card flex flex-col justify-between">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">
               <div>

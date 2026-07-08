@@ -171,7 +171,7 @@ function ReportsPage() {
       </div>
 
       {/* Revenue + Bookings trend */}
-      <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+      <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0">
         <SectionHeader
           title="Revenue & Bookings Trend"
           sub="Monthly figures (₹ lakhs) and total bookings"
@@ -211,7 +211,7 @@ function ReportsPage() {
 
       {/* Destination revenue + Lead source */}
       <div className="grid gap-6 lg:grid-cols-2">
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0">
           <SectionHeader title="Revenue by Destination" sub="₹ lakhs — current year" />
           <div className="mt-4 h-64">
             <ResponsiveContainer>
@@ -230,7 +230,7 @@ function ReportsPage() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-card p-6 shadow-card">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0">
           <SectionHeader title="Lead Sources" sub="Where inquiries come from" />
           <div className="mt-4 flex items-center gap-6">
             <div className="h-56 w-56 shrink-0">
