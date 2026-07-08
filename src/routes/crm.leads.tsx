@@ -1569,7 +1569,7 @@ function LeadDetail({
                 </select>
               ) : (
                 <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
-                  <EmployeeProfileCard employeeName={lead.assignedTo} />
+                  <EmployeeProfileCard employeeName={lead.assignedTo} compact={true} />
                 </div>
               )}
             </div>

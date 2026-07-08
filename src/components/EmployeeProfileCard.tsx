@@ -15,7 +15,7 @@ const STATUS_COLOR = {
   Inactive: "bg-slate-100 text-slate-800 border-slate-200",
 };
 
-export function EmployeeProfileCard({ employeeName }: { employeeName: string }) {
+export function EmployeeProfileCard({ employeeName, compact = false }: { employeeName: string; compact?: boolean }) {
   const [imgError, setImgError] = useState(false);
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
@@ -69,10 +69,10 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
     );
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex flex-col sm:flex-row items-center sm:justify-start gap-4">
+    <div className={`bg-white rounded-2xl border border-gray-200 ${compact ? 'p-3 gap-3' : 'p-4 gap-4'} shadow-sm flex flex-col sm:flex-row items-center sm:justify-start`}>
       {imgError || !employee.avatar ? (
-        <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 ring-4 ring-[#FF6B00]/10 flex items-center justify-center shrink-0">
-          <span className="text-2xl font-bold text-primary">
+        <div className={`${compact ? 'h-10 w-10 text-lg rounded-xl ring-2' : 'h-16 w-16 text-2xl rounded-2xl ring-4'} bg-primary/10 border border-primary/20 ring-[#FF6B00]/10 flex items-center justify-center shrink-0`}>
+          <span className="font-bold text-primary">
             {employee.name ? employee.name.charAt(0).toUpperCase() : "?"}
           </span>
         </div>
@@ -81,29 +81,33 @@ export function EmployeeProfileCard({ employeeName }: { employeeName: string }) 
           src={employee.avatar}
           alt={employee.name}
           onError={() => setImgError(true)}
-          className="h-16 w-16 rounded-2xl object-cover border border-gray-200 ring-4 ring-[#FF6B00]/10 shrink-0"
+          className={`${compact ? 'h-10 w-10 rounded-xl ring-2' : 'h-16 w-16 rounded-2xl ring-4'} object-cover border border-gray-200 ring-[#FF6B00]/10 shrink-0`}
         />
       )}
-      <div className="text-center sm:text-left space-y-1">
+      <div className={`text-center sm:text-left ${compact ? '' : 'space-y-1'}`}>
         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-          <h3 className="text-lg font-bold font-display text-gray-900">{employee.name}</h3>
+          <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-bold font-display text-gray-900`}>{employee.name}</h3>
           <span
             className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLOR[employee.status as keyof typeof STATUS_COLOR] || "bg-slate-100"}`}
           >
             {employee.status}
           </span>
         </div>
-        <p className="text-[#FF6B00] font-semibold text-xs">
-          {employee.role} • {empDetails.department}
-        </p>
-        <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
-          <span className="flex items-center gap-1">
-            <Mail className="h-3 w-3" /> {employee.email}
-          </span>
-          <span className="flex items-center gap-1">
-            <Phone className="h-3 w-3" /> {employee.phone}
-          </span>
-        </div>
+        {!compact && (
+          <>
+            <p className="text-[#FF6B00] font-semibold text-xs">
+              {employee.role} • {empDetails.department}
+            </p>
+            <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
+              <span className="flex items-center gap-1">
+                <Mail className="h-3 w-3" /> {employee.email}
+              </span>
+              <span className="flex items-center gap-1">
+                <Phone className="h-3 w-3" /> {employee.phone}
+              </span>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

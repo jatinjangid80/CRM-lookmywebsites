@@ -363,7 +363,7 @@ function TaskCard({
             Assigned To
           </p>
           <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
-            <EmployeeProfileCard employeeName={task.assignee} />
+            <EmployeeProfileCard employeeName={task.assignee} compact={true} />
           </div>
         </div>
       </div>
