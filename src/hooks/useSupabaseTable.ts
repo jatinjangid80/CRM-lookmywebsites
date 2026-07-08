@@ -180,6 +180,32 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (tableName !== "employees") delete newRow.profile_details;
     delete newRow.leadSection;
 
+    if (tableName === "tasks") {
+      if (typeof newRow.attachments !== "string") {
+        newRow.attachments = JSON.stringify(newRow.attachments || []);
+      }
+      // Encode extra fields into description
+      const customFields: any = {};
+      if (newRow.task_type) customFields.task_type = newRow.task_type;
+      if (newRow.parent_id) customFields.parent_id = newRow.parent_id;
+      if (newRow.notes) customFields.notes = newRow.notes;
+      
+      if (Object.keys(customFields).length > 0) {
+        newRow.description = JSON.stringify({
+          _isMeta: true,
+          text: newRow.description || "",
+          ...customFields
+        });
+      }
+
+      delete newRow.task_type;
+      delete newRow.parent_id;
+      delete newRow.notes;
+      
+      delete newRow.paidFor;
+      delete newRow.adminNotes;
+    }
+
     if (tableName === "customers") {
       delete newRow.company;
       delete newRow.city;
@@ -293,6 +319,18 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
           if (parsed.profile_details !== undefined) newRow.profile_details = parsed.profile_details;
+        }
+      } catch (e) {}
+    }
+
+    if (tableName === "tasks" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.description);
+        if (parsed._isMeta) {
+          newRow.description = parsed.text;
+          if (parsed.task_type !== undefined) newRow.task_type = parsed.task_type;
+          if (parsed.parent_id !== undefined) newRow.parent_id = parsed.parent_id;
+          if (parsed.notes !== undefined) newRow.notes = parsed.notes;
         }
       } catch (e) {}
     }

@@ -1,960 +1,1124 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useRef } from "react";
+import React, { useState, useMemo } from "react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import {
-  Plus,
-  CheckCircle2,
-  Circle,
-  Clock,
-  AlertCircle,
-  Phone,
-  Mail,
-  CreditCard,
-  FileText,
-  CalendarDays,
-  Trash2,
-  X,
-  Filter,
-  Sparkles,
-  ListChecks,
+  Plus, CheckCircle2, Circle, Clock, AlertCircle, Phone, Mail,
+  CreditCard, FileText, CalendarDays, Trash2, X, Filter, Sparkles,
+  ListChecks, Calendar, Users, User, Edit, Eye, Paperclip, MessageSquare,
+  MoreVertical, CheckSquare, List, CheckCircle
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
+import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Badge } from "@/components/ui/badge";
+import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Checkbox } from "@/components/ui/checkbox";
 import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
-/* ─── Types ─────────────────────────────────────────── */
 type Priority = "High" | "Medium" | "Low";
-type TaskType = "Call" | "Email" | "Payment" | "Document" | "Follow-up" | "Other";
-type TaskStatus = "Pending" | "Done";
-
-interface TaskNote {
-  text: string;
-  createdAt: string;
-}
+type TaskStatus = "Pending" | "In Progress" | "Completed";
 
 interface Task {
   id: string;
+  task_number?: number;
   title: string;
-  type: TaskType;
+  description?: string;
+  assigned_to?: string;
+  customer_id?: string;
+  booking_id?: string;
+  created_by: string;
   priority: Priority;
-  assignee: string;
-  dueDate: string;
   status: TaskStatus;
-  note: string;
-  notes?: (string | TaskNote)[];
-  lead?: string;
+  progress: number;
+  start_date: string;
+  due_date: string;
+  completed_at: string | null;
+  attachments: { name: string; url: string }[];
+  created_at: string;
+  task_type?: "Individual" | "Group" | "Subtask";
+  parent_id?: string;
+  notes?: { id: string; content: string; created_at: string; created_by: string }[];
 }
 
-/* ─── Seed data ──────────────────────────────────────── */
-const today = new Date().toISOString().slice(0, 10);
 const SEED: Task[] = [];
-
-/* ─── Constants ──────────────────────────────────────── */
-const TYPE_ICONS: Record<TaskType, typeof Phone> = {
-  Call: Phone,
-  Email: Mail,
-  Payment: CreditCard,
-  Document: FileText,
-  "Follow-up": CalendarDays,
-  Other: AlertCircle,
-};
-
-const TYPE_COLORS: Record<TaskType, string> = {
-  Call: "bg-blue-100   text-blue-700",
-  Email: "bg-violet-100 text-violet-700",
-  Payment: "bg-emerald-100 text-emerald-700",
-  Document: "bg-amber-100  text-amber-700",
-  "Follow-up": "bg-pink-100   text-pink-700",
-  Other: "bg-slate-100  text-slate-600",
-};
-
-const TYPE_ACCENT: Record<TaskType, string> = {
-  Call: "border-l-blue-400",
-  Email: "border-l-violet-400",
-  Payment: "border-l-emerald-400",
-  Document: "border-l-amber-400",
-  "Follow-up": "border-l-pink-400",
-  Other: "border-l-slate-400",
-};
-
-const PRIORITY_PILL: Record<Priority, string> = {
-  High: "bg-red-100   text-red-700",
-  Medium: "bg-amber-100 text-amber-700",
-  Low: "bg-emerald-100 text-emerald-700",
-};
-
-const PRIORITY_DOT: Record<Priority, string> = {
-  High: "bg-red-500",
-  Medium: "bg-amber-500",
-  Low: "bg-emerald-500",
-};
-
-const TASK_TYPES: TaskType[] = ["Call", "Email", "Payment", "Document", "Follow-up", "Other"];
 const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
+const STATUSES: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 
-/* ─── Helpers ────────────────────────────────────────── */
-function initials(name: string) {
-  return name
-    .split(" ")
-    .map((w) => w[0])
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-}
-const AVATAR_COLORS = ["bg-blue-500", "bg-violet-500", "bg-rose-500", "bg-teal-500"];
-function avatarColor(name: string) {
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) & 0xffff;
-  return AVATAR_COLORS[h % AVATAR_COLORS.length];
-}
+const PRIORITY_COLORS: Record<string, string> = {
+  High: "bg-red-100 text-red-800 border-red-200",
+  Medium: "bg-amber-100 text-amber-800 border-amber-200",
+  Low: "bg-emerald-100 text-emerald-800 border-emerald-200",
+};
 
-function formatDate(d: string) {
-  return new Date(d + "T00:00:00").toLocaleDateString("en-IN", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
+const STATUS_COLORS: Record<string, string> = {
+  Pending: "bg-slate-100 text-slate-800 border-slate-200",
+  "In Progress": "bg-blue-100 text-blue-800 border-blue-200",
+  Completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Done: "bg-emerald-100 text-emerald-800 border-emerald-200",
+};
 
-/* ─── Sub-components ─────────────────────────────────── */
-function StatCard({
-  label,
-  value,
-  total,
-  color,
-  icon,
-  onClick,
-  active,
-}: {
-  label: string;
-  value: number;
-  total: number;
-  color: string;
-  icon: React.ReactNode;
-  onClick?: () => void;
-  active?: boolean;
-}) {
-  const pct = total > 0 ? Math.round((value / total) * 100) : 0;
-  return (
-    <div
-      onClick={onClick}
-      className={`rounded-2xl border bg-card p-5 shadow-card transition-all duration-200 ${
-        onClick ? "cursor-pointer hover:shadow-md hover:-translate-y-0.5 select-none" : ""
-      } ${active ? "border-primary ring-2 ring-primary/20 scale-[1.01]" : "border-border"}`}
-    >
-      <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-          {label}
-        </p>
-        <span className={`grid h-8 w-8 place-items-center rounded-xl ${color}`}>{icon}</span>
-      </div>
-      <p className="mt-3 font-display text-4xl font-bold">{value}</p>
-      {/* Progress bar */}
-      <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-border">
-        <div
-          className={`h-full rounded-full transition-all duration-700 ${color.replace(/bg-(\w+-\d+).*/, "bg-$1")}`}
-          style={{ width: `${pct}%` }}
-        />
-      </div>
-      <p className="mt-1.5 text-xs text-muted-foreground">{pct}% of total</p>
-    </div>
-  );
-}
-
-function formatNoteDate(isoString: string) {
-  try {
-    const d = new Date(isoString);
-    if (isNaN(d.getTime())) return "";
-    return d
-      .toLocaleDateString("en-IN", {
-        day: "numeric",
-        month: "short",
-        hour: "2-digit",
-        minute: "2-digit",
-        hour12: true,
-      })
-      .replace(",", "");
-  } catch {
-    return "";
-  }
-}
-
-function TaskCard({
-  task,
-  isAdmin,
-  onToggle,
-  onDelete,
-  onEditNote,
-}: {
-  task: Task;
-  isAdmin: boolean;
-  onToggle: () => void;
-  onDelete: () => void;
-  onEditNote: (newNote: string) => void;
-}) {
-  const Icon = TYPE_ICONS[task.type];
-  const isOverdue = task.status === "Pending" && task.dueDate < today;
-  const isDone = task.status === "Done";
-
-  const [isEditingNote, setIsEditingNote] = useState(false);
-  const [editNoteText, setEditNoteText] = useState("");
-
-  const allNotes = [task.note, ...(task.notes || [])].filter(Boolean);
-
-  return (
-    <div
-      className={`
-        group relative flex items-start gap-4 rounded-2xl border-l-4 border border-border bg-card
-        px-4 py-4 shadow-card transition-all duration-200
-        hover:shadow-md hover:-translate-y-0.5
-        ${isDone ? "opacity-55" : ""}
-        ${isOverdue && !isDone ? "border-red-200 bg-red-50/30" : ""}
-        ${!isOverdue && !isDone ? TYPE_ACCENT[task.type] : ""}
-        ${isOverdue && !isDone ? "border-l-red-400" : ""}
-        ${isDone ? "border-l-emerald-300" : ""}
-      `}
-    >
-      {/* Checkbox */}
-      <button
-        id={`toggle-${task.id}`}
-        onClick={onToggle}
-        className="mt-0.5 shrink-0 transition-transform hover:scale-110 active:scale-95"
-        aria-label={isDone ? "Mark pending" : "Mark done"}
-      >
-        {isDone ? (
-          <CheckCircle2 className="h-5 w-5 text-emerald-500" />
-        ) : (
-          <CheckCircle2 className="h-5 w-5 text-muted-foreground/30 hover:text-emerald-500 transition-colors" />
-        )}
-      </button>
-
-      {/* Type icon badge */}
-      <span
-        className={`mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl text-sm font-bold ${TYPE_COLORS[task.type]}`}
-      >
-        <Icon className="h-4 w-4" />
-      </span>
-
-      {/* Body */}
-      <div className="min-w-0 flex-1 space-y-1.5">
-        {/* Title row */}
-        <div className="flex flex-wrap items-start gap-2">
-          <p
-            className={`text-sm font-semibold leading-snug ${isDone ? "line-through text-muted-foreground" : ""}`}
-          >
-            {task.title}
-          </p>
-          <span
-            className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${PRIORITY_PILL[task.priority]}`}
-          >
-            <span
-              className={`inline-block h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[task.priority]}`}
-            />
-            {task.priority}
-          </span>
-          {isOverdue && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 text-xs font-semibold text-red-700 animate-pulse">
-              <AlertCircle className="h-3 w-3" /> Overdue
-            </span>
-          )}
-          {isDone && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-xs font-semibold text-emerald-700">
-              <CheckCircle2 className="h-3 w-3" /> Done
-            </span>
-          )}
-        </div>
-
-        {/* Meta row */}
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
-          {task.lead && (
-            <span className="flex items-center gap-1 font-medium text-foreground/70">
-              <span className="h-1.5 w-1.5 rounded-full bg-primary/60" />
-              {task.lead}
-            </span>
-          )}
-          <span className="flex items-center gap-1">
-            <Clock className="h-3 w-3" />
-            {formatDate(task.dueDate)}
-          </span>
-        </div>
-
-        {/* Notes list */}
-        {allNotes.length > 0 && (
-          <div className="mt-2 space-y-1.5 pl-2 border-l-2 border-border/80">
-            {allNotes.map((note, idx) => {
-              const isString = typeof note === "string";
-              const noteText = isString ? note : note.text;
-              const noteTime = isString ? "" : formatNoteDate(note.createdAt);
-              return (
-                <div
-                  key={idx}
-                  className="text-xs text-muted-foreground/80 italic leading-relaxed flex flex-wrap items-baseline gap-x-1.5"
-                >
-                  <span className="text-muted-foreground/60">•</span>
-                  <span>{noteText}</span>
-                  {noteTime && (
-                    <span className="text-[10px] text-muted-foreground/50 not-italic font-medium">
-                      ({noteTime})
-                    </span>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {isEditingNote ? (
-          <div className="mt-2 w-full animate-in fade-in slide-in-from-top-2 duration-200">
-            <textarea
-              autoFocus
-              placeholder="Add another detail or follow-up note..."
-              value={editNoteText}
-              onChange={(e) => setEditNoteText(e.target.value)}
-              rows={2}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-            />
-            <div className="flex gap-2 mt-2">
-              <Button
-                size="sm"
-                variant="outline"
-                className="h-7 text-xs rounded-full px-4"
-                onClick={() => {
-                  setIsEditingNote(false);
-                  setEditNoteText("");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button
-                size="sm"
-                className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90"
-                style={{ background: "var(--gradient-brand)" }}
-                onClick={() => {
-                  if (editNoteText.trim()) {
-                    onEditNote(editNoteText.trim());
-                  }
-                  setIsEditingNote(false);
-                  setEditNoteText("");
-                }}
-              >
-                Add
-              </Button>
-            </div>
-          </div>
-        ) : (
-          <button
-            onClick={() => {
-              setEditNoteText("");
-              setIsEditingNote(true);
-            }}
-            className="text-xs text-blue-500 hover:text-blue-600 hover:underline mt-1.5 flex items-center gap-1"
-          >
-            + Add Note
-          </button>
-        )}
-
-        {/* Assigned Profile Card */}
-        <div className="mt-3 pt-3 border-t border-border border-dashed w-full block">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Assigned To
-          </p>
-          <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
-            <EmployeeProfileCard employeeName={task.assignee} compact={true} />
-          </div>
-        </div>
-      </div>
-
-      {/* Right side actions & pills */}
-      <div className="flex shrink-0 items-start gap-2 -mt-1 -mr-1">
-        {/* Type pill (right side) */}
-        <span
-          className={`hidden rounded-lg px-2 py-1 text-xs font-semibold sm:inline-block ${TYPE_COLORS[task.type]}`}
-        >
-          {task.type}
-        </span>
-
-        {/* Delete */}
-        {isAdmin && (
-          <button
-            id={`delete-${task.id}`}
-            onClick={onDelete}
-            className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
-            aria-label="Delete task"
-          >
-            <Trash2 className="h-4 w-4" />
-          </button>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── Modal ──────────────────────────────────────────── */
-function AddTaskModal({
-  assignees,
-  onClose,
-  onAdd,
-}: {
-  assignees: string[];
-  onClose: () => void;
-  onAdd: (task: Omit<Task, "id" | "status">) => void;
-}) {
-  const [form, setForm] = useState<Omit<Task, "id" | "status">>({
-    title: "",
-    type: "Call",
-    priority: "Medium",
-    assignee: assignees[0] || "Riya Bansal",
-    dueDate: "",
-    note: "",
-    lead: "",
-  });
-  const titleRef = useRef<HTMLInputElement>(null);
-  useEffect(() => {
-    titleRef.current?.focus();
-  }, []);
-
-  const canSubmit = form.title.trim() !== "" && form.dueDate !== "";
-  const fieldCls =
-    "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
-
-  return (
-    <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
-    >
-      {/* Sheet on mobile, dialog on sm+ */}
-      <div
-        className="w-full sm:max-w-lg rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl animate-float-up"
-        style={{ animationDuration: "0.25s" }}
-      >
-        {/* Handle (mobile) */}
-        <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border sm:hidden" />
-
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 pt-5 pb-4 border-b border-border">
-          <div className="flex items-center gap-3">
-            <span
-              className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              <Plus className="h-4 w-4" />
-            </span>
-            <div>
-              <h2 className="font-display text-lg font-bold leading-tight">New Task</h2>
-              <p className="text-xs text-muted-foreground">Add a call, reminder or follow-up</p>
-            </div>
-          </div>
-          <button
-            id="close-modal-btn"
-            onClick={onClose}
-            className="rounded-xl p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <div className="space-y-4 px-6 pt-5 pb-6">
-          {/* Title */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">
-              Task title <span className="text-red-500">*</span>
-            </label>
-            <Input
-              ref={titleRef}
-              id="task-title-input"
-              placeholder="e.g. Call Ananya about Bali visa"
-              value={form.title}
-              onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && canSubmit) onAdd(form);
-              }}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Type pills */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold">Type</label>
-            <div className="flex flex-wrap gap-2">
-              {TASK_TYPES.map((t) => {
-                const Ic = TYPE_ICONS[t];
-                const active = form.type === t;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setForm((f) => ({ ...f, type: t }))}
-                    className={`flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-semibold transition-all ${
-                      active
-                        ? `${TYPE_COLORS[t]} border-transparent shadow-sm`
-                        : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                    }`}
-                  >
-                    <Ic className="h-3 w-3" />
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Priority pills */}
-          <div>
-            <label className="mb-2 block text-sm font-semibold">Priority</label>
-            <div className="flex gap-2">
-              {PRIORITIES.map((p) => (
-                <button
-                  key={p}
-                  type="button"
-                  onClick={() => setForm((f) => ({ ...f, priority: p }))}
-                  className={`flex items-center gap-1.5 rounded-xl border px-4 py-1.5 text-xs font-semibold transition-all ${
-                    form.priority === p
-                      ? `${PRIORITY_PILL[p]} border-transparent shadow-sm`
-                      : "border-border bg-background text-muted-foreground hover:bg-secondary"
-                  }`}
-                >
-                  <span className={`h-1.5 w-1.5 rounded-full ${PRIORITY_DOT[p]}`} />
-                  {p}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Assignee & Due Date */}
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold">Assignee</label>
-              <select
-                id="task-assignee-select"
-                value={form.assignee}
-                onChange={(e) => setForm((f) => ({ ...f, assignee: e.target.value }))}
-                className={fieldCls}
-              >
-                {assignees.map((a) => (
-                  <option key={a}>{a}</option>
-                ))}
-              </select>
-            </div>
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold">
-                Due date <span className="text-red-500">*</span>
-              </label>
-              <Input
-                id="task-due-date-input"
-                type="date"
-                value={form.dueDate}
-                onChange={(e) => setForm((f) => ({ ...f, dueDate: e.target.value }))}
-                className="rounded-xl"
-              />
-            </div>
-          </div>
-
-          {/* Lead */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">
-              Lead / Customer <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <Input
-              id="task-lead-input"
-              placeholder="e.g. Ananya Verma"
-              value={form.lead}
-              onChange={(e) => setForm((f) => ({ ...f, lead: e.target.value }))}
-              className="rounded-xl"
-            />
-          </div>
-
-          {/* Note */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">
-              Note <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <textarea
-              id="task-note-input"
-              placeholder="Context or reminder details..."
-              value={form.note}
-              onChange={(e) => setForm((f) => ({ ...f, note: e.target.value }))}
-              rows={2}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-            />
-          </div>
-
-          {/* Actions */}
-          <div className="flex gap-3 pt-1">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              id="submit-task-btn"
-              className="flex-1 gap-2 rounded-xl"
-              style={{ background: canSubmit ? "var(--gradient-brand)" : undefined }}
-              onClick={() => canSubmit && onAdd(form)}
-              disabled={!canSubmit}
-            >
-              <Plus className="h-4 w-4" /> Add Task
-            </Button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-/* ─── Filter pill ─────────────────────────────────────── */
-function Pill({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      className={`rounded-full border px-3.5 py-1.5 text-xs font-semibold transition-all ${
-        active
-          ? "border-primary bg-primary text-primary-foreground shadow-sm"
-          : "border-border bg-background text-muted-foreground hover:bg-secondary hover:text-foreground"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
-
-/* ─── Main page ──────────────────────────────────────── */
 function TasksPage() {
+  const { user } = getAuth();
+  const isAdmin = user?.role === "admin";
+  const currentUser = user?.username || "Admin";
+
   const [tasks, setTasks] = useSupabaseTable<Task[]>("tasks", SEED);
-  const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
-  const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
-  const auth = getAuth();
-  const assignees = Array.from(
-    new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
-  );
-  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
-  const userAssigneeName = auth?.name || "";
+  const [employees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
 
-  const [showModal, setShowModal] = useState(false);
-  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [filterStatus, setFilterStatus] = useState<"All" | TaskStatus | "Overdue">("All");
-  const [filterPriority, setFilterPriority] = useState<"All" | Priority>("All");
-  const [filterType, setFilterType] = useState<"All" | TaskType>("All");
-  const [filterAssignee, setFilterAssignee] = useState<"All" | string>("All");
+  const [currentView, setCurrentView] = useState<"list" | "individual" | "group" | "calendar">("list");
+  
+  // Modals state
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [newNote, setNewNote] = useState("");
+  const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
+  const [tableEditNoteText, setTableEditNoteText] = useState("");
+  const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [formData, setFormData] = useState<Partial<Task>>({
+    title: "", description: "", assigned_to: "", customer_id: "", booking_id: "",
+    priority: "Medium", status: "Pending", progress: 0,
+    start_date: new Date().toISOString().split('T')[0],
+    due_date: new Date().toISOString().split('T')[0]
+  });
+  const [taskType, setTaskType] = useState<"Individual" | "Group">("Individual");
+  const [subTasks, setSubTasks] = useState<{ title: string, assigned_to: string }[]>([]);
+  const [calendarDate, setCalendarDate] = useState(new Date());
 
-  // Persist every time tasks change
+  const totalTasks = tasks.length;
+  const pendingTasks = tasks.filter(t => t.status === "Pending").length;
+  const inProgressTasks = tasks.filter(t => t.status === "In Progress").length;
+  const completedTasks = tasks.filter(t => t.status === "Completed").length;
+  const overdueTasks = tasks.filter(t => {
+    const d = t.due_date || (t as any).dueDate;
+    return t.status !== "Completed" && t.status !== "Done" && d && new Date(d) < new Date();
+  }).length;
 
-  const toggle = (id: string) =>
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === id ? ({ ...t, status: t.status === "Done" ? "Pending" : "Done" } as Task) : t,
-      ),
-    );
-
-  const remove = (id: string) => setTasks((prev) => prev.filter((t) => t.id !== id));
-
-  const addTask = (formData: Omit<Task, "id" | "status">) => {
-    const id = `T-${String(Date.now()).slice(-4)}`;
-    setTasks((prev) => [{ ...formData, id, status: "Pending" }, ...prev]);
-    setShowModal(false);
+  const handleEditTask = (task: Task) => {
+    setIsEditing(task.id);
+    setFormData({
+      title: task.title,
+      description: task.description || "",
+      assigned_to: task.assigned_to || (task as any).assignee || "",
+      customer_id: task.customer_id || (task as any).lead || "",
+      booking_id: task.booking_id || "",
+      priority: task.priority as Priority,
+      status: task.status as TaskStatus,
+      progress: task.progress || 0,
+      start_date: task.start_date ? task.start_date.split('T')[0] : new Date().toISOString().split('T')[0],
+      due_date: (task.due_date || (task as any).dueDate) ? String(task.due_date || (task as any).dueDate).split('T')[0] : new Date().toISOString().split('T')[0]
+    });
+    setTaskType(task.task_type === "Group" ? "Group" : "Individual");
+    setSubTasks([]); // Not supporting editing existing sub-tasks deeply for now, they are edited individually
+    setSelectedFiles([]);
+    setShowCreateModal(true);
   };
 
-  const visibleTasks = isAdmin
-    ? tasks
-    : tasks.filter((t) => t.assignee.toLowerCase() === userAssigneeName.toLowerCase());
-
-  const filtered = visibleTasks.filter((t) => {
-    if (filterStatus === "Overdue") {
-      if (t.status !== "Pending" || t.dueDate >= today) return false;
-    } else if (filterStatus !== "All" && t.status !== filterStatus) {
-      return false;
+  const handleDeleteTask = (taskId: string) => {
+    if (confirm("Are you sure you want to delete this task?")) {
+      setTasks(prev => prev.filter(t => t.id !== taskId && t.parent_id !== taskId));
     }
-    if (filterPriority !== "All" && t.priority !== filterPriority) return false;
-    if (filterType !== "All" && t.type !== filterType) return false;
-    if (isAdmin && filterAssignee !== "All" && t.assignee !== filterAssignee) return false;
-    return true;
-  });
+  };
 
-  const pending = visibleTasks.filter((t) => t.status === "Pending").length;
-  const done = visibleTasks.filter((t) => t.status === "Done").length;
-  const overdue = visibleTasks.filter((t) => t.status === "Pending" && t.dueDate < today).length;
-  const total = visibleTasks.length;
+  const handleSaveTask = () => {
+    if (!formData.title?.trim()) return;
 
-  /* Keyboard shortcut: N → open modal */
-  useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (
-        e.key === "n" &&
-        !showModal &&
-        (e.target as HTMLElement).tagName !== "INPUT" &&
-        (e.target as HTMLElement).tagName !== "TEXTAREA"
-      ) {
-        setShowModal(true);
+    if (isEditing) {
+      setTasks(prev => prev.map(t => {
+        if (t.id === isEditing) {
+          return {
+            ...t,
+            title: formData.title || t.title,
+            description: formData.description || "",
+            assigned_to: formData.assigned_to || "",
+            customer_id: formData.customer_id || "",
+            booking_id: formData.booking_id || "",
+            priority: (formData.priority || t.priority) as Priority,
+            status: (formData.status || t.status) as TaskStatus,
+            progress: formData.progress || 0,
+            start_date: formData.start_date || t.start_date,
+            due_date: formData.due_date || t.due_date,
+            completed_at: formData.status === "Completed" && t.status !== "Completed" ? new Date().toISOString() : t.completed_at
+          };
+        }
+        return t;
+      }));
+    } else {
+      let nextTaskNum = tasks.length > 0 ? Math.max(...tasks.map(t => t.task_number || 0)) + 1 : 1;
+      
+      const filesToSave = selectedFiles.map(f => ({
+        name: f.name,
+        url: URL.createObjectURL(f)
+      }));
+
+      const newTask: Task = {
+        id: crypto.randomUUID(),
+        task_number: nextTaskNum,
+        title: formData.title || "",
+        description: formData.description || "",
+        assigned_to: taskType === "Individual" ? (formData.assigned_to || "") : "",
+        customer_id: formData.customer_id || "",
+        booking_id: formData.booking_id || "",
+        created_by: currentUser,
+        priority: (formData.priority || "Medium") as Priority,
+        status: (formData.status || "Pending") as TaskStatus,
+        progress: formData.progress || 0,
+        start_date: formData.start_date || new Date().toISOString().split('T')[0],
+        due_date: formData.due_date || new Date().toISOString().split('T')[0],
+        completed_at: formData.status === "Completed" ? new Date().toISOString() : null,
+        attachments: filesToSave,
+        created_at: new Date().toISOString(),
+        task_type: taskType
+      };
+
+      const newTasksToAdd = [newTask];
+
+      if (taskType === "Group" && subTasks.length > 0) {
+        subTasks.forEach(st => {
+          if (!st.title.trim()) return;
+          nextTaskNum++;
+          newTasksToAdd.push({
+            id: crypto.randomUUID(),
+            task_number: nextTaskNum,
+            title: st.title,
+            description: "",
+            assigned_to: st.assigned_to,
+            customer_id: formData.customer_id || "",
+            booking_id: formData.booking_id || "",
+            created_by: currentUser,
+            priority: (formData.priority || "Medium") as Priority,
+            status: "Pending",
+            progress: 0,
+            start_date: formData.start_date || new Date().toISOString().split('T')[0],
+            due_date: formData.due_date || new Date().toISOString().split('T')[0],
+            completed_at: null,
+            attachments: [],
+            created_at: new Date().toISOString(),
+            task_type: "Subtask",
+            parent_id: newTask.id
+          });
+        });
       }
-      if (e.key === "Escape" && showModal) setShowModal(false);
+
+      setTasks([...tasks, ...newTasksToAdd]);
+    }
+
+    setShowCreateModal(false);
+    setSelectedFiles([]);
+    setIsEditing(null);
+    setFormData({
+      title: "", description: "", assigned_to: "", customer_id: "", booking_id: "",
+      priority: "Medium", status: "Pending", progress: 0,
+      start_date: new Date().toISOString().split('T')[0],
+      due_date: new Date().toISOString().split('T')[0]
+    });
+  };
+
+  const getDisplayId = (t: Task) => {
+    if (!t) return "";
+    let baseStr = "";
+    if (t.task_number) {
+      baseStr = `T-${String(t.task_number).padStart(3, '0')}`;
+    } else {
+      const strId = String(t.id || "").toUpperCase();
+      baseStr = (strId.startsWith('T-') || strId.startsWith('TSK-')) ? strId : `T-${strId.slice(0, 4)}`;
+    }
+
+    if (t.task_type === "Subtask" && t.parent_id) {
+       const siblings = tasks.filter(x => x.parent_id === t.parent_id).sort((a,b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime());
+       const idx = siblings.findIndex(x => x.id === t.id);
+       const letter = String.fromCharCode(65 + Math.max(0, idx));
+       return `${baseStr}-${letter}`;
+    }
+    return baseStr;
+  };
+
+  const updateTaskStatus = (taskId: string, status: TaskStatus) => {
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        return { 
+          ...t, 
+          status, 
+          progress: status === "Completed" ? 100 : (status === "Pending" ? 0 : 50),
+          completed_at: status === "Completed" ? new Date().toISOString() : null
+        };
+      }
+      return t;
+    }));
+    if (viewingTask && viewingTask.id === taskId) {
+      setViewingTask(prev => prev ? {
+        ...prev,
+        status,
+        progress: status === "Completed" ? 100 : (status === "Pending" ? 0 : 50),
+        completed_at: status === "Completed" ? new Date().toISOString() : null
+      } : prev);
+    }
+  };
+
+  const handleAddNote = (taskId: string) => {
+    if (!newNote.trim()) return;
+    
+    const note = {
+      id: crypto.randomUUID(),
+      content: newNote,
+      created_at: new Date().toISOString(),
+      created_by: currentUser || "Me"
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [showModal, isAdmin]);
+
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          notes: [...(t.notes || []), note]
+        };
+      }
+      return t;
+    }));
+    
+    if (viewingTask && viewingTask.id === taskId) {
+       setViewingTask(prev => prev ? { ...prev, notes: [...(prev.notes || []), note] } : prev);
+    }
+    
+    setNewNote("");
+  };
+
+  const handleTableAddNote = (taskId: string) => {
+    if (!tableEditNoteText.trim()) {
+      setEditingTableNoteId(null);
+      return;
+    }
+    
+    const note = {
+      id: crypto.randomUUID(),
+      content: tableEditNoteText,
+      created_at: new Date().toISOString(),
+      created_by: currentUser || "Me"
+    };
+
+    setTasks(prev => prev.map(t => {
+      if (t.id === taskId) {
+        return {
+          ...t,
+          notes: [...(t.notes || []), note]
+        };
+      }
+      return t;
+    }));
+    
+    if (viewingTask && viewingTask.id === taskId) {
+       setViewingTask(prev => prev ? { ...prev, notes: [...(prev.notes || []), note] } : prev);
+    }
+    
+    setTableEditNoteText("");
+    setEditingTableNoteId(null);
+  };
 
   return (
-    <>
-      <div className="space-y-6">
-        {/* ── Header ── */}
-        <div className="flex flex-wrap items-center justify-between gap-4">
-          <div>
-            <h1 className="font-display text-3xl font-bold">Tasks &amp; Follow-ups</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Manage calls, emails and payment reminders.
-            </p>
-          </div>
-          <Button
-            id="add-task-btn"
-            onClick={() => setShowModal(true)}
-            className="gap-2 rounded-xl px-5"
-            style={{ background: "var(--gradient-brand)" }}
-          >
-            <Plus className="h-4 w-4" /> Add Task
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-slate-50/50 p-6 overflow-hidden">
+      {/* Dashboard Top Row */}
+      <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Task Management</h1>
+          <p className="text-sm text-slate-500">Track and manage your team's workflow</p>
+        </div>
+        <Button onClick={() => { setIsEditing(null); setShowCreateModal(true); }} className="gap-2">
+          <Plus className="h-4 w-4" />
+          Create Task
+        </Button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-5 mb-6">
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Total Tasks</p>
+          <p className="mt-2 text-3xl font-bold text-slate-900">{totalTasks}</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-slate-700">{pendingTasks}</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">In Progress</p>
+          <p className="mt-2 text-3xl font-bold text-blue-600">{inProgressTasks}</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Completed</p>
+          <p className="mt-2 text-3xl font-bold text-emerald-600">{completedTasks}</p>
+        </div>
+        <div className="rounded-xl border bg-white p-4 shadow-sm">
+          <p className="text-sm font-medium text-slate-500">Overdue</p>
+          <p className="mt-2 text-3xl font-bold text-red-600">{overdueTasks}</p>
+        </div>
+      </div>
+
+      {/* Main Content Area */}
+      <div className="flex-1 rounded-xl border bg-white shadow-sm overflow-hidden flex flex-col">
+        <div className="border-b px-4 py-3 flex justify-end gap-2">
+          <Button variant={currentView === "list" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("list")} className="gap-2">
+            <List className="h-4 w-4" /> List View
+          </Button>
+          <Button variant={currentView === "individual" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("individual")} className="gap-2">
+            <User className="h-4 w-4" /> Individual Tasks
+          </Button>
+          <Button variant={currentView === "group" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("group")} className="gap-2">
+            <Users className="h-4 w-4" /> Group Tasks
+          </Button>
+          <Button variant={currentView === "calendar" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("calendar")} className="gap-2">
+            <Calendar className="h-4 w-4" /> Calendar View
           </Button>
         </div>
 
-        {/* ── Stat cards ── */}
-        <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard
-            label="Pending"
-            value={pending}
-            total={total}
-            color="bg-amber-100  text-amber-600"
-            icon={<Clock className="h-4 w-4" />}
-            onClick={() => setFilterStatus(filterStatus === "Pending" ? "All" : "Pending")}
-            active={filterStatus === "Pending"}
-          />
-          <StatCard
-            label="Completed"
-            value={done}
-            total={total}
-            color="bg-emerald-100 text-emerald-600"
-            icon={<CheckCircle2 className="h-4 w-4" />}
-            onClick={() => setFilterStatus(filterStatus === "Done" ? "All" : "Done")}
-            active={filterStatus === "Done"}
-          />
-          <StatCard
-            label="Overdue"
-            value={overdue}
-            total={total}
-            color="bg-red-100    text-red-600"
-            icon={<AlertCircle className="h-4 w-4" />}
-            onClick={() => setFilterStatus(filterStatus === "Overdue" ? "All" : "Overdue")}
-            active={filterStatus === "Overdue"}
-          />
-        </div>
-
-        {/* ── Filters ── */}
-        <div className="rounded-2xl border border-border bg-card p-4 shadow-card">
-          <div className="flex flex-wrap items-center justify-end gap-4">
-            <span className="mr-auto text-sm font-medium text-muted-foreground">
-              {filtered.length} task{filtered.length !== 1 ? "s" : ""}
-            </span>
-
-            <Filter className="h-4 w-4 shrink-0 text-muted-foreground" />
-
-            {/* Status */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground font-medium">Status:</span>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as "All" | TaskStatus | "Overdue")}
-                className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-              >
-                <option value="All">All Statuses</option>
-                <option value="Pending">⏳ Pending</option>
-                <option value="Done">✅ Done</option>
-                <option value="Overdue">🚨 Overdue</option>
-              </select>
-            </div>
-
-            {/* Priority */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground font-medium">Priority:</span>
-              <select
-                value={filterPriority}
-                onChange={(e) => setFilterPriority(e.target.value as Priority | "All")}
-                className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-              >
-                <option value="All">All Priorities</option>
-                {PRIORITIES.map((p) => (
-                  <option key={p} value={p}>{p}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Type */}
-            <div className="flex items-center gap-2 text-sm">
-              <span className="text-muted-foreground font-medium">Type:</span>
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as TaskType | "All")}
-                className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-              >
-                <option value="All">All Types</option>
-                {TASK_TYPES.map((t) => (
-                  <option key={t} value={t}>{t}</option>
-                ))}
-              </select>
-            </div>
-
-            {/* Assignee */}
-            {isAdmin && (
-              <div className="flex items-center gap-2 text-sm">
-                <span className="text-muted-foreground font-medium">Assignee:</span>
-                <select
-                  value={filterAssignee}
-                  onChange={(e) => setFilterAssignee(e.target.value)}
-                  className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-                >
-                  <option value="All">All Assignees</option>
-                  {assignees.map((a) => (
-                    <option key={a} value={a}>{a.split(" ")[0]}</option>
-                  ))}
-                </select>
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* ── Task list ── */}
-        <div className="space-y-2.5">
-          {filtered.length === 0 ? (
-            <div className="grid min-h-[28vh] place-items-center rounded-2xl border border-dashed border-border bg-card p-10 text-center">
-              <div>
-                <ListChecks className="mx-auto h-12 w-12 text-primary/25" />
-                <p className="mt-4 font-semibold text-foreground/70">All clear here!</p>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  No tasks match the current filters.
-                </p>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="mt-4 rounded-xl"
-                  onClick={() => {
-                    setFilterStatus("All");
-                    setFilterPriority("All");
-                    setFilterType("All");
-                  }}
-                >
-                  Clear filters
-                </Button>
-              </div>
-            </div>
-          ) : (
-            filtered.map((t) => (
-              <TaskCard
-                key={t.id}
-                task={t}
-                isAdmin={isAdmin}
-                onToggle={() => {
-                  const newTasks = tasks.map((x) =>
-                    x.id === t.id
-                      ? {
-                          ...x,
-                          status:
-                            x.status === "Pending"
-                              ? ("Done" as TaskStatus)
-                              : ("Pending" as TaskStatus),
-                        }
-                      : x,
-                  );
-                  setTasks(newTasks);
-                }}
-                onEditNote={(newNote) => {
-                  const newTasks = tasks.map((x) => {
-                    if (x.id === t.id) {
-                      const currentNotes = x.notes || [];
-                      return {
-                        ...x,
-                        notes: [
-                          ...currentNotes,
-                          { text: newNote, createdAt: new Date().toISOString() },
-                        ],
-                      };
-                    }
-                    return x;
-                  });
-                  setTasks(newTasks);
-                }}
-                onDelete={() => {
-                  setDeleteConfirmId(t.id);
-                }}
-              />
-            ))
+        <div className="flex-1 overflow-auto p-4">
+          {(currentView === "list" || currentView === "group") && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">Task ID</TableHead>
+                  <TableHead>Task Name</TableHead>
+                  <TableHead>Assigned To</TableHead>
+                  <TableHead>Customer</TableHead>
+                  <TableHead>Priority</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Due Date</TableHead>
+                  <TableHead>Progress</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {tasks.length === 0 ? (
+                   <TableRow>
+                     <TableCell colSpan={9} className="text-center py-8 text-slate-500">No tasks found. Create one to get started.</TableCell>
+                   </TableRow>
+                ) : tasks.filter(t => !t.parent_id && (currentView === "group" ? t.task_type === "Group" : true)).map((task) => {
+  const subTasks = tasks.filter(st => st.parent_id === task.id);
+  return (
+    <React.Fragment key={task.id}>
+                  <TableRow key={task.id} className={task.task_type === "Group" ? "bg-slate-50/50" : ""}>
+                    <TableCell className="font-medium text-slate-500">#{getDisplayId(task)}</TableCell>
+                    <TableCell className="font-semibold">{task.title}</TableCell>
+                    <TableCell className="align-top min-w-[200px]">
+                      <div className="mb-2 font-medium text-gray-800">{task.assigned_to || (task as any).assignee || "-"}</div>
+                      <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5">
+                        {task.notes && task.notes.length > 0 && (
+                          task.notes.map((n: any, i: number) => (
+                            <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                              <span className="text-muted-foreground/60">•</span>
+                              <span className="text-muted-foreground">{n.content}</span>
+                              {n.created_at && (
+                                <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
+                                  ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                </span>
+                              )}
+                            </div>
+                          ))
+                        )}
+                        <div className="mt-1">
+                          {editingTableNoteId === task.id ? (
+                            <div className="flex flex-col gap-2 mt-1">
+                              <textarea
+                                autoFocus
+                                value={tableEditNoteText}
+                                onChange={(e) => setTableEditNoteText(e.target.value)}
+                                className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="Write a note..."
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleTableAddNote(task.id);
+                                  } else if (e.key === "Escape") {
+                                    setEditingTableNoteId(null);
+                                    setTableEditNoteText("");
+                                  }
+                                }}
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="ghost" onClick={() => { setEditingTableNoteId(null); setTableEditNoteText(""); }} className="h-6 text-xs px-2">Cancel</Button>
+                                <Button size="sm" onClick={() => handleTableAddNote(task.id)} className="h-6 text-xs px-2 bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTableNoteId(task.id);
+                                setTableEditNoteText("");
+                              }}
+                              className="text-sm text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
+                            >
+                              + Add Note
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{task.customer_id || (task as any).lead || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={PRIORITY_COLORS[task.priority] || "bg-slate-100 text-slate-800"}>{task.priority}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={STATUS_COLORS[task.status] || "bg-slate-100 text-slate-800"}>{task.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-slate-600 text-sm">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {(task.due_date || (task as any).dueDate) 
+                           ? new Date(task.due_date || (task as any).dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short'}) 
+                           : "N/A"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                           const p = task.progress ?? (task.status === "Completed" || task.status === "Done" as any ? 100 : 0);
+                           return (
+                             <>
+                               <Progress value={p} className="h-2 w-16" />
+                               <span className="text-xs text-slate-500">{p}%</span>
+                             </>
+                           );
+                        })()}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditTask(task)}>
+                          <Edit className="h-4 w-4 text-slate-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setViewingTask(task)}>
+                          <Eye className="h-4 w-4 text-slate-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+      {subTasks.length > 0 && subTasks.map((st) => (
+                  <TableRow className="bg-slate-50/80" key={st.id}>
+                    <TableCell className="font-medium text-slate-500 pl-8 relative"><div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-slate-300"></div><div className="absolute left-3 top-0 bottom-1/2 w-[1px] bg-slate-300"></div>#{getDisplayId(st)}</TableCell>
+                    <TableCell className="font-semibold">{st.title}</TableCell>
+                    <TableCell className="align-top min-w-[200px]">
+                      <div className="mb-2 font-medium text-gray-800">{st.assigned_to || (st as any).assignee || "-"}</div>
+                      <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5">
+                        {st.notes && st.notes.length > 0 && (
+                          st.notes.map((n: any, i: number) => (
+                            <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                              <span className="text-muted-foreground/60">•</span>
+                              <span className="text-muted-foreground">{n.content}</span>
+                              {n.created_at && (
+                                <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
+                                  ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                </span>
+                              )}
+                            </div>
+                          ))
+                        )}
+                        <div className="mt-1">
+                          {editingTableNoteId === st.id ? (
+                            <div className="flex flex-col gap-2 mt-1">
+                              <textarea
+                                autoFocus
+                                value={tableEditNoteText}
+                                onChange={(e) => setTableEditNoteText(e.target.value)}
+                                className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                placeholder="Write a note..."
+                                onKeyDown={(e) => {
+                                  if (e.key === "Enter" && !e.shiftKey) {
+                                    e.preventDefault();
+                                    handleTableAddNote(st.id);
+                                  } else if (e.key === "Escape") {
+                                    setEditingTableNoteId(null);
+                                    setTableEditNoteText("");
+                                  }
+                                }}
+                              />
+                              <div className="flex justify-end gap-2">
+                                <Button size="sm" variant="ghost" onClick={() => { setEditingTableNoteId(null); setTableEditNoteText(""); }} className="h-6 text-xs px-2">Cancel</Button>
+                                <Button size="sm" onClick={() => handleTableAddNote(st.id)} className="h-6 text-xs px-2 bg-blue-600 hover:bg-blue-700 text-white">Save</Button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setEditingTableNoteId(st.id);
+                                setTableEditNoteText("");
+                              }}
+                              className="text-sm text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
+                            >
+                              + Add Note
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>{st.customer_id || (st as any).lead || "-"}</TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={PRIORITY_COLORS[st.priority] || "bg-slate-100 text-slate-800"}>{st.priority}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant="outline" className={STATUS_COLORS[st.status] || "bg-slate-100 text-slate-800"}>{st.status}</Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-1.5 text-slate-600 text-sm">
+                        <CalendarDays className="h-3.5 w-3.5" />
+                        {(st.due_date || (st as any).dueDate) 
+                           ? new Date(st.due_date || (st as any).dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short'}) 
+                           : "N/A"}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        {(() => {
+                           const p = st.progress ?? (st.status === "Completed" || st.status === "Done" as any ? 100 : 0);
+                           return (
+                             <>
+                               <Progress value={p} className="h-2 w-16" />
+                               <span className="text-xs text-slate-500">{p}%</span>
+                             </>
+                           );
+                        })()}
+                      </div>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end items-center gap-1">
+                        <Button variant="ghost" size="icon" onClick={() => handleEditTask(st)}>
+                          <Edit className="h-4 w-4 text-slate-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => setViewingTask(st)}>
+                          <Eye className="h-4 w-4 text-slate-500" />
+                        </Button>
+                        <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
+                          <Trash2 className="h-4 w-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+      ))}
+    </React.Fragment>
+  )
+})}
+              </TableBody>
+            </Table>
           )}
-        </div>
 
-        {/* ── Completion footer ── */}
-        {filtered.length > 0 && (
-          <div className="flex items-center gap-3 rounded-2xl border border-border bg-card px-5 py-3.5 shadow-card">
-            <Sparkles className="h-4 w-4 shrink-0 text-primary" />
-            <div className="flex-1">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-border">
-                <div
-                  className="h-full rounded-full transition-all duration-700"
-                  style={{
-                    width: `${total > 0 ? Math.round((done / total) * 100) : 0}%`,
-                    background: "var(--gradient-brand)",
-                  }}
-                />
-              </div>
+          {currentView === "individual" && (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+               {employees.map(emp => {
+                 const empTasks = tasks.filter(t => (t.assigned_to || (t as any).assignee) === emp.name);
+                 if (empTasks.length === 0) return null;
+                 return (
+                   <div key={emp.id} className="rounded-xl border bg-slate-50 p-4">
+                     <div className="flex items-center gap-3 mb-4">
+                       <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center font-bold text-brand">
+                         {emp.name.charAt(0)}
+                       </div>
+                       <div>
+                         <h3 className="font-bold text-slate-900">{emp.name}</h3>
+                         <p className="text-xs text-slate-500">{empTasks.length} Assigned Tasks</p>
+                       </div>
+                     </div>
+                     <div className="space-y-3">
+                       {empTasks.map(t => (
+                         <div key={t.id} className="group flex items-start gap-3 rounded-lg border bg-white p-3 shadow-sm hover:border-brand/50">
+                           <div className="mt-0.5">
+                             {t.status === "Completed" ? (
+                               <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+                             ) : (
+                               <Circle className="h-5 w-5 text-slate-300" />
+                             )}
+                           </div>
+                           <div className="flex-1">
+                             <p onClick={() => setViewingTask(t)} className={`cursor-pointer text-sm font-medium ${t.status === "Completed" || t.status === "Done" ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                               {t.task_type === "Subtask" && <Badge variant="secondary" className="mr-2 text-[9px] px-1 py-0 h-4 bg-brand/10 text-brand border-brand/20">Sub-Task</Badge>}
+                               {t.title}
+                             </p>
+                             <div className="mt-1 flex items-center justify-between">
+                                <div className="flex items-center gap-2">
+                                  <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${PRIORITY_COLORS[t.priority] || "bg-slate-100"}`}>{t.priority}</Badge>
+                                  <span className="text-[10px] text-slate-500">
+                                    {(t.due_date || (t as any).dueDate) 
+                                      ? new Date(t.due_date || (t as any).dueDate).toLocaleDateString() 
+                                      : "N/A"}
+                                  </span>
+                                </div>
+                                <div className="flex gap-1">
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditTask(t)}>
+                                    <Edit className="h-3.5 w-3.5 text-slate-400" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingTask(t)}>
+                                    <Eye className="h-3.5 w-3.5 text-slate-400" />
+                                  </Button>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
+                                    <Trash2 className="h-3.5 w-3.5 text-red-400" />
+                                  </Button>
+                                </div>
+                             </div>
+                           </div>
+                         </div>
+                       ))}
+                     </div>
+                   </div>
+                 )
+               })}
             </div>
-            <p className="shrink-0 text-xs font-semibold text-muted-foreground">
-              {done}/{total} tasks completed
-            </p>
-          </div>
-        )}
+          )}
+
+
+          {currentView === "calendar" && (() => {
+             const year = calendarDate.getFullYear();
+             const month = calendarDate.getMonth();
+             const firstDayOfMonth = new Date(year, month, 1);
+             const startDay = firstDayOfMonth.getDay();
+             const daysInMonth = new Date(year, month + 1, 0).getDate();
+             const monthName = firstDayOfMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+             const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+             const daysArray = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+             
+             return (
+               <div className="bg-white rounded-xl border shadow-sm p-6 overflow-hidden">
+                 <div className="flex items-center justify-between mb-6">
+                   <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                     <Calendar className="h-5 w-5 text-brand" />
+                     {monthName}
+                   </h2>
+                   <div className="flex gap-2">
+                     <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date(year, month - 1, 1))}>Prev</Button>
+                     <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date())}>Today</Button>
+                     <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date(year, month + 1, 1))}>Next</Button>
+                   </div>
+                 </div>
+                 
+                 <div className="grid grid-cols-7 gap-px bg-slate-200 border bg-slate-200 rounded-lg overflow-hidden">
+                   {weekDays.map(day => (
+                     <div key={day} className="bg-slate-50 p-3 text-center text-sm font-semibold text-slate-600">
+                       {day}
+                     </div>
+                   ))}
+                   
+                   {Array.from({ length: startDay }).map((_, i) => (
+                     <div key={`empty-${i}`} className="bg-white p-2 min-h-[120px]" />
+                   ))}
+                   
+                   {daysArray.map(date => {
+                     const isToday = new Date().toDateString() === date.toDateString();
+                     const dateStr = date.toISOString().split('T')[0];
+                     const dayTasks = tasks.filter(t => (t.due_date || (t as any).dueDate)?.startsWith(dateStr));
+                     
+                     return (
+                       <div key={date.toISOString()} className={`bg-white p-2 min-h-[120px] transition-colors hover:bg-slate-50/50 ${isToday ? 'bg-blue-50/30' : ''}`}>
+                         <div className="flex justify-between items-start mb-2">
+                           <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-brand text-white shadow-sm' : 'text-slate-700'}`}>
+                             {date.getDate()}
+                           </span>
+                           {dayTasks.length > 0 && (
+                              <Badge variant="secondary" className="text-[10px] px-1.5 h-5 bg-slate-100">{dayTasks.length}</Badge>
+                           )}
+                         </div>
+                         <div className="space-y-1.5 overflow-y-auto max-h-[80px] pr-1 scrollbar-thin">
+                           {dayTasks.map(t => (
+                             <div 
+                               key={t.id} 
+                               onClick={() => setViewingTask(t)}
+                               className={`text-[10px] px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 border ${
+                                 t.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 
+                                 t.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' : 
+                                 'bg-white text-slate-700 border-slate-200 shadow-sm'
+                               }`}
+                             >
+                               {t.title}
+                             </div>
+                           ))}
+                         </div>
+                       </div>
+                     );
+                   })}
+                 </div>
+               </div>
+             );
+          })()}
+        </div>
       </div>
 
-      {/* ── Modal ── */}
-      {showModal && (
-        <AddTaskModal assignees={assignees} onClose={() => setShowModal(false)} onAdd={addTask} />
-      )}
+      {/* Modals */}
+      <Dialog open={showCreateModal} onOpenChange={(open) => {
+        setShowCreateModal(open);
+        if (!open) setIsEditing(null);
+      }}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? "Edit Task" : "Create New Task"}</DialogTitle>
+          </DialogHeader>
 
-      {/* Delete Confirmation Modal */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm animate-in fade-in p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-card p-6 shadow-2xl animate-in zoom-in-95">
-            <h3 className="text-xl font-bold font-display text-foreground">Delete Task?</h3>
-            <p className="mt-2 text-sm text-muted-foreground">
-              Are you sure you want to delete this task? This action cannot be undone.
-            </p>
-            <div className="mt-6 flex justify-end gap-3">
-              <Button
-                variant="ghost"
-                onClick={() => setDeleteConfirmId(null)}
-                className="rounded-xl"
+          {!isEditing && (
+            <div className="flex bg-slate-100 p-1 rounded-lg w-fit mt-2">
+              <button 
+                onClick={() => setTaskType("Individual")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Individual" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
-                Cancel
-              </Button>
-              <Button
-                variant="destructive"
-                onClick={() => {
-                  const newTasks = tasks.filter((x) => x.id !== deleteConfirmId);
-                  setTasks(newTasks);
-
-                  setDeleteConfirmId(null);
-                }}
-                className="rounded-xl"
+                Individual Task
+              </button>
+              <button 
+                onClick={() => setTaskType("Group")}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Group" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
               >
-                Delete
-              </Button>
+                Group Task
+              </button>
             </div>
+          )}
+
+          <div className="grid grid-cols-2 gap-4 py-4">
+            <div className="col-span-2 space-y-2">
+              <label className="text-sm font-medium">{taskType === "Group" ? "Main Task Name *" : "Task Name *"}</label>
+              <Input placeholder="E.g., Dubai Visa Processing" value={formData.title} onChange={e => setFormData(f => ({...f, title: e.target.value}))} />
+            </div>
+            
+            <div className="col-span-2 space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Textarea rows={3} placeholder="Task details..." value={formData.description} onChange={e => setFormData(f => ({...f, description: e.target.value}))} />
+            </div>
+
+            {taskType === "Individual" && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Assigned To</label>
+                <Select value={formData.assigned_to} onValueChange={v => setFormData(f => ({...f, assigned_to: v}))}>
+                  <SelectTrigger><SelectValue placeholder="Select team member" /></SelectTrigger>
+                  <SelectContent>
+                    {employees.map(emp => (
+                      <SelectItem key={emp.id} value={emp.name}>{emp.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Customer (Optional)</label>
+              <Input placeholder="E.g., Rahul Sharma" value={formData.customer_id} onChange={e => setFormData(f => ({...f, customer_id: e.target.value}))} />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Priority</label>
+              <Select value={formData.priority} onValueChange={(v: Priority) => setFormData(f => ({...f, priority: v}))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {PRIORITIES.map(p => (
+                    <SelectItem key={p} value={p}>{p}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select value={formData.status} onValueChange={(v: TaskStatus) => setFormData(f => ({...f, status: v}))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {STATUSES.map(s => (
+                    <SelectItem key={s} value={s}>{s}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input type="date" value={formData.start_date} onChange={e => setFormData(f => ({...f, start_date: e.target.value}))} />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Due Date</label>
+              <Input type="date" value={formData.due_date} onChange={e => setFormData(f => ({...f, due_date: e.target.value}))} />
+            </div>
+
+            {taskType === "Group" && !isEditing && (
+              <div className="col-span-2 mt-4 space-y-4 rounded-lg border border-brand/20 bg-brand/5 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold text-brand">Sub-Tasks</p>
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    size="sm" 
+                    className="h-7 text-xs gap-1"
+                    onClick={() => setSubTasks([...subTasks, { title: "", assigned_to: "" }])}
+                  >
+                    <Plus className="h-3 w-3" /> Add Sub-Task
+                  </Button>
+                </div>
+                
+                {subTasks.length === 0 ? (
+                  <p className="text-xs text-slate-500 text-center py-2">No sub-tasks added yet.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {subTasks.map((st, idx) => (
+                      <div key={idx} className="flex items-start gap-2 bg-white p-2 rounded border shadow-sm">
+                        <div className="flex-1 space-y-2">
+                          <Input 
+                            placeholder="Sub-task title..." 
+                            value={st.title} 
+                            onChange={(e) => {
+                              const newSt = [...subTasks];
+                              newSt[idx].title = e.target.value;
+                              setSubTasks(newSt);
+                            }}
+                            className="h-8 text-sm"
+                          />
+                          <Select 
+                            value={st.assigned_to} 
+                            onValueChange={(v) => {
+                              const newSt = [...subTasks];
+                              newSt[idx].assigned_to = v;
+                              setSubTasks(newSt);
+                            }}
+                          >
+                            <SelectTrigger className="h-8 text-sm"><SelectValue placeholder="Assign to..." /></SelectTrigger>
+                            <SelectContent>
+                              {employees.map(emp => (
+                                <SelectItem key={emp.id} value={emp.name}>{emp.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <Button 
+                          type="button" 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8 text-slate-400 hover:text-red-500 shrink-0"
+                          onClick={() => {
+                            setSubTasks(subTasks.filter((_, i) => i !== idx));
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="col-span-2 mt-2 space-y-3 rounded-lg border p-4 bg-slate-50">
+              <p className="text-sm font-medium">Reminders & Attachments</p>
+              <div className="flex gap-6">
+                <div className="flex items-center gap-2">
+                  <Checkbox id="email-rem" />
+                  <label htmlFor="email-rem" className="text-sm text-slate-600">Email Reminder</label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox id="wa-rem" />
+                  <label htmlFor="wa-rem" className="text-sm text-slate-600">WhatsApp Reminder</label>
+                </div>
+              </div>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="mt-2 w-full border-dashed gap-2"
+                onClick={() => document.getElementById('task-file-upload')?.click()}
+              >
+                 <Paperclip className="h-4 w-4" /> Upload Files
+              </Button>
+              {selectedFiles.length > 0 && (
+                <div className="flex flex-col gap-2 mt-3">
+                  {selectedFiles.map((file, idx) => (
+                    <div key={idx} className="flex items-center justify-between p-2 text-xs bg-background border border-border rounded-lg shadow-sm">
+                      <div className="flex items-center gap-2 overflow-hidden">
+                        <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
+                        <span className="truncate font-medium text-slate-700">{file.name}</span>
+                        <span className="text-[10px] text-muted-foreground shrink-0">
+                          ({(file.size / 1024).toFixed(1)} KB)
+                        </span>
+                      </div>
+                      <button 
+                        onClick={() => setSelectedFiles(prev => prev.filter((_, i) => i !== idx))}
+                        className="text-slate-400 hover:text-red-500 shrink-0 p-1"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+              <input 
+                type="file" 
+                id="task-file-upload" 
+                className="hidden" 
+                multiple
+                onChange={(e) => {
+                  if (e.target.files && e.target.files.length > 0) {
+                    setSelectedFiles(prev => [...prev, ...Array.from(e.target.files!)]);
+                  }
+                  e.target.value = ""; // Reset input so same file can be selected again
+                }}
+              />
+            </div>
+
           </div>
-        </div>
-      )}
-    </>
+          <DialogFooter>
+            <Button variant="ghost" onClick={() => { setShowCreateModal(false); setIsEditing(null); }}>Cancel</Button>
+            <Button onClick={handleSaveTask}>{isEditing ? "Save Changes" : "Save Task"}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={!!viewingTask} onOpenChange={(open) => !open && setViewingTask(null)}>
+        <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+           {viewingTask && (
+             <>
+               <DialogHeader>
+                 <DialogTitle className="flex items-center justify-between pr-4">
+                   <div className="flex items-center gap-2">
+                     <span className="text-slate-500 text-sm font-normal">#{getDisplayId(viewingTask)}</span>
+                     <span>Task Details</span>
+                   </div>
+                   <Badge variant="outline" className={STATUS_COLORS[viewingTask.status]}>{viewingTask.status}</Badge>
+                 </DialogTitle>
+               </DialogHeader>
+               <div className="py-4 space-y-6">
+                 <div>
+                   <h2 className="text-xl font-bold text-slate-900">{viewingTask.title}</h2>
+                   <p className="mt-2 text-sm text-slate-600">{viewingTask.description || "No description provided."}</p>
+                 </div>
+                 
+                 <div className="grid grid-cols-2 gap-y-4 text-sm">
+                   <div>
+                     <p className="text-slate-500 font-medium">Assigned To</p>
+                     <p className="font-semibold">{viewingTask.assigned_to || (viewingTask as any).assignee || "Unassigned"}</p>
+                   </div>
+                   <div>
+                     <p className="text-slate-500 font-medium">Customer</p>
+                     <p className="font-semibold">{viewingTask.customer_id || (viewingTask as any).lead || "-"}</p>
+                   </div>
+                   <div>
+                     <p className="text-slate-500 font-medium">Priority</p>
+                     <Badge variant="outline" className={`mt-1 ${PRIORITY_COLORS[viewingTask.priority] || "bg-slate-100"}`}>{viewingTask.priority}</Badge>
+                   </div>
+                   <div>
+                     <p className="text-slate-500 font-medium">Due Date</p>
+                     <div className="flex items-center gap-1.5 mt-1 font-semibold text-slate-700">
+                       <CalendarDays className="h-4 w-4 text-slate-400" />
+                       {(viewingTask.due_date || (viewingTask as any).dueDate) 
+                           ? new Date(viewingTask.due_date || (viewingTask as any).dueDate).toLocaleDateString() 
+                           : "N/A"}
+                     </div>
+                   </div>
+                 </div>
+
+                 <div className="space-y-2">
+                   <div className="flex justify-between text-sm">
+                     <span className="font-medium text-slate-700">Progress</span>
+                     <span className="font-bold text-slate-900">{viewingTask.progress ?? ((viewingTask.status === "Completed" || viewingTask.status === "Done" as any) ? 100 : 0)}%</span>
+                   </div>
+                   <Progress value={viewingTask.progress ?? ((viewingTask.status === "Completed" || viewingTask.status === "Done" as any) ? 100 : 0)} className="h-2.5" />
+                 </div>
+
+                 <div className="pt-6 border-t flex items-center gap-3">
+                   <Button 
+                      variant={viewingTask.status === "Pending" ? "default" : "outline"}
+                      className="flex-1"
+                      onClick={() => updateTaskStatus(viewingTask.id, "Pending")}
+                   >
+                     Pending
+                   </Button>
+                   <Button 
+                      variant={viewingTask.status === "In Progress" ? "default" : "outline"}
+                      className="flex-1 bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200"
+                      onClick={() => updateTaskStatus(viewingTask.id, "In Progress")}
+                   >
+                     In Progress
+                   </Button>
+                   <Button 
+                      variant={viewingTask.status === "Completed" ? "default" : "outline"}
+                      className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                      onClick={() => updateTaskStatus(viewingTask.id, "Completed")}
+                   >
+                     Completed
+                   </Button>
+                 </div>
+
+                 {viewingTask.attachments && viewingTask.attachments.length > 0 && (
+                   <div className="pt-6 border-t mt-6">
+                     <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                       <Paperclip className="h-4 w-4 text-slate-500" />
+                       Attachments
+                     </h3>
+                     <div className="grid grid-cols-2 gap-3">
+                       {viewingTask.attachments.map((file, idx) => (
+                         <a 
+                           key={idx} 
+                           href={file.url} 
+                           target="_blank" 
+                           rel="noopener noreferrer"
+                           className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border hover:border-brand/50 transition-colors"
+                         >
+                           <FileText className="h-5 w-5 text-brand" />
+                           <span className="text-sm font-medium text-slate-700 truncate">{file.name}</span>
+                         </a>
+                       ))}
+                     </div>
+                   </div>
+                 )}
+
+                 {/* Notes / Comments Section */}
+                 <div className="pt-6 border-t mt-6">
+                   <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
+                     <MessageSquare className="h-4 w-4 text-slate-500" />
+                     Task Notes & Updates
+                   </h3>
+                   
+                   <div className="space-y-4 max-h-[200px] overflow-y-auto mb-4 pr-2">
+                     {(!viewingTask.notes || viewingTask.notes.length === 0) ? (
+                       <p className="text-sm text-slate-500 italic text-center py-4 bg-slate-50 rounded-lg">No notes yet. Be the first to add an update!</p>
+                     ) : (
+                       viewingTask.notes.map(note => (
+                         <div key={note.id} className="bg-slate-50 rounded-lg p-3">
+                           <div className="flex justify-between items-start mb-1">
+                             <span className="text-xs font-semibold text-slate-700">{note.created_by}</span>
+                             <span className="text-[10px] text-slate-400">
+                               {new Date(note.created_at).toLocaleDateString()} {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                             </span>
+                           </div>
+                           <p className="text-sm text-slate-600 whitespace-pre-wrap">{note.content}</p>
+                         </div>
+                       ))
+                     )}
+                   </div>
+
+                   <div className="flex gap-2 items-end">
+                     <div className="flex-1">
+                       <Textarea 
+                         placeholder="Type your note here..." 
+                         value={newNote}
+                         onChange={(e) => setNewNote(e.target.value)}
+                         className="min-h-[60px] text-sm resize-none"
+                         onKeyDown={(e) => {
+                           if (e.key === 'Enter' && !e.shiftKey) {
+                             e.preventDefault();
+                             handleAddNote(viewingTask.id);
+                           }
+                         }}
+                       />
+                     </div>
+                     <Button 
+                       size="sm" 
+                       onClick={() => handleAddNote(viewingTask.id)}
+                       disabled={!newNote.trim()}
+                     >
+                       Post
+                     </Button>
+                   </div>
+                 </div>
+
+               </div>
+             </>
+           )}
+        </DialogContent>
+      </Dialog>
+    </div>
   );
 }

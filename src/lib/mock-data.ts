@@ -417,3 +417,37 @@ export function formatINR(n: number) {
     maximumFractionDigits: 0,
   }).format(n);
 }
+
+export type PaymentFollowUp = {
+  id: string;
+  invoiceId: string;
+  customerId: string;
+  customerName: string;
+  customerPhone: string;
+  invoiceDate: string;
+  totalAmount: number;
+  pendingAmount: number;
+  nextFollowUpDate: string;
+  nextFollowUpTime: string;
+  repeat: "None" | "Daily" | "Weekly";
+  notificationReminder: number;
+  notes: string;
+};
+
+export const paymentFollowUps: PaymentFollowUp[] = [
+  {
+    id: "PFU-1001",
+    invoiceId: "BK-002",
+    customerId: "C-101",
+    customerName: "Aarav Mehta",
+    customerPhone: "9876543210",
+    invoiceDate: yesterdayStr,
+    totalAmount: 52000,
+    pendingAmount: 22000,
+    nextFollowUpDate: todayStr,
+    nextFollowUpTime: "14:00",
+    repeat: "Daily",
+    notificationReminder: 7,
+    notes: "Client promised to pay by evening.",
+  }
+];

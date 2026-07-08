@@ -65,6 +65,8 @@ export const Route = createFileRoute("/crm/leads")({ component: LeadsPage });
 interface ExtLead extends Lead {
   avatar: string;
   notes: string;
+  noteDate?: string;
+  allNotes?: { text: string; date: string }[];
   insuranceDate?: string;
   policyType?: string;
   queryType?: string;
@@ -839,6 +841,7 @@ function LeadDetail({
 }) {
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [editNoteText, setEditNoteText] = useState(lead.notes || "");
+  const [newNoteText, setNewNoteText] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
 
   const [isEditingBooking, setIsEditingBooking] = useState(false);
@@ -1548,7 +1551,90 @@ function LeadDetail({
               </div>
             )}
 
+            {/* Notes & Updates Feed */}
+            <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Notes & Updates
+                </p>
+              </div>
 
+              <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+                {lead.allNotes && lead.allNotes.length > 0 ? (
+                  lead.allNotes.map((note, idx) => (
+                    <div key={idx} className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
+                      <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
+                      <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground font-medium">
+                        <Calendar className="h-3 w-3" />
+                        <span>
+                          {new Date(note.date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            hour: "numeric",
+                            minute: "2-digit"
+                          })}
+                        </span>
+                      </div>
+                    </div>
+                  ))
+                ) : lead.notes ? (
+                  <div className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
+                    <p className="text-foreground whitespace-pre-wrap">{lead.notes}</p>
+                    <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground font-medium">
+                      <Calendar className="h-3 w-3" />
+                      <span>{lead.noteDate ? new Date(lead.noteDate).toLocaleDateString() : "Legacy Note"}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-center py-4 text-xs text-muted-foreground bg-secondary/10 rounded-xl border border-dashed border-border">
+                    No notes yet. Add one below.
+                  </div>
+                )}
+              </div>
+
+              {onUpdateLead && (
+                <div className="mt-3 flex gap-2">
+                  <Input
+                    placeholder="Type an update..."
+                    value={newNoteText}
+                    onChange={(e) => setNewNoteText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && newNoteText.trim()) {
+                        const noteDate = new Date().toISOString();
+                        const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                        if (lead.notes && currentNotes.length === 0) {
+                          currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
+                        }
+                        currentNotes.push({ text: newNoteText.trim(), date: noteDate });
+                        onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
+                        setNewNoteText("");
+                      }
+                    }}
+                    className="h-9 text-xs flex-1 rounded-xl bg-background shadow-sm"
+                  />
+                  <Button 
+                    size="sm" 
+                    className="h-9 rounded-xl px-4 shrink-0 text-white shadow-sm" 
+                    style={{ background: "var(--gradient-brand)" }}
+                    onClick={() => {
+                      if (newNoteText.trim()) {
+                        const noteDate = new Date().toISOString();
+                        const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                        if (lead.notes && currentNotes.length === 0) {
+                          currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
+                        }
+                        currentNotes.push({ text: newNoteText.trim(), date: noteDate });
+                        onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
+                        setNewNoteText("");
+                      }
+                    }}
+                    disabled={!newNoteText.trim()}
+                  >
+                    Add
+                  </Button>
+                </div>
+              )}
+            </div>
 
             {/* Assignee Card */}
             <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
