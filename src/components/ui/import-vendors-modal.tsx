@@ -84,12 +84,11 @@ export function ImportVendorsModal({
     }
 
     const actualHeaders = Object.keys(data[0]);
-    const headersMatch =
-      actualHeaders.length >= EXPECTED_HEADERS.length &&
-      EXPECTED_HEADERS.every((h, i) => actualHeaders[i]?.trim() === h);
-
-    if (!headersMatch) {
-      setError("Invalid Template. Please download and use the official Vendor Import Template.");
+    // More relaxed header matching: just make sure we have some essential columns
+    const hasEssentials = actualHeaders.some(h => h.includes("Vendor Name") || h.includes("Mobile"));
+    
+    if (!hasEssentials) {
+      setError("Invalid Template. Please ensure the file has 'Vendor Name' and 'Mobile Number' columns.");
       return;
     }
 
@@ -97,27 +96,43 @@ export function ImportVendorsModal({
     const seenMobiles = new Set<string>();
 
     data.forEach((row, index) => {
+      // Skip completely empty rows
       if (Object.values(row).every((v) => !v || String(v).trim() === "")) return;
 
+      const cleanField = (val: any) => {
+        const s = String(val || "").trim();
+        return (s.toUpperCase() === "NA" || s.toUpperCase() === "N/A" || s === "-") ? "" : s;
+      };
+
       const rowErrors: string[] = [];
-      const name = String(row["Vendor Name"] || "").trim();
-      const contact = String(row["Contact Person"] || "").trim();
-      const mobile = String(row["Mobile Number"] || "").trim();
-      const email = String(row["Email ID"] || "").trim();
-      const website = String(row["Website"] || "").trim();
-      const place = String(row["Place"] || "").trim();
-      const city = String(row["Office City"] || "").trim();
-      const type = String(row["Vendor Type"] || "").trim();
+      
+      // We map whatever headers the user gave us to our expected fields
+      // This is a bit robust to case differences
+      const findVal = (keyStr: string) => {
+         const key = Object.keys(row).find(k => k.toLowerCase().includes(keyStr.toLowerCase()));
+         return key ? cleanField(row[key]) : "";
+      };
+
+      const name = findVal("Vendor Name") || findVal("Name");
+      const contact = findVal("Contact Person") || findVal("Contact");
+      const mobile = findVal("Mobile");
+      const email = findVal("Email");
+      let website = findVal("Website") || findVal("Web");
+      const place = findVal("Place");
+      const city = findVal("City");
+      let type = findVal("Vendor Type") || findVal("Type");
+      
+      if (website && !/^https?:\/\//i.test(website)) {
+        website = "http://" + website;
+      }
+      
+      // Instead of failing on unknown types, we map it to "Other" or just pass it as string.
+      // We'll let it pass even if it's not strictly in the dropdown to avoid blocking imports.
+      if (!type) {
+         type = "Other";
+      }
 
       if (!name) rowErrors.push("Vendor Name is required.");
-      if (!contact) rowErrors.push("Contact Person is required.");
-      if (!place) rowErrors.push("Place is required.");
-      if (!city) rowErrors.push("Office City is required.");
-      if (!type) {
-        rowErrors.push("Vendor Type is required.");
-      } else if (!allowedTypes.includes(type)) {
-        rowErrors.push(`Vendor Type '${type}' is not valid.`);
-      }
       if (!mobile) {
         rowErrors.push("Mobile Number is required.");
       } else if (seenMobiles.has(mobile)) {
@@ -125,14 +140,25 @@ export function ImportVendorsModal({
       } else {
         seenMobiles.add(mobile);
       }
+
       if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         rowErrors.push("Email format is invalid.");
       }
-      if (website && !/^https?:\/\/.+/.test(website)) {
-        rowErrors.push("Website must start with http:// or https://");
-      }
 
-      rows.push({ rowNumber: index + 2, data: row, isValid: rowErrors.length === 0, errors: rowErrors });
+      // Reconstruct a cleaned row that matches EXPECTED_HEADERS perfectly so the rest of the app works
+      const cleanedRow = {
+        "Vendor Name": name,
+        "Contact Person": contact || name, // Fallback to vendor name
+        "Mobile Number": mobile,
+        "Email ID": email,
+        "Website": website,
+        "Place": place || "Unknown",
+        "Office City": city || "Unknown",
+        "Vendor Type": type,
+        "Status": cleanField(row["Status"]) || "Active"
+      };
+
+      rows.push({ rowNumber: index + 2, data: cleanedRow, isValid: rowErrors.length === 0, errors: rowErrors });
     });
 
     if (rows.length === 0) {
