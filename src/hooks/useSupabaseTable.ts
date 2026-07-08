@@ -181,11 +181,11 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.leadSection;
 
     if (tableName === "tasks") {
-      // Encode extra fields into notes
+      // Encode extra fields into description
       const customFields: any = {};
       if (newRow.task_type) customFields.task_type = newRow.task_type;
       if (newRow.parent_id) customFields.parent_id = newRow.parent_id;
-      if (newRow.description) customFields.description = newRow.description;
+      if (newRow.notes) customFields.notes = newRow.notes;
       if (newRow.attachments) customFields.attachments = newRow.attachments;
       if (newRow.customer_id) customFields.customer_id = newRow.customer_id;
       if (newRow.booking_id) customFields.booking_id = newRow.booking_id;
@@ -195,10 +195,13 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.task_number) customFields.task_number = newRow.task_number;
       if (newRow.created_by) customFields.created_by = newRow.created_by;
       
-      newRow.notes = JSON.stringify({
-        _isMeta: true,
-        ...customFields
-      });
+      if (Object.keys(customFields).length > 0) {
+        newRow.description = JSON.stringify({
+          _isMeta: true,
+          text: newRow.description || "",
+          ...customFields
+        });
+      }
 
       // Map to Supabase native columns for the dashboard
       if (newRow.task_type !== undefined) newRow.type = newRow.task_type;
@@ -206,8 +209,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.due_date !== undefined) newRow.dueDate = newRow.due_date;
       
       // Delete the non-existent columns from Supabase payload
-      delete newRow.description;
       delete newRow.task_type;
+      delete newRow.notes;
       delete newRow.assigned_to;
       delete newRow.due_date;
       delete newRow.customer_id;
@@ -344,13 +347,14 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.dueDate !== undefined) newRow.due_date = newRow.dueDate;
     }
 
-    if (tableName === "tasks" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+    if (tableName === "tasks" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
       try {
-        const parsed = JSON.parse(newRow.notes);
+        const parsed = JSON.parse(newRow.description);
         if (parsed._isMeta) {
-          if (parsed.description !== undefined) newRow.description = parsed.description;
+          newRow.description = parsed.text;
           if (parsed.task_type !== undefined) newRow.task_type = parsed.task_type;
           if (parsed.parent_id !== undefined) newRow.parent_id = parsed.parent_id;
+          if (parsed.notes !== undefined) newRow.notes = parsed.notes;
           if (parsed.attachments !== undefined) newRow.attachments = parsed.attachments;
           if (parsed.customer_id !== undefined) newRow.customer_id = parsed.customer_id;
           if (parsed.booking_id !== undefined) newRow.booking_id = parsed.booking_id;
@@ -361,6 +365,38 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.created_by !== undefined) newRow.created_by = parsed.created_by;
         }
       } catch (e) {}
+    }
+
+    // Safety guard: notes must always be an array - handle broken data from a past bad commit
+    if (tableName === "tasks") {
+      if (typeof newRow.notes === "string") {
+        try {
+          const parsedNotes = JSON.parse(newRow.notes);
+          if (parsedNotes && parsedNotes._isMeta) {
+            // This was a bad meta payload accidentally written to notes column - recover fields
+            if (parsedNotes.task_type !== undefined && !newRow.task_type) newRow.task_type = parsedNotes.task_type;
+            if (parsedNotes.parent_id !== undefined && !newRow.parent_id) newRow.parent_id = parsedNotes.parent_id;
+            if (parsedNotes.attachments !== undefined) newRow.attachments = parsedNotes.attachments;
+            if (parsedNotes.customer_id !== undefined) newRow.customer_id = parsedNotes.customer_id;
+            if (parsedNotes.booking_id !== undefined) newRow.booking_id = parsedNotes.booking_id;
+            if (parsedNotes.progress !== undefined) newRow.progress = parsedNotes.progress;
+            if (parsedNotes.start_date !== undefined) newRow.start_date = parsedNotes.start_date;
+            if (parsedNotes.completed_at !== undefined) newRow.completed_at = parsedNotes.completed_at;
+            if (parsedNotes.task_number !== undefined) newRow.task_number = parsedNotes.task_number;
+            if (parsedNotes.created_by !== undefined) newRow.created_by = parsedNotes.created_by;
+            if (parsedNotes.description !== undefined && !newRow.description) newRow.description = parsedNotes.description;
+            newRow.notes = []; // reset notes to empty array
+          } else if (Array.isArray(parsedNotes)) {
+            newRow.notes = parsedNotes;
+          } else {
+            newRow.notes = [];
+          }
+        } catch (e) {
+          newRow.notes = []; // not valid JSON, reset
+        }
+      } else if (!Array.isArray(newRow.notes)) {
+        newRow.notes = [];
+      }
     }
 
     return newRow;
