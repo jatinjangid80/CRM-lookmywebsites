@@ -22,7 +22,10 @@ import {
   QrCode,
   DollarSign,
   XCircle,
+  History,
+  Edit2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -56,7 +59,6 @@ interface QuoteForm {
   durationNights: number;
   durationDays: number;
   hotelName: string;
-  hotelStars: string;
   hotelNights: number;
   mealPlan: string;
   flightSector: string;
@@ -64,7 +66,9 @@ interface QuoteForm {
   flightNotes: string;
   basePrice: number;
   gstRate: number; // 0, 5, 18
+  tcsRate: number; // 0, 5, 20
   discount: number;
+  discountType: "amount" | "percentage";
   inclusions: string;
   exclusions: string;
   terms: string;
@@ -80,7 +84,6 @@ const DEFAULT_FORM: QuoteForm = {
   durationNights: 4,
   durationDays: 5,
   hotelName: "",
-  hotelStars: "3 Star",
   hotelNights: 4,
   mealPlan: "Breakfast Included (CP)",
   flightSector: "",
@@ -88,7 +91,9 @@ const DEFAULT_FORM: QuoteForm = {
   flightNotes: "Economy return flights included",
   basePrice: 25000,
   gstRate: 5,
+  tcsRate: 0,
   discount: 0,
+  discountType: "amount",
   inclusions:
     "Standard Hotel Room\nDaily Breakfast\nReturn Airport Transfers\nSightseeing as per itinerary\n24/7 Local Support",
   exclusions:
@@ -132,6 +137,7 @@ function QuotationsPage() {
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
   const [quotations, setQuotations] = useSupabaseTable<any[]>("quotations", []);
+  const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
 
   const [form, setForm] = useState<QuoteForm>({ ...DEFAULT_FORM });
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -202,7 +208,11 @@ function QuotationsPage() {
   };
 
   const gstAmount = Math.round((form.basePrice * form.gstRate) / 100);
-  const totalAmount = form.basePrice + gstAmount - form.discount;
+  const tcsAmount = Math.round((form.basePrice * form.tcsRate) / 100);
+  const discountAmount = form.discountType === "percentage" 
+    ? Math.round((form.basePrice * form.discount) / 100) 
+    : form.discount;
+  const totalAmount = form.basePrice + gstAmount + tcsAmount - discountAmount;
 
   const handleItineraryChange = (idx: number, field: keyof DayItinerary, val: string) => {
     setForm((f) => {
@@ -214,7 +224,14 @@ function QuotationsPage() {
 
   // Save quotation to Database
   const handleSaveQuotation = async () => {
-    const id = `QT-${Math.floor(1000 + Math.random() * 9000)}`;
+    const maxNumber = quotations.reduce((max: number, q: any) => {
+      if (q.id && q.id.startsWith("QT-")) {
+        const num = parseInt(q.id.replace("QT-", ""), 10);
+        if (!isNaN(num) && num > max) return num;
+      }
+      return max;
+    }, 0);
+    const id = editingQuoteId || `QT-${String(maxNumber + 1).padStart(3, "0")}`;
     const newQuoteObj = {
       id,
       customer_name: form.customerName,
@@ -223,14 +240,20 @@ function QuotationsPage() {
       package_name: form.packageName,
       destination: form.destination,
       total_amount: totalAmount,
-      created_at: new Date().toISOString(),
+      created_at: editingQuoteId ? (quotations.find(q => q.id === editingQuoteId)?.created_at || new Date().toISOString()) : new Date().toISOString(),
       details: form,
       agent_name: auth?.name || "Admin",
     };
 
-    setQuotations([newQuoteObj, ...quotations]);
+    if (editingQuoteId) {
+      setQuotations(quotations.map(q => q.id === editingQuoteId ? newQuoteObj : q));
+    } else {
+      setQuotations([newQuoteObj, ...quotations]);
+    }
+    
     setSavedQuoteId(id);
     setPreviewOpen(true);
+    setEditingQuoteId(null);
   };
 
   // Generate WhatsApp Message
@@ -383,7 +406,10 @@ function QuotationsPage() {
           <Button
             variant="outline"
             className="rounded-xl"
-            onClick={() => setForm({ ...DEFAULT_FORM })}
+            onClick={() => {
+              setForm({ ...DEFAULT_FORM });
+              setEditingQuoteId(null);
+            }}
           >
             Reset Form
           </Button>
@@ -644,20 +670,44 @@ function QuotationsPage() {
                   onChange={(e) => setForm({ ...form, gstRate: Number(e.target.value) })}
                   className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
                 >
-                  <option value="0">0% GST</option>
+                  <option value="0">None</option>
                   <option value="5">5% GST (Standard Tour)</option>
                   <option value="18">18% GST (Hotel/Flights)</option>
                 </select>
               </div>
               <div>
-                <Label htmlFor="disc">Special Discount (₹)</Label>
-                <Input
-                  id="disc"
-                  type="number"
-                  value={form.discount}
-                  onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })}
-                  className="rounded-xl mt-1.5"
-                />
+                <Label htmlFor="tcsrate">TCS Rate (International Pack)</Label>
+                <select
+                  id="tcsrate"
+                  value={form.tcsRate}
+                  onChange={(e) => setForm({ ...form, tcsRate: Number(e.target.value) })}
+                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
+                >
+                  <option value="0">None</option>
+                  <option value="5">5% TCS (With PAN)</option>
+                  <option value="20">20% TCS (Without PAN)</option>
+                </select>
+              </div>
+              <div>
+                <Label htmlFor="disc">Special Discount</Label>
+                <div className="flex items-center gap-2 mt-1.5">
+                  <select
+                    value={form.discountType}
+                    onChange={(e) => setForm({ ...form, discountType: e.target.value as "amount" | "percentage" })}
+                    className="rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-28 shrink-0"
+                  >
+                    <option value="amount">₹ Flat</option>
+                    <option value="percentage">% Perc</option>
+                  </select>
+                  <Input
+                    id="disc"
+                    type="number"
+                    value={form.discount}
+                    onChange={(e) => setForm({ ...form, discount: Number(e.target.value) })}
+                    className="rounded-xl flex-1"
+                    placeholder={form.discountType === "percentage" ? "e.g. 5" : "e.g. 1000"}
+                  />
+                </div>
               </div>
 
               <div className="border-t border-border pt-4 mt-2 space-y-2">
@@ -669,9 +719,15 @@ function QuotationsPage() {
                   <span>GST Amount ({form.gstRate}%):</span>
                   <span>{formatINR(gstAmount)}</span>
                 </div>
+                {form.tcsRate > 0 && (
+                  <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                    <span>TCS Amount ({form.tcsRate}%):</span>
+                    <span>{formatINR(tcsAmount)}</span>
+                  </div>
+                )}
                 <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                  <span>Discount:</span>
-                  <span className="text-emerald-600">- {formatINR(form.discount)}</span>
+                  <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
+                  <span className="text-emerald-600">- {formatINR(discountAmount)}</span>
                 </div>
                 <div className="flex justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
                   <span>Total Cost:</span>
@@ -718,6 +774,56 @@ function QuotationsPage() {
                 />
               </div>
             </div>
+          </div>
+
+          {/* Recent Quotations */}
+          <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+            <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider flex items-center gap-2">
+              <History className="h-4 w-4" /> Recent Quotes
+            </h3>
+            {!quotations || quotations.length === 0 ? (
+              <p className="text-xs text-muted-foreground text-center py-4">No recent quotes</p>
+            ) : (
+              <div className="space-y-3">
+                {quotations.slice(0, 5).map((q: any) => (
+                  <div key={q.id} className="flex flex-col gap-1.5 p-3 rounded-xl border border-border bg-muted/30">
+                    <div className="flex items-center justify-between">
+                      <span className="font-semibold text-xs">{q.id} - {q.customer_name}</span>
+                      <span className="font-bold text-primary text-xs">{formatINR(q.total_amount)}</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                      <span className="truncate max-w-[150px]">{q.package_name}</span>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="h-6 text-[10px] px-2 rounded-lg"
+                        onClick={() => {
+                          if (q.details) {
+                            try {
+                              let parsedDetails = q.details;
+                              if (typeof parsedDetails === 'string') {
+                                parsedDetails = JSON.parse(parsedDetails);
+                              }
+                              // Clone to avoid mutation
+                              const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                              setForm(clonedDetails);
+                              setEditingQuoteId(q.id);
+                              window.scrollTo({ top: 0, behavior: "smooth" });
+                              toast.success(`Quote ${q.id} loaded for editing`);
+                            } catch (error) {
+                              console.error("Failed to parse quote details", error);
+                              toast.error("Could not load quote details");
+                            }
+                          }
+                        }}
+                      >
+                        <Edit2 className="h-3 w-3 mr-1" /> Edit
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -815,7 +921,7 @@ function QuotationsPage() {
                       Stay Option
                     </p>
                     <p className="font-semibold mt-0.5">
-                      {form.hotelName} ({form.hotelStars})
+                      {form.hotelName}
                     </p>
                     <p className="text-muted-foreground text-[11px]">
                       {form.hotelNights} Nights stay with {form.mealPlan}
@@ -899,10 +1005,16 @@ function QuotationsPage() {
                   <span>GST ({form.gstRate}%):</span>
                   <span>{formatINR(gstAmount)}</span>
                 </div>
+                {form.tcsRate > 0 && (
+                  <div className="flex justify-between pr-8 text-muted-foreground">
+                    <span>TCS ({form.tcsRate}%):</span>
+                    <span>{formatINR(tcsAmount)}</span>
+                  </div>
+                )}
                 {form.discount > 0 && (
                   <div className="flex justify-between pr-8 text-emerald-600">
-                    <span>Discount:</span>
-                    <span>- {formatINR(form.discount)}</span>
+                    <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
+                    <span>- {formatINR(discountAmount)}</span>
                   </div>
                 )}
                 <div className="flex justify-between pr-8 pt-2 border-t border-border/80 font-display font-black text-base text-primary">

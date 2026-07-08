@@ -58,6 +58,8 @@ interface VisaDoc {
 interface VisaApp {
   id: string;
   customer: string;
+  phone?: string;
+  email?: string;
   avatar: string;
   country: string;
   flag: string;
@@ -555,6 +557,8 @@ function VisaPage() {
   // Visa Application Form state
   const [appModalOpen, setAppModalOpen] = useState(false);
   const [appCustomer, setAppCustomer] = useState("");
+  const [appCustomerPhone, setAppCustomerPhone] = useState("");
+  const [appCustomerEmail, setAppCustomerEmail] = useState("");
   const [appCountry, setAppCountry] = useState("");
   const [appVisaType, setAppVisaType] = useState("");
 
@@ -621,6 +625,8 @@ function VisaPage() {
     const newApp: VisaApp = {
       id: `V-${newIdStr}`,
       customer: appCustomer,
+      phone: appCustomerPhone,
+      email: appCustomerEmail,
       avatar: getRandomAvatar(),
       country: appCountry,
       flag: getFlagEmoji(appCountry),
@@ -646,6 +652,8 @@ function VisaPage() {
 
     // Reset Form
     setAppCustomer("");
+    setAppCustomerPhone("");
+    setAppCustomerEmail("");
     setAppCountry("");
     setAppVisaType("");
 
@@ -1602,7 +1610,11 @@ function VisaPage() {
                             <p className="font-semibold">{app.customer}</p>
                             <span className="text-xs text-muted-foreground">{app.id}</span>
                           </div>
-                          <p className="mt-0.5 text-sm text-muted-foreground">
+                          <p className="mt-0.5 text-xs text-muted-foreground">
+                            {app.phone && <span className="mr-2">📞 {app.phone}</span>}
+                            {app.email && <span>✉️ {app.email}</span>}
+                          </p>
+                          <p className="mt-0.5 text-sm font-medium text-foreground">
                             {app.flag} {app.country} · {app.visaType}
                           </p>
                         </div>
@@ -1999,7 +2011,18 @@ function VisaPage() {
               </label>
               <select
                 value={appCustomer}
-                onChange={(e) => setAppCustomer(e.target.value)}
+                onChange={(e) => {
+                  const custName = e.target.value;
+                  setAppCustomer(custName);
+                  const cust = customers.find(c => c.name === custName);
+                  if (cust) {
+                    setAppCustomerPhone(cust.phone || "");
+                    setAppCustomerEmail(cust.email || "");
+                  } else {
+                    setAppCustomerPhone("");
+                    setAppCustomerEmail("");
+                  }
+                }}
                 required
                 className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               >
