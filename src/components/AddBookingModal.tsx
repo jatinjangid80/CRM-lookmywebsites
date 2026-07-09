@@ -25,7 +25,6 @@ const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
   { type: "Hotel", icon: Hotel, label: "Hotel" },
   { type: "Visa", icon: FileText, label: "Visa" },
   { type: "Travel Insurance", icon: Shield, label: "Travel Insurance" },
-  { type: "General Insurance", icon: Shield, label: "General Insurance" },
   { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
   { type: "Train Ticket", icon: Train, label: "Train Ticket" },
   { type: "Taxi", icon: Car, label: "Taxi" },
@@ -50,10 +49,9 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
   const [purchaseInvoiceNo, setPurchaseInvoiceNo] = useState("");
   const [remarks, setRemarks] = useState("");
 
-  // Auto Calculated & Core Financials
+  // Core Financials
   const [sellingPrice, setSellingPrice] = useState<number>(0);
   const [purchasePrice, setPurchasePrice] = useState<number>(0);
-  const [serviceCharges, setServiceCharges] = useState<number>(0);
   const [gstAmount, setGstAmount] = useState<number>(0);
   const [ticketAmount, setTicketAmount] = useState<number>(0); // For Bus
 
@@ -86,7 +84,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
       setSellingPrice(0);
       setPurchasePrice(0);
-      setServiceCharges(0);
       setGstAmount(0);
       setTicketAmount(0);
       setRefundDate("");
@@ -105,11 +102,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
   const updateDetail = (key: string, value: any) => {
     setDetails((prev: any) => ({ ...prev, [key]: value }));
   };
-
-  // Calculations
-  useEffect(() => {
-    setSellingPrice((purchasePrice || 0) + (serviceCharges || 0));
-  }, [purchasePrice, serviceCharges]);
 
   const profit = useMemo(() => {
     return (sellingPrice || 0) - (purchasePrice || 0);
@@ -147,7 +139,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
       sellingPrice,
       purchasePrice,
-      serviceCharges,
       gstAmount,
       ticketAmount,
       profit,
@@ -211,11 +202,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     key={bt.type}
                     type="button"
                     onClick={() => setBookingType(bt.type)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${
-                      isSelected
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${isSelected
                         ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20"
                         : "bg-secondary/40 border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
-                    }`}
+                      }`}
                   >
                     <Icon className="h-4 w-4" />
                     {bt.label}
@@ -428,10 +418,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
                       className="h-6 px-2 text-xs"
                       onClick={() => {
                         const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
@@ -559,10 +549,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
-                    <Button 
-                      type="button" 
-                      variant="ghost" 
-                      size="sm" 
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
                       className="h-6 px-2 text-xs"
                       onClick={() => {
                         const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
@@ -609,22 +599,20 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     <button
                       type="button"
                       onClick={() => updateDetail("taxiPricingMode", "day")}
-                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${
-                        details.taxiPricingMode !== "km"
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode !== "km"
                           ? "bg-background shadow text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                      }`}
+                        }`}
                     >
                       Day Wise Pricing
                     </button>
                     <button
                       type="button"
                       onClick={() => updateDetail("taxiPricingMode", "km")}
-                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${
-                        details.taxiPricingMode === "km"
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode === "km"
                           ? "bg-background shadow text-primary"
                           : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                      }`}
+                        }`}
                     >
                       KM Wise Pricing
                     </button>
@@ -1021,57 +1009,6 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
               </>
             )}
 
-            {bookingType === "General Insurance" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Expiry Date</Label>
-                  <Input
-                    type="date"
-                    value={details.expiryDate || ""}
-                    onChange={(e) => updateDetail("expiryDate", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Policy Type</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={details.policyType || ""}
-                    onChange={(e) => updateDetail("policyType", e.target.value)}
-                  >
-                    <option value="">Select...</option>
-                    <option value="Four Wheeler">Four Wheeler</option>
-                    <option value="Two Wheeler">Two Wheeler</option>
-                    <option value="School Bus">School Bus</option>
-                    <option value="Pickup">Pickup</option>
-                    <option value="Tractor">Tractor</option>
-                    <option value="Health">Health</option>
-                    <option value="LIC">LIC</option>
-                    <option value="Commercial Vehicle">Commercial Vehicle</option>
-                  </select>
-                </div>
-                <div className="space-y-2">
-                  <Label>Query Type</Label>
-                  <select
-                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    value={details.queryType || ""}
-                    onChange={(e) => updateDetail("queryType", e.target.value)}
-                  >
-                    <option value="">Select...</option>
-                    <option value="New">New</option>
-                    <option value="Renewal">Renewal</option>
-                    <option value="Expired">Expired</option>
-                  </select>
-                </div>
-                <div className="space-y-2 sm:col-span-2">
-                  <Label>Client / Company</Label>
-                  <Input
-                    value={details.clientCompany || ""}
-                    onChange={(e) => updateDetail("clientCompany", e.target.value)}
-                    placeholder="e.g. Acme Corp..."
-                  />
-                </div>
-              </>
-            )}
 
             {bookingType === "Bus Ticket" && (
               <>
@@ -1126,31 +1063,22 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
             <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
+                <Label>Selling Price (₹)</Label>
+                <Input
+                  type="number"
+                  required
+                  value={sellingPrice || ""}
+                  onChange={(e) => setSellingPrice(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
                 <Label>Purchase Price (₹)</Label>
                 <Input
                   type="number"
                   required
                   value={purchasePrice || ""}
                   onChange={(e) => setPurchasePrice(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Service Charges (₹)</Label>
-                <Input
-                  type="number"
-                  value={serviceCharges || ""}
-                  onChange={(e) => setServiceCharges(Number(e.target.value))}
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>Selling Price (Auto) (₹)</Label>
-                <Input
-                  type="number"
-                  disabled
-                  className="bg-secondary/50 font-semibold text-muted-foreground"
-                  value={sellingPrice}
                 />
               </div>
 
@@ -1191,8 +1119,8 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button 
-              type="submit" 
+            <Button
+              type="submit"
               className="shadow-md border-0 text-white"
               style={{ background: "var(--gradient-brand, var(--color-brand, #0f172a))" }}
             >
