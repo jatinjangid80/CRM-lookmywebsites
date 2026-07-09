@@ -24,6 +24,7 @@ import { Route as CrmPaymentsRouteImport } from './routes/crm.payments'
 import { Route as CrmPaymentRequestsRouteImport } from './routes/crm.payment-requests'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
+import { Route as CrmInsuranceRouteImport } from './routes/crm.insurance'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
 import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
 import { Route as CrmCustomersRouteImport } from './routes/crm.customers'
@@ -104,6 +105,11 @@ const CrmLeadsRoute = CrmLeadsRouteImport.update({
   path: '/leads',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmInsuranceRoute = CrmInsuranceRouteImport.update({
+  id: '/insurance',
+  path: '/insurance',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmEmployeesRoute = CrmEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -133,6 +139,7 @@ export interface FileRoutesByFullPath {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
@@ -153,6 +160,7 @@ export interface FileRoutesByTo {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
@@ -175,6 +183,7 @@ export interface FileRoutesById {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
@@ -198,6 +207,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/insurance'
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payment-requests'
@@ -218,6 +228,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/insurance'
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payment-requests'
@@ -239,6 +250,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/insurance'
     | '/crm/leads'
     | '/crm/packages'
     | '/crm/payment-requests'
@@ -366,6 +378,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmLeadsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/insurance': {
+      id: '/crm/insurance'
+      path: '/insurance'
+      fullPath: '/crm/insurance'
+      preLoaderRoute: typeof CrmInsuranceRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/employees': {
       id: '/crm/employees'
       path: '/employees'
@@ -402,6 +421,7 @@ interface CrmRouteChildren {
   CrmCustomersRoute: typeof CrmCustomersRoute
   CrmDocumentsRoute: typeof CrmDocumentsRoute
   CrmEmployeesRoute: typeof CrmEmployeesRoute
+  CrmInsuranceRoute: typeof CrmInsuranceRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
   CrmPaymentRequestsRoute: typeof CrmPaymentRequestsRoute
@@ -421,6 +441,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmCustomersRoute: CrmCustomersRoute,
   CrmDocumentsRoute: CrmDocumentsRoute,
   CrmEmployeesRoute: CrmEmployeesRoute,
+  CrmInsuranceRoute: CrmInsuranceRoute,
   CrmLeadsRoute: CrmLeadsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
   CrmPaymentRequestsRoute: CrmPaymentRequestsRoute,

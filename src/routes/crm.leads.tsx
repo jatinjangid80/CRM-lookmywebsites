@@ -437,6 +437,28 @@ function AddLeadModal({
         </div>
 
         <div className="grid gap-4 px-6 pt-5 pb-6 sm:grid-cols-2 overflow-y-auto">
+          {/* Service */}
+          <div className="sm:col-span-2">
+            <label className="mb-1.5 block text-sm font-semibold">
+              Service <span className="text-red-500">*</span>
+            </label>
+            <select
+              id="lead-service"
+              value={form.service}
+              onChange={set("service")}
+              className={fieldCls}
+            >
+              {SERVICES.map((g) => (
+                <optgroup key={g.group} label={g.group}>
+                  {g.items.map((i) => (
+                    <option key={i.label} value={i.label}>
+                      {i.icon} {i.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
           {/* Name */}
           <div className="sm:col-span-2">
             <label className="mb-1.5 block text-sm font-semibold">
@@ -459,7 +481,7 @@ function AddLeadModal({
                 onClick={handleFetchCustomer}
                 className="text-xs text-primary hover:underline font-normal flex items-center gap-1"
               >
-                <Search className="h-3 w-3" /> Fetch
+                <Search className="h-3 w-3" /> Find
               </button>
             </label>
             <Input
@@ -671,7 +693,7 @@ function AddLeadModal({
             <label className="mb-1.5 block text-sm font-semibold">Reference</label>
             <Input
               id="lead-reference"
-              placeholder="e.g. John Doe..."
+              placeholder="e.g. Jatin jangid"
               value={form.reference}
               onChange={set("reference")}
               className="rounded-xl"
@@ -691,29 +713,8 @@ function AddLeadModal({
               ))}
             </select>
           </div>
-          {/* Service */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">
-              Service <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="lead-service"
-              value={form.service}
-              onChange={set("service")}
-              className={fieldCls}
-            >
-              {SERVICES.map((g) => (
-                <optgroup key={g.group} label={g.group}>
-                  {g.items.map((i) => (
-                    <option key={i.label} value={i.label}>
-                      {i.icon} {i.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-          {/* Priority */}
+
+id          {/* Priority */}
           <div>
             <label className="mb-1.5 block text-sm font-semibold">Priority</label>
             <select

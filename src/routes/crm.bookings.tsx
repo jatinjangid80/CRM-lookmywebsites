@@ -724,7 +724,7 @@ function BookingsPage() {
         </div>
 
         {/* Row 2: Revenue Analytics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
           <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <TrendingUp className="h-16 w-16 text-primary" />
@@ -738,17 +738,6 @@ function BookingsPage() {
           </div>
           <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
-              <TrendingUp className="h-16 w-16 text-emerald-600" />
-            </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Total Profit
-            </p>
-            <p className="text-3xl font-display font-bold text-emerald-600">
-              {formatINR(dashboardData.totalProfit)}
-            </p>
-          </div>
-          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
               <CheckCircle2 className="h-16 w-16 text-blue-600" />
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
@@ -756,17 +745,6 @@ function BookingsPage() {
             </p>
             <p className="text-3xl font-display font-bold text-blue-600">
               {formatINR(dashboardData.avgValue)}
-            </p>
-          </div>
-          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <Briefcase className="h-16 w-16 text-amber-600" />
-            </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Profit Margin
-            </p>
-            <p className="text-3xl font-display font-bold text-amber-600">
-              {dashboardData.margin}%
             </p>
           </div>
         </div>
@@ -922,7 +900,6 @@ function BookingsPage() {
                 <th className="px-4 py-3">Type / Service</th>
                 <th className="px-4 py-3">Travel Date</th>
                 <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Profit / Margin</th>
                 <th className="px-4 py-3">Status</th>
                 <th className="px-4 py-3">Files</th>
                 <th className="px-4 py-3"></th>
@@ -957,20 +934,6 @@ function BookingsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">{b.travelDate}</td>
                     <td className="px-4 py-3 font-medium">{formatINR(b.amount || 0)}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span
-                          className={
-                            b.profit > 0
-                              ? "text-emerald-600 font-semibold text-xs"
-                              : "text-muted-foreground text-xs"
-                          }
-                        >
-                          {formatINR(b.profit || 0)}
-                        </span>
-                        <span className="text-[10px] text-muted-foreground">{b.margin || 0}%</span>
-                      </div>
-                    </td>
                     <td className="px-4 py-3">
                       <span
                         className={`rounded-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}

@@ -67,6 +67,7 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/visa", label: "Visa", icon: Plane },
   { to: "/crm/customers", label: "Customers", icon: UserCheck },
   { to: "/crm/bookings", label: "Bookings", icon: CalendarCheck },
+  { to: "/crm/insurance", label: "General Insurance", icon: ShieldCheck },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
   { to: "/crm/packages", label: "Packages", icon: Pkg },
   { to: "/crm/employees", label: "Employees", icon: Briefcase },

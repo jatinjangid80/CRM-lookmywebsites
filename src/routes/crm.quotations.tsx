@@ -24,6 +24,7 @@ import {
   XCircle,
   History,
   Edit2,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -793,32 +794,71 @@ function QuotationsPage() {
                     </div>
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="truncate max-w-[150px]">{q.package_name}</span>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="h-6 text-[10px] px-2 rounded-lg"
-                        onClick={() => {
-                          if (q.details) {
-                            try {
-                              let parsedDetails = q.details;
-                              if (typeof parsedDetails === 'string') {
-                                parsedDetails = JSON.parse(parsedDetails);
+                      <div className="flex gap-2">
+                        <Button
+                          variant="secondary"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 rounded-lg"
+                          onClick={() => {
+                            if (q.details) {
+                              try {
+                                let parsedDetails = q.details;
+                                if (typeof parsedDetails === 'string') {
+                                  parsedDetails = JSON.parse(parsedDetails);
+                                }
+                                const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                setForm(clonedDetails);
+                                setEditingQuoteId(q.id);
+                                setPreviewOpen(true);
+                              } catch (error) {
+                                console.error("Failed to parse quote details", error);
+                                toast.error("Could not load quote details");
                               }
-                              // Clone to avoid mutation
-                              const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                              setForm(clonedDetails);
-                              setEditingQuoteId(q.id);
-                              window.scrollTo({ top: 0, behavior: "smooth" });
-                              toast.success(`Quote ${q.id} loaded for editing`);
-                            } catch (error) {
-                              console.error("Failed to parse quote details", error);
-                              toast.error("Could not load quote details");
                             }
-                          }
-                        }}
-                      >
-                        <Edit2 className="h-3 w-3 mr-1" /> Edit
-                      </Button>
+                          }}
+                        >
+                          <Eye className="h-3 w-3 mr-1" /> View
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 rounded-lg"
+                          onClick={() => {
+                            if (q.details) {
+                              try {
+                                let parsedDetails = q.details;
+                                if (typeof parsedDetails === 'string') {
+                                  parsedDetails = JSON.parse(parsedDetails);
+                                }
+                                // Clone to avoid mutation
+                                const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                setForm(clonedDetails);
+                                setEditingQuoteId(q.id);
+                                window.scrollTo({ top: 0, behavior: "smooth" });
+                                toast.success(`Quote ${q.id} loaded for editing`);
+                              } catch (error) {
+                                console.error("Failed to parse quote details", error);
+                                toast.error("Could not load quote details");
+                              }
+                            }
+                          }}
+                        >
+                          <Edit2 className="h-3 w-3 mr-1" /> Edit
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          className="h-6 text-[10px] px-2 rounded-lg"
+                          onClick={() => {
+                            if (window.confirm("Are you sure you want to delete this quotation?")) {
+                              setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
+                              toast.success(`Quote ${q.id} deleted`);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-3 w-3 mr-1" /> Delete
+                        </Button>
+                      </div>
                     </div>
                   </div>
                 ))}
