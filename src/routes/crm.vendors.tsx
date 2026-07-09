@@ -132,6 +132,18 @@ type SortDir = "asc" | "desc";
 function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
 
+  const normalizeVendor = (vendor: any) => ({
+    ...vendor,
+    place: vendor.place || vendor.location || "",
+    officeCity: vendor.officeCity || vendor.city || "",
+    mobile: vendor.mobile || vendor.phone || "",
+    vendorType: vendor.vendorType || vendor.category || "",
+    contactPerson: vendor.contactPerson || vendor.contactperson || vendor.contact_person || "",
+    createdAt: vendor.createdAt || (vendor.created_at ? new Date(vendor.created_at).toISOString().slice(0, 10) : ""),
+  });
+
+  const normalizedVendors = useMemo(() => vendors.map(normalizeVendor), [vendors]);
+
   // Search & Filters
   const [q, setQ] = useState("");
   const [filterType, setFilterType] = useState("All");
@@ -162,21 +174,21 @@ function VendorsPage() {
     setFormContacts((prev) => prev.map((c, idx) => idx === i ? { ...c, [field]: value } : c));
 
   // ── Derived lists ──
-  const uniquePlaces = useMemo(() => Array.from(new Set(vendors.map((v) => v.place).filter(Boolean))), [vendors]);
-  const uniqueCities = useMemo(() => Array.from(new Set(vendors.map((v) => v.officeCity).filter(Boolean))), [vendors]);
+  const uniquePlaces = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.place).filter(Boolean))), [normalizedVendors]);
+  const uniqueCities = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.officeCity).filter(Boolean))), [normalizedVendors]);
 
   // ── Stats ──
   const stats = useMemo(() => ({
-    total: vendors.length,
-    active: vendors.filter((v) => v.status === "Active").length,
-    types: new Set(vendors.map((v) => v.vendorType)).size,
-    cities: new Set(vendors.map((v) => v.officeCity).filter(Boolean)).size,
-    countries: new Set(vendors.map((v) => (v.place || "").split(",").pop()?.trim()).filter(Boolean)).size,
-  }), [vendors]);
+    total: normalizedVendors.length,
+    active: normalizedVendors.filter((v) => v.status === "Active").length,
+    types: new Set(normalizedVendors.map((v) => v.vendorType)).size,
+    cities: new Set(normalizedVendors.map((v) => v.officeCity).filter(Boolean)).size,
+    countries: new Set(normalizedVendors.map((v) => (v.place || "").split(",").pop()?.trim()).filter(Boolean)).size,
+  }), [normalizedVendors]);
 
   // ── Filter & Sort ──
   const filtered = useMemo(() => {
-    let list = vendors.filter((v) => {
+    let list = normalizedVendors.filter((v) => {
       const sq = q.toLowerCase();
       return (
         (filterType === "All" || v.vendorType === filterType) &&
@@ -201,7 +213,7 @@ function VendorsPage() {
       });
     }
     return list;
-  }, [vendors, q, filterType, filterPlace, filterCity, filterStatus, sortField, sortDir]);
+  }, [normalizedVendors, q, filterType, filterPlace, filterCity, filterStatus, sortField, sortDir]);
 
   const totalPages = Math.ceil(filtered.length / perPage);
   const paginated = filtered.slice((page - 1) * perPage, page * perPage);
@@ -336,7 +348,19 @@ function VendorsPage() {
 
   const handleExport = () => {
     const headers = ["Vendor ID", "Place", "Vendor Name", "Contact Person", "Mobile", "Email", "Website", "Office City", "Vendor Type", "Status", "Created Date"];
-    const rows = filtered.map((v) => [v.id, v.place, v.name, v.contactPerson, v.mobile, v.email, v.website, v.officeCity, v.vendorType, v.status, v.createdAt]);
+    const rows = filtered.map((v) => [
+      v.id,
+      v.place,
+      v.name,
+      v.contactPerson,
+      v.mobile,
+      v.email,
+      v.website,
+      v.officeCity,
+      v.vendorType,
+      v.status,
+      v.createdAt,
+    ]);
     const wb = XLSX.utils.book_new();
     const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
     ws["!cols"] = headers.map(() => ({ wch: 20 }));
@@ -548,11 +572,10 @@ function VendorsPage() {
                       <TypeBadge type={v.vendorType} />
                     </td>
                     <td className="px-4 py-3 align-top text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                        v.status === "Active"
+                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${v.status === "Active"
                           ? "bg-emerald-100 text-emerald-700 border-emerald-200"
                           : "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>
+                        }`}>
                         {v.status}
                       </span>
                     </td>
@@ -786,9 +809,8 @@ function VendorsPage() {
                     <DialogDescription className="flex items-center flex-wrap gap-x-3 gap-y-1 mt-1">
                       <span className="font-mono text-xs bg-secondary px-2 py-0.5 rounded-md">{selectedVendor.id}</span>
                       <TypeBadge type={selectedVendor.vendorType} />
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                        selectedVendor.status === "Active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"
-                      }`}>{selectedVendor.status}</span>
+                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${selectedVendor.status === "Active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"
+                        }`}>{selectedVendor.status}</span>
                     </DialogDescription>
                   </div>
                 </div>
