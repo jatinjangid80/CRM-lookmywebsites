@@ -23,12 +23,24 @@ import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPaymentsRouteImport } from './routes/crm.payments'
 import { Route as CrmPaymentRequestsRouteImport } from './routes/crm.payment-requests'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
+import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
 import { Route as CrmInsuranceRouteImport } from './routes/crm.insurance'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
 import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
 import { Route as CrmCustomersRouteImport } from './routes/crm.customers'
+import { Route as CrmCalendarRouteImport } from './routes/crm.calendar'
 import { Route as CrmBookingsRouteImport } from './routes/crm.bookings'
+import { Route as CrmAccountsRouteImport } from './routes/crm.accounts'
+import { Route as CrmServicesTravelInsuranceRouteImport } from './routes/crm.services.travel-insurance'
+import { Route as CrmServicesTransportRouteImport } from './routes/crm.services.transport'
+import { Route as CrmServicesInternationalRouteImport } from './routes/crm.services.international'
+import { Route as CrmServicesHotelRouteImport } from './routes/crm.services.hotel'
+import { Route as CrmServicesForexRouteImport } from './routes/crm.services.forex'
+import { Route as CrmServicesFlightsRouteImport } from './routes/crm.services.flights'
+import { Route as CrmServicesDomesticRouteImport } from './routes/crm.services.domestic'
+import { Route as CrmServicesCruiseRouteImport } from './routes/crm.services.cruise'
+import { Route as CrmServicesActivitiesRouteImport } from './routes/crm.services.activities'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
@@ -100,6 +112,11 @@ const CrmPackagesRoute = CrmPackagesRouteImport.update({
   path: '/packages',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmNotificationsRoute = CrmNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmLeadsRoute = CrmLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
@@ -125,9 +142,66 @@ const CrmCustomersRoute = CrmCustomersRouteImport.update({
   path: '/customers',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmCalendarRoute = CrmCalendarRouteImport.update({
+  id: '/calendar',
+  path: '/calendar',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmBookingsRoute = CrmBookingsRouteImport.update({
   id: '/bookings',
   path: '/bookings',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmAccountsRoute = CrmAccountsRouteImport.update({
+  id: '/accounts',
+  path: '/accounts',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesTravelInsuranceRoute =
+  CrmServicesTravelInsuranceRouteImport.update({
+    id: '/services/travel-insurance',
+    path: '/services/travel-insurance',
+    getParentRoute: () => CrmRoute,
+  } as any)
+const CrmServicesTransportRoute = CrmServicesTransportRouteImport.update({
+  id: '/services/transport',
+  path: '/services/transport',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesInternationalRoute =
+  CrmServicesInternationalRouteImport.update({
+    id: '/services/international',
+    path: '/services/international',
+    getParentRoute: () => CrmRoute,
+  } as any)
+const CrmServicesHotelRoute = CrmServicesHotelRouteImport.update({
+  id: '/services/hotel',
+  path: '/services/hotel',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesForexRoute = CrmServicesForexRouteImport.update({
+  id: '/services/forex',
+  path: '/services/forex',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesFlightsRoute = CrmServicesFlightsRouteImport.update({
+  id: '/services/flights',
+  path: '/services/flights',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesDomesticRoute = CrmServicesDomesticRouteImport.update({
+  id: '/services/domestic',
+  path: '/services/domestic',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesCruiseRoute = CrmServicesCruiseRouteImport.update({
+  id: '/services/cruise',
+  path: '/services/cruise',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmServicesActivitiesRoute = CrmServicesActivitiesRouteImport.update({
+  id: '/services/activities',
+  path: '/services/activities',
   getParentRoute: () => CrmRoute,
 } as any)
 
@@ -135,12 +209,15 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/crm': typeof CrmRouteWithChildren
   '/login': typeof LoginRoute
+  '/crm/accounts': typeof CrmAccountsRoute
   '/crm/bookings': typeof CrmBookingsRoute
+  '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
@@ -152,16 +229,28 @@ export interface FileRoutesByFullPath {
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm/': typeof CrmIndexRoute
+  '/crm/services/activities': typeof CrmServicesActivitiesRoute
+  '/crm/services/cruise': typeof CrmServicesCruiseRoute
+  '/crm/services/domestic': typeof CrmServicesDomesticRoute
+  '/crm/services/flights': typeof CrmServicesFlightsRoute
+  '/crm/services/forex': typeof CrmServicesForexRoute
+  '/crm/services/hotel': typeof CrmServicesHotelRoute
+  '/crm/services/international': typeof CrmServicesInternationalRoute
+  '/crm/services/transport': typeof CrmServicesTransportRoute
+  '/crm/services/travel-insurance': typeof CrmServicesTravelInsuranceRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
+  '/crm/accounts': typeof CrmAccountsRoute
   '/crm/bookings': typeof CrmBookingsRoute
+  '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
@@ -173,18 +262,30 @@ export interface FileRoutesByTo {
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm': typeof CrmIndexRoute
+  '/crm/services/activities': typeof CrmServicesActivitiesRoute
+  '/crm/services/cruise': typeof CrmServicesCruiseRoute
+  '/crm/services/domestic': typeof CrmServicesDomesticRoute
+  '/crm/services/flights': typeof CrmServicesFlightsRoute
+  '/crm/services/forex': typeof CrmServicesForexRoute
+  '/crm/services/hotel': typeof CrmServicesHotelRoute
+  '/crm/services/international': typeof CrmServicesInternationalRoute
+  '/crm/services/transport': typeof CrmServicesTransportRoute
+  '/crm/services/travel-insurance': typeof CrmServicesTravelInsuranceRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/crm': typeof CrmRouteWithChildren
   '/login': typeof LoginRoute
+  '/crm/accounts': typeof CrmAccountsRoute
   '/crm/bookings': typeof CrmBookingsRoute
+  '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/payment-requests': typeof CrmPaymentRequestsRoute
   '/crm/payments': typeof CrmPaymentsRoute
@@ -196,6 +297,15 @@ export interface FileRoutesById {
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm/': typeof CrmIndexRoute
+  '/crm/services/activities': typeof CrmServicesActivitiesRoute
+  '/crm/services/cruise': typeof CrmServicesCruiseRoute
+  '/crm/services/domestic': typeof CrmServicesDomesticRoute
+  '/crm/services/flights': typeof CrmServicesFlightsRoute
+  '/crm/services/forex': typeof CrmServicesForexRoute
+  '/crm/services/hotel': typeof CrmServicesHotelRoute
+  '/crm/services/international': typeof CrmServicesInternationalRoute
+  '/crm/services/transport': typeof CrmServicesTransportRoute
+  '/crm/services/travel-insurance': typeof CrmServicesTravelInsuranceRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -203,12 +313,15 @@ export interface FileRouteTypes {
     | '/'
     | '/crm'
     | '/login'
+    | '/crm/accounts'
     | '/crm/bookings'
+    | '/crm/calendar'
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
     | '/crm/leads'
+    | '/crm/notifications'
     | '/crm/packages'
     | '/crm/payment-requests'
     | '/crm/payments'
@@ -220,16 +333,28 @@ export interface FileRouteTypes {
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm/'
+    | '/crm/services/activities'
+    | '/crm/services/cruise'
+    | '/crm/services/domestic'
+    | '/crm/services/flights'
+    | '/crm/services/forex'
+    | '/crm/services/hotel'
+    | '/crm/services/international'
+    | '/crm/services/transport'
+    | '/crm/services/travel-insurance'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/login'
+    | '/crm/accounts'
     | '/crm/bookings'
+    | '/crm/calendar'
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
     | '/crm/leads'
+    | '/crm/notifications'
     | '/crm/packages'
     | '/crm/payment-requests'
     | '/crm/payments'
@@ -241,17 +366,29 @@ export interface FileRouteTypes {
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm'
+    | '/crm/services/activities'
+    | '/crm/services/cruise'
+    | '/crm/services/domestic'
+    | '/crm/services/flights'
+    | '/crm/services/forex'
+    | '/crm/services/hotel'
+    | '/crm/services/international'
+    | '/crm/services/transport'
+    | '/crm/services/travel-insurance'
   id:
     | '__root__'
     | '/'
     | '/crm'
     | '/login'
+    | '/crm/accounts'
     | '/crm/bookings'
+    | '/crm/calendar'
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
     | '/crm/leads'
+    | '/crm/notifications'
     | '/crm/packages'
     | '/crm/payment-requests'
     | '/crm/payments'
@@ -263,6 +400,15 @@ export interface FileRouteTypes {
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm/'
+    | '/crm/services/activities'
+    | '/crm/services/cruise'
+    | '/crm/services/domestic'
+    | '/crm/services/flights'
+    | '/crm/services/forex'
+    | '/crm/services/hotel'
+    | '/crm/services/international'
+    | '/crm/services/transport'
+    | '/crm/services/travel-insurance'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -371,6 +517,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmPackagesRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/notifications': {
+      id: '/crm/notifications'
+      path: '/notifications'
+      fullPath: '/crm/notifications'
+      preLoaderRoute: typeof CrmNotificationsRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/leads': {
       id: '/crm/leads'
       path: '/leads'
@@ -406,6 +559,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmCustomersRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/calendar': {
+      id: '/crm/calendar'
+      path: '/calendar'
+      fullPath: '/crm/calendar'
+      preLoaderRoute: typeof CrmCalendarRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/bookings': {
       id: '/crm/bookings'
       path: '/bookings'
@@ -413,16 +573,89 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmBookingsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/accounts': {
+      id: '/crm/accounts'
+      path: '/accounts'
+      fullPath: '/crm/accounts'
+      preLoaderRoute: typeof CrmAccountsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/travel-insurance': {
+      id: '/crm/services/travel-insurance'
+      path: '/services/travel-insurance'
+      fullPath: '/crm/services/travel-insurance'
+      preLoaderRoute: typeof CrmServicesTravelInsuranceRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/transport': {
+      id: '/crm/services/transport'
+      path: '/services/transport'
+      fullPath: '/crm/services/transport'
+      preLoaderRoute: typeof CrmServicesTransportRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/international': {
+      id: '/crm/services/international'
+      path: '/services/international'
+      fullPath: '/crm/services/international'
+      preLoaderRoute: typeof CrmServicesInternationalRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/hotel': {
+      id: '/crm/services/hotel'
+      path: '/services/hotel'
+      fullPath: '/crm/services/hotel'
+      preLoaderRoute: typeof CrmServicesHotelRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/forex': {
+      id: '/crm/services/forex'
+      path: '/services/forex'
+      fullPath: '/crm/services/forex'
+      preLoaderRoute: typeof CrmServicesForexRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/flights': {
+      id: '/crm/services/flights'
+      path: '/services/flights'
+      fullPath: '/crm/services/flights'
+      preLoaderRoute: typeof CrmServicesFlightsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/domestic': {
+      id: '/crm/services/domestic'
+      path: '/services/domestic'
+      fullPath: '/crm/services/domestic'
+      preLoaderRoute: typeof CrmServicesDomesticRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/cruise': {
+      id: '/crm/services/cruise'
+      path: '/services/cruise'
+      fullPath: '/crm/services/cruise'
+      preLoaderRoute: typeof CrmServicesCruiseRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/services/activities': {
+      id: '/crm/services/activities'
+      path: '/services/activities'
+      fullPath: '/crm/services/activities'
+      preLoaderRoute: typeof CrmServicesActivitiesRouteImport
+      parentRoute: typeof CrmRoute
+    }
   }
 }
 
 interface CrmRouteChildren {
+  CrmAccountsRoute: typeof CrmAccountsRoute
   CrmBookingsRoute: typeof CrmBookingsRoute
+  CrmCalendarRoute: typeof CrmCalendarRoute
   CrmCustomersRoute: typeof CrmCustomersRoute
   CrmDocumentsRoute: typeof CrmDocumentsRoute
   CrmEmployeesRoute: typeof CrmEmployeesRoute
   CrmInsuranceRoute: typeof CrmInsuranceRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
+  CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
   CrmPaymentRequestsRoute: typeof CrmPaymentRequestsRoute
   CrmPaymentsRoute: typeof CrmPaymentsRoute
@@ -434,15 +667,27 @@ interface CrmRouteChildren {
   CrmVendorsRoute: typeof CrmVendorsRoute
   CrmVisaRoute: typeof CrmVisaRoute
   CrmIndexRoute: typeof CrmIndexRoute
+  CrmServicesActivitiesRoute: typeof CrmServicesActivitiesRoute
+  CrmServicesCruiseRoute: typeof CrmServicesCruiseRoute
+  CrmServicesDomesticRoute: typeof CrmServicesDomesticRoute
+  CrmServicesFlightsRoute: typeof CrmServicesFlightsRoute
+  CrmServicesForexRoute: typeof CrmServicesForexRoute
+  CrmServicesHotelRoute: typeof CrmServicesHotelRoute
+  CrmServicesInternationalRoute: typeof CrmServicesInternationalRoute
+  CrmServicesTransportRoute: typeof CrmServicesTransportRoute
+  CrmServicesTravelInsuranceRoute: typeof CrmServicesTravelInsuranceRoute
 }
 
 const CrmRouteChildren: CrmRouteChildren = {
+  CrmAccountsRoute: CrmAccountsRoute,
   CrmBookingsRoute: CrmBookingsRoute,
+  CrmCalendarRoute: CrmCalendarRoute,
   CrmCustomersRoute: CrmCustomersRoute,
   CrmDocumentsRoute: CrmDocumentsRoute,
   CrmEmployeesRoute: CrmEmployeesRoute,
   CrmInsuranceRoute: CrmInsuranceRoute,
   CrmLeadsRoute: CrmLeadsRoute,
+  CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
   CrmPaymentRequestsRoute: CrmPaymentRequestsRoute,
   CrmPaymentsRoute: CrmPaymentsRoute,
@@ -454,6 +699,15 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmVendorsRoute: CrmVendorsRoute,
   CrmVisaRoute: CrmVisaRoute,
   CrmIndexRoute: CrmIndexRoute,
+  CrmServicesActivitiesRoute: CrmServicesActivitiesRoute,
+  CrmServicesCruiseRoute: CrmServicesCruiseRoute,
+  CrmServicesDomesticRoute: CrmServicesDomesticRoute,
+  CrmServicesFlightsRoute: CrmServicesFlightsRoute,
+  CrmServicesForexRoute: CrmServicesForexRoute,
+  CrmServicesHotelRoute: CrmServicesHotelRoute,
+  CrmServicesInternationalRoute: CrmServicesInternationalRoute,
+  CrmServicesTransportRoute: CrmServicesTransportRoute,
+  CrmServicesTravelInsuranceRoute: CrmServicesTravelInsuranceRoute,
 }
 
 const CrmRouteWithChildren = CrmRoute._addFileChildren(CrmRouteChildren)

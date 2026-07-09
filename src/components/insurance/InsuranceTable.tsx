@@ -18,8 +18,8 @@ interface InsuranceTableProps {
 }
 
 export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplicate, onDelete }: InsuranceTableProps) {
-  const getCompanyName = (id: string) => companies.find(c => c.id === id)?.name || id;
-  const getVendorName = (id: string) => vendors.find(v => v.id === id)?.name || id;
+  const getCompanyName = (p: any) => p.company_id === "other" ? (p.custom_company || "Other") : (companies.find(c => c.id === p.company_id)?.name || p.company_id);
+  const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
   const formatINR = (amount: number) => {
     return new Intl.NumberFormat("en-IN", {
@@ -81,8 +81,8 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                     <div className="text-xs text-muted-foreground">{p.mobile_number}</div>
                   </td>
                   <td className="px-4 py-3">
-                    <div className="text-sm">{getCompanyName(p.company_id)}</div>
-                    <div className="text-xs text-muted-foreground">{getVendorName(p.vendor_id)}</div>
+                    <div className="text-sm">{getCompanyName(p)}</div>
+                    <div className="text-xs text-muted-foreground">{getVendorName(p)}</div>
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-medium">{p.vehicle_number}</div>

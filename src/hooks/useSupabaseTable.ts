@@ -17,7 +17,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         console.error(`Error fetching ${tableName}:`, error);
         return;
       }
-      
+
       if (remoteData && remoteData.length > 0) {
         setData(remoteData.map(unSanitizeRow) as T);
       } else {
@@ -69,6 +69,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.children;
       delete newRow.lastFollowUp;
       delete newRow.createdTime;
+      // paymentStatus is stored as part of notes metadata for leads
       delete newRow.paymentStatus;
     }
     if (tableName === "employees") {
@@ -156,12 +157,42 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       }
     }
     if (tableName === "payment_requests") {
-      if (newRow.paidFor !== undefined || newRow.adminNotes !== undefined) {
-         const existingRemarks = newRow.remarks || "";
-         newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, paidFor: newRow.paidFor, adminNotes: newRow.adminNotes });
+      const requestMeta: Record<string, any> = {};
+      const metaFields = [
+        "paidFor",
+        "adminNotes",
+        "bookingId",
+        "bookingNumber",
+        "customer",
+        "vendor",
+        "serviceType",
+        "bookingAmount",
+        "vendorPayable",
+        "profit",
+        "employeeName",
+        "requestedAmount",
+        "paymentMode",
+        "dueDate",
+        "priority",
+        "remarks",
+        "invoiceAttachments",
+        "vendorBillAttachments",
+        "auditTimeline",
+        "accountRemarks",
+        "adminRemarks",
+        "rejectionReason",
+        "paymentDetails",
+      ];
+
+      const existingRemarks = newRow.remarks || "";
+      for (const field of metaFields) {
+        if (newRow[field] !== undefined) {
+          requestMeta[field] = newRow[field];
+          delete newRow[field];
+        }
       }
-      delete newRow.paidFor;
-      delete newRow.adminNotes;
+
+      newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...requestMeta });
     }
 
     if (tableName === "customers") {
@@ -194,7 +225,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.completed_at) customFields.completed_at = newRow.completed_at;
       if (newRow.task_number) customFields.task_number = newRow.task_number;
       if (newRow.created_by) customFields.created_by = newRow.created_by;
-      
+
       if (Object.keys(customFields).length > 0) {
         newRow.note = JSON.stringify({
           _isMeta: true,
@@ -209,7 +240,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.task_type !== undefined) newRow.type = newRow.task_type;
       if (newRow.assigned_to !== undefined) newRow.assignee = newRow.assigned_to;
       if (newRow.due_date !== undefined) newRow.dueDate = newRow.due_date;
-      
+
       // Delete the non-existent columns from Supabase payload
       delete newRow.task_type;
       delete newRow.notes;
@@ -275,7 +306,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (tableName === "reviews" && newRow.employeeId) {
       newRow.empId = newRow.employeeId;
     }
-    
+
     if (tableName === "leads" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
       try {
         const parsed = JSON.parse(newRow.notes);
@@ -286,7 +317,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
           if (parsed.leadSection !== undefined) newRow.leadSection = parsed.leadSection;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (tableName === "bookings" && typeof newRow.remarks === "string" && newRow.remarks.includes("_isMeta")) {
@@ -298,7 +329,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (tableName === "payment_requests" && typeof newRow.remarks === "string" && newRow.remarks.includes("_isMeta")) {
@@ -306,10 +337,37 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const parsed = JSON.parse(newRow.remarks);
         if (parsed._isMeta) {
           newRow.remarks = parsed.text;
-          if (parsed.paidFor !== undefined) newRow.paidFor = parsed.paidFor;
-          if (parsed.adminNotes !== undefined) newRow.adminNotes = parsed.adminNotes;
+          const metaFields = [
+            "paidFor",
+            "adminNotes",
+            "bookingId",
+            "bookingNumber",
+            "customer",
+            "vendor",
+            "serviceType",
+            "bookingAmount",
+            "vendorPayable",
+            "profit",
+            "employeeName",
+            "requestedAmount",
+            "paymentMode",
+            "dueDate",
+            "priority",
+            "invoiceAttachments",
+            "vendorBillAttachments",
+            "auditTimeline",
+            "accountRemarks",
+            "adminRemarks",
+            "rejectionReason",
+            "paymentDetails",
+          ];
+          for (const field of metaFields) {
+            if (parsed[field] !== undefined) {
+              newRow[field] = parsed[field];
+            }
+          }
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (tableName === "customers" && typeof newRow.name === "string" && newRow.name.includes("---META---")) {
@@ -328,7 +386,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         if (parsed.createdAt !== undefined) newRow.createdAt = parsed.createdAt;
         if (parsed.lastBookingDate !== undefined) newRow.lastBookingDate = parsed.lastBookingDate;
         if (parsed.assignedTo !== undefined) newRow.assignedTo = parsed.assignedTo;
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (tableName === "employees" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
@@ -341,14 +399,14 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
           if (parsed.profile_details !== undefined) newRow.profile_details = parsed.profile_details;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     if (tableName === "tasks") {
       if (newRow.type !== undefined) newRow.task_type = newRow.type;
       if (newRow.assignee !== undefined) newRow.assigned_to = newRow.assignee;
       if (newRow.dueDate !== undefined) newRow.due_date = newRow.dueDate;
-      
+
       if (newRow.note !== undefined) {
         newRow.description = newRow.note;
       }
@@ -371,7 +429,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.task_number !== undefined) newRow.task_number = parsed.task_number;
           if (parsed.created_by !== undefined) newRow.created_by = parsed.created_by;
         }
-      } catch (e) {}
+      } catch (e) { }
     }
 
     // Safety guard: notes must always be an array - handle broken data from a past bad commit

@@ -2,8 +2,41 @@ import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+
+const DEFAULT_COMPANIES = [
+  { id: "tata-aig", name: "Tata AIG" },
+  { id: "go-digit", name: "Go Digit" },
+  { id: "icici-lombard", name: "ICICI Lombard" },
+  { id: "united-india", name: "United India Insurance" },
+  { id: "bajaj-allianz", name: "Bajaj Allianz" },
+  { id: "liberty-general", name: "Liberty General Insurance" },
+  { id: "future-generali", name: "Future Generali" },
+  { id: "reliance-general", name: "Reliance General Insurance" },
+  { id: "universal-sompo", name: "Universal Sompo" },
+  { id: "iffco-tokio", name: "IFFCO Tokio" },
+  { id: "sbi-general", name: "SBI General Insurance" },
+  { id: "care-health", name: "Care Health Insurance" },
+  { id: "lic", name: "LIC" },
+  { id: "new-india", name: "New India Assurance" },
+  { id: "raheja-qbe", name: "Raheja QBE General Insurance" },
+  { id: "shriram-general", name: "Shriram General Insurance" },
+];
+
+const DEFAULT_VENDORS = [
+  { id: "pravindra", name: "Pravindra" },
+  { id: "ginar", name: "Ginar" },
+  { id: "sunshine", name: "Sunshine" },
+  { id: "starline", name: "Starline" },
+  { id: "rightsure", name: "Rightsure" },
+  { id: "silver-square", name: "Silver Square" },
+  { id: "manvendra", name: "Manvendra" },
+  { id: "care-code", name: "Care Code" },
+  { id: "techwheel", name: "Techwheel Dealer" },
+  { id: "maruti-sanga", name: "Maruti Sanga" },
+];
 
 export function InsuranceForm({ 
   onClose, 
@@ -73,10 +106,34 @@ export function InsuranceForm({
 
   // Auto Calculations
   useEffect(() => {
+    const od = Number(form.od_premium) || 0;
+    const tp = Number(form.tp_premium) || 0;
+    const calculatedNet = od + tp;
+    setForm((f: any) => {
+      // Only auto-update net if it actually equals the sum, so we don't override manual edits
+      if (f.net_premium === calculatedNet) return f;
+      return { ...f, net_premium: calculatedNet };
+    });
+  }, [form.od_premium, form.tp_premium]);
+
+  useEffect(() => {
+    const net = Number(form.net_premium) || 0;
+    const gstPct = Number(form.gst_percentage) || 18;
+    const calculatedGst = Math.round(net * (gstPct / 100));
+    setForm((f: any) => {
+      if (f.gst === calculatedGst && f.total_premium === net + calculatedGst) return f;
+      return { ...f, gst: calculatedGst, total_premium: net + calculatedGst };
+    });
+  }, [form.net_premium, form.gst_percentage]);
+
+  useEffect(() => {
     const net = Number(form.net_premium) || 0;
     const gst = Number(form.gst) || 0;
-    setForm((f: any) => ({ ...f, total_premium: net + gst }));
-  }, [form.net_premium, form.gst]);
+    setForm((f: any) => {
+      if (f.total_premium === net + gst) return f;
+      return { ...f, total_premium: net + gst };
+    });
+  }, [form.gst]);
 
   useEffect(() => {
     const custPaid = Number(form.customer_paid) || 0;
@@ -121,8 +178,8 @@ export function InsuranceForm({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-      <div className="h-full w-full max-w-4xl bg-background shadow-2xl animate-in slide-in-from-right duration-300 flex flex-col">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4 sm:p-6">
+      <div className="w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-2xl bg-background shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4 bg-card">
           <div className="flex items-center gap-3">
@@ -142,7 +199,7 @@ export function InsuranceForm({
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white">
+            <Button onClick={handleSave}>
               Save Policy
             </Button>
           </div>
@@ -279,10 +336,19 @@ export function InsuranceForm({
                   onChange={(e) => setForm({...form, company_id: e.target.value})}
                 >
                   <option value="">Select Company</option>
-                  {companies.map(c => (
+                  {(companies && companies.length > 0 ? companies : DEFAULT_COMPANIES).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
+                  <option value="other">Other</option>
                 </select>
+                {form.company_id === "other" && (
+                  <Input 
+                    className="mt-2"
+                    placeholder="Enter Custom Company Name"
+                    value={form.custom_company || ""}
+                    onChange={(e) => setForm({...form, custom_company: e.target.value})}
+                  />
+                )}
               </div>
               <div className="space-y-1">
                 <Label>Vendor</Label>
@@ -292,10 +358,19 @@ export function InsuranceForm({
                   onChange={(e) => setForm({...form, vendor_id: e.target.value})}
                 >
                   <option value="">Select Vendor</option>
-                  {vendors.map(v => (
+                  {(vendors && vendors.length > 0 ? vendors : DEFAULT_VENDORS).map(v => (
                     <option key={v.id} value={v.id}>{v.name}</option>
                   ))}
+                  <option value="other">Other</option>
                 </select>
+                {form.vendor_id === "other" && (
+                  <Input 
+                    className="mt-2"
+                    placeholder="Enter Custom Vendor Name"
+                    value={form.custom_vendor || ""}
+                    onChange={(e) => setForm({...form, custom_vendor: e.target.value})}
+                  />
+                )}
               </div>
             </div>
           </section>
@@ -346,40 +421,12 @@ export function InsuranceForm({
                   onChange={(e) => setForm({...form, vehicle_model: e.target.value})}
                 />
               </div>
-
-              <div className="space-y-1">
-                <Label>Fuel Type</Label>
-                <select 
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={form.fuel_type}
-                  onChange={(e) => setForm({...form, fuel_type: e.target.value})}
-                >
-                  <option>Petrol</option>
-                  <option>Diesel</option>
-                  <option>CNG</option>
-                  <option>EV</option>
-                </select>
-              </div>
               <div className="space-y-1">
                 <Label>Seating Capacity</Label>
                 <Input 
                   type="number"
                   value={form.seating_capacity}
                   onChange={(e) => setForm({...form, seating_capacity: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Engine Number</Label>
-                <Input 
-                  value={form.engine_number}
-                  onChange={(e) => setForm({...form, engine_number: e.target.value})}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Chassis Number</Label>
-                <Input 
-                  value={form.chassis_number}
-                  onChange={(e) => setForm({...form, chassis_number: e.target.value})}
                 />
               </div>
 
@@ -413,27 +460,26 @@ export function InsuranceForm({
                   onChange={(e) => setForm({...form, idv_value: e.target.value})}
                 />
               </div>
-              <div className="space-y-1">
-                <Label>NCB %</Label>
+              <div className="space-y-1 col-span-2">
+                <Label>Previous Policy No.</Label>
                 <Input 
-                  type="number"
-                  value={form.ncb_percentage}
-                  onChange={(e) => setForm({...form, ncb_percentage: e.target.value})}
+                  value={form.previous_policy_number}
+                  onChange={(e) => setForm({...form, previous_policy_number: e.target.value})}
                 />
               </div>
-
-              <div className="space-y-1 col-span-2">
+              <div className="space-y-1 col-span-1">
                 <Label>Previous Insurer</Label>
                 <Input 
                   value={form.previous_insurer}
                   onChange={(e) => setForm({...form, previous_insurer: e.target.value})}
                 />
               </div>
-              <div className="space-y-1 col-span-2">
-                <Label>Previous Policy No.</Label>
+              <div className="space-y-1 col-span-1">
+                <Label>NCB %</Label>
                 <Input 
-                  value={form.previous_policy_number}
-                  onChange={(e) => setForm({...form, previous_policy_number: e.target.value})}
+                  type="number"
+                  value={form.ncb_percentage}
+                  onChange={(e) => setForm({...form, ncb_percentage: e.target.value})}
                 />
               </div>
             </div>
@@ -472,11 +518,13 @@ export function InsuranceForm({
               </div>
               <div className="space-y-1">
                 <Label>GST</Label>
-                <Input 
-                  type="number"
-                  value={form.gst}
-                  onChange={(e) => setForm({...form, gst: e.target.value})}
-                />
+                <select 
+                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
+                  value={form.gst_percentage || 18}
+                  onChange={(e) => setForm({...form, gst_percentage: Number(e.target.value)})}
+                >
+                  <option value="18">18%</option>
+                </select>
               </div>
               <div className="space-y-1 bg-blue-50 p-2 rounded-lg border border-blue-100">
                 <Label className="text-blue-700">Total Premium</Label>

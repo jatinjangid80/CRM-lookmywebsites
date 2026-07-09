@@ -141,7 +141,7 @@ function GeneralInsurancePage() {
           <Button variant="outline" className="hidden md:flex">
             <Download className="mr-2 h-4 w-4" /> Export Data
           </Button>
-          <Button onClick={handleAddNew} className="bg-blue-600 hover:bg-blue-700 text-white">
+          <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" /> New Policy
           </Button>
         </div>

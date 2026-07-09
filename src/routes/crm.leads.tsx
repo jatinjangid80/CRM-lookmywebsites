@@ -166,7 +166,6 @@ const SERVICES = [
       { label: "Conference Booking", icon: "🎟" },
     ],
   },
-  { group: "Insurance Services", items: [{ label: "General Insurance", icon: "🛡️" }] },
 ];
 
 const SERVICE_ICONS: Record<string, string> = SERVICES.reduce(
@@ -714,7 +713,7 @@ function AddLeadModal({
             </select>
           </div>
 
-id          {/* Priority */}
+          id          {/* Priority */}
           <div>
             <label className="mb-1.5 block text-sm font-semibold">Priority</label>
             <select
@@ -1233,122 +1232,122 @@ function LeadDetail({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-              {lead.service?.toLowerCase().includes("insurance")
-                ? [
-                  {
-                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                    label: "Expiry Date",
-                    val: lead.expiryDate || "—",
-                  },
-                  {
-                    icon: <Shield className="h-4 w-4 text-primary" />,
-                    label: "Policy Type",
-                    val: lead.policyType || "—",
-                  },
-                  {
-                    icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                    label: "Query Type",
-                    val: lead.queryType || "—",
-                  },
-                  {
-                    icon: <Building2 className="h-4 w-4 text-primary" />,
-                    label: "Client / Company",
-                    val: lead.clientCompany || "—",
-                  },
-                  {
-                    icon: <UserCheck className="h-4 w-4 text-primary" />,
-                    label: "Reference",
-                    val: lead.reference || "—",
-                  },
-                  {
-                    icon: <Globe className="h-4 w-4 text-primary" />,
-                    label: "Source",
-                    val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                  },
-                  {
-                    icon: <Globe className="h-4 w-4 text-primary" />,
-                    label: "Section",
-                    val: lead.leadSection || "—",
-                  },
-                  {
-                    icon: <Briefcase className="h-4 w-4 text-primary" />,
-                    label: "Service",
-                    val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                  },
-                ].map((r) => (
-                  <div key={r.label} className="flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0">{r.icon}</span>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{r.label}</p>
-                      <p className="text-sm font-semibold">{r.val}</p>
+                {lead.service?.toLowerCase().includes("insurance")
+                  ? [
+                    {
+                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                      label: "Expiry Date",
+                      val: lead.expiryDate || "—",
+                    },
+                    {
+                      icon: <Shield className="h-4 w-4 text-primary" />,
+                      label: "Policy Type",
+                      val: lead.policyType || "—",
+                    },
+                    {
+                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
+                      label: "Query Type",
+                      val: lead.queryType || "—",
+                    },
+                    {
+                      icon: <Building2 className="h-4 w-4 text-primary" />,
+                      label: "Client / Company",
+                      val: lead.clientCompany || "—",
+                    },
+                    {
+                      icon: <UserCheck className="h-4 w-4 text-primary" />,
+                      label: "Reference",
+                      val: lead.reference || "—",
+                    },
+                    {
+                      icon: <Globe className="h-4 w-4 text-primary" />,
+                      label: "Source",
+                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
+                    },
+                    {
+                      icon: <Globe className="h-4 w-4 text-primary" />,
+                      label: "Section",
+                      val: lead.leadSection || "—",
+                    },
+                    {
+                      icon: <Briefcase className="h-4 w-4 text-primary" />,
+                      label: "Service",
+                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
+                    },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0">{r.icon}</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{r.label}</p>
+                        <p className="text-sm font-semibold">{r.val}</p>
+                      </div>
                     </div>
-                  </div>
-                ))
-                : [
-                  {
-                    icon: <MapPin className="h-4 w-4 text-primary" />,
-                    label: "Destination",
-                    val: lead.destination,
-                  },
-                  {
-                    icon: <IndianRupee className="h-4 w-4 text-primary" />,
-                    label: "Budget",
-                    val: formatINR(lead.budget),
-                  },
-                  {
-                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                    label: "Travel Date",
-                    val: lead.travelDate,
-                  },
-                  {
-                    icon: <Users className="h-4 w-4 text-primary" />,
-                    label: "Travellers",
-                    val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
-                  },
-                  {
-                    icon: <Phone className="h-4 w-4 text-primary" />,
-                    label: "WhatsApp",
-                    val: lead.whatsapp || lead.phone,
-                  },
-                  {
-                    icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                    label: "Next Follow-up",
-                    val: lead.nextFollowUp || "Not scheduled",
-                  },
-                  {
-                    icon: <Globe className="h-4 w-4 text-primary" />,
-                    label: "Source",
-                    val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                  },
-                  {
-                    icon: <Globe className="h-4 w-4 text-primary" />,
-                    label: "Section",
-                    val: lead.leadSection || "—",
-                  },
-                  {
-                    icon: <Briefcase className="h-4 w-4 text-primary" />,
-                    label: "Service",
-                    val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                  },
-                  {
-                    icon: <Package className="h-4 w-4 text-primary" />,
-                    label: "Package",
-                    val: lead.packageType || "—",
-                  },
-                  {
-                    icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                    label: "Priority",
-                    val: PRIORITY_BADGE[lead.priority] || lead.priority,
-                  },
-                ].map((r) => (
-                  <div key={r.label} className="flex items-start gap-2">
-                    <span className="mt-0.5 shrink-0">{r.icon}</span>
-                    <div>
-                      <p className="text-xs text-muted-foreground">{r.label}</p>
-                      <p className="text-sm font-semibold">{r.val}</p>
+                  ))
+                  : [
+                    {
+                      icon: <MapPin className="h-4 w-4 text-primary" />,
+                      label: "Destination",
+                      val: lead.destination,
+                    },
+                    {
+                      icon: <IndianRupee className="h-4 w-4 text-primary" />,
+                      label: "Budget",
+                      val: formatINR(lead.budget),
+                    },
+                    {
+                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                      label: "Travel Date",
+                      val: lead.travelDate,
+                    },
+                    {
+                      icon: <Users className="h-4 w-4 text-primary" />,
+                      label: "Travellers",
+                      val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
+                    },
+                    {
+                      icon: <Phone className="h-4 w-4 text-primary" />,
+                      label: "WhatsApp",
+                      val: lead.whatsapp || lead.phone,
+                    },
+                    {
+                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
+                      label: "Next Follow-up",
+                      val: lead.nextFollowUp || "Not scheduled",
+                    },
+                    {
+                      icon: <Globe className="h-4 w-4 text-primary" />,
+                      label: "Source",
+                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
+                    },
+                    {
+                      icon: <Globe className="h-4 w-4 text-primary" />,
+                      label: "Section",
+                      val: lead.leadSection || "—",
+                    },
+                    {
+                      icon: <Briefcase className="h-4 w-4 text-primary" />,
+                      label: "Service",
+                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
+                    },
+                    {
+                      icon: <Package className="h-4 w-4 text-primary" />,
+                      label: "Package",
+                      val: lead.packageType || "—",
+                    },
+                    {
+                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
+                      label: "Priority",
+                      val: PRIORITY_BADGE[lead.priority] || lead.priority,
+                    },
+                  ].map((r) => (
+                    <div key={r.label} className="flex items-start gap-2">
+                      <span className="mt-0.5 shrink-0">{r.icon}</span>
+                      <div>
+                        <p className="text-xs text-muted-foreground">{r.label}</p>
+                        <p className="text-sm font-semibold">{r.val}</p>
+                      </div>
                     </div>
-                  </div>
-                ))}
+                  ))}
               </div>
             )}
           </div>
@@ -1537,10 +1536,10 @@ function LeadDetail({
                         <div className="mt-1">
                           <span
                             className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${lead.paymentStatus === "Paid"
-                                ? "bg-emerald-100 text-emerald-700"
-                                : lead.paymentStatus === "Partial"
-                                  ? "bg-amber-100 text-amber-700"
-                                  : "bg-rose-100 text-rose-700"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : lead.paymentStatus === "Partial"
+                                ? "bg-amber-100 text-amber-700"
+                                : "bg-rose-100 text-rose-700"
                               }`}
                           >
                             {lead.paymentStatus || "Pending"}
@@ -1553,114 +1552,114 @@ function LeadDetail({
               </div>
             )}
 
-            {/* Notes & Updates Feed */}
-            <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
-              <div className="flex items-center justify-between mb-3">
-                <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                  Notes & Updates
-                </p>
-              </div>
+          {/* Notes & Updates Feed */}
+          <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
+            <div className="flex items-center justify-between mb-3">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Notes & Updates
+              </p>
+            </div>
 
-              <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-                {lead.allNotes && lead.allNotes.length > 0 ? (
-                  lead.allNotes.map((note, idx) => (
-                    <div key={idx} className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
-                      <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
-                      <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground font-medium">
-                        <Calendar className="h-3 w-3" />
-                        <span>
-                          {new Date(note.date).toLocaleDateString("en-US", {
-                            month: "short",
-                            day: "numeric",
-                            hour: "numeric",
-                            minute: "2-digit"
-                          })}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : lead.notes ? (
-                  <div className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
-                    <p className="text-foreground whitespace-pre-wrap">{lead.notes}</p>
+            <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
+              {lead.allNotes && lead.allNotes.length > 0 ? (
+                lead.allNotes.map((note, idx) => (
+                  <div key={idx} className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
+                    <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
                     <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground font-medium">
                       <Calendar className="h-3 w-3" />
-                      <span>{lead.noteDate ? new Date(lead.noteDate).toLocaleDateString() : "Legacy Note"}</span>
+                      <span>
+                        {new Date(note.date).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          hour: "numeric",
+                          minute: "2-digit"
+                        })}
+                      </span>
                     </div>
                   </div>
-                ) : (
-                  <div className="text-center py-4 text-xs text-muted-foreground bg-secondary/10 rounded-xl border border-dashed border-border">
-                    No notes yet. Add one below.
+                ))
+              ) : lead.notes ? (
+                <div className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
+                  <p className="text-foreground whitespace-pre-wrap">{lead.notes}</p>
+                  <div className="flex items-center gap-2 mt-2 text-[10px] text-muted-foreground font-medium">
+                    <Calendar className="h-3 w-3" />
+                    <span>{lead.noteDate ? new Date(lead.noteDate).toLocaleDateString() : "Legacy Note"}</span>
                   </div>
-                )}
-              </div>
-
-              {onUpdateLead && (
-                <div className="mt-3 flex gap-2">
-                  <Input
-                    placeholder="Type an update..."
-                    value={newNoteText}
-                    onChange={(e) => setNewNoteText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && newNoteText.trim()) {
-                        const noteDate = new Date().toISOString();
-                        const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
-                        if (lead.notes && currentNotes.length === 0) {
-                          currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
-                        }
-                        currentNotes.push({ text: newNoteText.trim(), date: noteDate });
-                        onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
-                        setNewNoteText("");
-                      }
-                    }}
-                    className="h-9 text-xs flex-1 rounded-xl bg-background shadow-sm"
-                  />
-                  <Button 
-                    size="sm" 
-                    className="h-9 rounded-xl px-4 shrink-0 text-white shadow-sm" 
-                    style={{ background: "var(--gradient-brand)" }}
-                    onClick={() => {
-                      if (newNoteText.trim()) {
-                        const noteDate = new Date().toISOString();
-                        const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
-                        if (lead.notes && currentNotes.length === 0) {
-                          currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
-                        }
-                        currentNotes.push({ text: newNoteText.trim(), date: noteDate });
-                        onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
-                        setNewNoteText("");
-                      }
-                    }}
-                    disabled={!newNoteText.trim()}
-                  >
-                    Add
-                  </Button>
                 </div>
-              )}
-            </div>
-
-            {/* Assignee Card */}
-            <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
-              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-                Assigned To
-              </p>
-              {isAdmin && assignees && assignees.length > 0 ? (
-                <select
-                  value={lead.assignedTo}
-                  onChange={(e) => onUpdateLead?.(lead.id, { assignedTo: e.target.value })}
-                  className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
-                >
-                  {assignees.map((a) => (
-                    <option key={a} value={a}>
-                      {a}
-                    </option>
-                  ))}
-                </select>
               ) : (
-                <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
-                  <EmployeeProfileCard employeeName={lead.assignedTo} compact={true} />
+                <div className="text-center py-4 text-xs text-muted-foreground bg-secondary/10 rounded-xl border border-dashed border-border">
+                  No notes yet. Add one below.
                 </div>
               )}
             </div>
+
+            {onUpdateLead && (
+              <div className="mt-3 flex gap-2">
+                <Input
+                  placeholder="Type an update..."
+                  value={newNoteText}
+                  onChange={(e) => setNewNoteText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && newNoteText.trim()) {
+                      const noteDate = new Date().toISOString();
+                      const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                      if (lead.notes && currentNotes.length === 0) {
+                        currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
+                      }
+                      currentNotes.push({ text: newNoteText.trim(), date: noteDate });
+                      onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
+                      setNewNoteText("");
+                    }
+                  }}
+                  className="h-9 text-xs flex-1 rounded-xl bg-background shadow-sm"
+                />
+                <Button
+                  size="sm"
+                  className="h-9 rounded-xl px-4 shrink-0 text-white shadow-sm"
+                  style={{ background: "var(--gradient-brand)" }}
+                  onClick={() => {
+                    if (newNoteText.trim()) {
+                      const noteDate = new Date().toISOString();
+                      const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                      if (lead.notes && currentNotes.length === 0) {
+                        currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
+                      }
+                      currentNotes.push({ text: newNoteText.trim(), date: noteDate });
+                      onUpdateLead(lead.id, { notes: newNoteText.trim(), noteDate, allNotes: currentNotes });
+                      setNewNoteText("");
+                    }
+                  }}
+                  disabled={!newNoteText.trim()}
+                >
+                  Add
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Assignee Card */}
+          <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
+            <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
+              Assigned To
+            </p>
+            {isAdmin && assignees && assignees.length > 0 ? (
+              <select
+                value={lead.assignedTo}
+                onChange={(e) => onUpdateLead?.(lead.id, { assignedTo: e.target.value })}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                {assignees.map((a) => (
+                  <option key={a} value={a}>
+                    {a}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <div className="scale-90 sm:scale-95 origin-top-left -mx-2 -mt-2">
+                <EmployeeProfileCard employeeName={lead.assignedTo} compact={true} />
+              </div>
+            )}
+          </div>
           {/* WhatsApp Quick Actions */}
           <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/5 p-4 space-y-3">
             <p className="text-xs font-semibold uppercase tracking-wider text-emerald-800 dark:text-emerald-300">
@@ -1900,6 +1899,8 @@ function LeadsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [filterStatus, setFilterStatus] = useState<LeadStatus | "All">("All");
+  const [sortField, setSortField] = useState<"createdAt" | "name" | "budget">("createdAt");
+  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [view, setView] = useState<"table" | "kanban">("table");
   const [showModal, setShowModal] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -1907,7 +1908,7 @@ function LeadsPage() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
   const [tableEditNoteText, setTableEditNoteText] = useState("");
-  
+
   const [allTasks, setAllTasks] = useSupabaseTable<any[]>("tasks", []);
   const [tableEditTaskText, setTableEditTaskText] = useState("");
   const [editingTaskLeadId, setEditingTaskLeadId] = useState<string | null>(null);
@@ -1939,7 +1940,7 @@ function LeadsPage() {
     ];
     const csvRows = [
       headers.join(","),
-      ...filtered.map((l) =>
+      ...sortedLeads.map((l) =>
         [
           `"${l.id}"`,
           `"${l.name.replace(/"/g, '""')}"`,
@@ -1974,7 +1975,7 @@ function LeadsPage() {
   const exportToWord = () => {
     const tableHeader =
       "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
-    const tableRows = filtered
+    const tableRows = sortedLeads
       .map(
         (l) =>
           `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination}</td><td>₹${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td></tr>`,
@@ -2001,7 +2002,7 @@ function LeadsPage() {
     if (!printWindow) return;
     const tableHeader =
       "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
-    const tableRows = filtered
+    const tableRows = sortedLeads
       .map(
         (l) =>
           `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination || ""}</td><td>${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td><td>${l.leadSection || ""}</td></tr>`,
@@ -2081,6 +2082,21 @@ function LeadsPage() {
         l.destination?.toLowerCase().includes(q.toLowerCase()) ||
         l.id?.toLowerCase().includes(q.toLowerCase())),
   );
+
+  const sortedLeads = [...filtered].sort((a, b) => {
+    const dir = sortDir === "asc" ? 1 : -1;
+    if (sortField === "name") {
+      return dir * String(a.name || "").localeCompare(String(b.name || ""));
+    }
+    if (sortField === "budget") {
+      return dir * ((Number(a.budget) || 0) - (Number(b.budget) || 0));
+    }
+    const aDate = new Date(a.createdAt || "");
+    const bDate = new Date(b.createdAt || "");
+    if (aDate < bDate) return -1 * dir;
+    if (aDate > bDate) return 1 * dir;
+    return 0;
+  });
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);
@@ -2275,6 +2291,25 @@ function LeadsPage() {
               ))}
             </select>
           </div>
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground font-medium">Sort:</span>
+            <select
+              value={sortField}
+              onChange={(e) => setSortField(e.target.value as typeof sortField)}
+              className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+            >
+              <option value="createdAt">Date</option>
+              <option value="name">Name</option>
+              <option value="budget">Budget</option>
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortDir((prev) => (prev === "asc" ? "desc" : "asc"))}
+              className="h-9 rounded-full border border-border bg-card px-4 text-sm font-semibold text-foreground hover:bg-secondary"
+            >
+              {sortDir === "asc" ? "Asc" : "Desc"}
+            </button>
+          </div>
           {/* View toggle */}
           <div className="flex rounded-xl border border-border overflow-hidden">
             <button
@@ -2311,179 +2346,179 @@ function LeadsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.length === 0 && (
+                  {sortedLeads.length === 0 && (
                     <tr>
                       <td colSpan={8} className="py-12 text-center text-muted-foreground text-sm">
                         No leads match your filters.
                       </td>
                     </tr>
                   )}
-                  {filtered.map((l) => (
+                  {sortedLeads.map((l) => (
                     <React.Fragment key={l.id}>
-                    <tr
-                      className="border-t border-border hover:bg-secondary/30 transition-colors cursor-pointer"
-                      onClick={() => setSelected(l)}
-                    >
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={l.status}
-                          onValueChange={(val: LeadStatus) => {
-                            setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
-                          }}
-                        >
-                          <SelectTrigger className={`inline-flex items-center rounded-sm px-2 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
-                            <SelectValue />
-                            <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {STATUSES.map((s) => (
-                              <SelectItem key={s} value={s} className="text-sm">
-                                {s}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="flex items-center gap-1.5">
-                          <div className="text-sm font-semibold whitespace-nowrap">{l.name}</div>
-                        </div>
-                        {l.clientCompany && <div className="text-xs text-muted-foreground truncate max-w-[120px] mt-0.5">{l.clientCompany}</div>}
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium">{l.createdAt}</div>
-                        <div className="text-xs text-muted-foreground">{l.createdTime || "-"}</div>
-                      </td>
-                      <td className="px-4 py-3">
-                        <div className="text-sm max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
-                        <div className="text-xs font-semibold text-muted-foreground">{l.service || "-"}</div>
-                      </td>
-                      <td className="px-4 py-3 whitespace-nowrap">
-                        <div className="text-sm font-medium">{l.travelDate || "-"}</div>
-                        <div className="text-xs text-emerald-600 font-medium">{l.budget ? `₹${l.budget}` : "-"}</div>
-                      </td>
-                      <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
-                        <Select
-                          value={l.priority || "Medium"}
-                          onValueChange={(val: "High" | "Medium" | "Low") => {
-                            setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
-                          }}
-                        >
-                          <SelectTrigger className="justify-between rounded-md border border-input ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 inline-flex items-center px-1 py-1 text-sm whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
-                            <SelectValue placeholder="-" />
-                            <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {["High", "Medium", "Low"].map((p) => (
-                              <SelectItem key={p} value={p} className="text-sm">
-                                {p}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </td>
-                      <td className="px-4 py-3 text-sm align-top min-w-[140px]">
-                        <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
-                        <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5">
-                          {l.allNotes && l.allNotes.length > 0 ? (
-                            l.allNotes.map((n, i) => (
-                              <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                      <tr
+                        className="border-t border-border hover:bg-secondary/30 transition-colors cursor-pointer"
+                        onClick={() => setSelected(l)}
+                      >
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={l.status}
+                            onValueChange={(val: LeadStatus) => {
+                              setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
+                            }}
+                          >
+                            <SelectTrigger className={`inline-flex items-center rounded-sm px-2 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
+                              <SelectValue />
+                              <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {STATUSES.map((s) => (
+                                <SelectItem key={s} value={s} className="text-sm">
+                                  {s}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-1.5">
+                            <div className="text-sm font-semibold whitespace-nowrap">{l.name}</div>
+                          </div>
+                          {l.clientCompany && <div className="text-xs text-muted-foreground truncate max-w-[120px] mt-0.5">{l.clientCompany}</div>}
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-sm font-medium">{l.createdAt}</div>
+                          <div className="text-xs text-muted-foreground">{l.createdTime || "-"}</div>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="text-sm max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
+                          <div className="text-xs font-semibold text-muted-foreground">{l.service || "-"}</div>
+                        </td>
+                        <td className="px-4 py-3 whitespace-nowrap">
+                          <div className="text-sm font-medium">{l.travelDate || "-"}</div>
+                          <div className="text-xs text-emerald-600 font-medium">{l.budget ? `₹${l.budget}` : "-"}</div>
+                        </td>
+                        <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                          <Select
+                            value={l.priority || "Medium"}
+                            onValueChange={(val: "High" | "Medium" | "Low") => {
+                              setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
+                            }}
+                          >
+                            <SelectTrigger className="justify-between rounded-md border border-input ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 inline-flex items-center px-1 py-1 text-sm whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
+                              <SelectValue placeholder="-" />
+                              <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["High", "Medium", "Low"].map((p) => (
+                                <SelectItem key={p} value={p} className="text-sm">
+                                  {p}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-4 py-3 text-sm align-top min-w-[140px]">
+                          <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
+                          <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                            {l.allNotes && l.allNotes.length > 0 ? (
+                              [...l.allNotes].reverse().map((n, i) => (
+                                <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                                  <span className="text-muted-foreground/60">•</span>
+                                  <span className="text-muted-foreground">{n.text}</span>
+                                  {n.date && (
+                                    <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
+                                      ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                    </span>
+                                  )}
+                                </div>
+                              ))
+                            ) : l.notes ? (
+                              <div className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
                                 <span className="text-muted-foreground/60">•</span>
-                                <span className="text-muted-foreground">{n.text}</span>
-                                {n.date && (
+                                <span className="text-muted-foreground">{l.notes}</span>
+                                {l.noteDate && (
                                   <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
-                                    ({new Date(n.date).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                    ({new Date(l.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
                                   </span>
                                 )}
                               </div>
-                            ))
-                          ) : l.notes ? (
-                            <div className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
-                              <span className="text-muted-foreground/60">•</span>
-                              <span className="text-muted-foreground">{l.notes}</span>
-                              {l.noteDate && (
-                                <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
-                                  ({new Date(l.noteDate).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
-                                </span>
-                              )}
-                            </div>
-                          ) : null}
-                          {editingTableNoteId === l.id ? (
-                            <div className="mt-1 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
-                              <textarea
-                                autoFocus
-                                value={tableEditNoteText}
-                                onChange={(e) => setTableEditNoteText(e.target.value)}
-                                placeholder="Type your note here..."
-                                rows={2}
-                                className="w-full min-w-[160px] max-w-[200px] resize-none rounded-xl border border-border bg-background px-2.5 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
-                              />
-                              <div className="flex gap-2 mt-1">
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  className="h-7 text-xs rounded-full px-3"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setEditingTableNoteId(null);
-                                    setTableEditNoteText("");
-                                  }}
-                                >
-                                  Cancel
-                                </Button>
-                                <Button
-                                  size="sm"
-                                  className="h-7 text-xs rounded-full px-3 text-white"
-                                  style={{ background: "var(--gradient-brand)" }}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    if (tableEditNoteText.trim()) {
-                                      const noteDate = new Date().toISOString();
-                                      const newLeads = leads.map((x) => {
-                                        if (x.id === l.id) {
-                                          let currentNotes = x.allNotes ? [...x.allNotes] : [];
-                                          if (x.notes && currentNotes.length === 0) {
-                                            currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
+                            ) : null}
+                            {editingTableNoteId === l.id ? (
+                              <div className="mt-1 flex flex-col gap-1.5 animate-in fade-in slide-in-from-top-2 duration-200" onClick={(e) => e.stopPropagation()}>
+                                <textarea
+                                  autoFocus
+                                  value={tableEditNoteText}
+                                  onChange={(e) => setTableEditNoteText(e.target.value)}
+                                  placeholder="Type your note here..."
+                                  rows={2}
+                                  className="w-full min-w-[160px] max-w-[200px] resize-none rounded-xl border border-border bg-background px-2.5 py-2 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary shadow-sm"
+                                />
+                                <div className="flex gap-2 mt-1">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    className="h-7 text-xs rounded-full px-3"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      setEditingTableNoteId(null);
+                                      setTableEditNoteText("");
+                                    }}
+                                  >
+                                    Cancel
+                                  </Button>
+                                  <Button
+                                    size="sm"
+                                    className="h-7 text-xs rounded-full px-3 text-white"
+                                    style={{ background: "var(--gradient-brand)" }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      if (tableEditNoteText.trim()) {
+                                        const noteDate = new Date().toISOString();
+                                        const newLeads = leads.map((x) => {
+                                          if (x.id === l.id) {
+                                            let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                                            if (x.notes && currentNotes.length === 0) {
+                                              currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
+                                            }
+                                            currentNotes.push({ text: tableEditNoteText.trim(), date: noteDate });
+                                            return { ...x, notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
                                           }
-                                          currentNotes.push({ text: tableEditNoteText.trim(), date: noteDate });
-                                          return { ...x, notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
-                                        }
-                                        return x;
-                                      });
-                                      setLeads(newLeads);
-                                    }
-                                    setEditingTableNoteId(null);
-                                    setTableEditNoteText("");
-                                  }}
-                                >
-                                  Add Note
-                                </Button>
+                                          return x;
+                                        });
+                                        setLeads(newLeads);
+                                      }
+                                      setEditingTableNoteId(null);
+                                      setTableEditNoteText("");
+                                    }}
+                                  >
+                                    Add Note
+                                  </Button>
+                                </div>
                               </div>
+                            ) : (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingTableNoteId(l.id);
+                                  setTableEditNoteText("");
+                                }}
+                                className="text-sm text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
+                              >
+                                + Add Note
+                              </button>
+                            )}
+                          </div>
+                        </td>
+                        <td className="px-3 py-2.5 whitespace-nowrap">
+                          {l.leadSection ? (
+                            <div className="inline-flex items-center rounded-full bg-secondary/80 px-3 py-1 text-sm font-semibold text-secondary-foreground shadow-sm">
+                              {l.leadSection}
                             </div>
                           ) : (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingTableNoteId(l.id);
-                                setTableEditNoteText("");
-                              }}
-                              className="text-sm text-blue-500 hover:text-blue-600 font-medium text-left whitespace-nowrap mt-1 pl-1"
-                            >
-                              + Add Note
-                            </button>
+                            <span className="text-muted-foreground font-medium text-sm">-</span>
                           )}
-                        </div>
-                      </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap">
-                        {l.leadSection ? (
-                          <div className="inline-flex items-center rounded-full bg-secondary/80 px-3 py-1 text-sm font-semibold text-secondary-foreground shadow-sm">
-                            {l.leadSection}
-                          </div>
-                        ) : (
-                          <span className="text-muted-foreground font-medium text-sm">-</span>
-                        )}
-                      </td>
-                    </tr>
+                        </td>
+                      </tr>
                     </React.Fragment>
                   ))}
                 </tbody>
@@ -2512,7 +2547,7 @@ function LeadsPage() {
                 <KanbanCol
                   key={s}
                   status={s}
-                  leads={filtered.filter((l) => l.status === s)}
+                  leads={sortedLeads.filter((l) => l.status === s)}
                   onSelect={setSelected}
                   onDropLead={(id) => updateStatus(id, s)}
                 />

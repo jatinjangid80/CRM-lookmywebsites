@@ -25,6 +25,7 @@ import {
   XCircle,
   Undo2,
   CreditCard,
+  ChevronDown,
 } from "lucide-react";
 import {
   BarChart,
@@ -44,6 +45,13 @@ import {
 import { useState, useEffect, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -126,7 +134,6 @@ const SERVICES = [
       { label: "Conference Booking", icon: "🎟" },
     ],
   },
-  { group: "Insurance Services", items: [{ label: "General Insurance", icon: "🛡️" }] },
 ];
 
 function BookingsPage() {
@@ -411,6 +418,23 @@ function BookingsPage() {
     setUploadPriority("Medium");
   };
 
+  const updateBookingStatus = (bookingId: string, status: Booking["status"]) => {
+    if (bookingId.startsWith("LD-")) {
+      setLeads((prev) => prev.map((l) => {
+        if ("LD-" + l.id.replace("L-", "") === bookingId) {
+          return { ...l, paymentStatus: status };
+        }
+        return l;
+      }));
+    } else {
+      setBookingList((prev) => prev.map((b) => (b.id === bookingId ? { ...b, status } : b)));
+    }
+
+    if (managingBooking?.id === bookingId) {
+      setManagingBooking({ ...managingBooking, status } as ExtBooking);
+    }
+  };
+
   const handleSaveEdit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!managingBooking) return;
@@ -433,7 +457,7 @@ function BookingsPage() {
     } else {
       setBookingList((prev) => prev.map(b => b.id === managingBooking.id ? { ...b, ...editForm } as ExtBooking : b));
     }
-    
+
     setManagingBooking({ ...managingBooking, ...editForm } as ExtBooking);
     setIsEditing(false);
   };
@@ -611,14 +635,14 @@ function BookingsPage() {
 
     // Legacy mappings for AddBookingModal & Mock Data
     if (activeTab === "Hotel Booking" && b.bookingType === "Hotel") return true;
-    
+
     const isHolidayPackageTab = [
       "International Package",
       "Domestic Package",
       "Honeymoon Package",
       "Weekend Getaways"
     ].includes(activeTab);
-    
+
     if (isHolidayPackageTab && (b.bookingType === "Holiday Package" || !b.bookingType)) return true;
 
     return false;
@@ -707,13 +731,7 @@ function BookingsPage() {
             </div>
             <p className="text-2xl font-bold">{dashboardData.serviceCounts["Travel Insurance"]}</p>
           </div>
-          <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
-            <div className="flex items-center gap-2 text-muted-foreground">
-              <Shield className="h-4 w-4 text-emerald-500" />{" "}
-              <span className="text-xs font-semibold uppercase tracking-wider">Gen Ins</span>
-            </div>
-            <p className="text-2xl font-bold">{dashboardData.serviceCounts["General Insurance"]}</p>
-          </div>
+
           <div className="bg-card border border-border p-4 rounded-xl shadow-sm flex flex-col gap-1">
             <div className="flex items-center gap-2 text-muted-foreground">
               <Bus className="h-4 w-4 text-pink-500" />{" "}
@@ -914,7 +932,7 @@ function BookingsPage() {
                 </tr>
               ) : (
                 filteredBookings.map((b) => (
-                  <tr key={b.id} className="border-t border-border hover:bg-secondary/30">
+                  <tr key={b.id} className="border-t border-border hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => handleManageBooking(b)}>
                     <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">
                       {b.id}
                     </td>
@@ -934,12 +952,23 @@ function BookingsPage() {
                     </td>
                     <td className="px-4 py-3 text-sm">{b.travelDate}</td>
                     <td className="px-4 py-3 font-medium">{formatINR(b.amount || 0)}</td>
-                    <td className="px-4 py-3">
-                      <span
-                        className={`rounded-full px-2 py-1 text-[10px] font-bold tracking-wider uppercase ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}
+                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={b.status}
+                        onValueChange={(val: Booking["status"]) => updateBookingStatus(b.id, val)}
                       >
-                        {b.status}
-                      </span>
+                        <SelectTrigger className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}>
+                          <SelectValue />
+                          <ChevronDown className="h-3 w-3 opacity-70 ml-1" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {["Confirmed", "Pending", "Cancelled", "Completed", "Partial", "Paid", "Refunded"].map((s) => (
+                            <SelectItem key={s} value={s} className="text-xs font-semibold">
+                              {s}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
                     </td>
                     <td className="px-4 py-3">
                       {b.files && b.files.length > 0 ? (
@@ -952,14 +981,11 @@ function BookingsPage() {
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <Button size="sm" variant="ghost" onClick={() => handleManageBooking(b)}>
-                          Manage
-                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
-                          onClick={() => setDeleteTarget(b)}
+                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(b); }}
                           title="Delete Booking"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -1016,17 +1042,17 @@ function BookingsPage() {
                   <form onSubmit={handleSaveEdit} className="grid grid-cols-2 gap-4 text-sm mt-2">
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Customer</Label>
-                      <Input value={editForm.customer || ""} onChange={e => setEditForm({...editForm, customer: e.target.value})} className="rounded-3xl px-4" />
+                      <Input value={editForm.customer || ""} onChange={e => setEditForm({ ...editForm, customer: e.target.value })} className="rounded-3xl px-4" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Travel Date</Label>
-                      <Input type="date" value={editForm.travelDate || ""} onChange={e => setEditForm({...editForm, travelDate: e.target.value})} className="rounded-3xl px-4" />
+                      <Input type="date" value={editForm.travelDate || ""} onChange={e => setEditForm({ ...editForm, travelDate: e.target.value })} className="rounded-3xl px-4" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Service <span className="text-red-500">*</span></Label>
                       <select
                         value={editForm.bookingType || ""}
-                        onChange={e => setEditForm({...editForm, bookingType: e.target.value as any})}
+                        onChange={e => setEditForm({ ...editForm, bookingType: e.target.value as any })}
                         className="w-full rounded-3xl border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
                       >
                         <option value="">Select a service</option>
@@ -1043,15 +1069,15 @@ function BookingsPage() {
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Destination <span className="text-red-500">*</span></Label>
-                      <Input placeholder="e.g. Bali, Paris..." value={editForm.package || ""} onChange={e => setEditForm({...editForm, package: e.target.value})} className="rounded-3xl px-4" />
+                      <Input placeholder="e.g. Bali, Paris..." value={editForm.package || ""} onChange={e => setEditForm({ ...editForm, package: e.target.value })} className="rounded-3xl px-4" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Total Budget (₹)</Label>
-                      <Input type="number" placeholder="e.g. 85000" value={editForm.amount || 0} onChange={e => setEditForm({...editForm, amount: Number(e.target.value)})} className="rounded-3xl px-4" />
+                      <Input type="number" placeholder="e.g. 85000" value={editForm.amount || 0} onChange={e => setEditForm({ ...editForm, amount: Number(e.target.value) })} className="rounded-3xl px-4" />
                     </div>
                     <div className="space-y-1.5">
                       <Label className="text-sm font-semibold">Amount Paid (₹)</Label>
-                      <Input type="number" value={editForm.paid || 0} onChange={e => setEditForm({...editForm, paid: Number(e.target.value)})} className="rounded-3xl px-4" />
+                      <Input type="number" value={editForm.paid || 0} onChange={e => setEditForm({ ...editForm, paid: Number(e.target.value) })} className="rounded-3xl px-4" />
                     </div>
                     <div className="col-span-2 flex justify-end mt-2">
                       <Button type="submit" className="rounded-full px-6 bg-rose-500 hover:bg-rose-600 text-white font-semibold">Save Changes</Button>
