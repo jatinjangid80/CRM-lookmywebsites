@@ -92,6 +92,26 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       // (do NOT pack it into description)
       // allNotes, dob, relationship are not real columns — skip below
     }
+
+    if (tableName === "vendors") {
+      // Map app vendor fields to the actual Supabase columns.
+      if (newRow.place !== undefined) newRow.location = newRow.place;
+      if (newRow.vendorType !== undefined) newRow.category = newRow.vendorType;
+      else if (newRow.officeCity !== undefined && !newRow.category) newRow.category = newRow.officeCity;
+      if (newRow.mobile !== undefined) newRow.phone = newRow.mobile;
+      if (newRow.createdAt !== undefined) newRow.created_at = newRow.createdAt;
+      if (newRow.contactPerson !== undefined) {
+        newRow.contactperson = newRow.contactPerson;
+      }
+      delete newRow.place;
+      delete newRow.officeCity;
+      delete newRow.vendorType;
+      delete newRow.mobile;
+      delete newRow.createdAt;
+      delete newRow.website;
+      delete newRow.contacts;
+    }
+
     if (tableName === "certificates" && newRow.date) {
       newRow.issueDate = newRow.date;
       delete newRow.date;
@@ -400,6 +420,22 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.profile_details !== undefined) newRow.profile_details = parsed.profile_details;
         }
       } catch (e) { }
+    }
+
+    if (tableName === "vendors") {
+      if (newRow.location !== undefined) newRow.place = newRow.location;
+      if (newRow.category !== undefined) newRow.vendorType = newRow.category;
+      if (newRow.phone !== undefined) newRow.mobile = newRow.phone;
+      if (newRow.contactperson !== undefined) newRow.contactPerson = newRow.contactperson;
+      if (newRow.created_at !== undefined) {
+        const d = new Date(newRow.created_at);
+        newRow.createdAt = d.toISOString().slice(0, 10);
+      }
+      if (newRow.contactPerson !== undefined && newRow.contactperson === undefined) {
+        newRow.contactperson = newRow.contactPerson;
+      }
+      if (newRow.status !== undefined) newRow.status = String(newRow.status);
+      // Preserve notes if present.
     }
 
     if (tableName === "tasks") {
