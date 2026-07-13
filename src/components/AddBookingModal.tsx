@@ -1,0 +1,1084 @@
+import React, { useState, useEffect, useMemo } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X } from "lucide-react";
+
+interface AddBookingModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  onSave: (booking: Booking) => void;
+}
+
+const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
+  { type: "Holiday Package", icon: Map, label: "Holiday Package" },
+  { type: "Hotel", icon: Hotel, label: "Hotel" },
+  { type: "Visa", icon: FileText, label: "Visa" },
+  { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
+  { type: "Train Ticket", icon: Train, label: "Train Ticket" },
+  { type: "Taxi", icon: Car, label: "Taxi" },
+  { type: "Bus Ticket", icon: Bus, label: "Bus Ticket" },
+];
+
+export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalProps) {
+  const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
+  const [customers] = useSupabaseTable<any[]>("customers", []);
+  const [packages] = useSupabaseTable<any[]>("packages", []);
+  const [vendors] = useSupabaseTable<any[]>("vendors", []);
+
+  // Common Header
+  const [supplier, setSupplier] = useState("");
+  const [bookingDate, setBookingDate] = useState(new Date().toISOString().slice(0, 10));
+  const [customer, setCustomer] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [bookedBy, setBookedBy] = useState("");
+  const [company, setCompany] = useState("");
+  const [reference, setReference] = useState("");
+  const [saleInvoiceNo, setSaleInvoiceNo] = useState("");
+  const [purchaseInvoiceNo, setPurchaseInvoiceNo] = useState("");
+  const [remarks, setRemarks] = useState("");
+
+  // Core Financials
+  const [sellingPrice, setSellingPrice] = useState<number>(0);
+  const [purchasePrice, setPurchasePrice] = useState<number>(0);
+  const [gstAmount, setGstAmount] = useState<number>(0);
+  const [ticketAmount, setTicketAmount] = useState<number>(0); // For Bus
+
+  const [refundDate, setRefundDate] = useState("");
+  const [refundAmount, setRefundAmount] = useState<number>(0);
+
+  // Payment Details
+  const [amountPaid, setAmountPaid] = useState<number>(0);
+  const [paymentMode, setPaymentMode] = useState<PaymentMode>("Cash");
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Pending");
+  const [transactionId, setTransactionId] = useState("");
+
+  // Details Object
+  const [details, setDetails] = useState<any>({});
+
+  // Reset form when modal opens
+  useEffect(() => {
+    if (open) {
+      setBookingType("Holiday Package");
+      setSupplier("");
+      setBookingDate(new Date().toISOString().slice(0, 10));
+      setCustomer("");
+      setMobileNumber("");
+      setBookedBy("");
+      setCompany("");
+      setReference("");
+      setSaleInvoiceNo("");
+      setPurchaseInvoiceNo("");
+      setRemarks("");
+
+      setSellingPrice(0);
+      setPurchasePrice(0);
+      setGstAmount(0);
+      setTicketAmount(0);
+      setRefundDate("");
+      setRefundAmount(0);
+
+      setAmountPaid(0);
+      setPaymentMode("Cash");
+      setPaymentStatus("Pending");
+      setTransactionId("");
+
+      setDetails({});
+    }
+  }, [open]);
+
+  // Handle Detail Change
+  const updateDetail = (key: string, value: any) => {
+    setDetails((prev: any) => ({ ...prev, [key]: value }));
+  };
+
+  const profit = useMemo(() => {
+    return (sellingPrice || 0) - (purchasePrice || 0);
+  }, [sellingPrice, purchasePrice]);
+
+  const margin = useMemo(() => {
+    if (!sellingPrice || sellingPrice === 0) return 0;
+    return Number(((profit / sellingPrice) * 100).toFixed(2));
+  }, [profit, sellingPrice]);
+
+  const pendingAmount = useMemo(() => {
+    return (sellingPrice || 0) - (amountPaid || 0);
+  }, [sellingPrice, amountPaid]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!customer) {
+      alert("Customer name is required.");
+      return;
+    }
+
+    const newBooking: Booking = {
+      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      bookingType,
+      supplier,
+      bookingDate,
+      customer,
+      mobileNumber,
+      bookedBy,
+      company,
+      reference,
+      saleInvoiceNo,
+      purchaseInvoiceNo,
+      remarks,
+
+      sellingPrice,
+      purchasePrice,
+      gstAmount,
+      ticketAmount,
+      profit,
+      margin,
+      refundDate,
+      refundAmount,
+
+      amount: sellingPrice,
+      paid: amountPaid,
+      paymentMode,
+      transactionId,
+      status: paymentStatus,
+
+      // Legacy fallbacks
+      package:
+        details.packageType ||
+        details.hotelName ||
+        details.airline ||
+        details.trainName ||
+        bookingType,
+      travelDate: details.travelDate || details.checkIn || details.processDate || bookingDate,
+
+      details,
+    };
+
+    onSave(newBooking);
+    onOpenChange(false);
+  };
+
+  const renderSectionHeader = (title: string) => (
+    <div className="col-span-full border-b border-border pb-2 mt-4 mb-2 flex items-center gap-2">
+      <div className="h-4 w-1 bg-primary rounded-full"></div>
+      <h3 className="text-sm font-bold tracking-tight">{title}</h3>
+    </div>
+  );
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-0 shadow-2xl bg-card">
+        <div className="sticky top-0 z-10 bg-card border-b border-border p-6 pb-4">
+          <DialogHeader>
+            <DialogTitle className="font-display text-xl font-bold">Add New Booking</DialogTitle>
+            <DialogDescription className="text-xs mt-1">
+              Select a booking type and fill in the details below.
+            </DialogDescription>
+          </DialogHeader>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 pt-2">
+          {/* Booking Type Selector */}
+          <div className="space-y-3">
+            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Booking Type *
+            </Label>
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
+              {bookingTypes.map((bt) => {
+                const Icon = bt.icon;
+                const isSelected = bookingType === bt.type;
+                return (
+                  <button
+                    key={bt.type}
+                    type="button"
+                    onClick={() => setBookingType(bt.type)}
+                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${isSelected
+                        ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20"
+                        : "bg-secondary/40 border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+                      }`}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {bt.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {renderSectionHeader("Common Details")}
+
+            <div className="space-y-2">
+              <Label>Supplier *</Label>
+              <select
+                required
+                value={supplier}
+                onChange={(e) => setSupplier(e.target.value)}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a supplier...</option>
+                {vendors.map((v) => (
+                  <option key={v.id} value={v.name}>
+                    {v.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Booking Date *</Label>
+              <Input
+                type="date"
+                required
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Customer Name *</Label>
+              <select
+                required
+                value={customer}
+                onChange={(e) => {
+                  const selectedName = e.target.value;
+                  setCustomer(selectedName);
+                  const found = customers.find(c => c.name === selectedName);
+                  if (found && found.phone) {
+                    setMobileNumber(found.phone);
+                  }
+                }}
+                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <option value="">Select a customer...</option>
+                {customers.map((c) => (
+                  <option key={c.id} value={c.name}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-2">
+              <Label>Mobile Number *</Label>
+              <Input
+                required
+                type="tel"
+                value={mobileNumber}
+                onChange={(e) => setMobileNumber(e.target.value)}
+                placeholder="+91 XXXXX XXXXX"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Booked By</Label>
+              <Input
+                value={bookedBy}
+                onChange={(e) => setBookedBy(e.target.value)}
+                placeholder="Agent/Employee name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Reference</Label>
+              <Input
+                value={reference}
+                onChange={(e) => setReference(e.target.value)}
+                placeholder="Ref ID"
+              />
+            </div>
+
+
+            {renderSectionHeader("Booking Details")}
+
+            {/* DYNAMIC FORM FIELDS BASED ON TYPE */}
+            {(bookingType === "Train Ticket" || bookingType === "Air Ticket") && (
+              <>
+                <div className="space-y-2">
+                  <Label>Travel Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelDate || ""}
+                    onChange={(e) => updateDetail("travelDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sector *</Label>
+                  <Input
+                    required
+                    value={details.sector || ""}
+                    onChange={(e) => updateDetail("sector", e.target.value)}
+                    placeholder="DEL - MUM"
+                  />
+                </div>
+                {bookingType === "Train Ticket" ? (
+                  <div className="space-y-2">
+                    <Label>Train Name *</Label>
+                    <Input
+                      required
+                      value={details.trainName || ""}
+                      onChange={(e) => updateDetail("trainName", e.target.value)}
+                      placeholder="Rajdhani Exp"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <Label>Airline *</Label>
+                    <Input
+                      required
+                      value={details.airline || ""}
+                      onChange={(e) => updateDetail("airline", e.target.value)}
+                      placeholder="IndiGo"
+                    />
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <Label>PNR *</Label>
+                  <Input
+                    required
+                    value={details.pnr || ""}
+                    onChange={(e) => updateDetail("pnr", e.target.value)}
+                    placeholder="PNR12345"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Passenger Name"
+                  />
+                </div>
+              </>
+            )}
+
+            {bookingType === "Hotel" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Check In *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.checkIn || ""}
+                    onChange={(e) => updateDetail("checkIn", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Check Out *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.checkOut || ""}
+                    onChange={(e) => updateDetail("checkOut", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>City *</Label>
+                  <Input
+                    required
+                    value={details.city || ""}
+                    onChange={(e) => updateDetail("city", e.target.value)}
+                    placeholder="Goa"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Hotel Name *</Label>
+                  <Input
+                    required
+                    value={details.hotelName || ""}
+                    onChange={(e) => updateDetail("hotelName", e.target.value)}
+                    placeholder="Taj Hotel"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Meal Plan</Label>
+                  <Input
+                    value={details.mealPlan || ""}
+                    onChange={(e) => updateDetail("mealPlan", e.target.value)}
+                    placeholder="CP/MAP"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.leaderName || ""}
+                    onChange={(e) => updateDetail("leaderName", e.target.value)}
+                    placeholder="Guest Name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {bookingType === "Holiday Package" && (
+              <>
+                <div className="col-span-1 md:col-span-2 mb-2">
+                  <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Auto-fill from Packages</Label>
+                  <select
+                    className="w-full mt-2 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
+                    onChange={(e) => {
+                      const pkg = packages.find(p => p.id === e.target.value);
+                      if (pkg) {
+                        setDetails((prev: any) => ({
+                          ...prev,
+                          destination: pkg.destination || "",
+                          packageType: pkg.title || "",
+                        }));
+                        const basePrice = pkg.priceNum || parseInt((pkg.price || "").replace(/[^\d]/g, "")) || 0;
+                        if (basePrice > 0) {
+                          setSellingPrice(basePrice);
+                        }
+                      }
+                    }}
+                  >
+                    <option value="">-- Select Package --</option>
+                    {packages.map((p) => (
+                      <option key={p.id} value={p.id}>
+                        {p.title}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Travel From *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelFrom || ""}
+                    onChange={(e) => updateDetail("travelFrom", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Travel To *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelTo || ""}
+                    onChange={(e) => updateDetail("travelTo", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Destination *</Label>
+                  <Input
+                    required
+                    value={details.destination || ""}
+                    onChange={(e) => updateDetail("destination", e.target.value)}
+                    placeholder="Maldives"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Package Type *</Label>
+                  <Input
+                    required
+                    value={details.packageType || ""}
+                    onChange={(e) => updateDetail("packageType", e.target.value)}
+                    placeholder="Honeymoon"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>No. of Pax *</Label>
+                  <Input
+                    type="number"
+                    required
+                    value={details.noOfPax || ""}
+                    onChange={(e) => updateDetail("noOfPax", Number(e.target.value))}
+                    placeholder="2"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.leaderName || ""}
+                    onChange={(e) => updateDetail("leaderName", e.target.value)}
+                    placeholder="Guest Name"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {bookingType === "Taxi" && (
+              <>
+                <div className="col-span-1 md:col-span-2">
+                  <div className="flex p-1 bg-secondary/30 rounded-lg w-full mb-4 border">
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("taxiPricingMode", "day")}
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode !== "km"
+                          ? "bg-background shadow text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                        }`}
+                    >
+                      Day Wise Pricing
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("taxiPricingMode", "km")}
+                      className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode === "km"
+                          ? "bg-background shadow text-primary"
+                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                        }`}
+                    >
+                      KM Wise Pricing
+                    </button>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Travel Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelDate || ""}
+                    onChange={(e) => updateDetail("travelDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Location / City Route *</Label>
+                  <Input
+                    required
+                    value={details.cityRoute || ""}
+                    onChange={(e) => updateDetail("cityRoute", e.target.value)}
+                    placeholder="Delhi - Agra"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Vehicle Type *</Label>
+                  <Input
+                    required
+                    value={details.vehicleType || ""}
+                    onChange={(e) => updateDetail("vehicleType", e.target.value)}
+                    placeholder="Innova Crysta"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Vehicle No.</Label>
+                  <Input
+                    value={details.vehicleNo || ""}
+                    onChange={(e) => updateDetail("vehicleNo", e.target.value)}
+                    placeholder="DL 1C AA 1111"
+                  />
+                </div>
+
+                {details.taxiPricingMode !== "km" ? (
+                  /* DAY WISE MODE */
+                  <>
+                    <div className="space-y-2">
+                      <Label>Rate per Day *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.ratePerDay || ""}
+                        onChange={(e) => updateDetail("ratePerDay", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>No. of Days  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.days || ""}
+                        onChange={(e) => updateDetail("days", Number(e.target.value))}
+                        placeholder="3"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Extra Hrs Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.extraHrsCharge || ""}
+                        onChange={(e) => updateDetail("extraHrsCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nights Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.nightsCharge || ""}
+                        onChange={(e) => updateDetail("nightsCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Driver Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.driverCharge || ""}
+                        onChange={(e) => updateDetail("driverCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parking Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.parkingCharge || ""}
+                        onChange={(e) => updateDetail("parkingCharge", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Other Charges </Label>
+                      <Input
+                        type="number"
+                        value={details.otherCharges || ""}
+                        onChange={(e) => updateDetail("otherCharges", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                      <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                        Pricing Estimate
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="border-t border-border pt-4 mt-2 space-y-2">
+                          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Base Rate ({details.ratePerDay || 0} × {details.days || 0} days):</span>
+                            <span>₹ {(details.ratePerDay || 0) * (details.days || 0)}</span>
+                          </div>
+                          {(details.extraHrsCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Extra Hrs Charge:</span>
+                              <span>₹ {details.extraHrsCharge}</span>
+                            </div>
+                          )}
+                          {(details.nightsCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Nights Charge:</span>
+                              <span>₹ {details.nightsCharge}</span>
+                            </div>
+                          )}
+                          {(details.driverCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Driver Charge:</span>
+                              <span>₹ {details.driverCharge}</span>
+                            </div>
+                          )}
+                          {(details.parkingCharge || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Parking Charge:</span>
+                              <span>₹ {details.parkingCharge}</span>
+                            </div>
+                          )}
+                          {(details.otherCharges || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Other Charges:</span>
+                              <span>₹ {details.otherCharges}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
+                            <span>Total Cost:</span>
+                            <span>₹ {Math.max(0, ((details.ratePerDay || 0) * (details.days || 0)) + (details.extraHrsCharge || 0) + (details.nightsCharge || 0) + (details.driverCharge || 0) + (details.parkingCharge || 0) + (details.otherCharges || 0)).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          className="w-full mt-4"
+                          onClick={() => {
+                            const total = Math.max(0, ((details.ratePerDay || 0) * (details.days || 0)) + (details.extraHrsCharge || 0) + (details.nightsCharge || 0) + (details.driverCharge || 0) + (details.parkingCharge || 0) + (details.otherCharges || 0));
+                            setSellingPrice(total);
+                          }}
+                        >
+                          Apply to Total Amount
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  /* KM WISE MODE */
+                  <>
+                    <div className="space-y-2">
+                      <Label>Rate per KM  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.ratePerKm || ""}
+                        onChange={(e) => updateDetail("ratePerKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total KM  *</Label>
+                      <Input
+                        type="number"
+                        required
+                        value={details.totalKm || ""}
+                        onChange={(e) => updateDetail("totalKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Night Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.nightChargeKm || ""}
+                        onChange={(e) => updateDetail("nightChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Driver Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.driverChargeKm || ""}
+                        onChange={(e) => updateDetail("driverChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Parking Charge </Label>
+                      <Input
+                        type="number"
+                        value={details.parkingChargeKm || ""}
+                        onChange={(e) => updateDetail("parkingChargeKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Toll Tax </Label>
+                      <Input
+                        type="number"
+                        value={details.tollTaxKm || ""}
+                        onChange={(e) => updateDetail("tollTaxKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Other Charges </Label>
+                      <Input
+                        type="number"
+                        value={details.otherChargesKm || ""}
+                        onChange={(e) => updateDetail("otherChargesKm", Number(e.target.value))}
+                        placeholder="0"
+                      />
+                    </div>
+                    <div className="col-span-1 md:col-span-2 mt-4 rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                      <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                        Pricing Estimate
+                      </h3>
+                      <div className="space-y-3">
+                        <div className="border-t border-border pt-4 mt-2 space-y-2">
+                          <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                            <span>Base Rate ({details.ratePerKm || 0} × {details.totalKm || 0} km):</span>
+                            <span>₹ {(details.ratePerKm || 0) * (details.totalKm || 0)}</span>
+                          </div>
+                          {(details.nightChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Night Charge:</span>
+                              <span>₹ {details.nightChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.driverChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Driver Charge:</span>
+                              <span>₹ {details.driverChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.parkingChargeKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Parking Charge:</span>
+                              <span>₹ {details.parkingChargeKm}</span>
+                            </div>
+                          )}
+                          {(details.tollTaxKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Toll Tax:</span>
+                              <span>₹ {details.tollTaxKm}</span>
+                            </div>
+                          )}
+                          {(details.otherChargesKm || 0) > 0 && (
+                            <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                              <span>Other Charges:</span>
+                              <span>₹ {details.otherChargesKm}</span>
+                            </div>
+                          )}
+                          <div className="flex items-center justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
+                            <span>Total Cost:</span>
+                            <span>₹ {Math.max(0, ((details.ratePerKm || 0) * (details.totalKm || 0)) + (details.nightChargeKm || 0) + (details.driverChargeKm || 0) + (details.parkingChargeKm || 0) + (details.tollTaxKm || 0) + (details.otherChargesKm || 0)).toLocaleString('en-IN')}</span>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          className="w-full mt-4"
+                          onClick={() => {
+                            const total = Math.max(0, ((details.ratePerKm || 0) * (details.totalKm || 0)) + (details.nightChargeKm || 0) + (details.driverChargeKm || 0) + (details.parkingChargeKm || 0) + (details.tollTaxKm || 0) + (details.otherChargesKm || 0));
+                            setSellingPrice(total);
+                          }}
+                        >
+                          Apply to Total Amount
+                        </Button>
+                      </div>
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {bookingType === "Visa" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Country *</Label>
+                  <Input
+                    required
+                    value={details.country || ""}
+                    onChange={(e) => updateDetail("country", e.target.value)}
+                    placeholder="Dubai"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Visa Type *</Label>
+                  <Input
+                    required
+                    value={details.visaType || ""}
+                    onChange={(e) => updateDetail("visaType", e.target.value)}
+                    placeholder="Tourist 30 Days"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Process Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.processDate || ""}
+                    onChange={(e) => updateDetail("processDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Application Status</Label>
+                  <Input
+                    value={details.applicationStatus || ""}
+                    onChange={(e) => updateDetail("applicationStatus", e.target.value)}
+                    placeholder="Submitted"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Passenger Name"
+                  />
+                </div>
+              </>
+            )}
+
+
+            {bookingType === "Bus Ticket" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Travel Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelDate || ""}
+                    onChange={(e) => updateDetail("travelDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sector *</Label>
+                  <Input
+                    required
+                    value={details.sector || ""}
+                    onChange={(e) => updateDetail("sector", e.target.value)}
+                    placeholder="DEL - MANALI"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Bus Operator *</Label>
+                  <Input
+                    required
+                    value={details.busOperator || ""}
+                    onChange={(e) => updateDetail("busOperator", e.target.value)}
+                    placeholder="Zingbus"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>PNR / Ticket No.</Label>
+                  <Input
+                    value={details.pnr || ""}
+                    onChange={(e) => updateDetail("pnr", e.target.value)}
+                    placeholder="TKT123"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Passenger Name"
+                  />
+                </div>
+              </>
+            )}
+
+            {renderSectionHeader("Financial Details")}
+
+            <div className="col-span-full grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-2">
+                <Label>Selling Price (₹)</Label>
+                <Input
+                  type="number"
+                  required
+                  value={sellingPrice || ""}
+                  onChange={(e) => setSellingPrice(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label>Purchase Price (₹)</Label>
+                <Input
+                  type="number"
+                  required
+                  value={purchasePrice || ""}
+                  onChange={(e) => setPurchasePrice(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="flex items-center justify-between w-full h-full rounded-xl bg-secondary/30 p-4 border border-border">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Profit</p>
+                  <p className={`font-mono font-bold ${profit > 0 ? "text-emerald-600" : profit < 0 ? "text-red-500" : "text-gray-700"}`}>
+                    ₹{profit.toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Margin %</p>
+                  <p className={`font-mono font-bold ${margin > 0 ? "text-emerald-600" : margin < 0 ? "text-red-500" : "text-gray-700"}`}>
+                    {margin}%
+                  </p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Pending Amount</p>
+                  <p className="font-mono font-bold text-orange-600">
+                    ₹{pendingAmount.toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+
+            {renderSectionHeader("Remarks")}
+            <div className="space-y-2 col-span-full">
+              <Input
+                value={remarks}
+                onChange={(e) => setRemarks(e.target.value)}
+                placeholder="Add any additional notes here..."
+              />
+            </div>
+          </div>
+
+          <div className="sticky bottom-0 bg-card border-t border-border p-4 -mx-6 -mb-6 mt-6 flex justify-end gap-3 z-10">
+            <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              className="shadow-md border-0 text-white"
+              style={{ background: "var(--gradient-brand, var(--color-brand, #0f172a))" }}
+            >
+              Save Booking
+            </Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
