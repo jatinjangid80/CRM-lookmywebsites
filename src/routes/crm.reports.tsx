@@ -16,7 +16,7 @@ import {
 } from "recharts";
 import { IndianRupee, TrendingUp, UserCheck, CalendarCheck, Star, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { bookings, leads, formatINR } from "@/lib/mock-data";
+import { formatINR } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 
@@ -63,8 +63,8 @@ function SectionHeader({ title, sub }: { title: string; sub: string }) {
 }
 
 function ReportsPage() {
-  const [leadsList] = useSupabaseTable<any[]>("leads", leads);
-  const [bookingsList] = useSupabaseTable<any[]>("bookings", bookings);
+  const [leadsList] = useSupabaseTable<any[]>("leads", []);
+  const [bookingsList] = useSupabaseTable<any[]>("bookings", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
 
   const totalRevenue = bookingsList.reduce((s, b) => s + (b.paid || 0), 0);

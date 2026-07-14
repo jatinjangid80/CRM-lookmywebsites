@@ -266,7 +266,17 @@ function AttendancePage() {
                                 </span>
                               )}
                             </td>
-                            <td className="px-5 py-4 font-semibold text-slate-600">-</td>
+                            <td className="px-5 py-4 font-semibold text-slate-600">
+                              {record.checkout ? (() => {
+                                const [inH, inM] = record.checkin.split(':').map(Number);
+                                const [outH, outM] = record.checkout.split(':').map(Number);
+                                let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                                if (diff < 0) diff += 24 * 60;
+                                const h = Math.floor(diff / 60);
+                                const m = diff % 60;
+                                return `${h}h ${m}m`;
+                              })() : "-"}
+                            </td>
                             <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
                               <span className="inline-flex items-center gap-1 bg-secondary/40 px-2 py-1 rounded-lg">
                                 <Building2 className="h-3.5 w-3.5 text-emerald-500" />{record.location || "Office"}

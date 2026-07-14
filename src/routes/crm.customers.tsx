@@ -22,7 +22,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { bookings, formatINR, Customer as BaseCustomer } from "@/lib/mock-data";
+import { formatINR, Customer as BaseCustomer } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { ImportCustomersModal } from "@/components/ui/import-customers-modal";
 import { getAuth } from "@/lib/auth";
@@ -51,6 +51,7 @@ const SOURCES = ["Website", "Referral", "Facebook", "Instagram", "Ads", "Walk-in
 function CustomersPage() {
   const [customerList, setCustomerList] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [leads] = useSupabaseTable<any[]>("leads", []);
+  const [bookings] = useSupabaseTable<any[]>("bookings", []);
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
@@ -329,7 +330,10 @@ function CustomersPage() {
                     {c.name.charAt(0).toUpperCase()}
                   </div>
                   <div>
-                    <div className="font-bold text-foreground text-lg leading-tight">{c.name}</div>
+                    <div className="font-bold text-foreground text-lg leading-tight flex items-center gap-2">
+                      {c.name}
+                      <StatusBadge status={c.status} />
+                    </div>
                     <div className="text-xs text-muted-foreground mt-0.5">{c.id}</div>
                   </div>
                 </div>
@@ -533,7 +537,7 @@ function CustomersPage() {
                       // Wait, we need real bookings, not just hardcoded.
                       // Currently `bookings` is just the mock data, we don't have useSupabaseTable for bookings in customers page.
                       // Let's use the local mock `bookings` array for demonstration, matching by customer name or phone.
-                      const custBookings = bookings.filter(b => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
+                      const custBookings = bookings.filter((b: any) => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
                       if (custBookings.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
@@ -544,7 +548,7 @@ function CustomersPage() {
                       }
                       return (
                         <div className="space-y-3">
-                          {custBookings.map(b => (
+                          {custBookings.map((b: any) => (
                             <div key={b.id} className="bg-card border border-border p-4 rounded-xl shadow-sm flex items-center justify-between">
                               <div>
                                 <h4 className="font-semibold text-sm">{b.package || b.bookingType}</h4>
@@ -565,7 +569,7 @@ function CustomersPage() {
 
                   <TabsContent value="payments" className="m-0 outline-none">
                      {(() => {
-                      const custBookings = bookings.filter(b => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
+                      const custBookings = bookings.filter((b: any) => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
                       if (custBookings.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
@@ -576,7 +580,7 @@ function CustomersPage() {
                       }
                       return (
                         <div className="space-y-3">
-                          {custBookings.map(b => (
+                          {custBookings.map((b: any) => (
                             <div key={b.id + 'pay'} className="bg-card border border-border p-4 rounded-xl shadow-sm flex items-center justify-between">
                               <div>
                                 <h4 className="font-semibold text-sm">Payment for {b.id}</h4>

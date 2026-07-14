@@ -56,7 +56,7 @@ import {
 } from "@/components/ui/dialog";
 import { ImportLeadsModal } from "@/components/ui/import-leads-modal";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
-import { leads as SEED_LEADS, formatINR, type Lead } from "@/lib/mock-data";
+import { formatINR, type Lead } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import type { ExtCustomer } from "./crm.customers";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
@@ -65,7 +65,7 @@ import { toast } from "sonner";
 export const Route = createFileRoute("/crm/leads")({ component: LeadsPage });
 
 /* ─── Extra fields for extended leads ─── */
-interface ExtLead extends Lead {
+export interface ExtLead extends Lead {
   avatar: string;
   notes: string;
   noteDate?: string;
@@ -802,7 +802,7 @@ function DynamicFormStep({
                     }`
                   }
                 >
-                  {fetchStatus === "found" ? "✓ Found" : fetchStatus === "notfound" ? "✗ None" : "Fetch"}
+                  {fetchStatus === "found" ? "✓ Found" : fetchStatus === "notfound" ? "✗ None" : "Find"}
                 </button>
               </div>
               {fetchStatus === "found" && (
@@ -845,12 +845,7 @@ function DynamicFormStep({
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assign Sales</label>
-              <select id="lead-assignee" value={form.assignedTo} onChange={set("assignedTo")} className={FIELD_CLS}>
-                {assignees.map(a => <option key={a}>{a}</option>)}
-              </select>
-            </div>
+
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assign Ops</label>
               <select id="lead-ops" value={form.assignOpsTo} onChange={set("assignOpsTo")} className={FIELD_CLS}>

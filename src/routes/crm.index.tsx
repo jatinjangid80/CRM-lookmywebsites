@@ -38,8 +38,6 @@ import {
 import {
   revenueByMonth,
   destinationPerformance,
-  leads as seedLeads,
-  bookings as seedBookings,
   customers as seedCustomers,
   formatINR,
 } from "@/lib/mock-data";
@@ -80,11 +78,7 @@ const FUNNEL_COLORS = [
 
 const AVATARS = ["", "", "", "", "", "", ""];
 
-const LEADS_INIT = seedLeads.map((l, i) => ({
-  ...l,
-  avatar: AVATARS[i % AVATARS.length],
-  notes: "",
-}));
+const LEADS_INIT: any[] = [];
 
 // Custom Recharts tooltip components for visual excellence
 const RevenueTooltip = ({ active, payload, label }: any) => {
@@ -136,7 +130,7 @@ function Dashboard() {
 
   // Read dynamic lists from Supabase
   const [leadsList] = useSupabaseTable<any[]>("leads", LEADS_INIT);
-  const [bookingsList] = useSupabaseTable<any[]>("bookings", seedBookings);
+  const [bookingsList] = useSupabaseTable<any[]>("bookings", []);
   const [customersList] = useSupabaseTable<any[]>("customers", seedCustomers);
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const [packagesList] = useSupabaseTable<any[]>("packages", SEED_PACKAGES);

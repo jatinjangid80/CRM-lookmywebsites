@@ -838,7 +838,7 @@ function TasksPage() {
                     return (
                       <div key={date.toISOString()} className={`bg-white p-2 min-h-[120px] transition-colors hover:bg-slate-50/50 ${isToday ? 'bg-blue-50/30' : ''}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-brand text-white shadow-sm' : 'text-slate-700'}`}>
+                          <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-700'}`}>
                             {date.getDate()}
                           </span>
                           {dayTasks.length > 0 && (

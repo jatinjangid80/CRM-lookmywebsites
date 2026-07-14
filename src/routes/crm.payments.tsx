@@ -11,7 +11,7 @@ import {
   Share2,
   FileText,
 } from "lucide-react";
-import { bookings, formatINR } from "@/lib/mock-data";
+import { formatINR } from "@/lib/mock-data";
 import { useState, useMemo, useEffect } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { getAuth } from "@/lib/auth";
@@ -28,7 +28,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { type Booking, type PaymentFollowUp, paymentFollowUps } from "@/lib/mock-data";
+import { type Booking, type PaymentFollowUp } from "@/lib/mock-data";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar, PhoneCall, Repeat, CheckCircle } from "lucide-react";
 import logoImg from "../assets/Logo.svg";
@@ -45,7 +45,7 @@ function PaymentsPage() {
     }
   }, [auth, navigate]);
 
-  const [payments, setPayments] = useSupabaseTable<Booking[]>("bookings", bookings);
+  const [payments, setPayments] = useSupabaseTable<Booking[]>("bookings", []);
   const [leads] = useSupabaseTable<any[]>("leads", []);
 
   if (auth?.role !== "admin") return null;
@@ -88,7 +88,7 @@ function PaymentsPage() {
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [isAddOpen, setIsAddOpen] = useState(false);
   
-  const [followUps, setFollowUps] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", paymentFollowUps);
+  const [followUps, setFollowUps] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", []);
   const [isFollowUpModalOpen, setIsFollowUpModalOpen] = useState(false);
   const [selectedFollowUpTarget, setSelectedFollowUpTarget] = useState<Booking | null>(null);
   const [followUpForm, setFollowUpForm] = useState({

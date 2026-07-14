@@ -64,7 +64,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { ImportModal } from "@/components/ui/import-modal";
-import { bookings as initialBookings, formatINR, type Booking } from "@/lib/mock-data";
+import { formatINR, type Booking } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth } from "@/lib/auth";
 import { AddBookingModal } from "@/components/AddBookingModal";
@@ -142,7 +142,7 @@ function BookingsPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
 
-  const [bookingList, setBookingList] = useSupabaseTable<ExtBooking[]>("bookings", initialBookings);
+  const [bookingList, setBookingList] = useSupabaseTable<ExtBooking[]>("bookings", []);
   const [leads, setLeads] = useSupabaseTable<any[]>("leads", []);
 
   const allBookings = useMemo(() => {
@@ -540,7 +540,7 @@ function BookingsPage() {
         ...bookingToClone,
         id: newId,
         customer: `${bookingToClone.customer} (Copy)`,
-        createdAt: new Date().toISOString().slice(0, 10),
+        bookingDate: new Date().toISOString().slice(0, 10),
       };
       setBookingList((prev) => [newBooking, ...prev]);
       toast.success(`Booking cloned successfully as ${newId}!`);

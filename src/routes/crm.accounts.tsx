@@ -13,10 +13,10 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet } from "lucide-react";
+import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { paymentFollowUps, expenses, formatINR, type Expense } from "@/lib/mock-data";
+import { formatINR, type Expense, type PaymentFollowUp } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/crm/accounts")({
   component: AccountsPage,
@@ -31,7 +31,7 @@ function AccountsPage() {
   const [employees] = useSupabaseTable<any[]>("employees", []);
 
   // Transactions State
-  const [transactions, setTransactions] = useState<any[]>([]);
+  const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [newTx, setNewTx] = useState({
     type: "Receipt",
@@ -44,7 +44,7 @@ function AccountsPage() {
   });
 
   // Expenses State
-  const [expenseList, setExpenseList] = useState<Expense[]>(expenses);
+  const [expenseList, setExpenseList] = useSupabaseTable<Expense[]>("expenses", []);
   const [isAddExpenseOpen, setIsAddExpenseOpen] = useState(false);
   const [newExpense, setNewExpense] = useState<Partial<Expense>>({
     date: new Date().toISOString().split("T")[0],
@@ -60,8 +60,18 @@ function AccountsPage() {
   const [noteType, setNoteType] = useState<"Paid" | "Unpaid" | "Partial" | "Advance" | "Full" | "">("");
   const [noteContent, setNoteContent] = useState("");
   const [isAddFollowUpOpen, setIsAddFollowUpOpen] = useState(false);
+  const [newFollowUp, setNewFollowUp] = useState({
+    entityType: "Customer",
+    entityId: "",
+    invoiceId: "",
+    pendingAmount: "",
+    followUpDate: "",
+    remark: ""
+  });
   const [isLogFollowUpOpen, setIsLogFollowUpOpen] = useState(false);
-  const [followUpsList, setFollowUpsList] = useState(paymentFollowUps);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "Expense" | "Follow-up" | "Transaction" } | null>(null);
+  const [followUpsList, setFollowUpsList] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", []);
   const [selectedFuId, setSelectedFuId] = useState<string | null>(null);
   const [logNotes, setLogNotes] = useState("");
   const [logDate, setLogDate] = useState("");
@@ -113,6 +123,63 @@ function AccountsPage() {
     setLogNotes("");
     setLogDate("");
     setSelectedFuId(null);
+  };
+
+  const handleDelete = (id: string, type: "Expense" | "Follow-up" | "Transaction") => {
+    setDeleteTarget({ id, type });
+    setIsDeleteModalOpen(true);
+  };
+
+  const confirmDelete = () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.type === "Expense") {
+      setExpenseList(prev => prev.filter(e => e.id !== deleteTarget.id));
+    } else if (deleteTarget.type === "Follow-up") {
+      setFollowUpsList(prev => prev.filter(f => f.id !== deleteTarget.id));
+    } else if (deleteTarget.type === "Transaction") {
+      setTransactions(prev => prev.filter(t => t.id !== deleteTarget.id));
+    }
+    setIsDeleteModalOpen(false);
+    setDeleteTarget(null);
+  };
+
+  const handleCreateFollowUp = () => {
+    if (!newFollowUp.entityId) return;
+    
+    const isCust = newFollowUp.entityType === "Customer";
+    const entity = isCust 
+      ? customers.find(c => c.id === newFollowUp.entityId) 
+      : vendors.find(v => v.id === newFollowUp.entityId);
+      
+    const entityName = entity ? (entity.name ? entity.name.split('---META---')[0] : entity.id) : "Unknown";
+    const entityPhone = entity ? (entity.phone || entity.mobile || "N/A") : "N/A";
+    
+    const newFu = {
+      id: `PFU-${Math.floor(Math.random() * 10000)}`,
+      invoiceId: newFollowUp.invoiceId || "INV-NEW",
+      customerId: newFollowUp.entityId,
+      customerName: String(entityName),
+      customerPhone: String(entityPhone),
+      invoiceDate: new Date().toISOString().split('T')[0],
+      totalAmount: Number(newFollowUp.pendingAmount) || 0,
+      pendingAmount: Number(newFollowUp.pendingAmount) || 0,
+      nextFollowUpDate: newFollowUp.followUpDate || new Date().toISOString().split('T')[0],
+      nextFollowUpTime: "10:00",
+      repeat: "None" as const,
+      notificationReminder: 1,
+      notes: newFollowUp.remark || "New follow-up created",
+    };
+    
+    setFollowUpsList([newFu, ...followUpsList]);
+    setIsAddFollowUpOpen(false);
+    setNewFollowUp({
+      entityType: "Customer",
+      entityId: "",
+      invoiceId: "",
+      pendingAmount: "",
+      followUpDate: "",
+      remark: ""
+    });
   };
 
   return (
@@ -174,6 +241,7 @@ function AccountsPage() {
                     <th className="px-6 py-4 font-semibold">Payment Mode</th>
                     <th className="px-6 py-4 font-semibold">Amount</th>
                     <th className="px-6 py-4 font-semibold text-center">Status</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                </thead>
                <tbody className="divide-y divide-border">
@@ -210,6 +278,11 @@ function AccountsPage() {
                         }`}>
                           {exp.status}
                         </span>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -271,14 +344,19 @@ function AccountsPage() {
                         <span className="font-medium text-foreground">Follow-up: {fu.nextFollowUpDate} at {fu.nextFollowUpTime}</span>
                      </div>
                      
-                     <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
-                        setSelectedFuId(fu.id);
-                        setLogNotes(fu.notes);
-                        setLogDate(fu.nextFollowUpDate);
-                        setIsLogFollowUpOpen(true);
-                     }}>
-                        Log Follow-up
-                     </Button>
+                     <div className="flex items-center gap-2">
+                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(fu.id, "Follow-up")}>
+                          <Trash2 className="h-4 w-4" />
+                       </Button>
+                       <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
+                          setSelectedFuId(fu.id);
+                          setLogNotes(fu.notes);
+                          setLogDate(fu.nextFollowUpDate);
+                          setIsLogFollowUpOpen(true);
+                       }}>
+                          Log Follow-up
+                       </Button>
+                     </div>
                   </div>
                </div>
             ))}
@@ -320,6 +398,7 @@ function AccountsPage() {
                     <th className="px-6 py-4">Entity</th>
                     <th className="px-6 py-4">Mode</th>
                     <th className="px-6 py-4 text-right">Amount</th>
+                    <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
@@ -338,6 +417,11 @@ function AccountsPage() {
                       <td className="px-6 py-4">{tx.paymentMode}</td>
                       <td className={`px-6 py-4 text-right font-bold ${tx.type === 'Receipt' ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </td>
                     </tr>
                   ))}
@@ -387,17 +471,17 @@ function AccountsPage() {
                 <SelectContent>
                   {newTx.entityType === "Customer" && (
                     customers && customers.length > 0 
-                      ? customers.map(c => <SelectItem key={c.id} value={c.id}>{c.firstName} {c.lastName || ''}</SelectItem>)
+                      ? customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
                       : <SelectItem value="no-data" disabled>No customers found</SelectItem>
                   )}
                   {newTx.entityType === "Vendor" && (
                     vendors && vendors.length > 0
-                      ? vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>)
+                      ? vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor"}</SelectItem>)
                       : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
                   )}
                   {newTx.entityType === "Employee" && (
                     employees && employees.length > 0
-                      ? employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name}</SelectItem>)
+                      ? employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name ? e.name.split('---META---')[0] : e.id || "Unknown Employee"}</SelectItem>)
                       : <SelectItem value="no-data" disabled>No employees found</SelectItem>
                   )}
                 </SelectContent>
@@ -441,16 +525,22 @@ function AccountsPage() {
               let entityName = "";
               if(newTx.entityType === "Customer") {
                 const c = customers.find(x => x.id === newTx.entityId);
-                entityName = c ? `${c.firstName} ${c.lastName || ''}`.trim() : "";
+                entityName = c ? (c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer") : "";
               } else if(newTx.entityType === "Vendor") {
                 const v = vendors.find(x => x.id === newTx.entityId);
-                entityName = v?.name || "";
+                entityName = v ? (v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor") : "";
               } else if(newTx.entityType === "Employee") {
                 const e = employees.find(x => x.id === newTx.entityId);
-                entityName = e?.name || "";
+                entityName = e ? (e.name ? e.name.split('---META---')[0] : e.id || "Unknown Employee") : "";
               }
               
-              setTransactions([{ ...newTx, entityName }, ...transactions]);
+              const txWithId = {
+                id: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
+                ...newTx,
+                entityName
+              };
+              
+              setTransactions([txWithId, ...transactions]);
               setIsAddTxOpen(false);
               setNewTx({...newTx, entityId: "", amount: 0, notes: ""});
             }}>Save Transaction</Button>
@@ -552,26 +642,56 @@ function AccountsPage() {
             </DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Customer / Vendor Name</Label>
-              <Input placeholder="Enter name" />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Entity Type</Label>
+                <Select value={newFollowUp.entityType} onValueChange={v => setNewFollowUp({...newFollowUp, entityType: v, entityId: ""})}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Customer">Customer</SelectItem>
+                    <SelectItem value="Vendor">Vendor</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Select {newFollowUp.entityType}</Label>
+                <Select value={newFollowUp.entityId} onValueChange={v => setNewFollowUp({...newFollowUp, entityId: v})}>
+                  <SelectTrigger><SelectValue placeholder={`Select a ${newFollowUp.entityType.toLowerCase()}`} /></SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    {newFollowUp.entityType === "Customer" && (
+                      customers && customers.length > 0 
+                        ? customers.map(c => <SelectItem key={`fc-${c.id}`} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
+                        : <SelectItem value="no-data" disabled>No customers found</SelectItem>
+                    )}
+                    {newFollowUp.entityType === "Vendor" && (
+                      vendors && vendors.length > 0
+                        ? vendors.map(v => <SelectItem key={`fv-${v.id}`} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor"}</SelectItem>)
+                        : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>Invoice ID</Label>
-              <Input placeholder="INV-001" />
+              <Input placeholder="INV-001" value={newFollowUp.invoiceId} onChange={e => setNewFollowUp({...newFollowUp, invoiceId: e.target.value})} />
             </div>
             <div className="space-y-2">
               <Label>Pending Amount (₹)</Label>
-              <Input type="number" placeholder="Enter amount" />
+              <Input type="number" placeholder="Enter amount" value={newFollowUp.pendingAmount} onChange={e => setNewFollowUp({...newFollowUp, pendingAmount: e.target.value})} />
             </div>
             <div className="space-y-2">
               <Label>Follow-up Date</Label>
-              <Input type="date" />
+              <Input type="date" value={newFollowUp.followUpDate} onChange={e => setNewFollowUp({...newFollowUp, followUpDate: e.target.value})} />
+            </div>
+            <div className="space-y-2">
+              <Label>Remark</Label>
+              <Textarea placeholder="Enter any remarks..." className="min-h-[80px]" value={newFollowUp.remark} onChange={e => setNewFollowUp({...newFollowUp, remark: e.target.value})} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddFollowUpOpen(false)}>Cancel</Button>
-            <Button onClick={() => setIsAddFollowUpOpen(false)}>Create Follow-up</Button>
+            <Button onClick={handleCreateFollowUp}>Create Follow-up</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -617,6 +737,24 @@ function AccountsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsLogFollowUpOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveLog}>Save Log</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isDeleteModalOpen} onOpenChange={(open) => {
+        setIsDeleteModalOpen(open);
+        if (!open) setDeleteTarget(null);
+      }}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Delete {deleteTarget?.type}</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete this {deleteTarget?.type?.toLowerCase()}? This action cannot be undone.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="mt-4">
+            <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
+            <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

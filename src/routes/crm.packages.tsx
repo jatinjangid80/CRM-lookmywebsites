@@ -443,7 +443,6 @@ function PackagesPage() {
         ...pkgToClone,
         id: newId,
         title: `${pkgToClone.title} (Copy)`,
-        createdAt: new Date().toISOString(),
       };
       setPackages((prev) => [newPkg, ...prev]);
       toast.success(`Package cloned successfully as ${newId}!`);
