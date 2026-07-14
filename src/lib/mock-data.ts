@@ -48,7 +48,7 @@ export type Lead = {
     | "Payment Pending"
     | "on conform"
     | "in process"
-    | "Review Collected"
+    | "Postponed"
     | "Lost";
   source: string;
   reference?: string;
@@ -449,5 +449,49 @@ export const paymentFollowUps: PaymentFollowUp[] = [
     repeat: "Daily",
     notificationReminder: 7,
     notes: "Client promised to pay by evening.",
+  }
+];
+
+export type Expense = {
+  id: string;
+  date: string;
+  category: string;
+  amount: number;
+  paymentMode: string;
+  reference: string;
+  description: string;
+  status: "Paid" | "Pending" | "Cancelled";
+};
+
+export const expenses: Expense[] = [
+  {
+    id: "EXP-001",
+    date: todayStr,
+    category: "Office Supplies",
+    amount: 1500,
+    paymentMode: "UPI",
+    reference: "UPI/123456789",
+    description: "Printer ink and paper",
+    status: "Paid",
+  },
+  {
+    id: "EXP-002",
+    date: yesterdayStr,
+    category: "Software Subscription",
+    amount: 4500,
+    paymentMode: "Card",
+    reference: "CRD/5544",
+    description: "Monthly CRM License",
+    status: "Paid",
+  },
+  {
+    id: "EXP-003",
+    date: todayStr,
+    category: "Travel",
+    amount: 12000,
+    paymentMode: "Bank Transfer",
+    reference: "NEFT/ABC1234",
+    description: "Flight for client meeting in Delhi",
+    status: "Pending",
   }
 ];

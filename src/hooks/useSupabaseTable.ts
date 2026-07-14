@@ -59,12 +59,10 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     const newRow = { ...row };
     if (tableName === "leads") {
       if (newRow.nextFollowUp) newRow.noteDate = newRow.nextFollowUp;
-      if (newRow.whatsapp) newRow.reference = newRow.whatsapp;
       if (newRow.adults !== undefined) newRow.pax = newRow.adults;
       if (newRow.children !== undefined) newRow.queryType = String(newRow.children);
 
       delete newRow.nextFollowUp;
-      delete newRow.whatsapp;
       delete newRow.adults;
       delete newRow.children;
       delete newRow.lastFollowUp;
@@ -151,6 +149,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (newRow.relationship !== undefined && tableName !== "employees") customFields.relationship = newRow.relationship;
     if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
     if (newRow.leadSection !== undefined) customFields.leadSection = newRow.leadSection;
+    if (tableName === "leads" && newRow.whatsapp !== undefined) customFields.whatsapp = newRow.whatsapp;
 
     if (tableName === "customers") {
       if (newRow.company !== undefined) customFields.company = newRow.company;
@@ -230,6 +229,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     delete newRow.relationship;
     if (tableName !== "employees") delete newRow.profile_details;
     delete newRow.leadSection;
+    if (tableName === "leads") delete newRow.whatsapp;
 
     if (tableName === "tasks") {
       // Encode extra fields into description
@@ -296,7 +296,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     const newRow = { ...row };
     if (tableName === "leads") {
       if (newRow.noteDate) newRow.nextFollowUp = newRow.noteDate;
-      if (newRow.reference) newRow.whatsapp = newRow.reference;
+      // Fallback: if whatsapp wasn't stored in meta, it might be in reference from older records
+      if (newRow.reference && !newRow.whatsapp) newRow.whatsapp = newRow.reference;
       if (newRow.pax !== null) newRow.adults = newRow.pax;
       if (newRow.queryType !== null) newRow.children = Number(newRow.queryType) || 0;
       if (newRow.created_at) {
@@ -336,6 +337,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           if (parsed.dob !== undefined) newRow.dob = parsed.dob;
           if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
           if (parsed.leadSection !== undefined) newRow.leadSection = parsed.leadSection;
+          if (parsed.whatsapp !== undefined) newRow.whatsapp = parsed.whatsapp;
         }
       } catch (e) { }
     }

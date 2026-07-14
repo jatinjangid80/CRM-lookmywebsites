@@ -17,72 +17,12 @@ import {
 import { IndianRupee, TrendingUp, UserCheck, CalendarCheck, Star, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { bookings, leads, formatINR } from "@/lib/mock-data";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { INITIAL_EMPLOYEES } from "./crm.employees";
 
 export const Route = createFileRoute("/crm/reports")({ component: ReportsPage });
 
-/* ─── Chart data ─── */
-const revenueByMonth = [
-  { month: "Jan", revenue: 18.2, bookings: 8 },
-  { month: "Feb", revenue: 22.4, bookings: 11 },
-  { month: "Mar", revenue: 26.1, bookings: 14 },
-  { month: "Apr", revenue: 31.8, bookings: 17 },
-  { month: "May", revenue: 28.4, bookings: 13 },
-  { month: "Jun", revenue: 42.9, bookings: 21 },
-];
-
-const sourceData = [
-  { name: "Website", value: 38 },
-  { name: "Instagram", value: 26 },
-  { name: "Referral", value: 20 },
-  { name: "Google Ads", value: 10 },
-  { name: "WhatsApp", value: 6 },
-];
-
-const destData = [
-  { dest: "Bali", revenue: 15.6 },
-  { dest: "Dubai", revenue: 12.9 },
-  { dest: "Maldives", revenue: 28.5 },
-  { dest: "Europe", revenue: 37.8 },
-  { dest: "Thailand", revenue: 11.8 },
-  { dest: "Singapore", revenue: 28.5 },
-];
-
-const leaderboard = [
-  {
-    name: "Riya Bansal",
-    avatar: "https://i.pravatar.cc/80?img=8",
-    deals: 31,
-    revenue: 1840000,
-    conversion: 74,
-  },
-  {
-    name: "Rahul Gupta",
-    avatar: "https://i.pravatar.cc/80?img=53",
-    deals: 24,
-    revenue: 1260000,
-    conversion: 69,
-  },
-  {
-    name: "Amit Shah",
-    avatar: "https://i.pravatar.cc/80?img=60",
-    deals: 19,
-    revenue: 980000,
-    conversion: 68,
-  },
-  {
-    name: "Dev Mathur",
-    avatar: "https://i.pravatar.cc/80?img=65",
-    deals: 8,
-    revenue: 420000,
-    conversion: 53,
-  },
-];
-
-const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0"];
-
-const totalRevenue = bookings.reduce((s, b) => s + b.paid, 0);
-const pendingAmount = bookings.reduce((s, b) => s + (b.amount - b.paid), 0);
-const wonLeads = leads.filter((l) => l.status === "on conform" || l.status === "in process").length;
+const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0", "#FFC8A2"];
 
 function KpiCard({
   label,
@@ -123,6 +63,122 @@ function SectionHeader({ title, sub }: { title: string; sub: string }) {
 }
 
 function ReportsPage() {
+  const [leadsList] = useSupabaseTable<any[]>("leads", leads);
+  const [bookingsList] = useSupabaseTable<any[]>("bookings", bookings);
+  const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
+
+  const totalRevenue = bookingsList.reduce((s, b) => s + (b.paid || 0), 0);
+  const pendingAmount = bookingsList.reduce((s, b) => s + ((b.amount || 0) - (b.paid || 0)), 0);
+  const wonLeads = leadsList.filter((l) => l.status === "on conform" || l.status === "in process" || l.status === "Confirmed").length;
+  
+  const exportCSV = () => {
+    const rows = [
+      ["Report Type", "Month/Dest/Name", "Metric 1", "Metric 2"],
+      ["Revenue & Bookings Trend", "", "", ""],
+      ...revenueByMonth.map((r) => ["Trend", r.month, `${r.revenue} Lakhs`, `${r.bookings} Bookings`]),
+      [],
+      ["Revenue by Destination", "", "", ""],
+      ...destData.map((d) => ["Destination", d.dest, `${d.revenue} Lakhs`, ""]),
+      [],
+      ["Consultant Leaderboard", "", "", ""],
+      ...leaderboard.map((l) => ["Consultant", l.name, `₹${l.revenue}`, `${l.deals} Deals`]),
+    ];
+
+    const csv = rows.map((row) => row.map((value) => `"${String(value).replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `reports-analytics-${new Date().toISOString().split("T")[0]}.csv`;
+    document.body.appendChild(anchor); // Required for Safari/Firefox
+    anchor.click();
+    document.body.removeChild(anchor);
+    URL.revokeObjectURL(url);
+  };
+
+  // Compute revenueByMonth
+  const revenueMap = new Map();
+  bookingsList.forEach((b) => {
+    if (!b.bookingDate) return;
+    const date = new Date(b.bookingDate);
+    const month = date.toLocaleString("default", { month: "short" });
+    if (!revenueMap.has(month)) revenueMap.set(month, { revenue: 0, bookings: 0 });
+    const data = revenueMap.get(month);
+    data.revenue += (b.amount || 0) / 100000;
+    data.bookings += 1;
+  });
+  const allMonths = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const revenueByMonth = allMonths
+    .map((month) => ({
+      month,
+      revenue: Number((revenueMap.get(month)?.revenue || 0).toFixed(2)),
+      bookings: revenueMap.get(month)?.bookings || 0,
+    }))
+    .filter((m, i) => m.revenue > 0 || m.bookings > 0 || i <= new Date().getMonth());
+
+  // Compute destData
+  const destMap = new Map();
+  bookingsList.forEach((b) => {
+    const dest = b.details?.destination || b.destination || "Other";
+    destMap.set(dest, (destMap.get(dest) || 0) + (b.amount || 0));
+  });
+  const destData = Array.from(destMap.entries())
+    .map(([dest, amt]) => ({
+      dest,
+      revenue: Number((amt / 100000).toFixed(2)),
+    }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 6);
+
+  // Compute sourceData
+  const sourceMap = new Map();
+  leadsList.forEach((l) => {
+    const s = l.source || "Other";
+    sourceMap.set(s, (sourceMap.get(s) || 0) + 1);
+  });
+  const totalSources = leadsList.length || 1;
+  const sourceData = Array.from(sourceMap.entries())
+    .map(([name, count]) => ({
+      name,
+      value: Math.round((count / totalSources) * 100),
+    }))
+    .sort((a, b) => b.value - a.value);
+
+  // Compute leaderboard
+  const consultantMap = new Map();
+  // Initialize map with all employees
+  employeesList.forEach((e) => {
+    consultantMap.set(e.name, { deals: 0, revenue: 0, leads: 0 });
+  });
+
+  bookingsList.forEach((b) => {
+    const c = b.bookedBy || "Unknown";
+    if (!consultantMap.has(c)) consultantMap.set(c, { deals: 0, revenue: 0, leads: 0 });
+    consultantMap.get(c).deals += 1;
+    consultantMap.get(c).revenue += b.amount || 0;
+  });
+  leadsList.forEach((l) => {
+    const c = l.assignedTo;
+    if (c) {
+      if (!consultantMap.has(c)) consultantMap.set(c, { deals: 0, revenue: 0, leads: 0 });
+      consultantMap.get(c).leads += 1;
+    }
+  });
+  const leaderboard = Array.from(consultantMap.entries())
+    .map(([name, data]) => {
+      const conversion = data.leads ? Math.round((data.deals / data.leads) * 100) : 0;
+      const emp = employeesList.find((e) => e.name === name);
+      return {
+        name,
+        avatar: emp?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+        deals: data.deals,
+        revenue: data.revenue,
+        conversion,
+      };
+    })
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5); // top 5
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -133,7 +189,7 @@ function ReportsPage() {
             Revenue, pipeline and consultant performance at a glance.
           </p>
         </div>
-        <Button variant="outline" className="gap-2 rounded-xl">
+        <Button variant="outline" className="gap-2 rounded-xl" onClick={exportCSV}>
           <Download className="h-4 w-4" /> Export CSV
         </Button>
       </div>
@@ -156,14 +212,14 @@ function ReportsPage() {
         />
         <KpiCard
           label="Won Leads"
-          value={`${wonLeads} / ${leads.length}`}
+          value={`${wonLeads} / ${leadsList.length}`}
           icon={<UserCheck className="h-4 w-4" />}
           sub="Conversion rate"
           color="bg-emerald-100 text-emerald-600"
         />
         <KpiCard
           label="Active Bookings"
-          value={String(bookings.filter((b) => b.status !== "Cancelled").length)}
+          value={String(bookingsList.filter((b) => b.status !== "Cancelled").length)}
           icon={<CalendarCheck className="h-4 w-4" />}
           sub="Non-cancelled"
           color="bg-blue-100 text-blue-600"
@@ -319,7 +375,7 @@ function ReportsPage() {
                   <div
                     className="h-full rounded-full"
                     style={{
-                      width: `${Math.round((c.revenue / leaderboard[0].revenue) * 100)}%`,
+                      width: leaderboard.length > 0 && leaderboard[0].revenue > 0 ? `${Math.round((c.revenue / leaderboard[0].revenue) * 100)}%` : '0%',
                       background: "var(--gradient-brand)",
                     }}
                   />
@@ -358,8 +414,8 @@ function ReportsPage() {
                   "Lost",
                 ] as const
               ).map((stage) => {
-                const count = leads.filter((l) => l.status === stage).length;
-                const pct = Math.round((count / leads.length) * 100);
+                const count = leadsList.filter((l) => l.status === stage).length;
+                const pct = leadsList.length ? Math.round((count / leadsList.length) * 100) : 0;
                 return (
                   <tr key={stage} className="border-t border-border hover:bg-secondary/20">
                     <td className="px-6 py-3 font-medium">{stage}</td>

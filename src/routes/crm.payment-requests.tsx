@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { Fragment, useMemo, useState } from "react";
 import { getAuth } from "@/lib/auth";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { Booking, PaymentFollowUp, paymentFollowUps, formatINR } from "@/lib/mock-data";
+import { Booking, formatINR } from "@/lib/mock-data";
 import { Receipt, Plus, Search, CheckCircle2, FileText, Clock, Download, Upload, FilePlus, Bell, ArrowRight, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -140,7 +140,7 @@ function PaymentRequestsPage() {
   const [leads] = useSupabaseTable<any[]>("leads", []);
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
   const [employees] = useSupabaseTable<any[]>("employees", []);
-  const [followUps, setFollowUps] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", paymentFollowUps);
+
 
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | ApprovalStatus>("All");
@@ -156,7 +156,7 @@ function PaymentRequestsPage() {
   const [decisionTarget, setDecisionTarget] = useState<PaymentRequest | null>(null);
   const [decisionReason, setDecisionReason] = useState("");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [activeDrawerRequest, setActiveDrawerRequest] = useState<PaymentRequest | null>(null);
+
   const [expandedRows, setExpandedRows] = useState<Record<string, boolean>>({});
   const [isExporting, setIsExporting] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
@@ -325,26 +325,7 @@ function PaymentRequestsPage() {
     );
   };
 
-  const createFollowUp = (booking: Booking) => {
-    const pendingAmount = Math.max(0, (booking.amount || 0) - (booking.paid || 0));
-    if (!pendingAmount) return;
-    const followUp: PaymentFollowUp = {
-      id: `PFU-${Math.floor(1000 + Math.random() * 9000)}`,
-      invoiceId: booking.id,
-      customerId: "",
-      customerName: booking.customer,
-      customerPhone: booking.mobileNumber || "",
-      invoiceDate: booking.bookingDate || new Date().toISOString().slice(0, 10),
-      totalAmount: booking.amount || 0,
-      pendingAmount,
-      nextFollowUpDate: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
-      nextFollowUpTime: "10:00",
-      repeat: "Daily",
-      notificationReminder: 1,
-      notes: "Auto-created follow-up for pending customer payment after vendor payment request.",
-    };
-    setFollowUps((prev) => [followUp, ...prev]);
-  };
+
 
   const handleGenerateRequest = (booking: Booking) => {
     const nextId = createRequestId();
@@ -382,7 +363,7 @@ function PaymentRequestsPage() {
       ],
     };
     setRequests((prev) => [request, ...prev]);
-    createFollowUp(booking);
+
   };
 
   const handleOpenManualRequest = () => {
@@ -552,7 +533,6 @@ function PaymentRequestsPage() {
 
   const toggleRow = (id: string, request: PaymentRequest) => {
     setExpandedRows((prev) => ({ ...prev, [id]: !prev[id] }));
-    setActiveDrawerRequest(request);
   };
 
   const exportCSV = () => {
@@ -606,7 +586,7 @@ function PaymentRequestsPage() {
     const html = `
       <html>
         <head>
-          <title>Payment Requests</title>
+          <title>Final Payment Approval</title>
           <style>
             table { width: 100%; border-collapse: collapse; font-family: sans-serif; }
             th, td { border: 1px solid #ddd; padding: 8px; font-size: 12px; }
@@ -614,7 +594,7 @@ function PaymentRequestsPage() {
           </style>
         </head>
         <body>
-          <h2>Payment Requests</h2>
+          <h2>Final Payment Approval</h2>
           <table>
             <thead><tr><th>ID</th><th>Booking</th><th>Customer</th><th>Vendor</th><th>Service</th><th>Amount</th><th>Status</th></tr></thead>
             <tbody>${rows}</tbody>
@@ -697,9 +677,9 @@ function PaymentRequestsPage() {
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
       <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="font-display text-3xl font-bold">Payment Approvals</h1>
+          <h1 className="font-display text-3xl font-bold">Final Payment Approval</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Workflow-driven vendor payment requests with integrated booking source, accounts review, super admin approval, customer follow-ups, and activity timeline.
+            Review and approve accountant-verified vendor payments.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row gap-2">
@@ -838,7 +818,7 @@ function PaymentRequestsPage() {
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.75fr_1fr]">
+      <div className="space-y-6">
         <div className="space-y-6">
           <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
             <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
@@ -1047,68 +1027,6 @@ function PaymentRequestsPage() {
             </div>
           </div>
         </div>
-
-        <aside className="space-y-6">
-          <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Activity Drawer</h2>
-            <p className="text-sm text-muted-foreground mt-1">Select a request to inspect timeline, approvals, and payment proof.</p>
-            {activeDrawerRequest ? (
-              <div className="mt-5 space-y-4">
-                <div className="rounded-3xl border border-border bg-background p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Current Request</p>
-                  <p className="mt-2 font-semibold">{activeDrawerRequest.id}</p>
-                  <p className="text-sm text-muted-foreground">{activeDrawerRequest.bookingNumber} • {activeDrawerRequest.vendor}</p>
-                </div>
-                <div className="rounded-3xl border border-border bg-background p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Timeline</p>
-                  <div className="mt-3 space-y-3">
-                    {activeDrawerRequest.auditTimeline.slice(-4).map((event) => (
-                      <div key={event.id} className="rounded-2xl border border-border bg-slate-50 p-3">
-                        <div className="flex items-center justify-between text-[11px] uppercase tracking-[0.15em] text-muted-foreground">
-                          <span>{event.actor}</span>
-                          <span>{formatTime(event.timestamp)}</span>
-                        </div>
-                        <p className="mt-1 text-sm font-semibold">{event.action}</p>
-                        {event.note && <p className="text-sm text-muted-foreground mt-1">{event.note}</p>}
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="rounded-3xl border border-border bg-background p-4">
-                  <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Quick Actions</p>
-                  <div className="mt-3 grid gap-2">
-                    <Button onClick={() => { setViewingRequest(activeDrawerRequest); setIsViewOpen(true); }} variant="outline" className="w-full">View Full Request</Button>
-                    {isAccounts && activeDrawerRequest.status === "Pending Accounts" && (
-                      <Button onClick={() => handleApproveAccounts(activeDrawerRequest)} className="w-full">Approve in Accounts</Button>
-                    )}
-                    {isAdmin && activeDrawerRequest.status === "Pending Super Admin" && (
-                      <Button onClick={() => handleSuperAdminDecision(activeDrawerRequest, "Approved")} className="w-full">Approve as Super Admin</Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="mt-5 rounded-3xl border border-dashed border-border bg-secondary/50 p-6 text-sm text-muted-foreground">
-                Select a request row to open the activity drawer.
-              </div>
-            )}
-          </div>
-
-          <div className="rounded-3xl border border-border bg-card p-5 shadow-sm">
-            <h2 className="text-lg font-semibold">Customer Follow-ups</h2>
-            <p className="text-sm text-muted-foreground mt-1">Pending follow-ups for partial payments and reminders.</p>
-            <div className="mt-5 space-y-4">
-              <div className="rounded-3xl border border-border bg-background p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Open Follow-ups</p>
-                <p className="mt-2 text-2xl font-bold">{followUps.filter((f) => f.pendingAmount > 0).length}</p>
-              </div>
-              <div className="rounded-3xl border border-border bg-background p-4">
-                <p className="text-xs uppercase tracking-[0.2em] text-muted-foreground">Pending Amount</p>
-                <p className="mt-2 text-xl font-semibold">{formatINR(followUps.reduce((sum, f) => sum + f.pendingAmount, 0))}</p>
-              </div>
-            </div>
-          </div>
-        </aside>
       </div>
 
       <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>

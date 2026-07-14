@@ -358,6 +358,7 @@ function Dashboard() {
       bg: "bg-blue-500/10",
       border: "border-blue-500/20",
       color: "text-blue-600",
+      link: "/crm/leads",
     },
     {
       label: "Today's Sales",
@@ -367,6 +368,7 @@ function Dashboard() {
       bg: "bg-emerald-500/10",
       border: "border-emerald-500/20",
       color: "text-emerald-600",
+      link: "/crm/bookings",
     },
     {
       label: "Active Bookings",
@@ -376,6 +378,7 @@ function Dashboard() {
       bg: "bg-violet-500/10",
       border: "border-violet-500/20",
       color: "text-violet-600",
+      link: "/crm/bookings",
     },
     {
       label: "Pending Payments",
@@ -385,6 +388,7 @@ function Dashboard() {
       bg: "bg-rose-500/10",
       border: "border-rose-500/20",
       color: "text-rose-600",
+      link: "/crm/payment-requests",
     },
     {
       label: "Follow-ups Today",
@@ -394,6 +398,7 @@ function Dashboard() {
       bg: "bg-amber-500/10",
       border: "border-amber-500/20",
       color: "text-amber-600",
+      link: "/crm/leads",
     },
     {
       label: "Upcoming Departures",
@@ -403,6 +408,7 @@ function Dashboard() {
       bg: "bg-cyan-500/10",
       border: "border-cyan-500/20",
       color: "text-cyan-600",
+      link: "/crm/bookings",
     },
     {
       label: "Conversion Rate",
@@ -413,6 +419,7 @@ function Dashboard() {
       border: "border-pink-500/20",
       color: "text-pink-600",
       tooltip: convertedNames,
+      link: "/crm/reports",
     },
     {
       label: "Monthly Revenue",
@@ -422,6 +429,7 @@ function Dashboard() {
       bg: "bg-primary/100/10",
       border: "border-orange-500/20",
       color: "text-orange-600",
+      link: "/crm/reports",
     },
   ];
 
@@ -433,7 +441,8 @@ function Dashboard() {
           <div
             key={s.label}
             title={s.tooltip}
-            className={`group relative overflow-hidden rounded-2xl border ${s.border} bg-card p-5 shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300`}
+            onClick={() => s.link && navigate({ to: s.link as any })}
+            className={`group relative overflow-hidden rounded-2xl border ${s.border} bg-card p-5 shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 ${s.link ? 'cursor-pointer' : ''}`}
           >
             <div className="flex items-center justify-between">
               <span className={`grid h-10 w-10 place-items-center rounded-xl ${s.bg} ${s.color}`}>

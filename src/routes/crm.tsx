@@ -71,9 +71,10 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
   { to: "/crm/packages", label: "Packages", icon: Pkg },
   { to: "/crm/employees", label: "Employees", icon: Briefcase },
+  { to: "/crm/attendance", label: "Attendance", icon: Clock },
   { to: "/crm/vendors", label: "Vendors", icon: Building2 },
 
-  { to: "/crm/payment-requests", label: "Payment Requests", icon: Receipt },
+  { to: "/crm/Accounts", label: "Accounts", icon: CreditCard },
   { to: "/crm/settings", label: "Settings", icon: Settings },
 ];
 
@@ -93,10 +94,10 @@ function getNavForUser(auth: AuthUser): NavItem[] {
   const empSpecificNav = FULL_NAV.filter((n) => !["Employees", "Settings", "Payments"].includes(n.label));
 
   if (auth.name.toLowerCase().includes("nikita")) {
-    return FULL_NAV.filter((n) => ["Leads", "Tasks", "Settings", "Payment Requests"].includes(n.label));
+    return FULL_NAV.filter((n) => ["Leads", "Tasks", "Settings"].includes(n.label));
   }
   if (auth.name.toLowerCase().includes("aman")) {
-    return FULL_NAV.filter((n) => ["Vendors", "Settings", "Tasks", "Payment Requests"].includes(n.label));
+    return FULL_NAV.filter((n) => ["Vendors", "Settings", "Tasks"].includes(n.label));
   }
   if (auth.name.toLowerCase().includes("deepak")) {
     return FULL_NAV.filter((n) => [
@@ -107,7 +108,6 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Bookings",
       "Documents",
       "Vendors",
-      "Payment Requests",
       "Settings"
     ].includes(n.label));
   }
@@ -121,7 +121,6 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Documents",
       "Packages",
       "Vendors",
-      "Payment Requests",
       "Settings"
     ].includes(n.label));
   }

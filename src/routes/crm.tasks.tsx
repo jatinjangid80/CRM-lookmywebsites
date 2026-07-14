@@ -6,7 +6,7 @@ import {
   Plus, CheckCircle2, Circle, Clock, AlertCircle, Phone, Mail,
   CreditCard, FileText, CalendarDays, Trash2, X, Filter, Sparkles,
   ListChecks, Calendar, Users, User, Edit, Eye, Paperclip, MessageSquare,
-  MoreVertical, CheckSquare, List, CheckCircle
+  MoreVertical, CheckSquare, List, CheckCircle, Copy
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -19,6 +19,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAuth } from "@/lib/auth";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
@@ -135,8 +136,55 @@ function TasksPage() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (confirm("Are you sure you want to delete this task?")) {
-      setTasks(prev => prev.filter(t => t.id !== taskId && t.parent_id !== taskId));
+    if (window.confirm("Are you sure you want to delete this task?")) {
+      setTasks((prev: any[]) => prev.filter(t => t.id !== taskId && t.parent_id !== taskId));
+      toast.success("Task deleted successfully");
+    }
+  };
+
+  const handleCloneTask = (taskToClone: Task) => {
+    try {
+      const maxNumber = tasks.reduce((max, t) => {
+        const match = t.id?.match(/\d+/);
+        if (match) {
+          const val = parseInt(match[0]);
+          return val > max ? val : max;
+        }
+        return max;
+      }, 0);
+      const newId = `T-${String(maxNumber + 1).padStart(3, "0")}`;
+      const newTasksToAdd = [];
+
+      const clonedMainTask = {
+        ...taskToClone,
+        id: newId,
+        title: `${taskToClone.title} (Copy)`,
+        created_at: new Date().toISOString(),
+        completed_at: null,
+        status: "Pending" as const,
+        progress: 0,
+      };
+      newTasksToAdd.push(clonedMainTask);
+
+      const subTasks = tasks.filter(t => t.parent_id === taskToClone.id);
+      subTasks.forEach((st, idx) => {
+        const newSubId = `T-${String(maxNumber + 2 + idx).padStart(3, "0")}`;
+        newTasksToAdd.push({
+          ...st,
+          id: newSubId,
+          parent_id: newId,
+          title: st.title,
+          created_at: new Date().toISOString(),
+          completed_at: null,
+          status: "Pending" as const,
+          progress: 0,
+        });
+      });
+
+      setTasks((prev: Task[]) => [...prev, ...newTasksToAdd]);
+      toast.success(`Task cloned successfully as ${newId}!`);
+    } catch (err) {
+      toast.error("Failed to clone task");
     }
   };
 
@@ -388,16 +436,16 @@ function TasksPage() {
       {/* Main Content Area */}
       <div className="flex-1 rounded-xl border bg-white shadow-sm overflow-hidden flex flex-col">
         <div className="border-b px-4 py-3 flex justify-end gap-2">
-          <Button variant={currentView === "list" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("list")} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentView("list")} className={`gap-2 ${currentView === "list" ? "text-primary font-semibold hover:text-primary hover:bg-transparent" : "text-muted-foreground"}`}>
             <List className="h-4 w-4" /> List View
           </Button>
-          <Button variant={currentView === "individual" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("individual")} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentView("individual")} className={`gap-2 ${currentView === "individual" ? "text-primary font-semibold hover:text-primary hover:bg-transparent" : "text-muted-foreground"}`}>
             <User className="h-4 w-4" /> Individual Tasks
           </Button>
-          <Button variant={currentView === "group" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("group")} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentView("group")} className={`gap-2 ${currentView === "group" ? "text-primary font-semibold hover:text-primary hover:bg-transparent" : "text-muted-foreground"}`}>
             <Users className="h-4 w-4" /> Group Tasks
           </Button>
-          <Button variant={currentView === "calendar" ? "default" : "ghost"} size="sm" onClick={() => setCurrentView("calendar")} className="gap-2">
+          <Button variant="ghost" size="sm" onClick={() => setCurrentView("calendar")} className={`gap-2 ${currentView === "calendar" ? "text-primary font-semibold hover:text-primary hover:bg-transparent" : "text-muted-foreground"}`}>
             <Calendar className="h-4 w-4" /> Calendar View
           </Button>
         </div>
@@ -406,7 +454,7 @@ function TasksPage() {
           {(currentView === "list" || currentView === "group") && (
             <Table>
               <TableHeader>
-                <TableRow>
+                <TableRow className="bg-primary hover:bg-primary/90 [&_th]:text-primary-foreground">
                   <TableHead className="w-[100px]">Task ID</TableHead>
                   <TableHead>Task Name</TableHead>
                   <TableHead>Assigned To</TableHead>
@@ -432,20 +480,22 @@ function TasksPage() {
                         <TableCell className="font-semibold">{task.title}</TableCell>
                         <TableCell className="align-top min-w-[200px]">
                           <div className="mb-2 font-medium text-gray-800">{task.assigned_to || (task as any).assignee || "-"}</div>
-                          <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
-                            {task.notes && task.notes.length > 0 && (
-                              task.notes.slice().reverse().map((n: any, i: number) => (
-                                <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
-                                  <span className="text-muted-foreground/60">•</span>
-                                  <span className="text-muted-foreground">{n.content}</span>
-                                  {n.created_at && (
-                                    <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
-                                      ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
-                                    </span>
-                                  )}
-                                </div>
-                              ))
-                            )}
+                          <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
+                            <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
+                              {task.notes && task.notes.length > 0 && (
+                                task.notes.slice().reverse().map((n: any, i: number) => (
+                                  <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                                    <span className="text-muted-foreground/60">•</span>
+                                    <span className="text-muted-foreground">{n.content}</span>
+                                    {n.created_at && (
+                                      <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
+                                        ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                      </span>
+                                    )}
+                                  </div>
+                                ))
+                              )}
+                            </div>
                             <div className="mt-1">
                               {editingTableNoteId === task.id ? (
                                 <div className="flex flex-col gap-2 mt-1">
@@ -524,6 +574,11 @@ function TasksPage() {
                               <Eye className="h-4 w-4 text-slate-500" />
                             </Button>
                             {isAdmin && (
+                              <Button variant="ghost" size="icon" onClick={() => handleCloneTask(task)}>
+                                <Copy className="h-4 w-4 text-green-500" />
+                              </Button>
+                            )}
+                            {isAdmin && (
                               <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
                                 <Trash2 className="h-4 w-4 text-red-500" />
                               </Button>
@@ -537,20 +592,22 @@ function TasksPage() {
                           <TableCell className="font-semibold">{st.title}</TableCell>
                           <TableCell className="align-top min-w-[200px]">
                             <div className="mb-2 font-medium text-gray-800">{st.assigned_to || (st as any).assignee || "-"}</div>
-                            <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-2.5 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
-                              {st.notes && st.notes.length > 0 && (
-                                st.notes.slice().reverse().map((n: any, i: number) => (
-                                  <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
-                                    <span className="text-muted-foreground/60">•</span>
-                                    <span className="text-muted-foreground">{n.content}</span>
-                                    {n.created_at && (
-                                      <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
-                                        ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
-                                      </span>
-                                    )}
-                                  </div>
-                                ))
-                              )}
+                            <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
+                              <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
+                                {st.notes && st.notes.length > 0 && (
+                                  st.notes.slice().reverse().map((n: any, i: number) => (
+                                    <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
+                                      <span className="text-muted-foreground/60">•</span>
+                                      <span className="text-muted-foreground">{n.content}</span>
+                                      {n.created_at && (
+                                        <span className="text-xs text-muted-foreground/60 not-italic ml-0.5">
+                                          ({new Date(n.created_at).toLocaleString('en-GB', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).replace(',', '')})
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))
+                                )}
+                              </div>
                               <div className="mt-1">
                                 {editingTableNoteId === st.id ? (
                                   <div className="flex flex-col gap-2 mt-1">
@@ -629,6 +686,11 @@ function TasksPage() {
                                 <Eye className="h-4 w-4 text-slate-500" />
                               </Button>
                               {isAdmin && (
+                                <Button variant="ghost" size="icon" onClick={() => handleCloneTask(st)}>
+                                  <Copy className="h-4 w-4 text-green-500" />
+                                </Button>
+                              )}
+                              {isAdmin && (
                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
                                   <Trash2 className="h-4 w-4 text-red-500" />
                                 </Button>
@@ -701,6 +763,11 @@ function TasksPage() {
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingTask(t)}>
                                       <Eye className="h-3.5 w-3.5 text-slate-400" />
                                     </Button>
+                                    {isAdmin && (
+                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCloneTask(t)}>
+                                        <Copy className="h-3.5 w-3.5 text-green-400" />
+                                      </Button>
+                                    )}
                                     {isAdmin && (
                                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
                                         <Trash2 className="h-3.5 w-3.5 text-red-400" />
@@ -777,8 +844,8 @@ function TasksPage() {
                               key={t.id}
                               onClick={() => setViewingTask(t)}
                               className={`text-[10px] px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 border ${t.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                  t.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
-                                    'bg-white text-slate-700 border-slate-200 shadow-sm'
+                                t.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
+                                  'bg-white text-slate-700 border-slate-200 shadow-sm'
                                 }`}
                             >
                               {t.title}

@@ -1024,7 +1024,7 @@ function EmployeesPage() {
           </div>
 
           {/* Filter */}
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 rounded-2xl border border-border bg-card p-4 shadow-card overflow-hidden">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 overflow-hidden">
             <div className="relative w-full md:max-w-md flex-1 shrink-0">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History } from "lucide-react";
+import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -28,6 +28,7 @@ import { ImportCustomersModal } from "@/components/ui/import-customers-modal";
 import { getAuth } from "@/lib/auth";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/crm/customers")({
   component: CustomersPage,
@@ -120,6 +121,26 @@ function CustomersPage() {
     setCustomerList([customer, ...customerList]);
     setIsAddOpen(false);
     setNewCustomer({ name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned" });
+  };
+
+  const handleCloneCustomer = (customerToClone: ExtCustomer) => {
+    try {
+      const currentMaxId = customerList.reduce((max, c) => {
+        const num = parseInt(c.id.replace("CRN", ""));
+        return !isNaN(num) && num > max ? num : max;
+      }, 0);
+      const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
+      const clonedCustomer: ExtCustomer = {
+        ...customerToClone,
+        id: nextId,
+        name: `${customerToClone.name} (Copy)`,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+      setCustomerList((prev) => [clonedCustomer, ...prev]);
+      toast.success(`Customer cloned successfully as ${nextId}!`);
+    } catch (err) {
+      toast.error("Failed to clone customer");
+    }
   };
 
   const handleImportCustomers = (data: any[]) => {
@@ -242,7 +263,7 @@ function CustomersPage() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Customers</h1>
           <p className="mt-1 text-sm text-muted-foreground">
@@ -263,21 +284,21 @@ function CustomersPage() {
       </div>
 
       {/* Filters & Search */}
-      <div className="flex flex-col sm:flex-row gap-3">
-        <div className="relative flex-1">
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div className="relative w-full max-w-sm">
           <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder="Search by name, phone, email, reference or city..."
+            placeholder="Search name, phone, email..."
             value={q}
             onChange={(e) => { setQ(e.target.value); setCurrentPage(1); }}
-            className="pl-9 bg-card border-border shadow-sm h-10 rounded-xl"
+            className="pl-9 bg-background h-10 rounded-xl"
           />
         </div>
-        <div className="flex gap-3 overflow-x-auto pb-2 sm:pb-0">
+        
+        <div className="flex items-center gap-4">
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[140px] bg-card shadow-sm h-10 rounded-xl">
-              <Filter className="mr-2 h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Status" />
+            <SelectTrigger className="w-[160px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
+              <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="All">All Statuses</SelectItem>
@@ -286,135 +307,85 @@ function CustomersPage() {
               ))}
             </SelectContent>
           </Select>
-          
-          {cities.length > 0 && (
-            <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
-              <SelectTrigger className="w-[140px] bg-card shadow-sm h-10 rounded-xl">
-                <SelectValue placeholder="City" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Cities</SelectItem>
-                {cities.map((s) => (
-                  <SelectItem key={s as string} value={s as string}>{s}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          )}
-
-          <Select value={filterAssignee} onValueChange={(v) => { setFilterAssignee(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px] bg-card shadow-sm h-10 rounded-xl">
-              <SelectValue placeholder="Assigned To" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Employees</SelectItem>
-              {assignees.map((s) => (
-                <SelectItem key={s} value={s}>{s}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          <div className="text-sm text-muted-foreground whitespace-nowrap font-medium px-2">
+            {filtered.length} customers
+          </div>
         </div>
       </div>
 
-      {/* Data Table */}
-      <div className="bg-card rounded-2xl border border-border shadow-sm flex flex-col h-[calc(100vh-220px)]">
-        <div className="flex-1 overflow-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground sticky top-0 z-10 border-b border-border">
-              <tr>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Customer Info</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Contact</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap">Location / Details</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap text-right">Performance</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap text-center">Status</th>
-                <th className="px-4 py-3 font-semibold whitespace-nowrap text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {filtered.length === 0 ? (
-                <tr>
-                  <td colSpan={6} className="px-4 py-12 text-center text-muted-foreground">
-                    No customers found matching your criteria.
-                  </td>
-                </tr>
-              ) : (
-                filtered.map((c) => (
-                  <tr key={c.id} className="hover:bg-secondary/30 transition-colors group">
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex items-center gap-3">
-                        <div className="h-9 w-9 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm shrink-0 border border-primary/20">
-                          {c.name.charAt(0).toUpperCase()}
-                        </div>
-                        <div>
-                          <div className="font-semibold text-foreground">{c.name}</div>
-                          <div className="text-xs text-muted-foreground font-mono">{c.id}</div>
-                          {c.company && <div className="text-xs text-muted-foreground mt-0.5">{c.company}</div>}
-                        </div>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="font-medium">{c.phone}</div>
-                      <div className="text-xs text-muted-foreground break-all">{c.email || "No email"}</div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="text-sm">{c.city || "-"}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">
-                        Ref: {c.reference || "-"}
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        Assigned: {c.assignedTo || "-"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <div className="font-display font-bold text-primary">{formatINR(c.totalSpend)}</div>
-                      <div className="text-xs text-muted-foreground mt-0.5">{c.trips} {c.trips === 1 ? 'Booking' : 'Bookings'}</div>
-                    </td>
-                    <td className="px-4 py-3 align-top text-center">
-                      <StatusBadge status={c.status} />
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedCustomer(c);
-                              setDialogType("profile");
-                            }}
-                          >
-                            <User className="mr-2 h-4 w-4" /> View Profile
-                          </DropdownMenuItem>
-                          <DropdownMenuItem
-                            onClick={() => {
-                              setSelectedCustomer(c);
-                              setNewCustomer(c);
-                              setDialogType("edit");
-                            }}
-                          >
-                            <FileText className="mr-2 h-4 w-4" /> Edit Customer
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                            onClick={() => {
-                              setSelectedCustomer(c);
-                              setDialogType("delete");
-                            }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+      {/* Grid View */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+        {filtered.length === 0 ? (
+          <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-2xl border border-dashed">
+            <User className="h-12 w-12 mb-4 opacity-50" />
+            <p>No customers found matching your criteria.</p>
+          </div>
+        ) : (
+          filtered.map((c) => (
+            <div key={c.id} className="bg-card rounded-[24px] border border-border p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col">
+              <div className="flex justify-between items-start mb-6">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0">
+                    {c.name.charAt(0).toUpperCase()}
+                  </div>
+                  <div>
+                    <div className="font-bold text-foreground text-lg leading-tight">{c.name}</div>
+                    <div className="text-xs text-muted-foreground mt-0.5">{c.id}</div>
+                  </div>
+                </div>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" className="h-8 w-8 p-0 opacity-50 hover:opacity-100 transition-opacity">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                    <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}>
+                      <User className="mr-2 h-4 w-4" /> View Profile
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
+                      <FileText className="mr-2 h-4 w-4" /> Edit Customer
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleCloneCustomer(c)}>
+                      <Copy className="mr-2 h-4 w-4" /> Clone Customer
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
+                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+
+              <div className="space-y-3 mb-6 flex-1">
+                <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                  <Phone className="h-4 w-4 text-foreground/50 shrink-0" /> 
+                  <span className="font-medium text-foreground/80">{c.phone}</span>
+                </div>
+                {c.email && (
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <Mail className="h-4 w-4 text-foreground/50 shrink-0" />
+                    <span className="truncate font-medium text-foreground/80">{c.email}</span>
+                  </div>
+                )}
+                {c.city && (
+                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
+                    <MapPin className="h-4 w-4 text-foreground/50 shrink-0" />
+                    <span className="font-medium text-foreground/80">{c.city}</span>
+                  </div>
+                )}
+              </div>
+
+              <Button 
+                variant="outline" 
+                className="w-full rounded-xl bg-transparent border-border hover:bg-secondary/50 h-10 font-semibold"
+                onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}
+              >
+                View History
+              </Button>
+            </div>
+          ))
+        )}
       </div>
 
       {/* ── Modals ── */}
@@ -505,92 +476,52 @@ function CustomersPage() {
         <DialogContent className="sm:max-w-[800px] p-0 overflow-hidden h-[85vh] flex flex-col">
           {selectedCustomer && (
             <>
-              <DialogHeader className="px-6 pt-6 pb-4 border-b border-border bg-card">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-4">
-                    <div className="h-14 w-14 rounded-full bg-primary/10 text-primary flex items-center justify-center font-display font-bold text-2xl border border-primary/20">
-                      {selectedCustomer.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div>
-                      <DialogTitle className="text-2xl font-display">{selectedCustomer.name}</DialogTitle>
-                      <DialogDescription className="mt-1 flex items-center gap-2">
-                        <span className="font-mono text-xs bg-secondary px-2 py-0.5 rounded-md">{selectedCustomer.id}</span>
-                        <span>•</span>
-                        <span>{selectedCustomer.phone}</span>
-                        {selectedCustomer.email && (
-                          <>
-                            <span>•</span>
-                            <span>{selectedCustomer.email}</span>
-                          </>
-                        )}
-                      </DialogDescription>
-                    </div>
-                  </div>
-                  <StatusBadge status={selectedCustomer.status} />
+              <DialogHeader className="px-6 pt-8 pb-6">
+                <div>
+                  <DialogTitle className="text-4xl font-display font-bold tracking-tight mb-2">{selectedCustomer.name}</DialogTitle>
+                  <DialogDescription className="flex items-center gap-2 text-sm text-muted-foreground font-medium">
+                    <MapPin className="h-4 w-4" />
+                    <span>{selectedCustomer.city || "Unknown"}</span>
+                    <span>•</span>
+                    <span>{selectedCustomer.id}</span>
+                  </DialogDescription>
                 </div>
               </DialogHeader>
 
               <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-                <div className="px-6 border-b border-border bg-card/50">
-                  <TabsList className="h-12 bg-transparent gap-6">
-                    <TabsTrigger value="overview" className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent rounded-none px-2 text-sm">
-                      Overview
+                <div className="px-6 border-t border-border pt-6 pb-2">
+                  <TabsList className="h-12 bg-secondary/30 rounded-full w-full justify-between p-1">
+                    <TabsTrigger value="overview" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                      Info
                     </TabsTrigger>
-                    <TabsTrigger value="bookings" className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent rounded-none px-2 text-sm">
-                      Booking History
+                    <TabsTrigger value="bookings" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                      Bookings
                     </TabsTrigger>
-                    <TabsTrigger value="payments" className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent rounded-none px-2 text-sm">
-                      Payment History
-                    </TabsTrigger>
-                    <TabsTrigger value="leads" className="data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none border-b-2 border-transparent rounded-none px-2 text-sm">
-                      Leads
+                    <TabsTrigger value="payments" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                      Payments
                     </TabsTrigger>
                   </TabsList>
                 </div>
 
-                <div className="flex-1 overflow-y-auto p-6 bg-secondary/10">
-                  <TabsContent value="overview" className="m-0 space-y-6 outline-none">
-                    <div className="grid grid-cols-3 gap-4">
-                      <div className="bg-card border border-border rounded-xl p-4 shadow-sm text-center">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Spend</p>
-                        <p className="text-2xl font-bold font-display mt-1 text-primary">{formatINR(selectedCustomer.totalSpend)}</p>
-                      </div>
-                      <div className="bg-card border border-border rounded-xl p-4 shadow-sm text-center">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Bookings</p>
-                        <p className="text-2xl font-bold font-display mt-1">{selectedCustomer.trips}</p>
-                      </div>
-                      <div className="bg-card border border-border rounded-xl p-4 shadow-sm text-center">
-                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Customer Since</p>
-                        <p className="text-xl font-bold font-display mt-2">{selectedCustomer.createdAt}</p>
-                      </div>
-                    </div>
-
-                    <div className="bg-card border border-border rounded-xl shadow-sm p-5">
-                      <h3 className="font-semibold mb-4 text-sm uppercase tracking-wider text-muted-foreground">Demographics & Details</h3>
-                      <div className="grid grid-cols-2 gap-y-4 gap-x-8 text-sm">
+                <div className="flex-1 overflow-y-auto p-6">
+                  <TabsContent value="overview" className="m-0 outline-none">
+                    <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-8">
                         <div>
-                          <p className="text-muted-foreground text-xs mb-1">Company / Organization</p>
-                          <p className="font-medium">{selectedCustomer.company || "-"}</p>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Phone</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.phone}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground text-xs mb-1">City</p>
-                          <p className="font-medium">{selectedCustomer.city || "-"}</p>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Email</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.email || "-"}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground text-xs mb-1">Lead Source</p>
-                          <p className="font-medium">{selectedCustomer.source || "-"}</p>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Reference</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.reference || "-"}</p>
                         </div>
                         <div>
-                          <p className="text-muted-foreground text-xs mb-1">Referred By</p>
-                          <p className="font-medium">{selectedCustomer.reference || "-"}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs mb-1">Assigned Employee</p>
-                          <p className="font-medium">{selectedCustomer.assignedTo || "Unassigned"}</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs mb-1">Last Booking Date</p>
-                          <p className="font-medium">{selectedCustomer.lastBookingDate || "-"}</p>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Created At</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.createdAt}</p>
                         </div>
                       </div>
                     </div>

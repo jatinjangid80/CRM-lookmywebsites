@@ -26,6 +26,7 @@ import {
   Undo2,
   CreditCard,
   ChevronDown,
+  Copy,
 } from "lucide-react";
 import {
   BarChart,
@@ -43,6 +44,7 @@ import {
   Legend,
 } from "recharts";
 import { useState, useEffect, useMemo } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -520,6 +522,31 @@ function BookingsPage() {
     if (!deleteTarget) return;
     setBookingList((prev) => prev.filter((b) => b.id !== deleteTarget.id));
     setDeleteTarget(null);
+    toast.success("Booking deleted successfully!");
+  };
+
+  const handleCloneBooking = (bookingToClone: ExtBooking) => {
+    try {
+      const maxNumber = bookingList.reduce((max, b) => {
+        const match = b.id?.match(/\d+/);
+        if (match) {
+          const val = parseInt(match[0]);
+          return val > max ? val : max;
+        }
+        return max;
+      }, 0);
+      const newId = `BK-${String(maxNumber + 1).padStart(3, "0")}`;
+      const newBooking: ExtBooking = {
+        ...bookingToClone,
+        id: newId,
+        customer: `${bookingToClone.customer} (Copy)`,
+        createdAt: new Date().toISOString().slice(0, 10),
+      };
+      setBookingList((prev) => [newBooking, ...prev]);
+      toast.success(`Booking cloned successfully as ${newId}!`);
+    } catch (err) {
+      toast.error("Failed to clone booking");
+    }
   };
 
   function getFileIcon(type: string, name: string) {
@@ -913,46 +940,40 @@ function BookingsPage() {
           <table className="w-full text-sm">
             <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
               <tr>
-                <th className="px-4 py-3">Booking ID</th>
-                <th className="px-4 py-3">Customer</th>
-                <th className="px-4 py-3">Type / Service</th>
-                <th className="px-4 py-3">Travel Date</th>
-                <th className="px-4 py-3">Amount</th>
-                <th className="px-4 py-3">Status</th>
-                <th className="px-4 py-3">Files</th>
+                <th className="px-4 py-3 whitespace-nowrap">Booking Date</th>
+                <th className="px-4 py-3 whitespace-nowrap">Travel Date</th>
+                <th className="px-4 py-3 whitespace-nowrap">Passenger Name</th>
+                <th className="px-4 py-3 whitespace-nowrap">Mobile No</th>
+                <th className="px-4 py-3 whitespace-nowrap">Selling Price (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap">Purchase Price (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap">Profit (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap">Booked By</th>
+                <th className="px-4 py-3 whitespace-nowrap">Reference</th>
+                <th className="px-4 py-3 whitespace-nowrap">Payment Status</th>
+                <th className="px-4 py-3 whitespace-nowrap">Remarks</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={9} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={12} className="py-8 text-center text-muted-foreground">
                     No bookings found for {activeTab}.
                   </td>
                 </tr>
               ) : (
                 filteredBookings.map((b) => (
                   <tr key={b.id} className="border-t border-border hover:bg-secondary/30 cursor-pointer transition-colors" onClick={() => handleManageBooking(b)}>
-                    <td className="px-4 py-3 font-mono text-xs text-primary font-semibold">
-                      {b.id}
-                    </td>
-                    <td className="px-4 py-3 font-semibold">{b.customer}</td>
-                    <td className="px-4 py-3">
-                      <div className="flex flex-col">
-                        <span className="font-semibold text-xs text-foreground/80">
-                          {b.bookingType || "Holiday Package"}
-                        </span>
-                        <span
-                          className="text-xs text-muted-foreground truncate max-w-[150px]"
-                          title={b.package}
-                        >
-                          {b.package}
-                        </span>
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 text-sm">{b.travelDate}</td>
-                    <td className="px-4 py-3 font-medium">{formatINR(b.amount || 0)}</td>
-                    <td className="px-4 py-3" onClick={(e) => e.stopPropagation()}>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookingDate || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.travelDate || "-"}</td>
+                    <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap text-primary">{formatINR(b.sellingPrice || b.amount || 0)}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookedBy || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.reference || "-"}</td>
+                    <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <Select
                         value={b.status}
                         onValueChange={(val: Booking["status"]) => updateBookingStatus(b.id, val)}
@@ -970,22 +991,23 @@ function BookingsPage() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-3">
-                      {b.files && b.files.length > 0 ? (
-                        <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-50 text-blue-700 px-2 py-0.5 text-xs font-semibold border border-blue-100">
-                          📄 {b.files.length} file{b.files.length !== 1 ? "s" : ""}
-                        </span>
-                      ) : (
-                        <span className="text-muted-foreground/50 text-xs">—</span>
-                      )}
-                    </td>
+                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate" title={b.remarks || "-"}>{b.remarks || "-"}</td>
                     <td className="px-4 py-3 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
+                      <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="text-green-500 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0 rounded-xl"
+                          onClick={() => handleCloneBooking(b)}
+                          title="Clone Booking"
+                        >
+                          <Copy className="h-4 w-4" />
+                        </Button>
                         <Button
                           size="sm"
                           variant="ghost"
                           className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
-                          onClick={(e) => { e.stopPropagation(); setDeleteTarget(b); }}
+                          onClick={() => setDeleteTarget(b)}
                           title="Delete Booking"
                         >
                           <Trash2 className="h-4 w-4" />

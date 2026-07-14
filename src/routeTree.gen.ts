@@ -31,6 +31,7 @@ import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
 import { Route as CrmCustomersRouteImport } from './routes/crm.customers'
 import { Route as CrmCalendarRouteImport } from './routes/crm.calendar'
 import { Route as CrmBookingsRouteImport } from './routes/crm.bookings'
+import { Route as CrmAttendanceRouteImport } from './routes/crm.attendance'
 import { Route as CrmAccountsRouteImport } from './routes/crm.accounts'
 import { Route as CrmServicesTravelInsuranceRouteImport } from './routes/crm.services.travel-insurance'
 import { Route as CrmServicesTransportRouteImport } from './routes/crm.services.transport'
@@ -152,6 +153,11 @@ const CrmBookingsRoute = CrmBookingsRouteImport.update({
   path: '/bookings',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmAttendanceRoute = CrmAttendanceRouteImport.update({
+  id: '/attendance',
+  path: '/attendance',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmAccountsRoute = CrmAccountsRouteImport.update({
   id: '/accounts',
   path: '/accounts',
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/crm': typeof CrmRouteWithChildren
   '/login': typeof LoginRoute
   '/crm/accounts': typeof CrmAccountsRoute
+  '/crm/attendance': typeof CrmAttendanceRoute
   '/crm/bookings': typeof CrmBookingsRoute
   '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/crm/accounts': typeof CrmAccountsRoute
+  '/crm/attendance': typeof CrmAttendanceRoute
   '/crm/bookings': typeof CrmBookingsRoute
   '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/crm': typeof CrmRouteWithChildren
   '/login': typeof LoginRoute
   '/crm/accounts': typeof CrmAccountsRoute
+  '/crm/attendance': typeof CrmAttendanceRoute
   '/crm/bookings': typeof CrmBookingsRoute
   '/crm/calendar': typeof CrmCalendarRoute
   '/crm/customers': typeof CrmCustomersRoute
@@ -314,6 +323,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/login'
     | '/crm/accounts'
+    | '/crm/attendance'
     | '/crm/bookings'
     | '/crm/calendar'
     | '/crm/customers'
@@ -347,6 +357,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/crm/accounts'
+    | '/crm/attendance'
     | '/crm/bookings'
     | '/crm/calendar'
     | '/crm/customers'
@@ -381,6 +392,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/login'
     | '/crm/accounts'
+    | '/crm/attendance'
     | '/crm/bookings'
     | '/crm/calendar'
     | '/crm/customers'
@@ -573,6 +585,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmBookingsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/attendance': {
+      id: '/crm/attendance'
+      path: '/attendance'
+      fullPath: '/crm/attendance'
+      preLoaderRoute: typeof CrmAttendanceRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/accounts': {
       id: '/crm/accounts'
       path: '/accounts'
@@ -648,6 +667,7 @@ declare module '@tanstack/react-router' {
 
 interface CrmRouteChildren {
   CrmAccountsRoute: typeof CrmAccountsRoute
+  CrmAttendanceRoute: typeof CrmAttendanceRoute
   CrmBookingsRoute: typeof CrmBookingsRoute
   CrmCalendarRoute: typeof CrmCalendarRoute
   CrmCustomersRoute: typeof CrmCustomersRoute
@@ -680,6 +700,7 @@ interface CrmRouteChildren {
 
 const CrmRouteChildren: CrmRouteChildren = {
   CrmAccountsRoute: CrmAccountsRoute,
+  CrmAttendanceRoute: CrmAttendanceRoute,
   CrmBookingsRoute: CrmBookingsRoute,
   CrmCalendarRoute: CrmCalendarRoute,
   CrmCustomersRoute: CrmCustomersRoute,

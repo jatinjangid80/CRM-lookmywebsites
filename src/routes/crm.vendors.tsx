@@ -17,6 +17,9 @@ import {
   ChevronDown,
   ChevronsUpDown,
   Filter,
+  Copy,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -44,6 +47,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 import { ImportVendorsModal } from "@/components/ui/import-vendors-modal";
 import * as XLSX from "xlsx";
 
@@ -132,15 +137,32 @@ type SortDir = "asc" | "desc";
 function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
 
-  const normalizeVendor = (vendor: any) => ({
-    ...vendor,
-    place: vendor.place || vendor.location || "",
-    officeCity: vendor.officeCity || vendor.city || "",
-    mobile: vendor.mobile || vendor.phone || "",
-    vendorType: vendor.vendorType || vendor.category || "",
-    contactPerson: vendor.contactPerson || vendor.contactperson || vendor.contact_person || "",
-    createdAt: vendor.createdAt || (vendor.created_at ? new Date(vendor.created_at).toISOString().slice(0, 10) : ""),
-  });
+  const normalizeVendor = (vendor: any) => {
+    let extra = {};
+    if (typeof vendor.notes === 'string' && vendor.notes.startsWith('{')) {
+      try {
+        extra = JSON.parse(vendor.notes);
+      } catch (e) {
+        // ignore
+      }
+    }
+    return {
+      ...vendor,
+      ...extra,
+      place: vendor.place || vendor.location || "",
+      officeCity: vendor.officeCity || extra.officeCity || vendor.city || "",
+      mobile: vendor.mobile || vendor.phone || "",
+      vendorType: vendor.vendorType || vendor.category || "",
+      contactPerson: vendor.contactPerson || vendor.contactperson || vendor.contact_person || "",
+      createdAt: vendor.createdAt || (vendor.created_at ? new Date(vendor.created_at).toISOString().slice(0, 10) : ""),
+      contacts: vendor.contacts || extra.contacts || [{
+        name: vendor.contactPerson || vendor.contactperson || vendor.contact_person || "",
+        mobile: vendor.mobile || vendor.phone || "",
+        email: vendor.email || ""
+      }],
+      notes: extra.notes || (typeof vendor.notes === 'string' && !vendor.notes.startsWith('{') ? vendor.notes : "")
+    };
+  };
 
   const normalizedVendors = useMemo(() => vendors.map(normalizeVendor), [vendors]);
 
@@ -284,66 +306,197 @@ function VendorsPage() {
       if (isDup) { setFormError("A vendor with this mobile number already exists."); return; }
 
       const id = `VND-${String(Date.now()).slice(-5)}`;
-      setVendors([{
-        ...form as Vendor,
+      
+      const newVendorData = {
         id,
-        createdAt: new Date().toISOString().slice(0, 10),
-        contacts: formContacts,
-        contactPerson: primaryContact.name,
-        mobile: primaryMobile,
+        name: form.name,
+        category: form.vendorType,
+        contactperson: primaryContact.name,
         email: primaryContact.email,
-      }, ...vendors]);
+        phone: primaryMobile,
+        location: form.place,
+        status: form.status,
+        created_at: new Date().toISOString(),
+        notes: JSON.stringify({
+          contacts: formContacts,
+          officeCity: form.officeCity,
+          website: form.website,
+          notes: form.notes
+        })
+      };
+
+      supabase.from("vendors").insert([newVendorData]).select().then(({ data, error }) => {
+        if (error) {
+          toast.error("Failed to add vendor: " + error.message);
+        } else if (data) {
+          const inserted = data[0];
+          setVendors([{
+            ...form as Vendor,
+            id: inserted.id,
+            createdAt: inserted.created_at.slice(0, 10),
+            contacts: formContacts,
+            contactPerson: primaryContact.name,
+            mobile: primaryMobile,
+            email: primaryContact.email,
+          }, ...vendors]);
+          toast.success("Vendor added successfully");
+        }
+      });
+
     } else if (dialogType === "edit" && selectedVendor) {
       const isDup = vendors.some((v) => {
         if (v.id === selectedVendor.id) return false;
         return v.mobile === primaryMobile || (v.contacts || []).some((c) => c.mobile === primaryMobile);
       });
       if (isDup) { setFormError("Another vendor already uses this mobile number."); return; }
-      setVendors(vendors.map((v) => v.id === selectedVendor.id ? {
-        ...v,
-        ...form,
-        contacts: formContacts,
-        contactPerson: primaryContact.name,
-        mobile: primaryMobile,
+      
+      const updatedVendorData = {
+        name: form.name,
+        category: form.vendorType,
+        contactperson: primaryContact.name,
         email: primaryContact.email,
-      } as Vendor : v));
+        phone: primaryMobile,
+        location: form.place,
+        status: form.status,
+        notes: JSON.stringify({
+          contacts: formContacts,
+          officeCity: form.officeCity,
+          website: form.website,
+          notes: form.notes
+        })
+      };
+
+      supabase.from("vendors").update(updatedVendorData).eq("id", selectedVendor.id).then(({ error }) => {
+        if (error) {
+          toast.error("Failed to update vendor: " + error.message);
+        } else {
+          setVendors(vendors.map((v) => v.id === selectedVendor.id ? {
+            ...v,
+            ...form,
+            contacts: formContacts,
+            contactPerson: primaryContact.name,
+            mobile: primaryMobile,
+            email: primaryContact.email,
+          } as Vendor : v));
+          toast.success("Vendor updated successfully");
+        }
+      });
     }
 
     setDialogType(null);
   };
 
   const handleDelete = () => {
-    if (selectedVendor) setVendors(vendors.filter((v) => v.id !== selectedVendor.id));
+    if (selectedVendor) {
+      supabase.from("vendors").delete().eq("id", selectedVendor.id).then(({ error }) => {
+        if (error) {
+          toast.error("Failed to delete vendor: " + error.message);
+        } else {
+          setVendors(vendors.filter((v) => v.id !== selectedVendor.id));
+          toast.success("Vendor deleted successfully");
+        }
+      });
+    }
     setDialogType(null);
   };
 
-  const handleImport = (data: any[]) => {
+  const handleCloneVendor = (vendorToClone: Vendor) => {
+    try {
+      let maxNum = vendors.reduce((max, v) => {
+        const n = parseInt(v.id.replace("VND-", ""));
+        return isNaN(n) ? max : Math.max(max, n);
+      }, 0);
+      const nextId = `VND-${String(maxNum + 1).padStart(3, "0")}`;
+      
+      const newVendorData = {
+        id: nextId,
+        name: `${vendorToClone.name} (Copy)`,
+        category: vendorToClone.vendorType,
+        contactperson: vendorToClone.contactPerson,
+        email: vendorToClone.email,
+        phone: vendorToClone.mobile,
+        location: vendorToClone.place,
+        status: vendorToClone.status,
+        created_at: new Date().toISOString(),
+        notes: JSON.stringify({
+          contacts: vendorToClone.contacts || [],
+          officeCity: vendorToClone.officeCity,
+          website: vendorToClone.website,
+          notes: vendorToClone.notes
+        })
+      };
+
+      supabase.from("vendors").insert([newVendorData]).select().then(({ data, error }) => {
+        if (error) {
+          toast.error("Failed to clone vendor: " + error.message);
+        } else if (data) {
+          const clonedVendor: Vendor = {
+            ...vendorToClone,
+            id: nextId,
+            name: `${vendorToClone.name} (Copy)`,
+            createdAt: data[0].created_at.slice(0, 10),
+          };
+          setVendors((prev) => [clonedVendor, ...prev]);
+          toast.success(`Vendor cloned successfully as ${nextId}!`);
+        }
+      });
+    } catch (err) {
+      toast.error("Failed to clone vendor");
+    }
+  };
+
+  const handleImport = async (data: any[]) => {
     let maxNum = vendors.reduce((max, v) => {
       const n = parseInt(v.id.replace("VND-", ""));
       return isNaN(n) ? max : Math.max(max, n);
     }, 0);
 
-    const newVendors: Vendor[] = [];
+    const newVendors: any[] = [];
     data.forEach((row) => {
       const mobile = String(row["Mobile Number"] || "").trim();
-      if (vendors.some((v) => v.mobile === mobile) || newVendors.some((v) => v.mobile === mobile)) return;
+      if (!mobile) return;
+      if (vendors.some((v) => v.mobile === mobile) || newVendors.some((v) => v.phone === mobile)) return;
       maxNum++;
       newVendors.push({
         id: `VND-${String(maxNum).padStart(5, "0")}`,
-        place: String(row["Place"] || ""),
+        location: String(row["Place"] || ""),
         name: String(row["Vendor Name"] || ""),
-        contactPerson: String(row["Contact Person"] || ""),
-        mobile,
+        contactperson: String(row["Contact Person"] || ""),
+        phone: mobile,
         email: String(row["Email ID"] || ""),
-        website: String(row["Website"] || ""),
-        officeCity: String(row["Office City"] || ""),
-        vendorType: (String(row["Vendor Type"] || "Other")) as VendorType,
-        status: (String(row["Status"] || "Active")) as VendorStatus,
-        createdAt: new Date().toISOString().slice(0, 10),
-        notes: "",
+        category: String(row["Vendor Type"] || "Other"),
+        status: String(row["Status"] || "Active"),
+        created_at: new Date().toISOString(),
+        notes: JSON.stringify({
+          importedFrom: "excel",
+          officeCity: String(row["Office City"] || ""),
+          website: String(row["Website"] || ""),
+        }),
       });
     });
-    setVendors([...newVendors, ...vendors]);
+
+    if (newVendors.length === 0) return;
+
+    const { error, data: inserted } = await supabase.from("vendors").insert(newVendors).select();
+    if (error) {
+      console.error("Vendor import failed:", error.message, error.details);
+      toast.error(`Vendor import failed: ${error.message}`);
+      return;
+    }
+
+    if (inserted) {
+      const mapped = inserted.map((row: any) => ({
+        ...row,
+        place: row.location || "",
+        officeCity: row.officeCity || "",
+        mobile: row.phone || "",
+        vendorType: row.category || "",
+        contactPerson: row.contactperson || "",
+        createdAt: row.created_at ? new Date(row.created_at).toISOString().slice(0, 10) : "",
+      }));
+      setVendors([...mapped, ...vendors]);
+      toast.success(`Successfully imported ${inserted.length} vendors`);
+    }
   };
 
   const handleExport = () => {
@@ -368,287 +521,195 @@ function VendorsPage() {
     XLSX.writeFile(wb, `Vendors_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
   };
 
-  // ── Render ──
-  const StatCard = ({ label, value, icon, color }: { label: string; value: number | string; icon: React.ReactNode; color: string }) => (
-    <div className="bg-card border border-border rounded-2xl p-5 shadow-sm flex items-center gap-4">
-      <div className={`h-12 w-12 rounded-xl flex items-center justify-center shrink-0 ${color}`}>{icon}</div>
-      <div>
-        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
-        <p className="text-2xl font-display font-bold mt-0.5">{value}</p>
-      </div>
-    </div>
-  );
-
+  // ── Helpers ──
   const TypeBadge = ({ type }: { type: string }) => (
     <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md border ${vendorTypeColor[type] || "bg-gray-100 text-gray-700 border-gray-200"}`}>
       {type}
     </span>
   );
 
-  const thClass = "px-4 py-3 font-semibold text-left whitespace-nowrap select-none cursor-pointer hover:bg-secondary/80 transition-colors";
+  const getInitials = (name: string) => {
+    return name ? name.substring(0, 2).toUpperCase() : "NA";
+  };
+  const getInitialsColor = (index: number) => {
+    const colors = [
+      "bg-orange-100 text-orange-600 border-orange-200",
+      "bg-green-100 text-green-600 border-green-200",
+      "bg-purple-100 text-purple-600 border-purple-200",
+      "bg-rose-100 text-rose-600 border-rose-200",
+      "bg-pink-100 text-pink-600 border-pink-200",
+      "bg-blue-100 text-blue-600 border-blue-200"
+    ];
+    return colors[index % colors.length];
+  };
 
+  // ── Render ──
   return (
-    <div className="space-y-6">
-      {/* ── Header ── */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border shadow-sm">
+    <div className="flex flex-col h-full space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shrink-0">
         <div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Vendor Management</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Manage your complete travel vendor and supplier database.
-          </p>
+          <h1 className="font-display text-3xl font-bold tracking-tight">Vendors</h1>
+          <p className="mt-1 text-sm text-muted-foreground">Manage service providers, DMCs, and suppliers.</p>
         </div>
-        <div className="flex gap-2 flex-wrap">
-          <Button variant="outline" onClick={handleExport}>
-            <Download className="mr-2 h-4 w-4" /> Export
+        <div className="flex gap-2">
+          <Button variant="outline" className="shadow-sm" onClick={() => setIsImportOpen(true)}>
+            <Download className="mr-2 h-4 w-4" /> Import
           </Button>
-          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-            <Download className="mr-2 h-4 w-4 rotate-180" /> Import
-          </Button>
-          <Button onClick={openAdd} style={{ background: "var(--gradient-brand)" }} className="text-white shadow-md">
+          <Button onClick={openAdd} className="shadow">
             <Plus className="mr-2 h-4 w-4" /> Add Vendor
           </Button>
         </div>
       </div>
 
-      {/* ── Stats ── */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
-        <StatCard label="Total Vendors" value={stats.total} icon={<Building2 className="h-6 w-6" />} color="bg-primary/10 text-primary" />
-        <StatCard label="Active Vendors" value={stats.active} icon={<Building2 className="h-6 w-6" />} color="bg-emerald-100 text-emerald-600" />
-        <StatCard label="Vendor Types" value={stats.types} icon={<Filter className="h-6 w-6" />} color="bg-purple-100 text-purple-600" />
-        <StatCard label="Cities Covered" value={stats.cities} icon={<MapPin className="h-6 w-6" />} color="bg-blue-100 text-blue-600" />
-        <StatCard label="Countries Covered" value={stats.countries} icon={<Globe className="h-6 w-6" />} color="bg-amber-100 text-amber-600" />
-      </div>
-
-      {/* ── Filters & Search ── */}
-      <div className="flex flex-col lg:flex-row gap-3">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search vendor name, contact, email, mobile, place..."
-            value={q}
-            onChange={(e) => { setQ(e.target.value); setPage(1); }}
-            className="pl-9 h-10 bg-card border-border shadow-sm rounded-xl"
-          />
-        </div>
-        <div className="flex gap-3 overflow-x-auto pb-1 lg:pb-0">
-          <Select value={filterType} onValueChange={(v) => { setFilterType(v); setPage(1); }}>
-            <SelectTrigger className="w-[160px] bg-card shadow-sm h-10 rounded-xl shrink-0">
-              <SelectValue placeholder="Vendor Type" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Types</SelectItem>
-              {VENDOR_TYPES.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-
-          {uniquePlaces.length > 0 && (
-            <Select value={filterPlace} onValueChange={(v) => { setFilterPlace(v); setPage(1); }}>
-              <SelectTrigger className="w-[150px] bg-card shadow-sm h-10 rounded-xl shrink-0">
-                <SelectValue placeholder="Place" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Places</SelectItem>
-                {uniquePlaces.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-              </SelectContent>
-            </Select>
-          )}
-
+      <div className="flex flex-col gap-4 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3 rounded-2xl p-2 px-4">
+          <div className="relative max-w-md w-full">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <input
+              className="flex w-full border border-input bg-transparent px-3 py-1 text-base shadow-sm transition-colors placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring md:text-sm pl-9 rounded-xl h-10"
+              placeholder="Search vendor, contact, phone..."
+              value={q}
+              onChange={(e) => { setQ(e.target.value); setPage(1); }}
+            />
+          </div>
+          <div className="flex-shrink-0 sm:ml-auto">
+            <select
+              className="appearance-none h-10 w-full sm:w-[240px] rounded-full border border-border bg-white dark:bg-background px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-secondary/20 transition-colors"
+              style={{ backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", backgroundSize: "16px" }}
+              value={filterType}
+              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
+            >
+              <option value="All">All Types ({stats.total})</option>
+              {VENDOR_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
           {uniqueCities.length > 0 && (
-            <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setPage(1); }}>
-              <SelectTrigger className="w-[150px] bg-card shadow-sm h-10 rounded-xl shrink-0">
-                <SelectValue placeholder="City" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="All">All Cities</SelectItem>
-                {uniqueCities.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-              </SelectContent>
-            </Select>
+            <div className="flex-shrink-0">
+              <select
+                className="appearance-none h-10 w-full sm:w-[240px] rounded-full border border-border bg-white dark:bg-background px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-secondary/20 transition-colors"
+                style={{ backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", backgroundSize: "16px" }}
+                value={filterCity}
+                onChange={(e) => { setFilterCity(e.target.value); setPage(1); }}
+              >
+                <option value="All">All Cities ({uniqueCities.length})</option>
+                {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
+              </select>
+            </div>
           )}
-
-          <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setPage(1); }}>
-            <SelectTrigger className="w-[140px] bg-card shadow-sm h-10 rounded-xl shrink-0">
-              <SelectValue placeholder="Status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Statuses</SelectItem>
-              <SelectItem value="Active">Active</SelectItem>
-              <SelectItem value="Inactive">Inactive</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+            {filtered.length} vendors
+          </div>
+          </div>
         </div>
       </div>
 
-      {/* ── Table ── */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border sticky top-0 z-10">
-              <tr>
-                <th className={thClass} onClick={() => handleSort("place")}>
-                  <div className="flex items-center gap-1.5">Place <SortIcon field="place" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("name")}>
-                  <div className="flex items-center gap-1.5">Vendor Name <SortIcon field="name" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("contactPerson")}>
-                  <div className="flex items-center gap-1.5">Contact Person <SortIcon field="contactPerson" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("mobile")}>
-                  <div className="flex items-center gap-1.5">Mobile <SortIcon field="mobile" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("email")}>
-                  <div className="flex items-center gap-1.5">Email ID <SortIcon field="email" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("officeCity")}>
-                  <div className="flex items-center gap-1.5">Office City <SortIcon field="officeCity" /></div>
-                </th>
-                <th className={thClass} onClick={() => handleSort("vendorType")}>
-                  <div className="flex items-center gap-1.5">Vendor Type <SortIcon field="vendorType" /></div>
-                </th>
-                <th className="px-4 py-3 font-semibold text-center whitespace-nowrap">Status</th>
-                <th className="px-4 py-3 font-semibold text-right whitespace-nowrap">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-border">
-              {paginated.length === 0 ? (
-                <tr>
-                  <td colSpan={9} className="px-4 py-16 text-center text-muted-foreground">
-                    <div className="flex flex-col items-center gap-3">
-                      <Building2 className="h-12 w-12 opacity-30" />
-                      <p className="font-medium">No vendors found</p>
-                      <p className="text-xs">Try adjusting your search or filters, or add a new vendor.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                paginated.map((v) => (
-                  <tr key={v.id} className="hover:bg-secondary/30 transition-colors group">
-                    <td className="px-4 py-3 align-top">
-                      <div className="flex items-center gap-1.5 text-sm font-medium">
-                        <MapPin className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-                        {v.place || "-"}
-                      </div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      <div className="font-semibold text-foreground">{v.name}</div>
-                      <div className="text-xs text-muted-foreground font-mono mt-0.5">{v.id}</div>
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {(() => {
-                        const contacts = v.contacts?.length ? v.contacts : [{ name: v.contactPerson, mobile: v.mobile, email: v.email }];
-                        const extra = contacts.length - 1;
-                        return (
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{contacts[0]?.name || "-"}</span>
-                            {extra > 0 && (
-                              <span className="text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded-md">
-                                +{extra} more
-                              </span>
-                            )}
-                          </div>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {(() => {
-                        const contacts = v.contacts?.length ? v.contacts : [{ name: v.contactPerson, mobile: v.mobile, email: v.email }];
-                        const primary = contacts[0]?.mobile;
-                        return primary ? (
-                          <a href={`tel:${primary}`} className="text-sm font-medium text-primary hover:underline">{primary}</a>
-                        ) : <span className="text-muted-foreground">-</span>;
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 align-top">
-                      {(() => {
-                        const contacts = v.contacts?.length ? v.contacts : [{ name: v.contactPerson, mobile: v.mobile, email: v.email }];
-                        const email = contacts[0]?.email;
-                        return email ? (
-                          <a href={`mailto:${email}`} className="text-sm text-muted-foreground hover:text-foreground hover:underline break-all">{email}</a>
-                        ) : <span className="text-muted-foreground">-</span>;
-                      })()}
-                    </td>
-                    <td className="px-4 py-3 align-top text-sm">{v.officeCity || "-"}</td>
-                    <td className="px-4 py-3 align-top">
-                      <TypeBadge type={v.vendorType} />
-                    </td>
-                    <td className="px-4 py-3 align-top text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${v.status === "Active"
-                          ? "bg-emerald-100 text-emerald-700 border-emerald-200"
-                          : "bg-slate-100 text-slate-600 border-slate-200"
-                        }`}>
-                        {v.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 align-top text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" className="h-8 w-8 p-0 opacity-50 group-hover:opacity-100 transition-opacity">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                          <DropdownMenuItem onClick={() => openView(v)}>
-                            <Eye className="mr-2 h-4 w-4" /> View Details
-                          </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEdit(v)}>
-                            <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
-                          </DropdownMenuItem>
-                          <DropdownMenuSeparator />
-                          {v.mobile && (
-                            <DropdownMenuItem asChild>
-                              <a href={`tel:${v.mobile}`}>
-                                <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
-                              </a>
-                            </DropdownMenuItem>
-                          )}
-                          {v.email && (
-                            <DropdownMenuItem asChild>
-                              <a href={`mailto:${v.email}`}>
-                                <Mail className="mr-2 h-4 w-4 text-blue-600" /> Send Email
-                              </a>
-                            </DropdownMenuItem>
-                          )}
-                          {v.website && (
-                            <DropdownMenuItem asChild>
-                              <a href={v.website} target="_blank" rel="noopener noreferrer">
-                                <Globe className="mr-2 h-4 w-4 text-purple-600" /> Open Website
-                              </a>
-                            </DropdownMenuItem>
-                          )}
-                          <DropdownMenuSeparator />
-                          <DropdownMenuItem
-                            className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                            onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
-                          >
-                            <Trash2 className="mr-2 h-4 w-4" /> Delete
-                          </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="flex items-center justify-between px-6 py-4 border-t border-border bg-secondary/20">
-            <p className="text-xs text-muted-foreground font-medium">
-              Showing {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} of {filtered.length} vendors
-            </p>
-            <div className="flex gap-2">
-              <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-                Next
-              </Button>
+      <div className="flex-1 overflow-y-auto pr-2 pb-2">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          {paginated.length === 0 ? (
+          <div className="col-span-full py-16 text-center text-muted-foreground bg-card rounded-2xl border border-border">
+            <div className="flex flex-col items-center gap-3">
+              <Building2 className="h-12 w-12 opacity-30" />
+              <p className="font-medium">No vendors found</p>
+              <p className="text-xs">Try adjusting your search or filters, or add a new vendor.</p>
             </div>
           </div>
+        ) : (
+          paginated.map((v, i) => (
+            <div key={v.id} onClick={() => openView(v)} className="bg-card border border-border p-5 rounded-2xl shadow-sm hover:border-primary/50 cursor-pointer transition-colors group">
+              <div className="flex justify-between items-start mb-3">
+                <div className="flex items-center gap-3">
+                  <div className={`h-12 w-12 rounded-2xl border flex items-center justify-center shrink-0 ${getInitialsColor(i)}`}>
+                    <span className="font-semibold text-lg">{getInitials(v.name)}</span>
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-lg line-clamp-1 break-all" title={v.name}>{v.name}</h3>
+                    <p className="text-xs text-muted-foreground">{v.id}</p>
+                  </div>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground -mr-2">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48 rounded-xl">
+                      <DropdownMenuItem onClick={() => openView(v)}>
+                        <Eye className="mr-2 h-4 w-4" /> View Details
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => openEdit(v)}>
+                        <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
+                      </DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => handleCloneVendor(v)}>
+                        <Copy className="mr-2 h-4 w-4" /> Clone Vendor
+                      </DropdownMenuItem>
+                      <DropdownMenuSeparator />
+                      {v.mobile && (
+                        <DropdownMenuItem asChild>
+                          <a href={`tel:${v.mobile}`}>
+                            <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      {v.email && (
+                        <DropdownMenuItem asChild>
+                          <a href={`mailto:${v.email}`}>
+                            <Mail className="mr-2 h-4 w-4 text-blue-600" /> Send Email
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      {v.website && (
+                        <DropdownMenuItem asChild>
+                          <a href={v.website} target="_blank" rel="noopener noreferrer">
+                            <Globe className="mr-2 h-4 w-4 text-purple-600" /> Open Website
+                          </a>
+                        </DropdownMenuItem>
+                      )}
+                      <DropdownMenuSeparator />
+                      <DropdownMenuItem
+                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                        onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
+                      >
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
+                </div>
+              </div>
+              <div className="mb-3">
+                <span className="inline-block px-2 py-0.5 rounded text-xs font-medium border bg-secondary text-secondary-foreground border-border">
+                  {v.vendorType} {v.status === 'Inactive' && '(Inactive)'}
+                </span>
+              </div>
+              <div className="space-y-2 text-sm text-muted-foreground mb-4">
+                <p>👤 {v.contactPerson || v.contacts?.[0]?.name || "N/A"}</p>
+                <p>📞 {v.mobile || v.contacts?.[0]?.mobile || "N/A"}</p>
+                <p>📍 {v.place || v.officeCity || "N/A"}</p>
+              </div>
+            </div>
+          ))
         )}
+        </div>
       </div>
+
+      {/* Pagination */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-2 border-t border-border mt-auto shrink-0">
+          <div className="text-sm text-muted-foreground">
+            Showing <span className="font-medium text-foreground">{(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)}</span> of <span className="font-medium text-foreground">{filtered.length}</span> vendors
+          </div>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
 
       {/* ── Import Modal ── */}
       <ImportVendorsModal

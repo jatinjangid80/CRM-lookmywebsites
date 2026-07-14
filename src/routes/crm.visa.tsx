@@ -22,17 +22,18 @@ import {
   ChevronsUpDown,
   Download,
   Filter,
+  Copy,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogDescription,
-  DialogFooter,
-} from "@/components/ui/dialog";
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+  SheetFooter,
+} from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -873,6 +874,30 @@ function VisaPage() {
     }
   };
 
+  const handleCloneVisaApp = (appToClone: VisaApp) => {
+    try {
+      const maxNumber = apps.reduce((max, a) => {
+        const match = a.id?.match(/\d+/);
+        if (match) {
+          const val = parseInt(match[0]);
+          return val > max ? val : max;
+        }
+        return max;
+      }, 0);
+      const newId = `V-${String(maxNumber + 1).padStart(3, "0")}`;
+      const newApp: VisaApp = {
+        ...appToClone,
+        id: newId,
+        applicant_name: `${appToClone.applicant_name} (Copy)`,
+        created_at: new Date().toISOString(),
+      };
+      setApps((prev) => [newApp, ...prev]);
+      toast.success(`Visa application cloned successfully as ${newId}!`);
+    } catch (err) {
+      toast.error("Failed to clone visa application");
+    }
+  };
+
   const filteredApps = apps.filter(
     (a) =>
       (filter === "All" || a.status === filter) &&
@@ -1492,22 +1517,6 @@ function VisaPage() {
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto border-b border-border pb-px scrollbar-hide">
-            <button
-              onClick={() => setActiveSubTab("applications")}
-              className={`whitespace-nowrap px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 ${activeSubTab === "applications" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-            >
-              📄 Applications Checklist ({apps.length})
-            </button>
-            <button
-              onClick={() => setActiveSubTab("requirements")}
-              className={`whitespace-nowrap px-5 py-2.5 text-sm font-semibold transition-colors border-b-2 ${activeSubTab === "requirements" ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-            >
-              ⚙️ Visa Requirements Setup ({requirements.length})
-            </button>
-          </div>
-
           {activeSubTab === "applications" ? (
             <>
               {/* Stat strip */}
@@ -1563,7 +1572,7 @@ function VisaPage() {
               </div>
 
               {/* Filter bar */}
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
+              <div className="flex flex-wrap items-center gap-3 pb-4">
                 <div className="relative max-w-xs flex-1">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                   <Input
@@ -1723,6 +1732,14 @@ function VisaPage() {
                                   onClick={() => setDeleteAppTargetId(app.id)}
                                 >
                                   <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="flex-1 rounded-xl text-xs font-semibold text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
+                                  onClick={() => handleCloneVisaApp(app)}
+                                >
+                                  <Copy className="h-4 w-4" />
                                 </Button>
                                 <Button
                                   size="sm"
@@ -1993,16 +2010,16 @@ function VisaPage() {
         description="Are you sure you want to delete this customer's visa application? All checklist progress will be lost."
       />
 
-      <Dialog open={appModalOpen} onOpenChange={setAppModalOpen}>
-        <DialogContent className="sm:max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl">
-          <DialogHeader>
-            <DialogTitle className="font-display text-lg font-bold">
+      <Sheet open={appModalOpen} onOpenChange={setAppModalOpen}>
+        <SheetContent className="sm:max-w-md overflow-y-auto rounded-l-2xl border-l border-border bg-card p-6 shadow-2xl">
+          <SheetHeader>
+            <SheetTitle className="font-display text-lg font-bold">
               New Visa Application
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-1">
+            </SheetTitle>
+            <SheetDescription className="text-xs text-muted-foreground mt-1">
               Add a new visa application track for a customer.
-            </DialogDescription>
-          </DialogHeader>
+            </SheetDescription>
+          </SheetHeader>
 
           <form onSubmit={handleAddApplication} className="space-y-4 py-4">
             <div>
@@ -2090,7 +2107,7 @@ function VisaPage() {
               </div>
             </div>
 
-            <DialogFooter className="border-t border-border pt-4">
+            <SheetFooter className="border-t border-border pt-4 mt-6">
               <Button
                 type="button"
                 variant="outline"
@@ -2102,10 +2119,10 @@ function VisaPage() {
               <Button type="submit" className="rounded-xl" style={BRAND_STYLE}>
                 Add Application
               </Button>
-            </DialogFooter>
+            </SheetFooter>
           </form>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
