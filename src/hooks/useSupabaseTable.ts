@@ -58,16 +58,15 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
   function sanitizeRow(row: any) {
     const newRow = { ...row };
     if (tableName === "leads") {
+      // Map follow-up date to noteDate column
       if (newRow.nextFollowUp) newRow.noteDate = newRow.nextFollowUp;
-      if (newRow.adults !== undefined) newRow.pax = newRow.adults;
-      if (newRow.children !== undefined) newRow.queryType = String(newRow.children);
+      // Keep adults/children in their own columns if needed, but we will pack them into meta
+      if (newRow.adults !== undefined) newRow.pax = Number(newRow.adults);
 
+      // Strip app-only computed/transient fields
       delete newRow.nextFollowUp;
-      delete newRow.adults;
-      delete newRow.children;
       delete newRow.lastFollowUp;
       delete newRow.createdTime;
-      // paymentStatus is stored as part of notes metadata for leads
       delete newRow.paymentStatus;
     }
     if (tableName === "employees") {
@@ -144,12 +143,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     // Serialize custom fields into existing columns so they store in Supabase
     // without requiring manual SQL schema migrations.
     const customFields: any = {};
-    if (newRow.allNotes !== undefined && tableName !== "employees") customFields.allNotes = newRow.allNotes;
-    if (newRow.dob !== undefined && tableName !== "employees") customFields.dob = newRow.dob;
-    if (newRow.relationship !== undefined && tableName !== "employees") customFields.relationship = newRow.relationship;
+    // For leads: allNotes, dob, relationship are REAL columns — keep them in the row, skip customFields
+    if (newRow.allNotes !== undefined && tableName !== "employees" && tableName !== "leads") customFields.allNotes = newRow.allNotes;
+    if (newRow.dob !== undefined && tableName !== "employees" && tableName !== "leads") customFields.dob = newRow.dob;
+    if (newRow.relationship !== undefined && tableName !== "employees" && tableName !== "leads") customFields.relationship = newRow.relationship;
     if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
-    if (newRow.leadSection !== undefined) customFields.leadSection = newRow.leadSection;
-    if (tableName === "leads" && newRow.whatsapp !== undefined) customFields.whatsapp = newRow.whatsapp;
+    if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
 
     if (tableName === "customers") {
       if (newRow.company !== undefined) customFields.company = newRow.company;
@@ -164,12 +163,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     const hasCustomFields = Object.keys(customFields).length > 0;
 
-    if (tableName === "leads") {
-      if (hasCustomFields) {
-        const existingNotes = newRow.notes || "";
-        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, ...customFields });
-      }
-    } else if (tableName === "bookings") {
+    if (tableName === "bookings") {
       if (hasCustomFields) {
         const existingRemarks = newRow.remarks || "";
         newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...customFields });
@@ -224,12 +218,37 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       // allNotes is a real JSONB column in Supabase
     }
 
-    delete newRow.allNotes;
-    delete newRow.dob;
-    delete newRow.relationship;
+    if (tableName === "leads") {
+      const NEW_SVC_COLS = [
+        "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+        "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+        "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+        "visaType","passportExpiry","country",
+        "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+        "companyName","eventType",
+      ];
+      const leadMeta: Record<string, any> = {};
+      const existingNotes = newRow.notes || "";
+      let hasMeta = false;
+      for (const field of NEW_SVC_COLS) {
+        if (newRow[field] !== undefined) {
+          leadMeta[field] = newRow[field];
+          delete newRow[field];
+          hasMeta = true;
+        }
+      }
+      if (hasMeta) {
+        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, ...leadMeta });
+      }
+    }
+
+    // For leads: allNotes, dob, relationship are real Supabase columns — keep them in the row
+    if (tableName !== "leads") {
+      delete newRow.allNotes;
+      delete newRow.dob;
+      delete newRow.relationship;
+    }
     if (tableName !== "employees") delete newRow.profile_details;
-    delete newRow.leadSection;
-    if (tableName === "leads") delete newRow.whatsapp;
 
     if (tableName === "tasks") {
       // Encode extra fields into description
@@ -297,9 +316,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     if (tableName === "leads") {
       if (newRow.noteDate) newRow.nextFollowUp = newRow.noteDate;
       // Fallback: if whatsapp wasn't stored in meta, it might be in reference from older records
-      if (newRow.reference && !newRow.whatsapp) newRow.whatsapp = newRow.reference;
-      if (newRow.pax !== null) newRow.adults = newRow.pax;
-      if (newRow.queryType !== null) newRow.children = Number(newRow.queryType) || 0;
+      // Follow-up date stored in noteDate column
+      if (newRow.noteDate) newRow.nextFollowUp = newRow.noteDate;
+      // adults mirrors pax if adults column not set (old records)
+      if (newRow.adults == null && newRow.pax != null) newRow.adults = newRow.pax;
+      // children column is now real; fall back to queryType for old records
+      if (newRow.children == null && newRow.queryType != null) newRow.children = Number(newRow.queryType) || 0;
       if (newRow.created_at) {
         const d = new Date(newRow.created_at);
         newRow.createdAt = d.toISOString().slice(0, 10);
@@ -328,16 +350,27 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       newRow.empId = newRow.employeeId;
     }
 
+    // Backward-compat: old records stored extra fields as meta JSON in notes
+    // New records use real columns — notes is plain text
     if (tableName === "leads" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
       try {
         const parsed = JSON.parse(newRow.notes);
         if (parsed._isMeta) {
-          newRow.notes = parsed.text;
+          newRow.notes = parsed.text ?? "";
+          // Restore any fields that were packed in old meta (only set if real column is empty)
+          if (!newRow.whatsapp && parsed.whatsapp) newRow.whatsapp = parsed.whatsapp;
+          if (!newRow.leadSection && parsed.leadSection) newRow.leadSection = parsed.leadSection;
           if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
-          if (parsed.dob !== undefined) newRow.dob = parsed.dob;
-          if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
-          if (parsed.leadSection !== undefined) newRow.leadSection = parsed.leadSection;
-          if (parsed.whatsapp !== undefined) newRow.whatsapp = parsed.whatsapp;
+          const legacyFields = [
+            "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+            "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+            "visaType","passportExpiry","country",
+            "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+            "companyName","eventType","assignToOps","assignOpsTo","adults","children"
+          ] as const;
+          for (const f of legacyFields) {
+            if (newRow[f] == null && parsed[f] !== undefined) newRow[f] = parsed[f];
+          }
         }
       } catch (e) { }
     }
@@ -524,10 +557,35 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       const { error, data } = await supabase.from(tableName).insert(toInsert).select();
       if (error) {
         console.error(`[${tableName}] INSERT error:`, error.message, error.details, error.hint);
+
+        // If error is about unknown columns (new migration not run yet), retry with base columns only
+        if (tableName === "leads" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          console.warn("[leads] Retrying INSERT with base columns only (run the SQL migration to enable all fields)");
+          const NEW_SVC_COLS = [
+            "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+            "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+            "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+            "visaType","passportExpiry","country",
+            "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+            "companyName","eventType",
+          ];
+          const fallbackRows = toInsert.map((row: any) => {
+            const safe = { ...row };
+            for (const col of NEW_SVC_COLS) delete safe[col];
+            return safe;
+          });
+          const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
+          if (err2) {
+            console.error(`[leads] Fallback INSERT also failed:`, err2.message, err2.details);
+          } else {
+            console.log(`[leads] Fallback INSERT success (base columns):`, data2);
+          }
+        }
       } else {
         console.log(`[${tableName}] INSERT success:`, data);
       }
     }
+
 
     // Find Updates
     const toUpdate = newArray

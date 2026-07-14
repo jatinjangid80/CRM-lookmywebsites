@@ -40,16 +40,16 @@ export type Lead = {
   budget: number;
   travelDate: string;
   status:
-    | "New Lead"
-    | "Contacted"
-    | "Quotation Sent"
-    | "Negotiation"
-    | "Confirmed"
-    | "Payment Pending"
-    | "on conform"
-    | "in process"
-    | "Postponed"
-    | "Lost";
+  | "New Lead"
+  | "Contacted"
+  | "Quotation Sent"
+  | "Negotiation"
+  | "Confirmed"
+  | "Payment Pending"
+  | "on conform"
+  | "in process"
+  | "Postponed"
+  | "Lost";
   source: string;
   reference?: string;
   createdAt: string;
@@ -73,6 +73,39 @@ export type Lead = {
   children?: number;
   lastFollowUp?: string;
   nextFollowUp?: string;
+  // Air Ticket fields
+  sourceCity?: string;
+  destinationCity?: string;
+  infants?: number;
+  fareType?: string;
+  directFlight?: boolean;
+  flightClass?: string;
+  preferredAirline?: string;
+  // Hotel fields
+  checkIn?: string;
+  checkOut?: string;
+  nights?: string;
+  nationality?: string;
+  starRating?: string;
+  mealPreference?: string;
+  // Visa fields
+  visaType?: string;
+  passportExpiry?: string;
+  country?: string;
+  // Package / Holiday fields
+  goingFrom?: string;
+  noOfDays?: string;
+  inclusions?: string;
+  theme?: string;
+  hotelPreference?: string;
+  foodPreference?: string;
+  // Corporate / MICE fields
+  companyName?: string;
+  eventType?: string;
+  // Ops assignment
+  assignToOps?: boolean;
+  assignOpsTo?: string;
+  leadSection?: string;
 };
 
 const todayStr = new Date().toISOString().slice(0, 10);

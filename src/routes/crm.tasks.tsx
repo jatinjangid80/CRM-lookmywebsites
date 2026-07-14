@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Checkbox } from "@/components/ui/checkbox";
 import { getAuth } from "@/lib/auth";
 import { toast } from "sonner";
+import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
@@ -78,6 +79,7 @@ function TasksPage() {
   // Modals state
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [viewingTask, setViewingTask] = useState<Task | null>(null);
+  const [taskToDelete, setTaskToDelete] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [newNote, setNewNote] = useState("");
   const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
@@ -136,9 +138,14 @@ function TasksPage() {
   };
 
   const handleDeleteTask = (taskId: string) => {
-    if (window.confirm("Are you sure you want to delete this task?")) {
-      setTasks((prev: any[]) => prev.filter(t => t.id !== taskId && t.parent_id !== taskId));
+    setTaskToDelete(taskId);
+  };
+
+  const confirmDeleteTask = () => {
+    if (taskToDelete) {
+      setTasks((prev: any[]) => prev.filter(t => t.id !== taskToDelete && t.parent_id !== taskToDelete));
       toast.success("Task deleted successfully");
+      setTaskToDelete(null);
     }
   };
 
@@ -1235,6 +1242,14 @@ function TasksPage() {
           )}
         </DialogContent>
       </Dialog>
+      
+      <DeleteConfirmModal 
+        isOpen={!!taskToDelete}
+        onClose={() => setTaskToDelete(null)}
+        onConfirm={confirmDeleteTask}
+        title="Delete Task"
+        description="Are you sure you want to delete this task? This action cannot be undone."
+      />
     </div>
   );
 }

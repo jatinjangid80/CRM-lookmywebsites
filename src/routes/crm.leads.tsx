@@ -258,39 +258,662 @@ function initials(n: string) {
     .slice(0, 2);
 }
 
-/* ─── Add Lead Modal ─── */
+/* ─── Add Lead Modal (Two-Step) ─── */
+
 const EMPTY_FORM = {
+  // Common
   name: "",
   phone: "",
   email: "",
-  destination: "",
-  budget: "",
-  travelDate: "",
+  whatsapp: "",
   source: SOURCES[0],
-  leadSection: "B2C",
-  reference: "",
-  status: "New Lead" as LeadStatus,
   assignedTo: "",
-  pax: "2",
-  notes: "",
-  service: "International Package",
+  assignOpsTo: "",
+  assignToOps: false,
   priority: "Medium" as Lead["priority"],
-  packageType: "",
+  notes: "",
+  status: "New Lead" as LeadStatus,
+  reference: "",
+  leadSection: "B2C",
+  // Air Ticket
+  sourceCity: "",
+  destinationCity: "",
+  adults: "1",
+  children: "0",
+  infants: "0",
+  travelDate: "",
+  fareType: "Regular",
+  directFlight: false,
+  flightClass: "Economy",
+  preferredAirline: "",
+  // Hotel
+  destination: "",
+  checkIn: "",
+  checkOut: "",
+  nights: "",
+  nationality: "Indian",
+  starRating: "3",
+  mealPreference: "",
+  // Visa
+  country: "",
+  visaType: "Tourist",
+  passportExpiry: "",
+  // Package / Holiday
+  goingFrom: "",
+  noOfDays: "",
+  inclusions: "",
+  theme: "",
+  hotelPreference: "",
+  foodPreference: "",
+  budget: "",
+  // Insurance
   insuranceDate: "",
   policyType: "Four Wheeler",
   queryType: "New",
   clientCompany: "",
   expiryDate: "",
+  // Corporate / MICE
+  companyName: "",
+  eventType: "",
+  // misc
+  pax: "2",
+  packageType: "",
   totalAmount: "",
   amountPaid: "",
   vendorName: "",
-  whatsapp: "",
-  adults: "2",
-  children: "0",
   lastFollowUp: "",
   nextFollowUp: "",
 };
 
+// ── field class helper ──
+const FIELD_CLS =
+  "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
+
+// ── Service-specific form field blocks ──────────────────────────────────────
+
+function AirTicketFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: any; setForm: any }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2 sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Source City *</label>
+        <Input placeholder="e.g. Mumbai" value={form.sourceCity} onChange={set("sourceCity")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2 sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination City *</label>
+        <Input placeholder="e.g. Dubai" value={form.destinationCity} onChange={set("destinationCity")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2 sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Departure Date *</label>
+        <Input type="date" value={form.travelDate} onChange={set("travelDate")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Adults</label>
+        <Input type="number" min="1" value={form.adults} onChange={set("adults")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Children</label>
+        <Input type="number" min="0" value={form.children} onChange={set("children")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Infants</label>
+        <Input type="number" min="0" value={form.infants} onChange={set("infants")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Fare Type</label>
+        <select value={form.fareType} onChange={set("fareType")} className={FIELD_CLS}>
+          {["Regular", "Student", "Senior Citizen", "Armed Forces", "Corporate"].map(t => <option key={t}>{t}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Class</label>
+        <select value={form.flightClass} onChange={set("flightClass")} className={FIELD_CLS}>
+          {["Economy", "Premium Economy", "Business", "First Class"].map(c => <option key={c}>{c}</option>)}
+        </select>
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Preferred Airline</label>
+        <Input placeholder="e.g. IndiGo, Air India..." value={form.preferredAirline} onChange={set("preferredAirline")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2 sm:col-span-4 flex items-center gap-3">
+        <input
+          type="checkbox"
+          id="directFlight"
+          checked={form.directFlight}
+          onChange={(e) => setForm((f: typeof EMPTY_FORM) => ({ ...f, directFlight: e.target.checked }))}
+          className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+        />
+        <label htmlFor="directFlight" className="text-sm font-medium cursor-pointer">Direct Flight Only</label>
+      </div>
+    </div>
+  );
+}
+
+function HotelFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: any; setForm: any }) {
+  const calcNights = () => {
+    if (form.checkIn && form.checkOut) {
+      const diff = new Date(form.checkOut).getTime() - new Date(form.checkIn).getTime();
+      const n = Math.round(diff / (1000 * 60 * 60 * 24));
+      if (n > 0) setForm((f: typeof EMPTY_FORM) => ({ ...f, nights: String(n) }));
+    }
+  };
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination *</label>
+        <Input placeholder="e.g. Bali, Dubai, Goa..." value={form.destination} onChange={set("destination")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Check In *</label>
+        <Input type="date" value={form.checkIn} onChange={(e) => { set("checkIn")(e); setTimeout(calcNights, 100); }} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Check Out *</label>
+        <Input type="date" value={form.checkOut} onChange={(e) => { set("checkOut")(e); setTimeout(calcNights, 100); }} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nights</label>
+        <Input placeholder="Auto" value={form.nights} onChange={set("nights")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
+        <Input type="number" min="1" value={form.pax} onChange={set("pax")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Nationality</label>
+        <Input placeholder="e.g. Indian" value={form.nationality} onChange={set("nationality")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Star Rating</label>
+        <select value={form.starRating} onChange={set("starRating")} className={FIELD_CLS}>
+          {["Any", "1", "2", "3", "4", "5"].map(s => <option key={s}>{s}</option>)}
+        </select>
+      </div>
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Meal Preference</label>
+        <select value={form.mealPreference} onChange={set("mealPreference")} className={FIELD_CLS}>
+          {["", "Room Only", "Breakfast Included", "Half Board", "Full Board", "All Inclusive"].map(m => <option key={m} value={m}>{m || "— Select —"}</option>)}
+        </select>
+      </div>
+    </div>
+  );
+}
+
+function VisaFields({ form, set }: { form: typeof EMPTY_FORM; set: any }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2 sm:col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Country *</label>
+        <Input placeholder="e.g. UAE, UK, USA..." value={form.country} onChange={set("country")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travel Date</label>
+        <Input type="date" value={form.travelDate} onChange={set("travelDate")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Visa Type</label>
+        <select value={form.visaType} onChange={set("visaType")} className={FIELD_CLS}>
+          {["Tourist", "Business", "Student", "Work", "Transit", "Medical", "Family"].map(v => <option key={v}>{v}</option>)}
+        </select>
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
+        <Input type="number" min="1" value={form.pax} onChange={set("pax")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Passport Expiry</label>
+        <Input type="date" value={form.passportExpiry} onChange={set("passportExpiry")} className="rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function PackageFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: any; setForm: any }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Going To *</label>
+        <Input placeholder="e.g. Bali, Paris, Kerala..." value={form.destination} onChange={set("destination")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Going From</label>
+        <Input placeholder="e.g. Mumbai, Delhi..." value={form.goingFrom} onChange={set("goingFrom")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travel Date *</label>
+        <Input type="date" value={form.travelDate} onChange={set("travelDate")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">No of Days</label>
+        <Input placeholder="e.g. 7" value={form.noOfDays} onChange={set("noOfDays")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
+        <select value={form.pax} onChange={set("pax")} className={FIELD_CLS}>
+          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+          <option value="10+">10+</option>
+        </select>
+      </div>
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hotel Preference</label>
+        <div className="flex items-center gap-5 mt-1">
+          {[1,2,3,4,5].map(star => (
+            <label key={star} className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
+              <input
+                type="checkbox"
+                checked={form.hotelPreference?.includes(String(star))}
+                onChange={(e) => {
+                  const cur = form.hotelPreference ? form.hotelPreference.split(",").filter(Boolean) : [];
+                  const next = e.target.checked ? [...cur, String(star)] : cur.filter(s => s !== String(star));
+                  setForm((f: typeof EMPTY_FORM) => ({ ...f, hotelPreference: next.join(",") }));
+                }}
+                className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary"
+              />
+              {"⭐".repeat(star)}
+            </label>
+          ))}
+        </div>
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Price Range (₹)</label>
+        <Input placeholder="e.g. 50000 – 80000" value={form.budget} onChange={set("budget")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Food Preference</label>
+        <Input placeholder="e.g. Veg, Non-Veg, Jain..." value={form.foodPreference} onChange={set("foodPreference")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Theme</label>
+        <Input placeholder="e.g. Beach, Hill, Adventure..." value={form.theme} onChange={set("theme")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Inclusions</label>
+        <Input placeholder="e.g. Flight, Hotel, Transfers..." value={form.inclusions} onChange={set("inclusions")} className="rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function InsuranceFields({ form, set }: { form: typeof EMPTY_FORM; set: any }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Policy Type *</label>
+        <select value={form.policyType} onChange={set("policyType")} className={FIELD_CLS}>
+          {["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"].map(p => <option key={p}>{p}</option>)}
+        </select>
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Query Type</label>
+        <select value={form.queryType} onChange={set("queryType")} className={FIELD_CLS}>
+          {["New","Renewal","Expired"].map(q => <option key={q}>{q}</option>)}
+        </select>
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Insurance Date *</label>
+        <Input type="date" value={form.insuranceDate} onChange={set("insuranceDate")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Expiry Date</label>
+        <Input type="date" value={form.expiryDate} onChange={set("expiryDate")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Client / Company</label>
+        <Input placeholder="e.g. Acme Corp or Customer Name" value={form.clientCompany} onChange={set("clientCompany")} className="rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function GenericTravelFields({ form, set, label }: { form: typeof EMPTY_FORM; set: any; label: string }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">{label} *</label>
+        <Input placeholder={`e.g. ${label.includes("From") ? "Mumbai" : "Dubai"}`} value={form.destination} onChange={set("destination")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date *</label>
+        <Input type="date" value={form.travelDate} onChange={set("travelDate")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
+        <Input type="number" min="1" value={form.pax} onChange={set("pax")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Budget / Price (₹)</label>
+        <Input placeholder="e.g. 25000" value={form.budget} onChange={set("budget")} className="rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+function CorporateFields({ form, set }: { form: typeof EMPTY_FORM; set: any }) {
+  return (
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
+      <div className="col-span-2 sm:col-span-4">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Company Name *</label>
+        <Input placeholder="e.g. TCS, Infosys..." value={form.companyName} onChange={set("companyName")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Event / Trip Type</label>
+        <Input placeholder="e.g. Annual Meet, Team Outing..." value={form.eventType} onChange={set("eventType")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Destination</label>
+        <Input placeholder="e.g. Goa, Singapore..." value={form.destination} onChange={set("destination")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Date</label>
+        <Input type="date" value={form.travelDate} onChange={set("travelDate")} className="rounded-xl" />
+      </div>
+      <div>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Pax</label>
+        <Input type="number" min="1" value={form.pax} onChange={set("pax")} className="rounded-xl" />
+      </div>
+      <div className="col-span-2">
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Budget (₹)</label>
+        <Input placeholder="e.g. 5,00,000" value={form.budget} onChange={set("budget")} className="rounded-xl" />
+      </div>
+    </div>
+  );
+}
+
+// ── Service category card colours ─────────────────────────────────────────
+const SVC_COLOR: Record<string, string> = {
+  "Travel Services": "from-blue-500/10 to-sky-500/5 hover:from-blue-500/20 border-blue-200/60",
+  "Holiday Packages": "from-teal-500/10 to-emerald-500/5 hover:from-teal-500/20 border-teal-200/60",
+  Business: "from-violet-500/10 to-purple-500/5 hover:from-violet-500/20 border-violet-200/60",
+};
+const SVC_BADGE: Record<string, string> = {
+  "Travel Services": "bg-blue-100 text-blue-700",
+  "Holiday Packages": "bg-teal-100 text-teal-700",
+  Business: "bg-violet-100 text-violet-700",
+};
+
+// ── Helper: which sub-form to render ────────────────────────────────────────
+function getServiceFormType(service: string): string {
+  if (service === "Air Ticket") return "air";
+  if (service === "Hotel Booking") return "hotel";
+  if (service === "Visa") return "visa";
+  if (service === "Travel Insurance") return "insurance";
+  if (["Corporate Travel", "MICE Events", "Conference Booking"].includes(service)) return "corporate";
+  const packages = [
+    "International Package","Domestic Package","Honeymoon Package",
+    "Family Package","Group Tour","Corporate Tour","Luxury Tour","Adventure Tour",
+  ];
+  if (packages.includes(service)) return "package";
+  return "generic";
+}
+
+function getGenericDestLabel(service: string): string {
+  const labels: Record<string, string> = {
+    "Cruise Booking": "Cruise Destination",
+    "Passport Assistance": "Applicant Location",
+    "Forex Exchange": "Currency / Destination",
+    "Airport Transfer": "Airport / Destination",
+    "Car Rental": "Pickup Location",
+    "Train Ticket": "Destination",
+    "Bus Ticket": "Destination",
+    "Taxi Booking": "Pickup & Drop",
+  };
+  return labels[service] || "Destination";
+}
+
+// ── Step 1: Service card selector ───────────────────────────────────────────
+function ServiceSelectorStep({ onSelect }: { onSelect: (service: string) => void }) {
+  return (
+    <div className="flex flex-col gap-6 px-6 pt-4 pb-6 overflow-y-auto">
+      {SERVICES.map((group) => (
+        <div key={group.group}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-gray-100 text-gray-600"}`}>
+              {group.group}
+            </span>
+            <div className="flex-1 h-px bg-border" />
+          </div>
+          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+            {group.items.map((item) => (
+              <button
+                key={item.label}
+                onClick={() => onSelect(item.label)}
+                className={`group relative flex flex-col items-center justify-center gap-2 rounded-2xl border bg-gradient-to-br p-3 text-center transition-all duration-200 hover:shadow-md hover:scale-[1.03] active:scale-[0.98] ${SVC_COLOR[group.group] ?? "hover:bg-secondary border-border"}`}
+              >
+                <span className="text-2xl leading-none">{item.icon}</span>
+                <span className="text-[11px] font-semibold leading-tight text-foreground line-clamp-2">{item.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+// ── Step 2: Dynamic form (service-specific fields + shared common fields) ───
+function DynamicFormStep({
+  service,
+  form,
+  set,
+  setForm,
+  assignees,
+  canSubmit,
+  onSubmit,
+  onBack,
+  customers,
+}: {
+  service: string;
+  form: typeof EMPTY_FORM;
+  set: (k: keyof typeof EMPTY_FORM) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => void;
+  setForm: React.Dispatch<React.SetStateAction<typeof EMPTY_FORM>>;
+  assignees: string[];
+  canSubmit: boolean;
+  onSubmit: () => void;
+  onBack: () => void;
+  customers: ExtCustomer[];
+}) {
+  const icon = SERVICE_ICONS[service] ?? "📋";
+  const formType = getServiceFormType(service);
+  const [fetchStatus, setFetchStatus] = useState<"idle" | "found" | "notfound">("idle");
+
+  const handleFetchCustomer = () => {
+    const cleanPhone = (form.phone || "").replace(/[^0-9+]/g, "");
+    if (!cleanPhone) return;
+    const found = customers.find((c) =>
+      c.phone && String(c.phone).replace(/[^0-9+]/g, "").includes(cleanPhone)
+    );
+    if (found) {
+      setForm((f) => ({
+        ...f,
+        name: found.name || f.name,
+        email: (found as any).email || f.email,
+        whatsapp: (found as any).whatsapp || f.whatsapp || found.phone || f.whatsapp,
+      }));
+      setFetchStatus("found");
+      setTimeout(() => setFetchStatus("idle"), 2500);
+    } else {
+      setFetchStatus("notfound");
+      setTimeout(() => setFetchStatus("idle"), 2500);
+    }
+  };
+
+  return (
+    <div className="flex flex-col gap-0 overflow-y-auto">
+      {/* Sub-header: service badge + back button */}
+      <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-secondary/30">
+        <button
+          onClick={onBack}
+          className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+        >
+          <span className="text-base">←</span>
+          <span className="hidden sm:inline">All Services</span>
+        </button>
+        <div className="flex-1 flex items-center gap-2">
+          <span className="text-lg">{icon}</span>
+          <span className="text-sm font-bold text-foreground">{service}</span>
+        </div>
+      </div>
+
+      <div className="grid gap-5 px-6 pt-5 pb-6">
+
+        {/* ── Service-specific fields ── */}
+        <div className="rounded-2xl border border-border bg-secondary/20 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Trip Details</p>
+          {formType === "air" && <AirTicketFields form={form} set={set} setForm={setForm} />}
+          {formType === "hotel" && <HotelFields form={form} set={set} setForm={setForm} />}
+          {formType === "visa" && <VisaFields form={form} set={set} />}
+          {formType === "package" && <PackageFields form={form} set={set} setForm={setForm} />}
+          {formType === "insurance" && <InsuranceFields form={form} set={set} />}
+          {formType === "corporate" && <CorporateFields form={form} set={set} />}
+          {formType === "generic" && <GenericTravelFields form={form} set={set} label={getGenericDestLabel(service)} />}
+        </div>
+
+        {/* ── Customer / Contact ── */}
+        <div className="rounded-2xl border border-border bg-secondary/20 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Customer Info</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full Name *</label>
+              <Input id="lead-name" placeholder="e.g. Priya Sharma" value={form.name} onChange={set("name")} className="rounded-xl" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+                Phone *
+              </label>
+              <div className="flex gap-2">
+                <Input
+                  id="lead-phone"
+                  type="tel"
+                  placeholder="+91 98200 00000"
+                  value={form.phone}
+                  onChange={(e) => { const v = e.target.value.replace(/[^0-9+\s-]/g, ""); setForm(f => ({ ...f, phone: v })); }}
+                  className="rounded-xl flex-1"
+                />
+                <button
+                  type="button"
+                  onClick={handleFetchCustomer}
+                  disabled={!(form.phone || "").trim()}
+                  className={
+                    `shrink-0 rounded-xl px-3 py-2 text-xs font-semibold border transition-all duration-200 ${
+                      fetchStatus === "found"
+                        ? "bg-green-500 border-green-500 text-white"
+                        : fetchStatus === "notfound"
+                        ? "bg-red-500 border-red-500 text-white"
+                        : "bg-primary border-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
+                    }`
+                  }
+                >
+                  {fetchStatus === "found" ? "✓ Found" : fetchStatus === "notfound" ? "✗ None" : "Fetch"}
+                </button>
+              </div>
+              {fetchStatus === "found" && (
+                <p className="mt-1 text-[11px] text-green-600 font-medium">✓ Customer details filled from records</p>
+              )}
+              {fetchStatus === "notfound" && (
+                <p className="mt-1 text-[11px] text-red-500 font-medium">No customer found with this number</p>
+              )}
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">WhatsApp</label>
+              <Input id="lead-whatsapp" placeholder="+91 98200 00000" value={form.whatsapp} onChange={set("whatsapp")} className="rounded-xl" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Email</label>
+              <Input id="lead-email" type="email" placeholder="name@example.com" value={form.email} onChange={set("email")} className="rounded-xl" />
+            </div>
+          </div>
+        </div>
+
+        {/* ── Assignment & Source ── */}
+        <div className="rounded-2xl border border-border bg-secondary/20 p-4">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Assignment & Source</p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lead Source</label>
+              <Select value={form.source} onValueChange={(v) => setForm(f => ({ ...f, source: v }))}>
+                <SelectTrigger id="lead-source" className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm h-10 focus:outline-none focus:ring-2 focus:ring-primary transition-shadow">
+                  <SelectValue placeholder="Select source" />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCES.map(s => (
+                    <SelectItem key={s} value={s}>
+                      <div className="flex items-center gap-2">
+                        <span className={`h-2.5 w-2.5 rounded-full ${SOURCE_COLORS[s] ?? "bg-gray-300"}`} />
+                        {s}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assign Sales</label>
+              <select id="lead-assignee" value={form.assignedTo} onChange={set("assignedTo")} className={FIELD_CLS}>
+                {assignees.map(a => <option key={a}>{a}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Assign Ops</label>
+              <select id="lead-ops" value={form.assignOpsTo} onChange={set("assignOpsTo")} className={FIELD_CLS}>
+                <option value="">— None —</option>
+                {assignees.map(a => <option key={a}>{a}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Priority</label>
+              <select id="lead-priority" value={form.priority} onChange={set("priority")} className={FIELD_CLS}>
+                <option value="High">🔴 High</option>
+                <option value="Medium">🟡 Medium</option>
+                <option value="Low">🟢 Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Reference</label>
+              <Input id="lead-reference" placeholder="e.g. Jatin Jangid" value={form.reference} onChange={set("reference")} className="rounded-xl" />
+            </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Lead Section</label>
+              <select value={form.leadSection} onChange={set("leadSection")} className={FIELD_CLS}>
+                <option value="B2C">B2C</option>
+                <option value="B2B">B2B</option>
+                <option value="Corporate">Corporate</option>
+                <option value="Other">Other</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        {/* ── Remarks ── */}
+        <div>
+          <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
+            Remarks <span className="normal-case font-normal">(optional)</span>
+          </label>
+          <textarea
+            id="lead-notes"
+            rows={2}
+            placeholder="Any special requests or context..."
+            value={form.notes}
+            onChange={set("notes")}
+            className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
+          />
+        </div>
+
+        {/* ── Actions ── */}
+        <button
+          id="submit-lead-btn"
+          disabled={!canSubmit}
+          onClick={onSubmit}
+          className="w-full flex items-center justify-center gap-2 rounded-xl py-3 text-sm font-bold text-primary-foreground transition-all disabled:opacity-40 disabled:cursor-not-allowed hover:brightness-110 active:scale-[0.98]"
+          style={{ background: "var(--gradient-brand)" }}
+        >
+          <Plus className="h-4 w-4" />
+          Save Lead
+        </button>
+      </div>
+    </div>
+  );
+}
+
+// ── Main modal shell ─────────────────────────────────────────────────────────
 function AddLeadModal({
   onClose,
   onAdd,
@@ -308,42 +931,41 @@ function AddLeadModal({
     new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
   );
 
+  const [selectedService, setSelectedService] = useState<string | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM, assignedTo: assignees[0] || "" });
-
-  const handleFetchCustomer = () => {
-    const cleanPhone = form.phone.replace(/[^0-9+]/g, "");
-    if (!cleanPhone) {
-      alert("Please enter a phone number to fetch.");
-      return;
-    }
-    const found = customers.find((c) => c.phone && c.phone.replace(/[^0-9+]/g, "").includes(cleanPhone));
-    if (found) {
-      setForm((f) => ({
-        ...f,
-        name: found.name || f.name,
-        email: found.email || f.email,
-        whatsapp: (found as any).whatsapp || f.whatsapp || "",
-      }));
-    } else {
-      alert("No customer found with this phone number.");
-    }
-  };
-
-  const isInsurance = form.service?.toLowerCase().includes("insurance");
-  const canSubmit = isInsurance
-    ? form.name.trim() && form.phone.trim() && form.insuranceDate
-    : form.name.trim() && form.phone.trim() && form.destination && form.travelDate;
 
   const set =
     (k: keyof typeof EMPTY_FORM) =>
       (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) =>
         setForm((f) => ({ ...f, [k]: e.target.value }));
 
-  const fieldCls =
-    "w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary transition-shadow";
+  const handleSelectService = (service: string) => {
+    setForm(f => ({ ...f, service }));
+    setSelectedService(service);
+  };
+
+  const handleBack = () => {
+    setSelectedService(null);
+  };
+
+  const formType = selectedService ? getServiceFormType(selectedService) : "";
+  const isInsurance = formType === "insurance";
+  const isAir = formType === "air";
+  const isPackage = formType === "package";
+  const isHotel = formType === "hotel";
+  const isVisa = formType === "visa";
+
+  const canSubmit = (() => {
+    if (!selectedService || !(form.name || "").trim() || !(form.phone || "").trim()) return false;
+    if (isInsurance) return !!form.insuranceDate;
+    if (isAir) return !!form.sourceCity && !!form.destinationCity && !!form.travelDate;
+    if (isHotel) return !!form.destination && !!form.checkIn && !!form.checkOut;
+    if (isVisa) return !!form.country;
+    return !!form.destination;
+  })();
 
   const submit = () => {
-    if (!canSubmit) return;
+    if (!canSubmit || !selectedService) return;
     const lmhLeads = existingLeads.filter((l) => l.id?.startsWith("T-"));
     let nextNum = 1;
     if (lmhLeads.length > 0) {
@@ -360,14 +982,20 @@ function AddLeadModal({
       return s;
     };
     const id = `T-${pad(nextNum, 3)}`;
+
+    let dest = form.destination;
+    if (isAir) dest = `${form.sourceCity} → ${form.destinationCity}`;
+    if (isInsurance) dest = form.clientCompany || "Insurance";
+
     onAdd({
       id,
       name: form.name,
       phone: form.phone,
       email: form.email,
-      destination: isInsurance ? form.clientCompany || "Insurance" : form.destination,
-      budget: isInsurance ? 0 : Number(form.budget) || 0,
-      travelDate: isInsurance ? form.insuranceDate : form.travelDate,
+      whatsapp: form.whatsapp || form.phone,
+      destination: dest,
+      budget: Number(form.budget) || 0,
+      travelDate: isInsurance ? form.insuranceDate : (isHotel ? form.checkIn : form.travelDate),
       status: form.status,
       source: form.source,
       reference: form.reference,
@@ -376,40 +1004,66 @@ function AddLeadModal({
       avatar: "",
       assignedTo: form.assignedTo,
       notes: form.notes,
-      pax: isInsurance ? 1 : Number(form.pax) || 2,
-      service: form.service,
+      pax: Number(form.pax) || 2,
+      service: selectedService,
       priority: form.priority,
-      packageType: isInsurance ? `${form.policyType} (${form.queryType})` : form.packageType,
+      packageType: form.packageType,
+      // Air ticket
+      sourceCity: isAir ? form.sourceCity : undefined,
+      destinationCity: isAir ? form.destinationCity : undefined,
+      infants: isAir ? Number(form.infants) : undefined,
+      fareType: isAir ? form.fareType : undefined,
+      directFlight: isAir ? form.directFlight : undefined,
+      flightClass: isAir ? form.flightClass : undefined,
+      preferredAirline: isAir ? form.preferredAirline : undefined,
+      adults: Number(form.adults) || 1,
+      children: Number(form.children) || 0,
+      // Hotel
+      checkIn: isHotel ? form.checkIn : undefined,
+      checkOut: isHotel ? form.checkOut : undefined,
+      nights: isHotel ? form.nights : undefined,
+      nationality: isHotel ? form.nationality : undefined,
+      starRating: isHotel ? form.starRating : undefined,
+      mealPreference: isHotel ? form.mealPreference : undefined,
+      // Visa
+      visaType: isVisa ? form.visaType : undefined,
+      passportExpiry: isVisa ? form.passportExpiry : undefined,
+      country: isVisa ? form.country : undefined,
+      // Package
+      goingFrom: isPackage ? form.goingFrom : undefined,
+      noOfDays: isPackage ? form.noOfDays : undefined,
+      inclusions: isPackage ? form.inclusions : undefined,
+      theme: isPackage ? form.theme : undefined,
+      hotelPreference: isPackage ? form.hotelPreference : undefined,
+      foodPreference: isPackage ? form.foodPreference : undefined,
+      // Insurance
       insuranceDate: isInsurance ? form.insuranceDate : undefined,
       policyType: isInsurance ? form.policyType : undefined,
       queryType: isInsurance ? form.queryType : undefined,
       clientCompany: isInsurance ? form.clientCompany : undefined,
       expiryDate: isInsurance ? form.expiryDate : undefined,
-      totalAmount: form.totalAmount ? Number(form.totalAmount) : undefined,
-      amountPaid: form.amountPaid ? Number(form.amountPaid) : undefined,
-      vendorName: form.vendorName || undefined,
-      whatsapp: form.whatsapp || form.phone,
-      adults: Number(form.adults) || 2,
-      children: Number(form.children) || 0,
-      lastFollowUp: form.lastFollowUp || undefined,
-      nextFollowUp: form.nextFollowUp || undefined,
+      // Corporate
+      companyName: form.companyName || undefined,
+      eventType: form.eventType || undefined,
+      // Common
+      assignToOps: form.assignToOps,
+      assignOpsTo: form.assignOpsTo || undefined,
+      leadSection: form.leadSection,
     });
   };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-sm"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
     >
       <div
-        className="w-full sm:max-w-2xl flex flex-col overflow-hidden max-h-[90vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl animate-float-up"
-        style={{ animationDuration: "0.25s" }}
+        className={`w-full flex flex-col overflow-hidden max-h-[92vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl transition-all duration-300 ${selectedService ? "sm:max-w-2xl" : "sm:max-w-3xl"}`}
+        style={{ animation: "floatUp 0.25s ease both" }}
       >
         <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border sm:hidden" />
 
-        {/* Header */}
+        {/* Modal header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 pt-5 pb-4">
           <div className="flex items-center gap-3">
             <span
@@ -419,8 +1073,12 @@ function AddLeadModal({
               <Plus className="h-4 w-4" />
             </span>
             <div>
-              <h2 className="font-display text-lg font-bold">Add New Lead</h2>
-              <p className="text-xs text-muted-foreground">Enter inquiry details below</p>
+              <h2 className="font-display text-lg font-bold">
+                {selectedService ? `New ${selectedService} Lead` : "Create New Lead"}
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                {selectedService ? "Fill in the details below" : "Select a service to continue"}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="rounded-xl p-2 hover:bg-secondary transition-colors">
@@ -428,391 +1086,26 @@ function AddLeadModal({
           </button>
         </div>
 
-        <div className="grid gap-4 px-6 pt-5 pb-6 sm:grid-cols-2 overflow-y-auto">
-          {/* Service */}
-          <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-semibold">
-              Service <span className="text-red-500">*</span>
-            </label>
-            <select
-              id="lead-service"
-              value={form.service}
-              onChange={set("service")}
-              className={fieldCls}
-            >
-              {SERVICES.map((g) => (
-                <optgroup key={g.group} label={g.group}>
-                  {g.items.map((i) => (
-                    <option key={i.label} value={i.label}>
-                      {i.icon} {i.label}
-                    </option>
-                  ))}
-                </optgroup>
-              ))}
-            </select>
-          </div>
-          {/* Name */}
-          <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-semibold">
-              Full name <span className="text-red-500">*</span>
-            </label>
-            <Input
-              id="lead-name"
-              placeholder="e.g. Priya Sharma"
-              value={form.name}
-              onChange={set("name")}
-              className="rounded-xl"
-            />
-          </div>
-          {/* Phone */}
-          <div>
-            <label className="mb-1.5 flex items-center justify-between text-sm font-semibold">
-              <span>Phone <span className="text-red-500">*</span></span>
-              <button
-                type="button"
-                onClick={handleFetchCustomer}
-                className="text-xs text-primary hover:underline font-normal flex items-center gap-1"
-              >
-                <Search className="h-3 w-3" /> Find
-              </button>
-            </label>
-            <Input
-              id="lead-phone"
-              type="tel"
-              placeholder="+91 98200 00000"
-              value={form.phone}
-              onChange={(e) => {
-                const val = e.target.value.replace(/[^0-9+\s-]/g, "");
-                setForm((f) => ({ ...f, phone: val }));
-              }}
-              className="rounded-xl"
-            />
-          </div>
-          {/* WhatsApp */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">WhatsApp</label>
-            <Input
-              id="lead-whatsapp"
-              placeholder="+91 98200 00000"
-              value={form.whatsapp}
-              onChange={set("whatsapp")}
-              className="rounded-xl"
-            />
-          </div>
-          {/* Email */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Email</label>
-            <Input
-              id="lead-email"
-              type="email"
-              placeholder="name@example.com"
-              value={form.email}
-              onChange={set("email")}
-              className="rounded-xl"
-            />
-          </div>
-          {/* Travelers details */}
-          {!isInsurance && (
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Adults</label>
-                <Input
-                  id="lead-adults"
-                  type="number"
-                  value={form.adults}
-                  onChange={set("adults")}
-                  className="rounded-xl"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Children</label>
-                <Input
-                  id="lead-children"
-                  type="number"
-                  value={form.children}
-                  onChange={set("children")}
-                  className="rounded-xl"
-                />
-              </div>
-            </div>
-          )}
-
-          {isInsurance ? (
-            <>
-              {/* Expiry Date */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Expiry Date</label>
-                <Input
-                  id="lead-exp-date"
-                  type="date"
-                  value={form.expiryDate}
-                  onChange={set("expiryDate")}
-                  className="rounded-xl"
-                />
-              </div>
-              {/* Policy Type */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Policy Type</label>
-                <select
-                  id="lead-policy-type"
-                  value={form.policyType}
-                  onChange={set("policyType")}
-                  className={fieldCls}
-                >
-                  <option>Four Wheeler</option>
-                  <option>Two Wheeler</option>
-                  <option>School Bus</option>
-                  <option>Pickup</option>
-                  <option>Tractor</option>
-                  <option>Health</option>
-                  <option>LIC</option>
-                  <option>Commercial Vehicle</option>
-                </select>
-              </div>
-              {/* Query Type */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Query Type</label>
-                <select
-                  id="lead-query-type"
-                  value={form.queryType}
-                  onChange={set("queryType")}
-                  className={fieldCls}
-                >
-                  <option>New</option>
-                  <option>Renewal</option>
-                  <option>Expired</option>
-                </select>
-              </div>
-              {/* Client / Company */}
-              <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-sm font-semibold">Client / Company</label>
-                <Input
-                  id="lead-client-company"
-                  placeholder="e.g. Acme Corp..."
-                  value={form.clientCompany}
-                  onChange={set("clientCompany")}
-                  className="rounded-xl"
-                />
-              </div>
-            </>
-          ) : (
-            <>
-              {/* Destination */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">
-                  Destination <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="lead-destination"
-                  placeholder="e.g. Bali, Paris..."
-                  value={form.destination}
-                  onChange={set("destination")}
-                  className="rounded-xl"
-                />
-              </div>
-              {/* Travel Date */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">
-                  Travel date <span className="text-red-500">*</span>
-                </label>
-                <Input
-                  id="lead-date"
-                  type="date"
-                  value={form.travelDate}
-                  onChange={set("travelDate")}
-                  className="rounded-xl"
-                />
-              </div>
-              {/* Budget */}
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Budget (₹)</label>
-                <Input
-                  id="lead-budget"
-                  type="number"
-                  placeholder="e.g. 85000"
-                  value={form.budget}
-                  onChange={set("budget")}
-                  className="rounded-xl"
-                />
-              </div>
-
-            </>
-          )}
-          {/* Source */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Source</label>
-            <Select
-              value={form.source}
-              onValueChange={(val) => setForm((prev) => ({ ...prev, source: val }))}
-            >
-              <SelectTrigger
-                id="lead-source"
-                className="w-full rounded-xl border border-border bg-background px-3 py-2.5 text-sm h-10 focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-              >
-                <SelectValue placeholder="Select a source" />
-              </SelectTrigger>
-              <SelectContent>
-                {SOURCES.map((s) => (
-                  <SelectItem key={s} value={s}>
-                    <div className="flex items-center gap-2">
-                      <span
-                        className={`h-3 w-3 rounded-full ${SOURCE_COLORS[s] || "bg-gray-200"}`}
-                      />
-                      {s}
-                    </div>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-          {/* Lead Section */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Lead Section</label>
-            <select
-              id="lead-section"
-              value={form.leadSection}
-              onChange={set("leadSection")}
-              className={fieldCls}
-            >
-              <option value="B2C">B2C</option>
-              <option value="B2B">B2B</option>
-              <option value="Corporate">Corporate</option>
-              <option value="Other">Other</option>
-            </select>
-          </div>
-          {/* Reference */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Reference</label>
-            <Input
-              id="lead-reference"
-              placeholder="e.g. Jatin jangid"
-              value={form.reference}
-              onChange={set("reference")}
-              className="rounded-xl"
-            />
-          </div>
-          {/* Assignee */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Assign to</label>
-            <select
-              id="lead-assignee"
-              value={form.assignedTo}
-              onChange={set("assignedTo")}
-              className={fieldCls}
-            >
-              {assignees.map((a) => (
-                <option key={a}>{a}</option>
-              ))}
-            </select>
-          </div>
-
-          id          {/* Priority */}
-          <div>
-            <label className="mb-1.5 block text-sm font-semibold">Priority</label>
-            <select
-              id="lead-priority"
-              value={form.priority}
-              onChange={set("priority")}
-              className={fieldCls}
-            >
-              <option value="High">🔴 High</option>
-              <option value="Medium">🟡 Medium</option>
-              <option value="Low">🟢 Low</option>
-            </select>
-          </div>
-          {/* Package Type */}
-          {!isInsurance && (
-            <div>
-              <label className="mb-1.5 block text-sm font-semibold">Package Type</label>
-              <Input
-                id="lead-packageType"
-                placeholder="e.g. Honeymoon, Custom"
-                value={form.packageType}
-                onChange={set("packageType")}
-                className="rounded-xl"
-              />
-            </div>
-          )}
-
-
-          {/* Booking / Payment Details */}
-          {["on conform", "in process"].includes(form.status) && (
-            <div className="sm:col-span-2 grid gap-4 rounded-xl border border-border p-4 bg-secondary/30 sm:grid-cols-3">
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Vendor Name</label>
-                <Input
-                  id="lead-vendorName"
-                  placeholder="e.g. Yes Hotels..."
-                  value={form.vendorName}
-                  onChange={set("vendorName")}
-                  className="rounded-xl bg-background"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Total Amount (₹)</label>
-                <Input
-                  id="lead-totalAmount"
-                  type="number"
-                  placeholder="e.g. 50000"
-                  value={form.totalAmount}
-                  onChange={set("totalAmount")}
-                  className="rounded-xl bg-background"
-                />
-              </div>
-              <div>
-                <label className="mb-1.5 block text-sm font-semibold">Amount Paid (₹)</label>
-                <Input
-                  id="lead-amountPaid"
-                  type="number"
-                  placeholder="e.g. 10000"
-                  value={form.amountPaid}
-                  onChange={set("amountPaid")}
-                  className="rounded-xl bg-background"
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Notes / Description */}
-          <div className="sm:col-span-2">
-            <label className="mb-1.5 block text-sm font-semibold">
-              {isInsurance ? "Description" : "Notes"}{" "}
-              <span className="text-muted-foreground font-normal">(optional)</span>
-            </label>
-            <textarea
-              id="lead-notes"
-              rows={2}
-              placeholder={
-                isInsurance
-                  ? "Policy details or description..."
-                  : "Any special requests or context..."
-              }
-              value={form.notes}
-              onChange={set("notes")}
-              className="w-full resize-none rounded-xl border border-border bg-background px-3 py-2.5 text-sm placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary transition-shadow"
-            />
-          </div>
-          {/* Actions */}
-          <div className="flex gap-3 sm:col-span-2">
-            <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              id="submit-lead-btn"
-              className="flex-1 gap-2 rounded-xl"
-              disabled={!canSubmit}
-              style={{ background: canSubmit ? "var(--gradient-brand)" : undefined }}
-              onClick={submit}
-            >
-              <Plus className="h-4 w-4" /> Add Lead
-            </Button>
-          </div>
-        </div>
+        {/* Step content */}
+        {!selectedService ? (
+          <ServiceSelectorStep onSelect={handleSelectService} />
+        ) : (
+          <DynamicFormStep
+            service={selectedService}
+            form={form}
+            set={set}
+            setForm={setForm}
+            assignees={assignees}
+            canSubmit={canSubmit}
+            onSubmit={submit}
+            onBack={handleBack}
+            customers={customers}
+          />
+        )}
       </div>
     </div>
   );
 }
-
 /* ─── Lead Detail Slide-over ─── */
 function LeadDetail({
   lead,
@@ -823,6 +1116,7 @@ function LeadDetail({
   assignees,
   onEditNote,
   onUpdateLead,
+  onClone,
 }: {
   lead: ExtLead;
   onClose: () => void;
@@ -1555,7 +1849,7 @@ function LeadDetail({
             </div>
 
             <div className="space-y-3 max-h-[240px] overflow-y-auto pr-2 custom-scrollbar">
-              {lead.allNotes && lead.allNotes.length > 0 ? (
+              {Array.isArray(lead.allNotes) && lead.allNotes.length > 0 ? (
                 lead.allNotes.map((note, idx) => (
                   <div key={idx} className="bg-secondary/20 rounded-xl p-3 border border-border/50 text-sm">
                     <p className="text-foreground whitespace-pre-wrap">{note.text}</p>
@@ -1596,7 +1890,7 @@ function LeadDetail({
                   onKeyDown={(e) => {
                     if (e.key === "Enter" && newNoteText.trim()) {
                       const noteDate = new Date().toISOString();
-                      const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                      const currentNotes = Array.isArray(lead.allNotes) ? [...lead.allNotes] : [];
                       if (lead.notes && currentNotes.length === 0) {
                         currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
                       }
@@ -1614,7 +1908,7 @@ function LeadDetail({
                   onClick={() => {
                     if (newNoteText.trim()) {
                       const noteDate = new Date().toISOString();
-                      const currentNotes = lead.allNotes ? [...lead.allNotes] : [];
+                      const currentNotes = Array.isArray(lead.allNotes) ? [...lead.allNotes] : [];
                       if (lead.notes && currentNotes.length === 0) {
                         currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
                       }
@@ -2449,7 +2743,7 @@ function LeadsPage() {
                           <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
                           <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
                             <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
-                              {l.allNotes && l.allNotes.length > 0 ? (
+                              {Array.isArray(l.allNotes) && l.allNotes.length > 0 ? (
                                 [...l.allNotes].reverse().map((n, i) => (
                                   <div key={i} className="text-sm text-muted-foreground italic flex flex-wrap items-baseline gap-x-1.5 leading-tight">
                                     <span className="text-muted-foreground/60">•</span>
@@ -2506,7 +2800,7 @@ function LeadsPage() {
                                         const noteDate = new Date().toISOString();
                                         const newLeads = leads.map((x) => {
                                           if (x.id === l.id) {
-                                            let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                                            let currentNotes = Array.isArray(x.allNotes) ? [...x.allNotes] : [];
                                             if (x.notes && currentNotes.length === 0) {
                                               currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
                                             }
@@ -2584,7 +2878,7 @@ function LeadsPage() {
         onOpenChange={setIsImportOpen}
         onImport={handleImportLeads}
         allowedStatuses={STATUSES}
-        allowedPriorities={["High", "Medium", "Low"]}
+        allowedPriorities={["High 🔴", "Medium 🟡", "Low 🟢"]}
         allowedAssignees={assignees}
       />
       {showModal && (
@@ -2610,7 +2904,7 @@ function LeadsPage() {
             const noteDate = new Date().toISOString();
             const newLeads = leads.map((x) => {
               if (x.id === id) {
-                let currentNotes = x.allNotes ? [...x.allNotes] : [];
+                let currentNotes = Array.isArray(x.allNotes) ? [...x.allNotes] : [];
                 if (x.notes && currentNotes.length === 0) {
                   currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
                 }

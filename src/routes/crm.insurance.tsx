@@ -3,6 +3,7 @@ import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Plus, Download, Shield } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
 
 import { InsuranceDashboard } from "@/components/insurance/InsuranceDashboard";
 import { InsuranceTable } from "@/components/insurance/InsuranceTable";
@@ -17,6 +18,7 @@ function GeneralInsurancePage() {
   const [activeTab, setActiveTab] = useState<"Policies" | "Renewals">("Policies");
   const [showForm, setShowForm] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<any>(null);
+  const [policyToDelete, setPolicyToDelete] = useState<any>(null);
 
   const [policies, setPolicies] = useSupabaseTable<any[]>("insurance_policies", []);
   const [companies] = useSupabaseTable<any[]>("insurance_companies", []);
@@ -98,9 +100,14 @@ function GeneralInsurancePage() {
   };
 
   const handleDelete = (policy: any) => {
-    if (window.confirm("Are you sure you want to permanently delete this policy?")) {
-      const filtered = policies.filter(p => p.id !== policy.id);
+    setPolicyToDelete(policy);
+  };
+
+  const confirmDeletePolicy = () => {
+    if (policyToDelete) {
+      const filtered = policies.filter(p => p.id !== policyToDelete.id);
       setPolicies(filtered);
+      setPolicyToDelete(null);
     }
   };
 
@@ -201,6 +208,14 @@ function GeneralInsurancePage() {
           onSave={handleSavePolicy}
         />
       )}
+
+      <DeleteConfirmModal 
+        isOpen={!!policyToDelete}
+        onClose={() => setPolicyToDelete(null)}
+        onConfirm={confirmDeletePolicy}
+        title="Delete Policy"
+        description="Are you sure you want to permanently delete this policy? This action cannot be undone."
+      />
     </div>
   );
 }
