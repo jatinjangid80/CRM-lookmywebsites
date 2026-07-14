@@ -599,7 +599,6 @@ function VendorsPage() {
           <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
             {filtered.length} vendors
           </div>
-          </div>
         </div>
       </div>
 
