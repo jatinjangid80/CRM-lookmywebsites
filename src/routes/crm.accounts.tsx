@@ -16,7 +16,7 @@ import {
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { formatINR, type Expense, type PaymentFollowUp } from "@/lib/mock-data";
+import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 
 export const Route = createFileRoute("/crm/accounts")({
   component: AccountsPage,
@@ -29,14 +29,17 @@ function AccountsPage() {
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
   const [employees] = useSupabaseTable<any[]>("employees", []);
+  const [bookings] = useSupabaseTable<any[]>("bookings", []);
 
   // Transactions State
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
+  const [invoiceMatchStatusTx, setInvoiceMatchStatusTx] = useState<"found" | "not_found" | null>(null);
   const [newTx, setNewTx] = useState({
     type: "Receipt",
     entityType: "Customer",
     entityId: "",
+    invoiceId: "",
     amount: 0,
     date: new Date().toISOString().split('T')[0],
     paymentMode: "Bank Transfer",
@@ -71,17 +74,51 @@ function AccountsPage() {
   const [isLogFollowUpOpen, setIsLogFollowUpOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "Expense" | "Follow-up" | "Transaction" } | null>(null);
+  const [invoiceMatchStatus, setInvoiceMatchStatus] = useState<"typing" | "found" | "not_found" | null>(null);
   const [followUpsList, setFollowUpsList] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", []);
   const [selectedFuId, setSelectedFuId] = useState<string | null>(null);
   const [logNotes, setLogNotes] = useState("");
   const [logDate, setLogDate] = useState("");
 
+  // Payment Approvals State
+  const [paymentRequests, setPaymentRequests] = useSupabaseTable<PaymentRequest[]>("payment_requests", initialPaymentRequests);
+  const [isAddPaymentRequestOpen, setIsAddPaymentRequestOpen] = useState(false);
+  const [newPaymentRequest, setNewPaymentRequest] = useState<Partial<PaymentRequest>>({
+    date: new Date().toISOString().split('T')[0],
+    entityType: "Vendor",
+    entityId: "",
+    amount: 0,
+    status: "Pending Approval",
+    remark: "",
+    invoiceId: "",
+  });
+
+  // Advanced Payment Approvals UI State
+  const [activePaymentTab, setActivePaymentTab] = useState("unpaid");
+  
+  const [isActionPopupOpen, setIsActionPopupOpen] = useState(false);
+  const [actionPopupType, setActionPopupType] = useState<PaymentRequest["status"] | "">("");
+  const [actionPopupReqId, setActionPopupReqId] = useState<string | null>(null);
+  const [actionPopupRemark, setActionPopupRemark] = useState("");
+
+  const [isHistoryViewerOpen, setIsHistoryViewerOpen] = useState(false);
+  const [historyReqId, setHistoryReqId] = useState<string | null>(null);
+
+  const [isReceiptViewerOpen, setIsReceiptViewerOpen] = useState(false);
+  const [receiptReqId, setReceiptReqId] = useState<string | null>(null);
+
+  // Toast Notification Mock (Since we don't have a real toast system imported)
+  const [toastMessage, setToastMessage] = useState<{title: string, desc: string} | null>(null);
+  const showToast = (title: string, desc: string) => {
+    setToastMessage({title, desc});
+    setTimeout(() => setToastMessage(null), 3000);
+  };
   const totalExpenses = expenseList.reduce((sum, e) => sum + e.amount, 0);
   const pendingExpenses = expenseList.filter(e => e.status === "Pending").reduce((sum, e) => sum + e.amount, 0);
 
   const handleSaveExpense = () => {
     if (!newExpense.amount || !newExpense.category) return;
-    
+
     const exp: Expense = {
       id: `EXP-${Math.floor(1000 + Math.random() * 9000)}`,
       date: newExpense.date || new Date().toISOString().split("T")[0],
@@ -108,13 +145,13 @@ function AccountsPage() {
 
   const handleSaveLog = () => {
     if (selectedFuId) {
-      setFollowUpsList(prev => 
-        prev.map(f => f.id === selectedFuId 
-          ? { 
-              ...f, 
-              notes: logNotes || f.notes, 
-              nextFollowUpDate: logDate || f.nextFollowUpDate 
-            } 
+      setFollowUpsList(prev =>
+        prev.map(f => f.id === selectedFuId
+          ? {
+            ...f,
+            notes: logNotes || f.notes,
+            nextFollowUpDate: logDate || f.nextFollowUpDate
+          }
           : f
         )
       );
@@ -145,15 +182,15 @@ function AccountsPage() {
 
   const handleCreateFollowUp = () => {
     if (!newFollowUp.entityId) return;
-    
+
     const isCust = newFollowUp.entityType === "Customer";
-    const entity = isCust 
-      ? customers.find(c => c.id === newFollowUp.entityId) 
+    const entity = isCust
+      ? customers.find(c => c.id === newFollowUp.entityId)
       : vendors.find(v => v.id === newFollowUp.entityId);
-      
+
     const entityName = entity ? (entity.name ? entity.name.split('---META---')[0] : entity.id) : "Unknown";
     const entityPhone = entity ? (entity.phone || entity.mobile || "N/A") : "N/A";
-    
+
     const newFu = {
       id: `PFU-${Math.floor(Math.random() * 10000)}`,
       invoiceId: newFollowUp.invoiceId || "INV-NEW",
@@ -169,7 +206,7 @@ function AccountsPage() {
       notificationReminder: 1,
       notes: newFollowUp.remark || "New follow-up created",
     };
-    
+
     setFollowUpsList([newFu, ...followUpsList]);
     setIsAddFollowUpOpen(false);
     setNewFollowUp({
@@ -182,8 +219,114 @@ function AccountsPage() {
     });
   };
 
+  const handleCreatePaymentRequest = () => {
+    if (!newPaymentRequest.entityId || !newPaymentRequest.amount) return;
+
+    let entityName = "Unknown";
+    if (newPaymentRequest.entityType === "Customer") {
+      const c = customers.find(x => x.id === newPaymentRequest.entityId);
+      if (c) entityName = c.name?.split('---META---')[0] || c.id;
+    } else if (newPaymentRequest.entityType === "Vendor") {
+      const v = vendors.find(x => x.id === newPaymentRequest.entityId);
+      if (v) entityName = v.name?.split('---META---')[0] || v.id;
+    } else if (newPaymentRequest.entityType === "Employee") {
+      const e = employees.find(x => x.id === newPaymentRequest.entityId);
+      if (e) entityName = e.name || e.id;
+    }
+
+    const newReq: PaymentRequest = {
+      id: `PRQ-${Math.floor(Math.random() * 10000)}`,
+      date: newPaymentRequest.date || new Date().toISOString().split('T')[0],
+      employeeId: "EMP-001", // Mocked logged-in user
+      employeeName: "Current User",
+      invoiceId: newPaymentRequest.invoiceId || "",
+      entityType: newPaymentRequest.entityType as any,
+      entityId: newPaymentRequest.entityId,
+      entityName,
+      amount: Number(newPaymentRequest.amount) || 0,
+      status: "Pending Approval",
+      remark: newPaymentRequest.remark,
+      auditLog: [{
+        timestamp: new Date().toISOString(),
+        action: "Created Request",
+        user: "Current User",
+        remark: newPaymentRequest.remark
+      }]
+    };
+
+    setPaymentRequests([newReq, ...paymentRequests]);
+    setIsAddPaymentRequestOpen(false);
+    setNewPaymentRequest({
+      date: new Date().toISOString().split('T')[0],
+      entityType: "Vendor",
+      entityId: "",
+      amount: 0,
+      status: "Pending Approval",
+      remark: "",
+      invoiceId: "",
+    });
+  };
+
+  const openActionPopup = (reqId: string, type: PaymentRequest["status"]) => {
+    setActionPopupReqId(reqId);
+    setActionPopupType(type);
+    setActionPopupRemark("");
+    setIsActionPopupOpen(true);
+  };
+
+  const handleActionPopupSubmit = () => {
+    if (!actionPopupReqId || !actionPopupType) return;
+
+    setPaymentRequests(prev => prev.map(req => {
+      if (req.id !== actionPopupReqId) return req;
+
+      let actionDesc = actionPopupType;
+      if (actionPopupType === "Accounts Verified") actionDesc = "Verified by Accounts";
+
+      const newAuditLog = [...req.auditLog, {
+        timestamp: new Date().toISOString(),
+        action: actionDesc,
+        user: "Current User",
+        remark: actionPopupRemark
+      }];
+
+      if (actionPopupType === "Paid") {
+        const newTx = {
+          id: `TXN-${Math.floor(10000 + Math.random() * 90000)}`,
+          date: new Date().toISOString().split('T')[0],
+          type: "Payment",
+          entityType: req.entityType,
+          entityId: req.entityId,
+          entityName: req.entityName,
+          amount: req.amount,
+          paymentMode: "Bank Transfer",
+          reference: `Auto-generated for PRQ ${req.id}`,
+          status: "Completed",
+          invoiceId: req.invoiceId
+        };
+        setTransactions([newTx, ...transactions]);
+        showToast("Payment Marked as Paid", `Receipt ${newTx.id} generated successfully.`);
+        return { ...req, status: actionPopupType, receiptId: newTx.id, auditLog: newAuditLog };
+      }
+      
+      showToast("Status Updated", `Request marked as ${actionPopupType}`);
+      return { ...req, status: actionPopupType, auditLog: newAuditLog };
+    }));
+
+    setIsActionPopupOpen(false);
+    setActionPopupReqId(null);
+    setActionPopupRemark("");
+  };
+
   return (
-    <main className="flex-1 p-4 sm:p-8 space-y-6">
+    <main className="flex-1 p-4 sm:p-8 space-y-6 relative">
+      {toastMessage && (
+        <div className="fixed bottom-4 right-4 z-50 bg-gray-900 text-white px-6 py-4 rounded-xl shadow-2xl flex flex-col min-w-[250px] animate-in slide-in-from-bottom-5">
+          <span className="font-semibold text-sm">{toastMessage.title}</span>
+          <span className="text-xs text-gray-300 mt-1">{toastMessage.desc}</span>
+        </div>
+      )}
+      
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Accounts</h1>
@@ -192,33 +335,34 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full sm:w-[600px] grid-cols-3 bg-secondary/50 rounded-xl p-1 shadow-sm">
+        <TabsList className="grid w-full sm:w-[800px] grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
           <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
+          <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approvel</TabsTrigger>
         </TabsList>
 
         <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-600">
-                  <TrendingDown className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-muted-foreground">Total Expenses</p>
-                  <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(totalExpenses)}</p>
-                </div>
-             </div>
-             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
-                <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-orange-100 text-orange-600">
-                  <AlertCircle className="h-6 w-6" />
-                </div>
-                <div>
-                  <p className="text-sm font-semibold text-muted-foreground">Pending Expenses</p>
-                  <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(pendingExpenses)}</p>
-                </div>
-             </div>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-blue-100 text-blue-600">
+                <TrendingDown className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">Total Expenses</p>
+                <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(totalExpenses)}</p>
+              </div>
+            </div>
+            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
+              <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-orange-100 text-orange-600">
+                <AlertCircle className="h-6 w-6" />
+              </div>
+              <div>
+                <p className="text-sm font-semibold text-muted-foreground">Pending Expenses</p>
+                <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(pendingExpenses)}</p>
+              </div>
+            </div>
           </div>
 
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -232,62 +376,61 @@ function AccountsPage() {
           </div>
 
           <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-             <table className="w-full text-sm text-left">
-               <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
-                  <tr>
-                    <th className="px-6 py-4 font-semibold">Date</th>
-                    <th className="px-6 py-4 font-semibold">Category</th>
-                    <th className="px-6 py-4 font-semibold">Description</th>
-                    <th className="px-6 py-4 font-semibold">Payment Mode</th>
-                    <th className="px-6 py-4 font-semibold">Amount</th>
-                    <th className="px-6 py-4 font-semibold text-center">Status</th>
-                    <th className="px-6 py-4 text-right">Actions</th>
-                  </tr>
-               </thead>
-               <tbody className="divide-y divide-border">
-                  {expenseList.map(exp => (
-                    <tr key={exp.id} className="hover:bg-secondary/20 transition-colors">
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium text-foreground">{exp.date}</span>
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <span className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                          {exp.category}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4">
-                        <p className="text-foreground font-medium">{exp.description}</p>
-                        <p className="text-xs text-muted-foreground mt-0.5">{exp.id}</p>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="flex items-center gap-2">
-                          <Wallet className="h-4 w-4 text-muted-foreground" />
-                          <span>{exp.paymentMode}</span>
-                        </div>
-                        {exp.reference && <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{exp.reference}</p>}
-                      </td>
-                      <td className="px-6 py-4 font-bold text-foreground">
-                        {formatINR(exp.amount)}
-                      </td>
-                      <td className="px-6 py-4 text-center">
-                        <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${
-                          exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'
+            <table className="w-full text-sm text-left">
+              <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
+                <tr>
+                  <th className="px-6 py-4 font-semibold">Date</th>
+                  <th className="px-6 py-4 font-semibold">Category</th>
+                  <th className="px-6 py-4 font-semibold">Description</th>
+                  <th className="px-6 py-4 font-semibold">Payment Mode</th>
+                  <th className="px-6 py-4 font-semibold">Amount</th>
+                  <th className="px-6 py-4 font-semibold text-center">Status</th>
+                  <th className="px-6 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {expenseList.map(exp => (
+                  <tr key={exp.id} className="hover:bg-secondary/20 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Calendar className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium text-foreground">{exp.date}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                        {exp.category}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <p className="text-foreground font-medium">{exp.description}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">{exp.id}</p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Wallet className="h-4 w-4 text-muted-foreground" />
+                        <span>{exp.paymentMode}</span>
+                      </div>
+                      {exp.reference && <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{exp.reference}</p>}
+                    </td>
+                    <td className="px-6 py-4 font-bold text-foreground">
+                      {formatINR(exp.amount)}
+                    </td>
+                    <td className="px-6 py-4 text-center">
+                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'
                         }`}>
-                          {exp.status}
-                        </span>
-                      </td>
-                      <td className="px-6 py-4 text-right">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </td>
-                    </tr>
-                  ))}
-               </tbody>
-             </table>
+                        {exp.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </TabsContent>
 
@@ -301,64 +444,64 @@ function AccountsPage() {
               <Plus className="mr-2 h-4 w-4" /> Add Follow-up
             </Button>
           </div>
-          
+
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {followUpsList.map(fu => (
-               <div key={fu.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:border-primary/40 transition-colors">
-                  <div className="flex justify-between items-start mb-4">
-                     <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold border border-orange-200 shrink-0">
-                           {fu.customerName.charAt(0)}
-                        </div>
-                        <div>
-                           <h3 className="font-semibold text-foreground">{fu.customerName}</h3>
-                           <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                             <PhoneCall className="h-3 w-3" /> {fu.customerPhone}
-                           </p>
-                        </div>
-                     </div>
-                     <div className="text-right">
-                       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Amount</p>
-                       <p className="text-lg font-display font-bold text-rose-600">{formatINR(fu.pendingAmount)}</p>
-                     </div>
+              <div key={fu.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:border-primary/40 transition-colors">
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold border border-orange-200 shrink-0">
+                      {fu.customerName.charAt(0)}
+                    </div>
+                    <div>
+                      <h3 className="font-semibold text-foreground">{fu.customerName}</h3>
+                      <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
+                        <PhoneCall className="h-3 w-3" /> {fu.customerPhone}
+                      </p>
+                    </div>
                   </div>
-                  
-                  <div className="bg-secondary/50 rounded-xl p-3 mb-4 border border-border">
-                     <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Invoice ID:</span>
-                        <span className="font-mono font-medium">{fu.invoiceId}</span>
-                     </div>
-                     <div className="flex items-center justify-between text-sm mt-1">
-                        <span className="text-muted-foreground">Total Amount:</span>
-                        <span className="font-medium">{formatINR(fu.totalAmount)}</span>
-                     </div>
-                     <div className="flex items-center justify-between text-sm mt-1">
-                        <span className="text-muted-foreground">Notes:</span>
-                        <span className="font-medium text-right max-w-[200px] truncate">{fu.notes}</span>
-                     </div>
+                  <div className="text-right">
+                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Pending Amount</p>
+                    <p className="text-lg font-display font-bold text-rose-600">{formatINR(fu.pendingAmount)}</p>
+                  </div>
+                </div>
+
+                <div className="bg-secondary/50 rounded-xl p-3 mb-4 border border-border">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Invoice ID:</span>
+                    <span className="font-mono font-medium">{fu.invoiceId}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-muted-foreground">Total Amount:</span>
+                    <span className="font-medium">{formatINR(fu.totalAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-muted-foreground">Notes:</span>
+                    <span className="font-medium text-right max-w-[200px] truncate">{fu.notes}</span>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-border gap-4">
+                  <div className="flex items-center gap-2 text-sm">
+                    <Calendar className="h-4 w-4 text-blue-500" />
+                    <span className="font-medium text-foreground">Follow-up: {fu.nextFollowUpDate} at {fu.nextFollowUpTime}</span>
                   </div>
 
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-border gap-4">
-                     <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-blue-500" />
-                        <span className="font-medium text-foreground">Follow-up: {fu.nextFollowUpDate} at {fu.nextFollowUpTime}</span>
-                     </div>
-                     
-                     <div className="flex items-center gap-2">
-                       <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(fu.id, "Follow-up")}>
-                          <Trash2 className="h-4 w-4" />
-                       </Button>
-                       <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
-                          setSelectedFuId(fu.id);
-                          setLogNotes(fu.notes);
-                          setLogDate(fu.nextFollowUpDate);
-                          setIsLogFollowUpOpen(true);
-                       }}>
-                          Log Follow-up
-                       </Button>
-                     </div>
+                  <div className="flex items-center gap-2">
+                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(fu.id, "Follow-up")}>
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                    <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
+                      setSelectedFuId(fu.id);
+                      setLogNotes(fu.notes);
+                      setLogDate(fu.nextFollowUpDate);
+                      setIsLogFollowUpOpen(true);
+                    }}>
+                      Log Follow-up
+                    </Button>
                   </div>
-               </div>
+                </div>
+              </div>
             ))}
           </div>
         </TabsContent>
@@ -430,6 +573,113 @@ function AccountsPage() {
             </div>
           )}
         </TabsContent>
+        <TabsContent value="payments-approval" className="space-y-6 mt-6">
+          <div className="flex justify-between items-center">
+            <h3 className="text-lg font-semibold text-foreground">Payment Requests</h3>
+            <Button onClick={() => setIsAddPaymentRequestOpen(true)} className="shadow">
+              <Plus className="mr-2 h-4 w-4" /> Request Payment
+            </Button>
+          </div>
+          
+          <Tabs value={activePaymentTab} onValueChange={setActivePaymentTab} className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="unpaid">Unpaid / Pending</TabsTrigger>
+              <TabsTrigger value="paid">Paid History</TabsTrigger>
+            </TabsList>
+
+            {["unpaid", "paid"].map(tabValue => {
+              const filteredRequests = paymentRequests.filter(req => 
+                tabValue === "paid" ? req.status === "Paid" : req.status !== "Paid"
+              );
+
+              return (
+                <TabsContent key={tabValue} value={tabValue} className="mt-0">
+                  {filteredRequests.length === 0 ? (
+                    <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
+                      <p className="text-muted-foreground text-sm max-w-md mx-auto">
+                        No {tabValue === "paid" ? "paid" : "unpaid"} payment requests found.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="rounded-2xl border border-border bg-card overflow-hidden shadow-sm">
+                      <table className="w-full text-sm text-left">
+                        <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
+                          <tr>
+                            <th className="px-6 py-4">Request ID</th>
+                            <th className="px-6 py-4">Employee</th>
+                            <th className="px-6 py-4">Entity</th>
+                            <th className="px-6 py-4">Amount</th>
+                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4 text-right">Actions</th>
+                          </tr>
+                        </thead>
+                        <tbody className="divide-y divide-border">
+                          {filteredRequests.map((req) => (
+                            <tr key={req.id} className="hover:bg-muted/30 transition-colors">
+                              <td className="px-6 py-4 font-medium">{req.id}</td>
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-foreground">{req.employeeName}</div>
+                                <div className="text-xs text-muted-foreground">{req.date}</div>
+                              </td>
+                              <td className="px-6 py-4">
+                                <div className="font-medium text-foreground">{req.entityName}</div>
+                                <div className="text-xs text-muted-foreground">{req.entityType} {req.invoiceId ? `• ${req.invoiceId}` : ''}</div>
+                              </td>
+                              <td className="px-6 py-4 font-bold text-foreground">
+                                {formatINR(req.amount)}
+                              </td>
+                              <td className="px-6 py-4">
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
+                                  req.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                                  req.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
+                                  req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                  req.status === 'Accounts Verified' ? 'bg-purple-100 text-purple-700' :
+                                  'bg-orange-100 text-orange-700'
+                                }`}>
+                                  {req.status}
+                                </span>
+                              </td>
+                              <td className="px-6 py-4 text-right space-x-2">
+                                <Button size="sm" variant="ghost" className="h-8 text-muted-foreground" onClick={() => { setHistoryReqId(req.id); setIsHistoryViewerOpen(true); }}>
+                                  History
+                                </Button>
+                                {req.status === 'Pending Approval' && (
+                                  <Button size="sm" variant="outline" className="h-8 text-purple-600 border-purple-200 hover:bg-purple-50" onClick={() => openActionPopup(req.id, "Accounts Verified")}>
+                                    Verify
+                                  </Button>
+                                )}
+                                {req.status === 'Accounts Verified' && (
+                                  <>
+                                    <Button size="sm" variant="outline" className="h-8 text-emerald-600 border-emerald-200 hover:bg-emerald-50" onClick={() => openActionPopup(req.id, "Approved")}>
+                                      Approve
+                                    </Button>
+                                    <Button size="sm" variant="outline" className="h-8 text-rose-600 border-rose-200 hover:bg-rose-50" onClick={() => openActionPopup(req.id, "Rejected")}>
+                                      Reject
+                                    </Button>
+                                  </>
+                                )}
+                                {req.status === 'Approved' && (
+                                  <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700" onClick={() => openActionPopup(req.id, "Paid")}>
+                                    Mark Paid
+                                  </Button>
+                                )}
+                                {req.status === 'Paid' && req.receiptId && (
+                                  <Button size="sm" variant="outline" className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { setReceiptReqId(req.id); setIsReceiptViewerOpen(true); }}>
+                                    View Receipt
+                                  </Button>
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  )}
+                </TabsContent>
+              );
+            })}
+          </Tabs>
+        </TabsContent>
       </Tabs>
 
       {/* Add Transaction Dialog */}
@@ -443,7 +693,7 @@ function AccountsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Type</Label>
-                <Select value={newTx.type} onValueChange={v => setNewTx({...newTx, type: v})}>
+                <Select value={newTx.type} onValueChange={v => setNewTx({ ...newTx, type: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Receipt">Receipt (In)</SelectItem>
@@ -453,7 +703,7 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Entity Type</Label>
-                <Select value={newTx.entityType} onValueChange={v => setNewTx({...newTx, entityType: v, entityId: ""})}>
+                <Select value={newTx.entityType} onValueChange={v => setNewTx({ ...newTx, entityType: v, entityId: "" })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Customer">Customer</SelectItem>
@@ -465,12 +715,106 @@ function AccountsPage() {
             </div>
 
             <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <Label>Booking ID / Vendor ID (Auto-fill)</Label>
+                {invoiceMatchStatusTx === "found" && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">Match Found!</span>}
+                {invoiceMatchStatusTx === "not_found" && <span className="text-[10px] text-rose-600 font-bold bg-rose-100 px-2 py-0.5 rounded-full">Not Found</span>}
+              </div>
+              <Input
+                placeholder="Optional: Type Booking, Invoice, Customer, or Vendor ID..."
+                value={newTx.invoiceId || ""}
+                onChange={e => {
+                  const val = e.target.value;
+                  let updates: any = { invoiceId: val };
+
+                  if (!val.trim()) {
+                    setInvoiceMatchStatusTx(null);
+                    setNewTx({ ...newTx, ...updates });
+                    return;
+                  }
+
+                  const matchingBooking = bookings.find(b =>
+                    b.saleInvoiceNo?.toLowerCase() === val.toLowerCase() ||
+                    b.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase() ||
+                    b.id?.toLowerCase() === val.toLowerCase() ||
+                    b.reference?.toLowerCase() === val.toLowerCase()
+                  );
+
+                  if (matchingBooking) {
+                    setInvoiceMatchStatusTx("found");
+                    const isVendorMatch = matchingBooking.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase();
+
+                    if (isVendorMatch) {
+                      const pending = (matchingBooking.purchasePrice || 0) - (matchingBooking.paid || 0);
+                      updates.amount = pending > 0 ? pending : 0;
+
+                      if (matchingBooking.supplier) {
+                        const v = vendors.find(vend => vend.name && vend.name.includes(matchingBooking.supplier));
+                        if (v) {
+                          updates.entityType = "Vendor";
+                          updates.entityId = v.id;
+                        }
+                      }
+                    } else {
+                      const pending = (matchingBooking.amount || 0) - (matchingBooking.paid || 0);
+                      updates.amount = pending > 0 ? pending : 0;
+
+                      if (matchingBooking.customer) {
+                        const c = customers.find(cust => cust.name && cust.name.includes(matchingBooking.customer));
+                        if (c) {
+                          updates.entityType = "Customer";
+                          updates.entityId = c.id;
+                        }
+                      }
+                    }
+                  } else {
+                    const matchedVendor = vendors.find(v => v.id?.toLowerCase() === val.toLowerCase());
+                    const matchedCustomer = customers.find(c => c.id?.toLowerCase() === val.toLowerCase());
+                    const matchedEmployee = employees.find(e => e.id?.toLowerCase() === val.toLowerCase());
+                    
+                    if (matchedVendor) {
+                      setInvoiceMatchStatusTx("found");
+                      updates.entityType = "Vendor";
+                      updates.entityId = matchedVendor.id;
+                      
+                      // Calculate total pending amount for this vendor
+                      const vendorBookings = bookings.filter(b => b.supplier === matchedVendor.name?.split('---META---')[0]);
+                      const totalPending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
+                      updates.amount = totalPending > 0 ? totalPending : 0;
+                      
+                    } else if (matchedCustomer) {
+                      setInvoiceMatchStatusTx("found");
+                      updates.entityType = "Customer";
+                      updates.entityId = matchedCustomer.id;
+                      
+                      // Calculate total pending amount for this customer
+                      const customerBookings = bookings.filter(b => b.customer === matchedCustomer.name?.split('---META---')[0]);
+                      const totalPending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
+                      updates.amount = totalPending > 0 ? totalPending : 0;
+                      
+                    } else if (matchedEmployee) {
+                      setInvoiceMatchStatusTx("found");
+                      updates.entityType = "Employee";
+                      updates.entityId = matchedEmployee.id;
+                      updates.amount = 0;
+                      
+                    } else {
+                      setInvoiceMatchStatusTx("not_found");
+                    }
+                  }
+
+                  setNewTx({ ...newTx, ...updates });
+                }}
+              />
+            </div>
+
+            <div className="space-y-2">
               <Label>Select {newTx.entityType}</Label>
-              <Select value={newTx.entityId} onValueChange={v => setNewTx({...newTx, entityId: v})}>
+              <Select value={newTx.entityId} onValueChange={v => setNewTx({ ...newTx, entityId: v })}>
                 <SelectTrigger><SelectValue placeholder={`Select a ${newTx.entityType.toLowerCase()}`} /></SelectTrigger>
                 <SelectContent>
                   {newTx.entityType === "Customer" && (
-                    customers && customers.length > 0 
+                    customers && customers.length > 0
                       ? customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
                       : <SelectItem value="no-data" disabled>No customers found</SelectItem>
                   )}
@@ -491,18 +835,18 @@ function AccountsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input type="date" value={newTx.date} onChange={e => setNewTx({...newTx, date: e.target.value})} />
+                <Input type="date" value={newTx.date} onChange={e => setNewTx({ ...newTx, date: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Amount (₹)</Label>
-                <Input type="number" value={newTx.amount || ""} onChange={e => setNewTx({...newTx, amount: Number(e.target.value)})} placeholder="0" />
+                <Input type="number" value={newTx.amount || ""} onChange={e => setNewTx({ ...newTx, amount: Number(e.target.value) })} placeholder="0" />
               </div>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Payment Mode</Label>
-                <Select value={newTx.paymentMode} onValueChange={v => setNewTx({...newTx, paymentMode: v})}>
+                <Select value={newTx.paymentMode} onValueChange={v => setNewTx({ ...newTx, paymentMode: v })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Cash">Cash</SelectItem>
@@ -514,35 +858,35 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Notes/Reference</Label>
-                <Input placeholder="Optional" value={newTx.notes} onChange={e => setNewTx({...newTx, notes: e.target.value})} />
+                <Input placeholder="Optional" value={newTx.notes} onChange={e => setNewTx({ ...newTx, notes: e.target.value })} />
               </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddTxOpen(false)}>Cancel</Button>
             <Button onClick={() => {
-              if(!newTx.entityId) return;
+              if (!newTx.entityId) return;
               let entityName = "";
-              if(newTx.entityType === "Customer") {
+              if (newTx.entityType === "Customer") {
                 const c = customers.find(x => x.id === newTx.entityId);
                 entityName = c ? (c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer") : "";
-              } else if(newTx.entityType === "Vendor") {
+              } else if (newTx.entityType === "Vendor") {
                 const v = vendors.find(x => x.id === newTx.entityId);
                 entityName = v ? (v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor") : "";
-              } else if(newTx.entityType === "Employee") {
+              } else if (newTx.entityType === "Employee") {
                 const e = employees.find(x => x.id === newTx.entityId);
                 entityName = e ? (e.name ? e.name.split('---META---')[0] : e.id || "Unknown Employee") : "";
               }
-              
+
               const txWithId = {
                 id: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
                 ...newTx,
                 entityName
               };
-              
+
               setTransactions([txWithId, ...transactions]);
               setIsAddTxOpen(false);
-              setNewTx({...newTx, entityId: "", amount: 0, notes: ""});
+              setNewTx({ ...newTx, entityId: "", amount: 0, notes: "" });
             }}>Save Transaction</Button>
           </DialogFooter>
         </DialogContent>
@@ -559,25 +903,25 @@ function AccountsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Date</Label>
-                <Input type="date" value={newExpense.date} onChange={e => setNewExpense({...newExpense, date: e.target.value})} />
+                <Input type="date" value={newExpense.date} onChange={e => setNewExpense({ ...newExpense, date: e.target.value })} />
               </div>
               <div className="space-y-2">
                 <Label>Amount (₹)</Label>
-                <Input type="number" value={newExpense.amount || ""} onChange={e => setNewExpense({...newExpense, amount: Number(e.target.value)})} placeholder="0.00" />
+                <Input type="number" value={newExpense.amount || ""} onChange={e => setNewExpense({ ...newExpense, amount: Number(e.target.value) })} placeholder="0.00" />
               </div>
             </div>
             <div className="space-y-2">
               <Label>Category</Label>
-              <Input placeholder="e.g. Travel, Office Supplies" value={newExpense.category} onChange={e => setNewExpense({...newExpense, category: e.target.value})} />
+              <Input placeholder="e.g. Travel, Office Supplies" value={newExpense.category} onChange={e => setNewExpense({ ...newExpense, category: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Description</Label>
-              <Input placeholder="Brief description of the expense" value={newExpense.description} onChange={e => setNewExpense({...newExpense, description: e.target.value})} />
+              <Input placeholder="Brief description of the expense" value={newExpense.description} onChange={e => setNewExpense({ ...newExpense, description: e.target.value })} />
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Payment Mode</Label>
-                <Select value={newExpense.paymentMode} onValueChange={v => setNewExpense({...newExpense, paymentMode: v})}>
+                <Select value={newExpense.paymentMode} onValueChange={v => setNewExpense({ ...newExpense, paymentMode: v })}>
                   <SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Cash">Cash</SelectItem>
@@ -589,7 +933,7 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Status</Label>
-                <Select value={newExpense.status} onValueChange={v => setNewExpense({...newExpense, status: v as any})}>
+                <Select value={newExpense.status} onValueChange={v => setNewExpense({ ...newExpense, status: v as any })}>
                   <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Paid">Paid</SelectItem>
@@ -600,7 +944,7 @@ function AccountsPage() {
             </div>
             <div className="space-y-2">
               <Label>Reference No. (Optional)</Label>
-              <Input placeholder="Transaction ID, Cheque No, etc." value={newExpense.reference} onChange={e => setNewExpense({...newExpense, reference: e.target.value})} />
+              <Input placeholder="Transaction ID, Cheque No, etc." value={newExpense.reference} onChange={e => setNewExpense({ ...newExpense, reference: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
@@ -645,7 +989,7 @@ function AccountsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Entity Type</Label>
-                <Select value={newFollowUp.entityType} onValueChange={v => setNewFollowUp({...newFollowUp, entityType: v, entityId: ""})}>
+                <Select value={newFollowUp.entityType} onValueChange={v => setNewFollowUp({ ...newFollowUp, entityType: v, entityId: "" })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Customer">Customer</SelectItem>
@@ -655,11 +999,11 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Select {newFollowUp.entityType}</Label>
-                <Select value={newFollowUp.entityId} onValueChange={v => setNewFollowUp({...newFollowUp, entityId: v})}>
+                <Select value={newFollowUp.entityId} onValueChange={v => setNewFollowUp({ ...newFollowUp, entityId: v })}>
                   <SelectTrigger><SelectValue placeholder={`Select a ${newFollowUp.entityType.toLowerCase()}`} /></SelectTrigger>
                   <SelectContent className="max-h-64">
                     {newFollowUp.entityType === "Customer" && (
-                      customers && customers.length > 0 
+                      customers && customers.length > 0
                         ? customers.map(c => <SelectItem key={`fc-${c.id}`} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
                         : <SelectItem value="no-data" disabled>No customers found</SelectItem>
                     )}
@@ -673,25 +1017,179 @@ function AccountsPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label>Invoice ID</Label>
-              <Input placeholder="INV-001" value={newFollowUp.invoiceId} onChange={e => setNewFollowUp({...newFollowUp, invoiceId: e.target.value})} />
+              <div className="flex justify-between items-center">
+                <Label>Booking ID / Vendor ID (Auto-fill)</Label>
+                {invoiceMatchStatus === "found" && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">Match Found!</span>}
+                {invoiceMatchStatus === "not_found" && <span className="text-[10px] text-rose-600 font-bold bg-rose-100 px-2 py-0.5 rounded-full">Not Found</span>}
+              </div>
+              <Input
+                placeholder="Type Booking, Invoice, Customer, or Vendor ID..."
+                value={newFollowUp.invoiceId}
+                onChange={e => {
+                  const val = e.target.value;
+                  let updates: any = { invoiceId: val };
+
+                  if (!val.trim()) {
+                    setInvoiceMatchStatus(null);
+                    setNewFollowUp({ ...newFollowUp, ...updates });
+                    return;
+                  }
+
+                  // Auto-fill logic
+                  const matchingBooking = bookings.find(b =>
+                    b.saleInvoiceNo?.toLowerCase() === val.toLowerCase() ||
+                    b.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase() ||
+                    b.id?.toLowerCase() === val.toLowerCase() ||
+                    b.reference?.toLowerCase() === val.toLowerCase()
+                  );
+
+                  if (matchingBooking) {
+                    setInvoiceMatchStatus("found");
+                    const isVendorMatch = matchingBooking.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase();
+
+                    if (isVendorMatch) {
+                      const pending = (matchingBooking.purchasePrice || 0) - (matchingBooking.paid || 0);
+                      updates.pendingAmount = pending > 0 ? pending.toString() : "0";
+
+                      if (matchingBooking.supplier) {
+                        const v = vendors.find(vend => vend.name && vend.name.includes(matchingBooking.supplier));
+                        if (v) {
+                          updates.entityType = "Vendor";
+                          updates.entityId = v.id;
+                        }
+                      }
+                    } else {
+                      const pending = (matchingBooking.amount || 0) - (matchingBooking.paid || 0);
+                      updates.pendingAmount = pending > 0 ? pending.toString() : "0";
+
+                      if (matchingBooking.customer) {
+                        const c = customers.find(cust => cust.name && cust.name.includes(matchingBooking.customer));
+                        if (c) {
+                          updates.entityType = "Customer";
+                          updates.entityId = c.id;
+                        }
+                      }
+                    }
+                  } else {
+                    const matchedVendor = vendors.find(v => v.id?.toLowerCase() === val.toLowerCase());
+                    const matchedCustomer = customers.find(c => c.id?.toLowerCase() === val.toLowerCase());
+                    
+                    if (matchedVendor) {
+                      setInvoiceMatchStatus("found");
+                      updates.entityType = "Vendor";
+                      updates.entityId = matchedVendor.id;
+                      
+                      // Calculate total pending amount for this vendor
+                      const vendorBookings = bookings.filter(b => b.supplier === matchedVendor.name?.split('---META---')[0]);
+                      const totalPending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
+                      updates.pendingAmount = totalPending > 0 ? totalPending.toString() : "0";
+                      
+                    } else if (matchedCustomer) {
+                      setInvoiceMatchStatus("found");
+                      updates.entityType = "Customer";
+                      updates.entityId = matchedCustomer.id;
+                      
+                      // Calculate total pending amount for this customer
+                      const customerBookings = bookings.filter(b => b.customer === matchedCustomer.name?.split('---META---')[0]);
+                      const totalPending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
+                      updates.pendingAmount = totalPending > 0 ? totalPending.toString() : "0";
+                      
+                    } else {
+                      setInvoiceMatchStatus("not_found");
+                    }
+                  }
+
+                  setNewFollowUp({ ...newFollowUp, ...updates });
+                }}
+              />
             </div>
             <div className="space-y-2">
               <Label>Pending Amount (₹)</Label>
-              <Input type="number" placeholder="Enter amount" value={newFollowUp.pendingAmount} onChange={e => setNewFollowUp({...newFollowUp, pendingAmount: e.target.value})} />
+              <Input type="number" placeholder="Enter amount" value={newFollowUp.pendingAmount} onChange={e => setNewFollowUp({ ...newFollowUp, pendingAmount: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Follow-up Date</Label>
-              <Input type="date" value={newFollowUp.followUpDate} onChange={e => setNewFollowUp({...newFollowUp, followUpDate: e.target.value})} />
+              <Input type="date" value={newFollowUp.followUpDate} onChange={e => setNewFollowUp({ ...newFollowUp, followUpDate: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label>Remark</Label>
-              <Textarea placeholder="Enter any remarks..." className="min-h-[80px]" value={newFollowUp.remark} onChange={e => setNewFollowUp({...newFollowUp, remark: e.target.value})} />
+              <Textarea placeholder="Enter any remarks..." className="min-h-[80px]" value={newFollowUp.remark} onChange={e => setNewFollowUp({ ...newFollowUp, remark: e.target.value })} />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddFollowUpOpen(false)}>Cancel</Button>
             <Button onClick={handleCreateFollowUp}>Create Follow-up</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Add Payment Request Dialog */}
+      <Dialog open={isAddPaymentRequestOpen} onOpenChange={setIsAddPaymentRequestOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Create Payment Request</DialogTitle>
+            <DialogDescription>Submit a payment request for approval.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Entity Type</Label>
+                <Select value={newPaymentRequest.entityType} onValueChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityType: v, entityId: "" })}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Customer">Customer</SelectItem>
+                    <SelectItem value="Vendor">Vendor</SelectItem>
+                    <SelectItem value="Employee">Employee</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Select {newPaymentRequest.entityType}</Label>
+                <Select value={newPaymentRequest.entityId} onValueChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityId: v })}>
+                  <SelectTrigger><SelectValue placeholder={`Select a ${newPaymentRequest.entityType?.toLowerCase()}`} /></SelectTrigger>
+                  <SelectContent className="max-h-64">
+                    {newPaymentRequest.entityType === "Customer" && (
+                      customers && customers.length > 0
+                        ? customers.map(c => <SelectItem key={`pr-c-${c.id}`} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id}</SelectItem>)
+                        : <SelectItem value="no-data" disabled>No customers found</SelectItem>
+                    )}
+                    {newPaymentRequest.entityType === "Vendor" && (
+                      vendors && vendors.length > 0
+                        ? vendors.map(v => <SelectItem key={`pr-v-${v.id}`} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id}</SelectItem>)
+                        : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
+                    )}
+                    {newPaymentRequest.entityType === "Employee" && (
+                      employees && employees.length > 0
+                        ? employees.map(e => <SelectItem key={`pr-e-${e.id}`} value={e.id}>{e.name || e.id}</SelectItem>)
+                        : <SelectItem value="no-data" disabled>No employees found</SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Booking ID / Invoice No (Optional)</Label>
+              <Input
+                placeholder="Type Booking ID or Invoice No..."
+                value={newPaymentRequest.invoiceId}
+                onChange={e => setNewPaymentRequest({ ...newPaymentRequest, invoiceId: e.target.value })}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Amount (₹)</Label>
+              <Input type="number" placeholder="Enter amount" value={newPaymentRequest.amount || ""} onChange={e => setNewPaymentRequest({ ...newPaymentRequest, amount: Number(e.target.value) })} />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Remarks / Justification</Label>
+              <Textarea placeholder="Explain the purpose of this payment..." className="min-h-[80px]" value={newPaymentRequest.remark} onChange={e => setNewPaymentRequest({ ...newPaymentRequest, remark: e.target.value })} />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddPaymentRequestOpen(false)}>Cancel</Button>
+            <Button onClick={handleCreatePaymentRequest}>Submit Request</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -714,17 +1212,17 @@ function AccountsPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Interaction Notes</Label>
-              <Textarea 
-                placeholder="What was discussed?" 
-                className="min-h-[100px]" 
+              <Textarea
+                placeholder="What was discussed?"
+                className="min-h-[100px]"
                 value={logNotes}
                 onChange={(e) => setLogNotes(e.target.value)}
               />
             </div>
             <div className="space-y-2">
               <Label>Next Follow-up Date</Label>
-              <Input 
-                type="date" 
+              <Input
+                type="date"
                 value={logDate}
                 onChange={(e) => setLogDate(e.target.value)}
               />
@@ -755,6 +1253,124 @@ function AccountsPage() {
           <DialogFooter className="mt-4">
             <Button variant="outline" onClick={() => setIsDeleteModalOpen(false)}>Cancel</Button>
             <Button variant="destructive" onClick={confirmDelete}>Delete</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Action Popup Dialog */}
+      <Dialog open={isActionPopupOpen} onOpenChange={setIsActionPopupOpen}>
+        <DialogContent className="sm:max-w-[400px]">
+          <DialogHeader>
+            <DialogTitle>
+              {actionPopupType === "Accounts Verified" ? "Verify Request" :
+               actionPopupType === "Approved" ? "Approve Request" :
+               actionPopupType === "Rejected" ? "Reject Request" :
+               actionPopupType === "Paid" ? "Mark as Paid" : "Update Status"}
+            </DialogTitle>
+            <DialogDescription>
+              Please provide any remarks or justification (optional).
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="space-y-2">
+              <Label>Remark / Notes</Label>
+              <Textarea 
+                placeholder="Type your notes here..." 
+                className="min-h-[100px]" 
+                value={actionPopupRemark}
+                onChange={(e) => setActionPopupRemark(e.target.value)}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsActionPopupOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleActionPopupSubmit}
+              className={actionPopupType === 'Rejected' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
+            >
+              Confirm
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* History Viewer Dialog */}
+      <Dialog open={isHistoryViewerOpen} onOpenChange={setIsHistoryViewerOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Approval Audit History</DialogTitle>
+            <DialogDescription>Full trail of actions for this request.</DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
+            {historyReqId && (
+              <div className="space-y-6">
+                {paymentRequests.find(r => r.id === historyReqId)?.auditLog.map((log, idx) => (
+                  <div key={idx} className="flex gap-4 relative">
+                    <div className="flex flex-col items-center">
+                      <div className="h-3 w-3 bg-primary rounded-full mt-1"></div>
+                      {idx !== (paymentRequests.find(r => r.id === historyReqId)?.auditLog.length || 1) - 1 && (
+                        <div className="w-px h-full bg-border mt-1"></div>
+                      )}
+                    </div>
+                    <div className="flex-1 pb-4">
+                      <div className="flex justify-between items-start mb-1">
+                        <p className="text-sm font-semibold text-foreground">{log.action}</p>
+                        <p className="text-xs text-muted-foreground">{new Date(log.timestamp).toLocaleString()}</p>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-2">By: {log.user}</p>
+                      {log.remark && (
+                        <div className="bg-muted p-3 rounded-lg text-sm text-foreground">
+                          {log.remark}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsHistoryViewerOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Receipt Viewer Dialog */}
+      <Dialog open={isReceiptViewerOpen} onOpenChange={setIsReceiptViewerOpen}>
+        <DialogContent className="sm:max-w-[600px]">
+          <DialogHeader>
+            <DialogTitle>Payment Receipt</DialogTitle>
+          </DialogHeader>
+          {receiptReqId && (
+            <div className="bg-card border border-border p-8 rounded-xl shadow-sm text-center">
+              <div className="h-16 w-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+              </div>
+              <h2 className="text-2xl font-bold mb-2">Payment Successful</h2>
+              <p className="text-muted-foreground mb-8">
+                Request ID: {receiptReqId} <br/>
+                Receipt ID: {paymentRequests.find(r => r.id === receiptReqId)?.receiptId}
+              </p>
+              
+              <div className="bg-secondary/30 rounded-xl p-6 text-left grid grid-cols-2 gap-y-4">
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Date</p>
+                  <p className="font-medium text-foreground">{new Date().toLocaleDateString()}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Entity</p>
+                  <p className="font-medium text-foreground">{paymentRequests.find(r => r.id === receiptReqId)?.entityName}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Amount</p>
+                  <p className="text-3xl font-bold text-foreground mt-1">{formatINR(paymentRequests.find(r => r.id === receiptReqId)?.amount || 0)}</p>
+                </div>
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button onClick={() => window.print()} variant="outline" className="mr-auto">Print</Button>
+            <Button onClick={() => setIsReceiptViewerOpen(false)}>Close</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

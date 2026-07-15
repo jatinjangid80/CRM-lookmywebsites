@@ -235,6 +235,28 @@ export type Booking = {
   };
 };
 
+export type PaymentRequest = {
+  id: string;
+  date: string;
+  employeeId: string;
+  employeeName: string;
+  invoiceId: string;
+  entityType: "Customer" | "Vendor" | "Employee" | "";
+  entityId: string;
+  entityName: string;
+  amount: number;
+  status: "Pending Approval" | "Accounts Verified" | "Approved" | "Rejected" | "Paid";
+  remark?: string;
+  receiptId?: string; // Links to the generated receipt once paid
+  auditLog: {
+    timestamp: string;
+    action: string;
+    user: string;
+    remark?: string;
+  }[];
+};
+
+export const initialPaymentRequests: PaymentRequest[] = [];
 
 export const revenueByMonth: any[] = [
   { month: "Jan", revenue: 4.2 },
