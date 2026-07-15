@@ -14,9 +14,108 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2 } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
+
+export function EntityCombobox({
+  entityType,
+  value,
+  onChange,
+  customers,
+  vendors,
+  employees
+}: {
+  entityType: string;
+  value: string;
+  onChange: (val: string) => void;
+  customers: any[];
+  vendors: any[];
+  employees: any[];
+}) {
+  const [open, setOpen] = useState(false);
+
+  let items: any[] = [];
+  if (entityType === "Customer") items = customers || [];
+  if (entityType === "Vendor") items = vendors || [];
+  if (entityType === "Employee") items = employees || [];
+
+  const displayItems = items.map(item => {
+    const rawName = item.name || "";
+    const nameParts = rawName.split('---META---');
+    const name = nameParts[0] || item.id || `Unknown ${entityType}`;
+    const phone = nameParts[1] || item.phone || "";
+    const email = item.email || "";
+    
+    return {
+      value: item.id,
+      label: name,
+      phone,
+      email
+    };
+  });
+
+  const selectedItem = displayItems.find(item => item.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal bg-background px-3 h-10 rounded-md border-input"
+        >
+          <span className="truncate">
+            {selectedItem ? selectedItem.label : `Select a ${entityType?.toLowerCase() || 'entity'}`}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput placeholder={`Search ${entityType?.toLowerCase() || 'entity'}...`} />
+          <CommandList>
+            <CommandEmpty>No {entityType?.toLowerCase() || 'entity'} found.</CommandEmpty>
+            <CommandGroup>
+              {displayItems.map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={`${item.label}___${item.value}___${item.phone}___${item.email}`}
+                  onSelect={(currentValue) => {
+                    const selectedId = displayItems.find(d => 
+                      `${d.label}___${d.value}___${d.phone}___${d.email}`.toLowerCase() === currentValue
+                    )?.value;
+                    onChange(selectedId || "");
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      value === item.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="truncate">{item.label}</span>
+                    {(item.phone || item.email) && (
+                      <span className="text-xs text-muted-foreground truncate">
+                        {item.phone} {item.phone && item.email ? '•' : ''} {item.email}
+                      </span>
+                    )}
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export const Route = createFileRoute("/crm/accounts")({
   component: AccountsPage,
@@ -810,26 +909,14 @@ function AccountsPage() {
 
             <div className="space-y-2">
               <Label>Select {newTx.entityType}</Label>
-              <Select value={newTx.entityId} onValueChange={v => setNewTx({ ...newTx, entityId: v })}>
-                <SelectTrigger><SelectValue placeholder={`Select a ${newTx.entityType.toLowerCase()}`} /></SelectTrigger>
-                <SelectContent>
-                  {newTx.entityType === "Customer" && (
-                    customers && customers.length > 0
-                      ? customers.map(c => <SelectItem key={c.id} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
-                      : <SelectItem value="no-data" disabled>No customers found</SelectItem>
-                  )}
-                  {newTx.entityType === "Vendor" && (
-                    vendors && vendors.length > 0
-                      ? vendors.map(v => <SelectItem key={v.id} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor"}</SelectItem>)
-                      : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
-                  )}
-                  {newTx.entityType === "Employee" && (
-                    employees && employees.length > 0
-                      ? employees.map(e => <SelectItem key={e.id} value={e.id}>{e.name ? e.name.split('---META---')[0] : e.id || "Unknown Employee"}</SelectItem>)
-                      : <SelectItem value="no-data" disabled>No employees found</SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
+              <EntityCombobox
+                entityType={newTx.entityType}
+                value={newTx.entityId}
+                onChange={v => setNewTx({ ...newTx, entityId: v })}
+                customers={customers}
+                vendors={vendors}
+                employees={employees}
+              />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -999,21 +1086,14 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Select {newFollowUp.entityType}</Label>
-                <Select value={newFollowUp.entityId} onValueChange={v => setNewFollowUp({ ...newFollowUp, entityId: v })}>
-                  <SelectTrigger><SelectValue placeholder={`Select a ${newFollowUp.entityType.toLowerCase()}`} /></SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {newFollowUp.entityType === "Customer" && (
-                      customers && customers.length > 0
-                        ? customers.map(c => <SelectItem key={`fc-${c.id}`} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id || "Unknown Customer"}</SelectItem>)
-                        : <SelectItem value="no-data" disabled>No customers found</SelectItem>
-                    )}
-                    {newFollowUp.entityType === "Vendor" && (
-                      vendors && vendors.length > 0
-                        ? vendors.map(v => <SelectItem key={`fv-${v.id}`} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id || "Unknown Vendor"}</SelectItem>)
-                        : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <EntityCombobox
+                  entityType={newFollowUp.entityType}
+                  value={newFollowUp.entityId}
+                  onChange={v => setNewFollowUp({ ...newFollowUp, entityId: v })}
+                  customers={customers}
+                  vendors={vendors}
+                  employees={employees}
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -1145,26 +1225,14 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Select {newPaymentRequest.entityType}</Label>
-                <Select value={newPaymentRequest.entityId} onValueChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityId: v })}>
-                  <SelectTrigger><SelectValue placeholder={`Select a ${newPaymentRequest.entityType?.toLowerCase()}`} /></SelectTrigger>
-                  <SelectContent className="max-h-64">
-                    {newPaymentRequest.entityType === "Customer" && (
-                      customers && customers.length > 0
-                        ? customers.map(c => <SelectItem key={`pr-c-${c.id}`} value={c.id}>{c.name ? c.name.split('---META---')[0] : c.id}</SelectItem>)
-                        : <SelectItem value="no-data" disabled>No customers found</SelectItem>
-                    )}
-                    {newPaymentRequest.entityType === "Vendor" && (
-                      vendors && vendors.length > 0
-                        ? vendors.map(v => <SelectItem key={`pr-v-${v.id}`} value={v.id}>{v.name ? v.name.split('---META---')[0] : v.id}</SelectItem>)
-                        : <SelectItem value="no-data" disabled>No vendors found</SelectItem>
-                    )}
-                    {newPaymentRequest.entityType === "Employee" && (
-                      employees && employees.length > 0
-                        ? employees.map(e => <SelectItem key={`pr-e-${e.id}`} value={e.id}>{e.name || e.id}</SelectItem>)
-                        : <SelectItem value="no-data" disabled>No employees found</SelectItem>
-                    )}
-                  </SelectContent>
-                </Select>
+                <EntityCombobox
+                  entityType={newPaymentRequest.entityType}
+                  value={newPaymentRequest.entityId}
+                  onChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityId: v })}
+                  customers={customers}
+                  vendors={vendors}
+                  employees={employees}
+                />
               </div>
             </div>
 
