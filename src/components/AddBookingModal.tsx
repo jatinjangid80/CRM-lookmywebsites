@@ -12,8 +12,10 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X } from "lucide-react";
-
+import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 interface AddBookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -30,6 +32,71 @@ const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
   { type: "Taxi", icon: Car, label: "Taxi" },
   { type: "Bus Ticket", icon: Bus, label: "Bus Ticket" },
 ];
+
+function SearchableSelect({
+  value,
+  onChange,
+  items,
+  placeholder,
+  emptyText
+}: {
+  value: string;
+  onChange: (val: string) => void;
+  items: { value: string; label: string }[];
+  placeholder: string;
+  emptyText: string;
+}) {
+  const [open, setOpen] = useState(false);
+  const selectedItem = items.find(item => item.value === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal bg-background px-3 h-10 rounded-md border-input"
+        >
+          <span className="truncate">
+            {selectedItem ? selectedItem.label : placeholder}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-[300px] p-0" align="start">
+        <Command>
+          <CommandInput placeholder={placeholder} />
+          <CommandList>
+            <CommandEmpty>{emptyText}</CommandEmpty>
+            <CommandGroup>
+              {items.map((item) => (
+                <CommandItem
+                  key={item.value}
+                  value={`${item.label}___${item.value}`}
+                  onSelect={() => {
+                    onChange(item.value);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      value === item.value ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
 
 export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalProps) {
   const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
@@ -220,19 +287,13 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
             <div className="space-y-2">
               <Label>Supplier *</Label>
-              <select
-                required
+              <SearchableSelect
                 value={supplier}
-                onChange={(e) => setSupplier(e.target.value)}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select a supplier...</option>
-                {vendors.map((v) => (
-                  <option key={v.id} value={v.name}>
-                    {v.name}
-                  </option>
-                ))}
-              </select>
+                onChange={(val) => setSupplier(val)}
+                items={vendors.map(v => ({ value: v.name, label: v.name }))}
+                placeholder="Select a supplier..."
+                emptyText="No supplier found."
+              />
             </div>
             <div className="space-y-2">
               <Label>Booking Date *</Label>
@@ -245,26 +306,19 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
             </div>
             <div className="space-y-2">
               <Label>Customer Name *</Label>
-              <select
-                required
+              <SearchableSelect
                 value={customer}
-                onChange={(e) => {
-                  const selectedName = e.target.value;
-                  setCustomer(selectedName);
-                  const found = customers.find(c => c.name === selectedName);
+                onChange={(val) => {
+                  setCustomer(val);
+                  const found = customers.find(c => c.name === val);
                   if (found && found.phone) {
                     setMobileNumber(found.phone);
                   }
                 }}
-                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                <option value="">Select a customer...</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+                items={customers.map(c => ({ value: c.name, label: c.name }))}
+                placeholder="Select a customer..."
+                emptyText="No customer found."
+              />
             </div>
             <div className="space-y-2">
               <Label>Mobile Number *</Label>
@@ -465,10 +519,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
               <>
                 <div className="col-span-1 md:col-span-2 mb-2">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Auto-fill from Packages</Label>
-                  <select
-                    className="w-full mt-2 rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                    onChange={(e) => {
-                      const pkg = packages.find(p => p.id === e.target.value);
+                  <SearchableSelect
+                    value="" // It's just for auto-fill, no need to store selected package id in state right now, but wait, SearchableSelect doesn't have an empty value handling well if value is not in items.
+                    onChange={(val) => {
+                      const pkg = packages.find(p => p.id === val);
                       if (pkg) {
                         setDetails((prev: any) => ({
                           ...prev,
@@ -481,14 +535,10 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                         }
                       }
                     }}
-                  >
-                    <option value="">-- Select Package --</option>
-                    {packages.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.title}
-                      </option>
-                    ))}
-                  </select>
+                    items={packages.map(p => ({ value: p.id, label: p.title }))}
+                    placeholder="-- Select Package --"
+                    emptyText="No package found."
+                  />
                 </div>
 
                 <div className="space-y-2">

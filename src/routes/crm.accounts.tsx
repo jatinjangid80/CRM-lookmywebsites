@@ -85,11 +85,8 @@ export function EntityCombobox({
                 <CommandItem
                   key={item.value}
                   value={`${item.label}___${item.value}___${item.phone}___${item.email}`}
-                  onSelect={(currentValue) => {
-                    const selectedId = displayItems.find(d => 
-                      `${d.label}___${d.value}___${d.phone}___${d.email}`.toLowerCase() === currentValue
-                    )?.value;
-                    onChange(selectedId || "");
+                  onSelect={() => {
+                    onChange(item.value || "");
                     setOpen(false);
                   }}
                 >
@@ -117,6 +114,84 @@ export function EntityCombobox({
   );
 }
 
+export function BookingCombobox({
+  bookings,
+  value,
+  onChange
+}: {
+  bookings: any[];
+  value: string;
+  onChange: (val: string, booking: any) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  
+  const displayItems = (bookings || []).map(b => {
+    const isVendor = !!b.supplier;
+    const entityName = b.customer || b.supplier || "Unknown Entity";
+    const invoiceNo = b.saleInvoiceNo || b.purchaseInvoiceNo || b.id || "N/A";
+    const label = `${invoiceNo} - ${entityName.split('---META---')[0]}`;
+    
+    return {
+      value: String(b.id),
+      invoiceNo: String(invoiceNo),
+      label,
+      entityName,
+      bookingId: String(b.id),
+      original: b
+    };
+  });
+
+  const selectedItem = displayItems.find(item => item.value === value || item.invoiceNo === value);
+
+  return (
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <Button
+          variant="outline"
+          role="combobox"
+          aria-expanded={open}
+          className="w-full justify-between font-normal bg-background px-3 h-10 rounded-md border-input"
+        >
+          <span className="truncate">
+            {selectedItem ? selectedItem.label : "Search by name, invoice, or ID..."}
+          </span>
+          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-full p-0" align="start">
+        <Command>
+          <CommandInput placeholder="Search bookings..." />
+          <CommandList>
+            <CommandEmpty>No bookings found.</CommandEmpty>
+            <CommandGroup>
+              {displayItems.map((item) => (
+                <CommandItem
+                  key={item.bookingId}
+                  value={`${item.label}___${item.bookingId}___${item.invoiceNo}`}
+                  onSelect={() => {
+                    onChange(item.invoiceNo, item.original);
+                    setOpen(false);
+                  }}
+                >
+                  <Check
+                    className={cn(
+                      "mr-2 h-4 w-4 shrink-0",
+                      (value === item.value || value === item.invoiceNo) ? "opacity-100" : "opacity-0"
+                    )}
+                  />
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="truncate">{item.label}</span>
+                  </div>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 export const Route = createFileRoute("/crm/accounts")({
   component: AccountsPage,
 });
@@ -128,7 +203,7 @@ function AccountsPage() {
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
   const [employees] = useSupabaseTable<any[]>("employees", []);
-  const [bookings] = useSupabaseTable<any[]>("bookings", []);
+  const [bookings, setBookings] = useSupabaseTable<any[]>("bookings", []);
 
   // Transactions State
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
@@ -819,29 +894,21 @@ function AccountsPage() {
                 {invoiceMatchStatusTx === "found" && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">Match Found!</span>}
                 {invoiceMatchStatusTx === "not_found" && <span className="text-[10px] text-rose-600 font-bold bg-rose-100 px-2 py-0.5 rounded-full">Not Found</span>}
               </div>
-              <Input
-                placeholder="Optional: Type Booking, Invoice, Customer, or Vendor ID..."
+              <BookingCombobox
+                bookings={bookings}
                 value={newTx.invoiceId || ""}
-                onChange={e => {
-                  const val = e.target.value;
+                onChange={(val, matchingBooking) => {
                   let updates: any = { invoiceId: val };
 
-                  if (!val.trim()) {
+                  if (!val || !val.trim()) {
                     setInvoiceMatchStatusTx(null);
                     setNewTx({ ...newTx, ...updates });
                     return;
                   }
 
-                  const matchingBooking = bookings.find(b =>
-                    b.saleInvoiceNo?.toLowerCase() === val.toLowerCase() ||
-                    b.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase() ||
-                    b.id?.toLowerCase() === val.toLowerCase() ||
-                    b.reference?.toLowerCase() === val.toLowerCase()
-                  );
-
                   if (matchingBooking) {
                     setInvoiceMatchStatusTx("found");
-                    const isVendorMatch = matchingBooking.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase();
+                    const isVendorMatch = !!matchingBooking.supplier;
 
                     if (isVendorMatch) {
                       const pending = (matchingBooking.purchasePrice || 0) - (matchingBooking.paid || 0);
@@ -867,39 +934,7 @@ function AccountsPage() {
                       }
                     }
                   } else {
-                    const matchedVendor = vendors.find(v => v.id?.toLowerCase() === val.toLowerCase());
-                    const matchedCustomer = customers.find(c => c.id?.toLowerCase() === val.toLowerCase());
-                    const matchedEmployee = employees.find(e => e.id?.toLowerCase() === val.toLowerCase());
-                    
-                    if (matchedVendor) {
-                      setInvoiceMatchStatusTx("found");
-                      updates.entityType = "Vendor";
-                      updates.entityId = matchedVendor.id;
-                      
-                      // Calculate total pending amount for this vendor
-                      const vendorBookings = bookings.filter(b => b.supplier === matchedVendor.name?.split('---META---')[0]);
-                      const totalPending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
-                      updates.amount = totalPending > 0 ? totalPending : 0;
-                      
-                    } else if (matchedCustomer) {
-                      setInvoiceMatchStatusTx("found");
-                      updates.entityType = "Customer";
-                      updates.entityId = matchedCustomer.id;
-                      
-                      // Calculate total pending amount for this customer
-                      const customerBookings = bookings.filter(b => b.customer === matchedCustomer.name?.split('---META---')[0]);
-                      const totalPending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
-                      updates.amount = totalPending > 0 ? totalPending : 0;
-                      
-                    } else if (matchedEmployee) {
-                      setInvoiceMatchStatusTx("found");
-                      updates.entityType = "Employee";
-                      updates.entityId = matchedEmployee.id;
-                      updates.amount = 0;
-                      
-                    } else {
-                      setInvoiceMatchStatusTx("not_found");
-                    }
+                    setInvoiceMatchStatusTx("not_found");
                   }
 
                   setNewTx({ ...newTx, ...updates });
@@ -912,7 +947,30 @@ function AccountsPage() {
               <EntityCombobox
                 entityType={newTx.entityType}
                 value={newTx.entityId}
-                onChange={v => setNewTx({ ...newTx, entityId: v })}
+                onChange={v => {
+                  let pending = 0;
+                  let invoiceId = "";
+                  if (v) {
+                    if (newTx.entityType === "Customer") {
+                      const matched = customers.find(c => c.id === v);
+                      if (matched) {
+                        const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
+                        pending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
+                        const unpaid = customerBookings.find(b => ((b.amount || 0) - (b.paid || 0)) > 0);
+                        if (unpaid) invoiceId = unpaid.id;
+                      }
+                    } else if (newTx.entityType === "Vendor") {
+                      const matched = vendors.find(v2 => v2.id === v);
+                      if (matched) {
+                        const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
+                        pending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
+                        const unpaid = vendorBookings.find(b => ((b.purchasePrice || 0) - (b.paid || 0)) > 0);
+                        if (unpaid) invoiceId = unpaid.id;
+                      }
+                    }
+                  }
+                  setNewTx({ ...newTx, entityId: v, amount: pending > 0 ? pending : (newTx.amount || 0), invoiceId: invoiceId || newTx.invoiceId });
+                }}
                 customers={customers}
                 vendors={vendors}
                 employees={employees}
@@ -970,6 +1028,24 @@ function AccountsPage() {
                 ...newTx,
                 entityName
               };
+
+              // Update booking paid amount if invoiceId exists
+              if (newTx.invoiceId && newTx.amount > 0) {
+                const targetBooking = bookings.find(b =>
+                  String(b.id).toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
+                  String(b.saleInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
+                  String(b.purchaseInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase()
+                );
+                
+                if (targetBooking) {
+                  const currentPaid = targetBooking.paid || 0;
+                  const updatedBooking = {
+                    ...targetBooking,
+                    paid: currentPaid + newTx.amount
+                  };
+                  setBookings(bookings.map(b => b.id === targetBooking.id ? updatedBooking : b));
+                }
+              }
 
               setTransactions([txWithId, ...transactions]);
               setIsAddTxOpen(false);
@@ -1089,7 +1165,35 @@ function AccountsPage() {
                 <EntityCombobox
                   entityType={newFollowUp.entityType}
                   value={newFollowUp.entityId}
-                  onChange={v => setNewFollowUp({ ...newFollowUp, entityId: v })}
+                  onChange={v => {
+                    let pending = 0;
+                    let invoiceId = "";
+                    if (v) {
+                      if (newFollowUp.entityType === "Customer") {
+                        const matched = customers.find(c => c.id === v);
+                        if (matched) {
+                          const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
+                          pending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
+                          const unpaid = customerBookings.find(b => ((b.amount || 0) - (b.paid || 0)) > 0);
+                          if (unpaid) invoiceId = unpaid.id;
+                        }
+                      } else if (newFollowUp.entityType === "Vendor") {
+                        const matched = vendors.find(v2 => v2.id === v);
+                        if (matched) {
+                          const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
+                          pending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
+                          const unpaid = vendorBookings.find(b => ((b.purchasePrice || 0) - (b.paid || 0)) > 0);
+                          if (unpaid) invoiceId = unpaid.id;
+                        }
+                      }
+                    }
+                    setNewFollowUp({ 
+                      ...newFollowUp, 
+                      entityId: v, 
+                      pendingAmount: pending > 0 ? String(pending) : newFollowUp.pendingAmount, 
+                      invoiceId: invoiceId || newFollowUp.invoiceId 
+                    });
+                  }}
                   customers={customers}
                   vendors={vendors}
                   employees={employees}
@@ -1102,30 +1206,21 @@ function AccountsPage() {
                 {invoiceMatchStatus === "found" && <span className="text-[10px] text-emerald-600 font-bold bg-emerald-100 px-2 py-0.5 rounded-full">Match Found!</span>}
                 {invoiceMatchStatus === "not_found" && <span className="text-[10px] text-rose-600 font-bold bg-rose-100 px-2 py-0.5 rounded-full">Not Found</span>}
               </div>
-              <Input
-                placeholder="Type Booking, Invoice, Customer, or Vendor ID..."
-                value={newFollowUp.invoiceId}
-                onChange={e => {
-                  const val = e.target.value;
+              <BookingCombobox
+                bookings={bookings}
+                value={newFollowUp.invoiceId || ""}
+                onChange={(val, matchingBooking) => {
                   let updates: any = { invoiceId: val };
 
-                  if (!val.trim()) {
+                  if (!val || !val.trim()) {
                     setInvoiceMatchStatus(null);
                     setNewFollowUp({ ...newFollowUp, ...updates });
                     return;
                   }
 
-                  // Auto-fill logic
-                  const matchingBooking = bookings.find(b =>
-                    b.saleInvoiceNo?.toLowerCase() === val.toLowerCase() ||
-                    b.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase() ||
-                    b.id?.toLowerCase() === val.toLowerCase() ||
-                    b.reference?.toLowerCase() === val.toLowerCase()
-                  );
-
                   if (matchingBooking) {
                     setInvoiceMatchStatus("found");
-                    const isVendorMatch = matchingBooking.purchaseInvoiceNo?.toLowerCase() === val.toLowerCase();
+                    const isVendorMatch = !!matchingBooking.supplier;
 
                     if (isVendorMatch) {
                       const pending = (matchingBooking.purchasePrice || 0) - (matchingBooking.paid || 0);
@@ -1151,32 +1246,7 @@ function AccountsPage() {
                       }
                     }
                   } else {
-                    const matchedVendor = vendors.find(v => v.id?.toLowerCase() === val.toLowerCase());
-                    const matchedCustomer = customers.find(c => c.id?.toLowerCase() === val.toLowerCase());
-                    
-                    if (matchedVendor) {
-                      setInvoiceMatchStatus("found");
-                      updates.entityType = "Vendor";
-                      updates.entityId = matchedVendor.id;
-                      
-                      // Calculate total pending amount for this vendor
-                      const vendorBookings = bookings.filter(b => b.supplier === matchedVendor.name?.split('---META---')[0]);
-                      const totalPending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
-                      updates.pendingAmount = totalPending > 0 ? totalPending.toString() : "0";
-                      
-                    } else if (matchedCustomer) {
-                      setInvoiceMatchStatus("found");
-                      updates.entityType = "Customer";
-                      updates.entityId = matchedCustomer.id;
-                      
-                      // Calculate total pending amount for this customer
-                      const customerBookings = bookings.filter(b => b.customer === matchedCustomer.name?.split('---META---')[0]);
-                      const totalPending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
-                      updates.pendingAmount = totalPending > 0 ? totalPending.toString() : "0";
-                      
-                    } else {
-                      setInvoiceMatchStatus("not_found");
-                    }
+                    setInvoiceMatchStatus("not_found");
                   }
 
                   setNewFollowUp({ ...newFollowUp, ...updates });
@@ -1228,7 +1298,30 @@ function AccountsPage() {
                 <EntityCombobox
                   entityType={newPaymentRequest.entityType}
                   value={newPaymentRequest.entityId}
-                  onChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityId: v })}
+                  onChange={v => {
+                    let pending = 0;
+                    let invoiceId = "";
+                    if (v) {
+                      if (newPaymentRequest.entityType === "Customer") {
+                        const matched = customers.find(c => c.id === v);
+                        if (matched) {
+                          const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
+                          pending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
+                          const unpaid = customerBookings.find(b => ((b.amount || 0) - (b.paid || 0)) > 0);
+                          if (unpaid) invoiceId = unpaid.id;
+                        }
+                      } else if (newPaymentRequest.entityType === "Vendor") {
+                        const matched = vendors.find(v2 => v2.id === v);
+                        if (matched) {
+                          const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
+                          pending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
+                          const unpaid = vendorBookings.find(b => ((b.purchasePrice || 0) - (b.paid || 0)) > 0);
+                          if (unpaid) invoiceId = unpaid.id;
+                        }
+                      }
+                    }
+                    setNewPaymentRequest({ ...newPaymentRequest, entityId: v, amount: pending > 0 ? pending : (newPaymentRequest.amount || 0), invoiceId: invoiceId || newPaymentRequest.invoiceId });
+                  }}
                   customers={customers}
                   vendors={vendors}
                   employees={employees}
@@ -1238,10 +1331,39 @@ function AccountsPage() {
 
             <div className="space-y-2">
               <Label>Booking ID / Invoice No (Optional)</Label>
-              <Input
-                placeholder="Type Booking ID or Invoice No..."
+              <BookingCombobox
+                bookings={bookings}
                 value={newPaymentRequest.invoiceId}
-                onChange={e => setNewPaymentRequest({ ...newPaymentRequest, invoiceId: e.target.value })}
+                onChange={(val, matchingBooking) => {
+                  let updates: any = { invoiceId: val };
+
+                  if (matchingBooking) {
+                    const isVendorMatch = !!matchingBooking.supplier;
+                    if (isVendorMatch) {
+                      const pending = (matchingBooking.purchasePrice || 0) - (matchingBooking.paid || 0);
+                      updates.amount = pending > 0 ? pending : 0;
+                      if (matchingBooking.supplier) {
+                        const v = vendors.find(vend => vend.name && vend.name.includes(matchingBooking.supplier));
+                        if (v) {
+                          updates.entityType = "Vendor";
+                          updates.entityId = v.id;
+                        }
+                      }
+                    } else {
+                      const pending = (matchingBooking.amount || 0) - (matchingBooking.paid || 0);
+                      updates.amount = pending > 0 ? pending : 0;
+                      if (matchingBooking.customer) {
+                        const c = customers.find(cust => cust.name && cust.name.includes(matchingBooking.customer));
+                        if (c) {
+                          updates.entityType = "Customer";
+                          updates.entityId = c.id;
+                        }
+                      }
+                    }
+                  }
+
+                  setNewPaymentRequest({ ...newPaymentRequest, ...updates });
+                }}
               />
             </div>
 

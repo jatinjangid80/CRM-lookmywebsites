@@ -195,6 +195,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         "adminRemarks",
         "rejectionReason",
         "paymentDetails",
+        "auditLog",
+        "remark",
       ];
 
       const existingRemarks = newRow.remarks || "";
