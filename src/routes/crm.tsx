@@ -108,6 +108,8 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Bookings",
       "Documents",
       "Vendors",
+      "Accounts",
+      "Attendance",
       "Settings"
     ].includes(n.label));
   }
@@ -121,6 +123,8 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Documents",
       "Packages",
       "Vendors",
+      "Accounts",
+      "Attendance",
       "Settings"
     ].includes(n.label));
   }
