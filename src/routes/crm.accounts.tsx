@@ -1,4 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { getAuth } from "@/lib/auth";
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -197,6 +198,7 @@ export const Route = createFileRoute("/crm/accounts")({
 });
 
 function AccountsPage() {
+  const auth = getAuth();
   const [activeTab, setActiveTab] = useState("expenses");
 
   // Entities for Receipts & Payments
@@ -411,8 +413,8 @@ function AccountsPage() {
     const newReq: PaymentRequest = {
       id: `PRQ-${Math.floor(Math.random() * 10000)}`,
       date: newPaymentRequest.date || new Date().toISOString().split('T')[0],
-      employeeId: "EMP-001", // Mocked logged-in user
-      employeeName: "Current User",
+      employeeId: auth?.id || "EMP-001",
+      employeeName: auth?.name || "Current User",
       invoiceId: newPaymentRequest.invoiceId || "",
       entityType: newPaymentRequest.entityType as any,
       entityId: newPaymentRequest.entityId,
@@ -423,7 +425,7 @@ function AccountsPage() {
       auditLog: [{
         timestamp: new Date().toISOString(),
         action: "Created Request",
-        user: "Current User",
+        user: auth?.name || "Current User",
         remark: newPaymentRequest.remark
       }]
     };
@@ -460,7 +462,7 @@ function AccountsPage() {
       const newAuditLog = [...req.auditLog, {
         timestamp: new Date().toISOString(),
         action: actionDesc,
-        user: "Current User",
+        user: auth?.name || "Current User",
         remark: actionPopupRemark
       }];
 
@@ -513,7 +515,7 @@ function AccountsPage() {
           <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
-          <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approvel</TabsTrigger>
+          <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
         </TabsList>
 
         <TabsContent value="expenses" className="space-y-6 mt-6">

@@ -170,6 +170,26 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       }
     }
     if (tableName === "payment_requests") {
+      // Map native columns
+      if (newRow.createdAt !== undefined) newRow.date = newRow.createdAt;
+      else if (newRow.dueDate !== undefined) newRow.date = newRow.dueDate;
+      else if (newRow.date === undefined) newRow.date = new Date().toISOString();
+      
+      if (newRow.employeeName !== undefined) newRow.submittedBy = newRow.employeeName;
+      else if (newRow.createdBy !== undefined) newRow.submittedBy = newRow.createdBy;
+      else if (newRow.submittedBy === undefined) newRow.submittedBy = "Unknown";
+      
+      if (newRow.vendor !== undefined) newRow.supplier = newRow.vendor;
+      else if (newRow.entityType === "Vendor" && newRow.entityName) newRow.supplier = newRow.entityName;
+      else if (newRow.supplier === undefined) newRow.supplier = "N/A";
+      
+      if (newRow.customer !== undefined) newRow.clientName = newRow.customer;
+      else if (newRow.entityType === "Customer" && newRow.entityName) newRow.clientName = newRow.entityName;
+      else if (newRow.clientName === undefined) newRow.clientName = "N/A";
+      
+      if (newRow.requestedAmount !== undefined) newRow.amount = newRow.requestedAmount;
+      else if (newRow.amount === undefined) newRow.amount = 0;
+
       const requestMeta: Record<string, any> = {};
       const metaFields = [
         "paidFor",
@@ -197,6 +217,22 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         "paymentDetails",
         "auditLog",
         "remark",
+        "accountStatus",
+        "adminStatus",
+        "createdAt",
+        "updatedAt",
+        "createdBy",
+        "entityType",
+        "entityId",
+        "entityName",
+        "employeeId",
+        "invoiceId",
+        "receiptId",
+        "vendorId",
+        "customerId",
+        "currency",
+        "notes",
+        "timeline"
       ];
 
       const existingRemarks = newRow.remarks || "";
@@ -208,6 +244,25 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       }
 
       newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...requestMeta });
+    }
+
+    if (tableName === "transactions") {
+      const transactionMeta: Record<string, any> = {};
+      const metaFields = ["reference", "status", "invoiceId", "receiptId"];
+      
+      const existingNotes = newRow.notes || "";
+      let hasMeta = false;
+      for (const field of metaFields) {
+        if (newRow[field] !== undefined) {
+          transactionMeta[field] = newRow[field];
+          delete newRow[field];
+          hasMeta = true;
+        }
+      }
+      
+      if (hasMeta) {
+        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, ...transactionMeta });
+      }
     }
 
     if (tableName === "customers") {
@@ -417,6 +472,24 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             "adminRemarks",
             "rejectionReason",
             "paymentDetails",
+            "accountStatus",
+            "adminStatus",
+            "createdAt",
+            "updatedAt",
+            "createdBy",
+            "entityType",
+            "entityId",
+            "entityName",
+            "employeeId",
+            "invoiceId",
+            "auditLog",
+            "remark",
+            "receiptId",
+            "vendorId",
+            "customerId",
+            "currency",
+            "notes",
+            "timeline"
           ];
           for (const field of metaFields) {
             if (parsed[field] !== undefined) {
@@ -425,6 +498,29 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           }
         }
       } catch (e) { }
+    }
+
+    if (tableName === "transactions" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.notes);
+        if (parsed._isMeta) {
+          newRow.notes = parsed.text;
+          const metaFields = ["reference", "status", "invoiceId", "receiptId"];
+          for (const field of metaFields) {
+            if (parsed[field] !== undefined) {
+              newRow[field] = parsed[field];
+            }
+          }
+        }
+      } catch (e) { }
+    }
+
+    if (tableName === "payment_requests") {
+      if (newRow.date && !newRow.createdAt) newRow.createdAt = newRow.date;
+      if (newRow.submittedBy && !newRow.employeeName) newRow.employeeName = newRow.submittedBy;
+      if (newRow.supplier && !newRow.vendor) newRow.vendor = newRow.supplier;
+      if (newRow.clientName && !newRow.customer) newRow.customer = newRow.clientName;
+      if (newRow.amount !== undefined && newRow.requestedAmount === undefined) newRow.requestedAmount = newRow.amount;
     }
 
     if (tableName === "customers" && typeof newRow.name === "string" && newRow.name.includes("---META---")) {
