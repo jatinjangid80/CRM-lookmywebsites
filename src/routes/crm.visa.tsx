@@ -1656,12 +1656,36 @@ function VisaPage() {
                           </div>
                         </div>
 
-                        {/* Status badge */}
-                        <span
-                          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${STATUS_STYLE[app.status]}`}
-                        >
-                          {STATUS_ICON[app.status]} {app.status}
-                        </span>
+                        {/* Status badge - click to change */}
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <button
+                              className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold cursor-pointer hover:opacity-80 transition-opacity ${STATUS_STYLE[app.status]}`}
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              {STATUS_ICON[app.status]} {app.status}
+                              <ChevronDown className="h-3 w-3 ml-0.5 opacity-60" />
+                            </button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-52 p-1" align="start" onClick={(e) => e.stopPropagation()}>
+                            <div className="text-[11px] text-muted-foreground font-medium px-2 py-1.5">Change Status</div>
+                            <div className="text-[10px] text-muted-foreground/70 px-2 pb-1 italic">Auto: Pending / Documents Complete</div>
+                            {(["Submitted", "Under Review", "Approved", "Rejected"] as VisaStatus[]).map((s) => (
+                              <button
+                                key={s}
+                                className={`w-full flex items-center gap-2 rounded-md px-2 py-1.5 text-xs font-medium hover:bg-secondary transition-colors ${app.status === s ? "bg-secondary" : ""}`}
+                                onClick={() => {
+                                  setApps(apps.map((a) => a.id === app.id ? { ...a, status: s } : a));
+                                }}
+                              >
+                                <span className={`inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[10px] font-semibold ${STATUS_STYLE[s]}`}>
+                                  {STATUS_ICON[s]} {s}
+                                </span>
+                                {app.status === s && <Check className="h-3 w-3 ml-auto text-primary" />}
+                              </button>
+                            ))}
+                          </PopoverContent>
+                        </Popover>
 
                         {/* Expand */}
                         <button
