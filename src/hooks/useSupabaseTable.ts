@@ -140,6 +140,16 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.empId;
     }
 
+    if (tableName === "visa_apps") {
+      // Pack extra app-only fields (not in Supabase schema) into docs JSONB as metadata
+      const visaMeta: any = {};
+      if (newRow.phone !== undefined) { visaMeta._phone = newRow.phone; delete newRow.phone; }
+      if (newRow.email !== undefined) { visaMeta._email = newRow.email; delete newRow.email; }
+      // docs is a JSONB array in Supabase — pack meta alongside it
+      const existingDocs = Array.isArray(newRow.docs) ? newRow.docs : [];
+      newRow.docs = JSON.stringify([{ _meta: true, ...visaMeta }, ...existingDocs]);
+    }
+
     // Serialize custom fields into existing columns so they store in Supabase
     // without requiring manual SQL schema migrations.
     const customFields: any = {};
@@ -405,6 +415,24 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     }
     if (tableName === "reviews" && newRow.employeeId) {
       newRow.empId = newRow.employeeId;
+    }
+
+    if (tableName === "visa_apps") {
+      // Unpack docs JSONB — extract meta and restore extra fields
+      try {
+        const docsRaw = newRow.docs;
+        const docsArr = Array.isArray(docsRaw) ? docsRaw : (typeof docsRaw === "string" ? JSON.parse(docsRaw) : []);
+        const metaEntry = docsArr.find((d: any) => d && d._meta === true);
+        if (metaEntry) {
+          if (metaEntry._phone !== undefined) newRow.phone = metaEntry._phone;
+          if (metaEntry._email !== undefined) newRow.email = metaEntry._email;
+          newRow.docs = docsArr.filter((d: any) => !d._meta);
+        } else {
+          newRow.docs = docsArr;
+        }
+      } catch (e) {
+        newRow.docs = [];
+      }
     }
 
     // Backward-compat: old records stored extra fields as meta JSON in notes
