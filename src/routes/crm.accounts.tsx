@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -235,6 +235,8 @@ function AccountsPage() {
     description: "",
     status: "Paid",
   });
+  const [isEditExpenseOpen, setIsEditExpenseOpen] = useState(false);
+  const [editExpense, setEditExpense] = useState<Partial<Expense> | null>(null);
   // Follow-up Note State
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [noteType, setNoteType] = useState<"Paid" | "Unpaid" | "Partial" | "Advance" | "Full" | "">("");
@@ -600,15 +602,41 @@ function AccountsPage() {
                       {formatINR(exp.amount)}
                     </td>
                     <td className="px-6 py-4 text-center">
-                      <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : 'bg-rose-100 text-rose-700 border-rose-200'
-                        }`}>
-                        {exp.status}
-                      </span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity ${
+                              exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : exp.status === 'Cancelled' ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-rose-100 text-rose-700 border-rose-200'
+                            }`}
+                          >
+                            {exp.status} <ChevronDown className="h-2.5 w-2.5" />
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-36 p-1" align="center">
+                          <div className="text-[10px] text-muted-foreground px-2 py-1">Change Status</div>
+                          {(["Paid", "Pending", "Cancelled"] as Expense["status"][]).map((s) => (
+                            <button
+                              key={s}
+                              className={`w-full flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-secondary transition-colors ${exp.status === s ? 'bg-secondary font-semibold' : ''}`}
+                              onClick={() => setExpenseList(expenseList.map(e => e.id === exp.id ? { ...e, status: s } : e))}
+                            >
+                              <span className={`inline-block w-2 h-2 rounded-full ${s === 'Paid' ? 'bg-emerald-500' : s === 'Cancelled' ? 'bg-gray-400' : 'bg-rose-500'}`} />
+                              {s}
+                              {exp.status === s && <Check className="h-3 w-3 ml-auto text-primary" />}
+                            </button>
+                          ))}
+                        </PopoverContent>
+                      </Popover>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50" onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }}>
+                          <Pencil className="h-4 w-4" />
+                        </Button>
+                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -1125,6 +1153,77 @@ function AccountsPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddExpenseOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveExpense}>Save Expense</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Expense Dialog */}
+      <Dialog open={isEditExpenseOpen} onOpenChange={setIsEditExpenseOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Expense</DialogTitle>
+            <DialogDescription>Update the expense details below.</DialogDescription>
+          </DialogHeader>
+          {editExpense && (
+            <div className="grid gap-4 py-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Date</Label>
+                  <Input type="date" value={editExpense.date} onChange={e => setEditExpense({ ...editExpense, date: e.target.value })} />
+                </div>
+                <div className="space-y-2">
+                  <Label>Amount (₹)</Label>
+                  <Input type="number" value={editExpense.amount || ""} onChange={e => setEditExpense({ ...editExpense, amount: Number(e.target.value) })} placeholder="0.00" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Category</Label>
+                <Input placeholder="e.g. Travel, Office Supplies" value={editExpense.category} onChange={e => setEditExpense({ ...editExpense, category: e.target.value })} />
+              </div>
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Input placeholder="Brief description" value={editExpense.description} onChange={e => setEditExpense({ ...editExpense, description: e.target.value })} />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Payment Mode</Label>
+                  <Select value={editExpense.paymentMode} onValueChange={v => setEditExpense({ ...editExpense, paymentMode: v })}>
+                    <SelectTrigger><SelectValue placeholder="Select mode" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Cash">Cash</SelectItem>
+                      <SelectItem value="UPI">UPI</SelectItem>
+                      <SelectItem value="Card">Card</SelectItem>
+                      <SelectItem value="Bank Transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="Cheque">Cheque</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={editExpense.status} onValueChange={v => setEditExpense({ ...editExpense, status: v as any })}>
+                    <SelectTrigger><SelectValue placeholder="Select status" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Paid">Paid</SelectItem>
+                      <SelectItem value="Pending">Pending</SelectItem>
+                      <SelectItem value="Cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Reference No. (Optional)</Label>
+                <Input placeholder="Transaction ID, Cheque No, etc." value={editExpense.reference} onChange={e => setEditExpense({ ...editExpense, reference: e.target.value })} />
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditExpenseOpen(false)}>Cancel</Button>
+            <Button onClick={() => {
+              if (!editExpense?.id) return;
+              setExpenseList(expenseList.map(e => e.id === editExpense.id ? { ...e, ...editExpense } as Expense : e));
+              setIsEditExpenseOpen(false);
+              setEditExpense(null);
+            }}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
