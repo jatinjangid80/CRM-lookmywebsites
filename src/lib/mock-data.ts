@@ -121,8 +121,15 @@ export type Customer = {
   trips: number;
   totalSpend: number;
   tier: "Silver" | "Gold" | "Platinum";
+  companyName?: string;
+  city?: string;
+  referenceName?: string;
+  leadSource?: string;
+  status?: "Active" | "Inactive" | "VIP";
+  assignedEmployee?: string;
   dob?: string;
-  relationship?: string;
+  dateOfAnniversary?: string;
+  gst?: string;
 };
 
 export const customers: Customer[] = [];

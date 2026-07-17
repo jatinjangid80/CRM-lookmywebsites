@@ -62,7 +62,7 @@ function CustomersPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   
   const [newCustomer, setNewCustomer] = useState<Partial<ExtCustomer>>({ 
-    name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned" 
+    name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned", company: "", city: "", reference: "", dob: "", dateOfAnniversary: "", gst: ""
   });
 
   const [selectedCustomer, setSelectedCustomer] = useState<ExtCustomer | null>(null);
@@ -113,6 +113,9 @@ function CustomersPage() {
       reference: newCustomer.reference || "",
       status: (newCustomer.status as any) || "Active",
       assignedTo: newCustomer.assignedTo || "Unassigned",
+      dob: newCustomer.dob || "",
+      dateOfAnniversary: newCustomer.dateOfAnniversary || "",
+      gst: newCustomer.gst || "",
       createdAt: new Date().toISOString().slice(0, 10),
       trips: 0,
       totalSpend: 0,
@@ -457,7 +460,7 @@ function CustomersPage() {
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2 col-span-2">
+            <div className="space-y-2">
               <Label htmlFor="assignedTo">Assigned Employee</Label>
               <Select value={newCustomer.assignedTo || "Unassigned"} onValueChange={(v) => setNewCustomer({ ...newCustomer, assignedTo: v })}>
                 <SelectTrigger id="assignedTo"><SelectValue /></SelectTrigger>
@@ -465,6 +468,18 @@ function CustomersPage() {
                   {assignees.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
                 </SelectContent>
               </Select>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dob">DOB</Label>
+              <Input id="dob" type="date" value={newCustomer.dob || ""} onChange={(e) => setNewCustomer({ ...newCustomer, dob: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="dateOfAnniversary">Date of Anniversary</Label>
+              <Input id="dateOfAnniversary" type="date" value={newCustomer.dateOfAnniversary || ""} onChange={(e) => setNewCustomer({ ...newCustomer, dateOfAnniversary: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="gst">GST</Label>
+              <Input id="gst" placeholder="GST Number" value={newCustomer.gst || ""} onChange={(e) => setNewCustomer({ ...newCustomer, gst: e.target.value })} />
             </div>
             <DialogFooter className="col-span-2 mt-4">
               <Button type="button" variant="outline" onClick={() => { setIsAddOpen(false); setDialogType(null); }}>
@@ -520,8 +535,36 @@ function CustomersPage() {
                           <p className="font-medium text-lg text-foreground">{selectedCustomer.email || "-"}</p>
                         </div>
                         <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Company</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.company || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">City</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.city || "-"}</p>
+                        </div>
+                        <div>
                           <p className="text-muted-foreground text-sm mb-1 font-medium">Reference</p>
                           <p className="font-medium text-lg text-foreground">{selectedCustomer.reference || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Source</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.source || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Assigned To</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.assignedTo || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">DOB</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.dob || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">Anniversary</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.dateOfAnniversary || "-"}</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-sm mb-1 font-medium">GST</p>
+                          <p className="font-medium text-lg text-foreground">{selectedCustomer.gst || "-"}</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground text-sm mb-1 font-medium">Created At</p>

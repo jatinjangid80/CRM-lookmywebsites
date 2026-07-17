@@ -19,6 +19,7 @@ import {
   CheckCircle2,
   Circle,
   Phone,
+  Gift,
 } from "lucide-react";
 import {
   LineChart,
@@ -342,6 +343,39 @@ function Dashboard() {
     .filter((l) => l.nextFollowUp && l.nextFollowUp >= todayStr)
     .sort((a, b) => new Date(a.nextFollowUp).getTime() - new Date(b.nextFollowUp).getTime())
     .slice(0, 5);
+
+  const upcomingEvents = useMemo(() => {
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const events: { id: string, name: string, type: "Birthday" | "Anniversary", date: Date, originalDate: string, daysUntil: number }[] = [];
+
+    (customersList || []).forEach(c => {
+      if (c.dob) {
+        const dobDate = new Date(c.dob);
+        if (!isNaN(dobDate.getTime())) {
+          const nextBday = new Date(today.getFullYear(), dobDate.getMonth(), dobDate.getDate());
+          if (nextBday < today) nextBday.setFullYear(today.getFullYear() + 1);
+          const diff = Math.ceil((nextBday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (diff <= 30) {
+            events.push({ id: c.id, name: c.name, type: "Birthday", date: nextBday, originalDate: c.dob, daysUntil: diff });
+          }
+        }
+      }
+      if (c.dateOfAnniversary) {
+        const annivDate = new Date(c.dateOfAnniversary);
+        if (!isNaN(annivDate.getTime())) {
+          const nextAnniv = new Date(today.getFullYear(), annivDate.getMonth(), annivDate.getDate());
+          if (nextAnniv < today) nextAnniv.setFullYear(today.getFullYear() + 1);
+          const diff = Math.ceil((nextAnniv.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+          if (diff <= 30) {
+            events.push({ id: c.id, name: c.name, type: "Anniversary", date: nextAnniv, originalDate: c.dateOfAnniversary, daysUntil: diff });
+          }
+        }
+      }
+    });
+
+    return events.sort((a, b) => a.daysUntil - b.daysUntil);
+  }, [customersList]);
 
   const kpis = [
     {
@@ -904,6 +938,76 @@ function Dashboard() {
             >
               <Link to="/crm/leads" className="flex items-center justify-center gap-1">
                 View all leads <ChevronRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {/* Row 5: Upcoming Birthdays & Anniversaries */}
+      <div className="grid gap-6 lg:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Gift className="h-5 w-5 text-primary" /> Upcoming Celebrations
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Customer birthdays & anniversaries in the next 30 days
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {upcomingEvents.length > 0 ? (
+                upcomingEvents.slice(0, 5).map((event, idx) => (
+                  <div
+                    key={`${event.id}-${idx}`}
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors"
+                  >
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-semibold truncate text-foreground">{event.name}</p>
+                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
+                        <span className={`font-medium px-1.5 py-0.5 rounded border ${event.type === 'Birthday' ? 'text-pink-600 bg-pink-50 border-pink-100' : 'text-purple-600 bg-purple-50 border-purple-100'}`}>
+                          {event.type}
+                        </span>
+                        <span>Turns {new Date().getFullYear() - new Date(event.originalDate).getFullYear()}</span>
+                      </p>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-[10px] font-semibold text-foreground bg-secondary px-2 py-1 rounded-md">
+                        {event.date.toLocaleDateString(undefined, {
+                          month: "short",
+                          day: "numeric",
+                        })}
+                      </p>
+                      <p className="text-[10px] text-muted-foreground mt-1">
+                        {event.daysUntil === 0 ? "Today!" : `In ${event.daysUntil} days`}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
+                  <Gift className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">No upcoming celebrations</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    No birthdays or anniversaries in the next 30 days.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          {upcomingEvents.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-4 text-xs font-semibold rounded-xl text-primary hover:text-primary-foreground hover:bg-primary"
+              asChild
+            >
+              <Link to="/crm/customers" className="flex items-center justify-center gap-1">
+                View all customers <ChevronRight className="h-3 w-3" />
               </Link>
             </Button>
           )}

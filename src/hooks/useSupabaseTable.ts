@@ -679,6 +679,25 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             console.log(`[leads] Fallback INSERT success (base columns):`, data2);
           }
         }
+        
+        // Fallback for customers
+        if (tableName === "customers" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          console.warn("[customers] Retrying INSERT with base columns only (run the SQL migration to enable all fields)");
+          const NEW_CUST_COLS = [
+            "company","city","reference","source","status","assignedTo","dob","dateOfAnniversary","gst"
+          ];
+          const fallbackRows = toInsert.map((row: any) => {
+            const safe = { ...row };
+            for (const col of NEW_CUST_COLS) delete safe[col];
+            return safe;
+          });
+          const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
+          if (err2) {
+            console.error(`[customers] Fallback INSERT also failed:`, err2.message, err2.details);
+          } else {
+            console.log(`[customers] Fallback INSERT success (base columns):`, data2);
+          }
+        }
       } else {
         console.log(`[${tableName}] INSERT success:`, data);
       }
@@ -699,6 +718,34 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       const { error, data } = await supabase.from(tableName).update(item).eq("id", item.id).select();
       if (error) {
         console.error(`[${tableName}] UPDATE error:`, error.message, error.details, error.hint);
+        
+        // Fallback for leads UPDATE
+        if (tableName === "leads" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          const NEW_SVC_COLS = [
+            "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+            "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+            "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+            "visaType","passportExpiry","country",
+            "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+            "companyName","eventType",
+          ];
+          const safe = { ...item };
+          for (const col of NEW_SVC_COLS) delete safe[col];
+          const { error: err2 } = await supabase.from(tableName).update(safe).eq("id", item.id);
+          if (err2) console.error("[leads] Fallback UPDATE failed:", err2.message);
+        }
+
+        // Fallback for customers UPDATE
+        if (tableName === "customers" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          const NEW_CUST_COLS = [
+            "company","city","reference","source","status","assignedTo","dob","dateOfAnniversary","gst"
+          ];
+          const safe = { ...item };
+          for (const col of NEW_CUST_COLS) delete safe[col];
+          const { error: err2 } = await supabase.from(tableName).update(safe).eq("id", item.id);
+          if (err2) console.error("[customers] Fallback UPDATE failed:", err2.message);
+        }
+
       } else {
         console.log(`[${tableName}] UPDATE success:`, data);
       }
