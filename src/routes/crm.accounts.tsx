@@ -199,7 +199,8 @@ export const Route = createFileRoute("/crm/accounts")({
 
 function AccountsPage() {
   const auth = getAuth();
-  const [activeTab, setActiveTab] = useState("expenses");
+  const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
+  const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
 
   // Entities for Receipts & Payments
   const [customers] = useSupabaseTable<any[]>("customers", []);
@@ -511,14 +512,20 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full sm:w-[800px] grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
-          <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-          <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
-          <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
+        <TabsList className={`grid w-full sm:w-[800px] ${isManagement ? 'grid-cols-1' : 'grid-cols-4'} bg-secondary/50 rounded-xl p-1 shadow-sm`}>
+          {!isManagement && (
+            <>
+              <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+              <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
+              <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
+            </>
+          )}
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="expenses" className="space-y-6 mt-6">
+        {!isManagement && (
+          <>
+            <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
@@ -749,6 +756,9 @@ function AccountsPage() {
             </div>
           )}
         </TabsContent>
+        </>
+        )}
+
         <TabsContent value="payments-approval" className="space-y-6 mt-6">
           <div className="flex justify-between items-center">
             <h3 className="text-lg font-semibold text-foreground">Payment Requests</h3>
@@ -819,7 +829,7 @@ function AccountsPage() {
                                 <Button size="sm" variant="ghost" className="h-8 text-muted-foreground" onClick={() => { setHistoryReqId(req.id); setIsHistoryViewerOpen(true); }}>
                                   History
                                 </Button>
-                                {req.status === 'Pending Approval' && (
+                                {!isManagement && req.status === 'Pending Approval' && (
                                   <Button size="sm" variant="outline" className="h-8 text-purple-600 border-purple-200 hover:bg-purple-50" onClick={() => openActionPopup(req.id, "Accounts Verified")}>
                                     Verify
                                   </Button>
@@ -834,7 +844,7 @@ function AccountsPage() {
                                     </Button>
                                   </>
                                 )}
-                                {req.status === 'Approved' && (
+                                {!isManagement && req.status === 'Approved' && (
                                   <Button size="sm" className="h-8 bg-emerald-600 hover:bg-emerald-700" onClick={() => openActionPopup(req.id, "Paid")}>
                                     Mark Paid
                                   </Button>

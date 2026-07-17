@@ -49,3 +49,25 @@ ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Allow all operations on expenses" ON expenses FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on payment_followups" ON payment_followups FOR ALL USING (true) WITH CHECK (true);
 CREATE POLICY "Allow all operations on transactions" ON transactions FOR ALL USING (true) WITH CHECK (true);
+
+
+-- 4. Create Payment Requests Table
+CREATE TABLE payment_requests (
+  "id" text PRIMARY KEY,
+  "date" text,
+  "employeeId" text,
+  "employeeName" text,
+  "invoiceId" text,
+  "entityType" text,
+  "entityId" text,
+  "entityName" text,
+  "amount" numeric,
+  "status" text,
+  "remark" text,
+  "receiptId" text,
+  "auditLog" jsonb
+);
+
+ALTER TABLE payment_requests ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Allow all operations on payment_requests" ON payment_requests FOR ALL USING (true) WITH CHECK (true);
+
