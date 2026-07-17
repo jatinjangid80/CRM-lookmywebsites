@@ -694,6 +694,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             "visaType","passportExpiry","country",
             "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
             "companyName","eventType",
+            "policyType","queryType","insuranceDate","expiryDate","clientCompany",
           ];
           const fallbackRows = toInsert.map((row: any) => {
             const safe = { ...row };

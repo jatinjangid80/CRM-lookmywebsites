@@ -145,6 +145,7 @@ const SERVICES = [
       { label: "Bus Ticket", icon: "🚌" },
       { label: "Taxi Booking", icon: "🚕" },
       { label: "Travel Insurance", icon: "🛡️" },
+      { label: "General Insurance", icon: "🧳" },
     ],
   },
   {
@@ -292,7 +293,7 @@ const EMPTY_FORM = {
   checkOut: "",
   nights: "",
   nationality: "Indian",
-  starRating: "3",
+  starRating: "1",
   mealPreference: "",
   // Visa
   country: "",
@@ -351,8 +352,8 @@ function AirTicketFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set:
         <Input type="number" min="1" value={form.adults} onChange={set("adults")} className="rounded-xl" />
       </div>
       <div>
-        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Children</label>
-        <Input type="number" min="0" value={form.children} onChange={set("children")} className="rounded-xl" />
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Childrens</label>
+        <Input type="number" min="0" value={form.children} onChange={set("childrens")} className="rounded-xl" />
       </div>
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Infants</label>
@@ -539,7 +540,10 @@ function InsuranceFields({ form, set }: { form: typeof EMPTY_FORM; set: any }) {
       <div className="col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Policy Type *</label>
         <select value={form.policyType} onChange={set("policyType")} className={FIELD_CLS}>
-          {["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"].map(p => <option key={p}>{p}</option>)}
+          {(form.leadSection === "General Insurance"
+            ? ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle","Fire","Marine","Property","Liability","Life"]
+            : ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"]
+          ).map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <div className="col-span-2">
@@ -580,7 +584,7 @@ function GenericTravelFields({ form, set, label }: { form: typeof EMPTY_FORM; se
         <Input type="number" min="1" value={form.pax} onChange={set("pax")} className="rounded-xl" />
       </div>
       <div className="col-span-2">
-        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Budget / Price (₹)</label>
+        <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Price (₹)</label>
         <Input placeholder="e.g. 25000" value={form.budget} onChange={set("budget")} className="rounded-xl" />
       </div>
     </div>
@@ -635,7 +639,7 @@ function getServiceFormType(service: string): string {
   if (service === "Air Ticket") return "air";
   if (service === "Hotel Booking") return "hotel";
   if (service === "Visa") return "visa";
-  if (service === "Travel Insurance") return "insurance";
+  if (service === "Travel Insurance" || service === "General Insurance") return "insurance";
   if (["Corporate Travel", "MICE Events", "Conference Booking"].includes(service)) return "corporate";
   const packages = [
     "International Package","Domestic Package","Honeymoon Package",
@@ -783,7 +787,7 @@ function DynamicFormStep({
                 <Input
                   id="lead-phone"
                   type="tel"
-                  placeholder="+91 98200 00000"
+                  placeholder="+91 9820000000"
                   value={form.phone}
                   onChange={(e) => { const v = e.target.value.replace(/[^0-9+\s-]/g, ""); setForm(f => ({ ...f, phone: v })); }}
                   className="rounded-xl flex-1"
@@ -1448,12 +1452,12 @@ function LeadDetail({
                       <label className="text-[10px] font-semibold uppercase text-muted-foreground">Priority</label>
                       <select
                         value={tripDetails.priority}
-                        onChange={(e) => setTripDetails({ ...tripDetails, priority: e.target.value as "High" | "Medium" | "Low" })}
+                        onChange={(e) => setTripDetails({ ...tripDetails, priority: e.target.value as " 🔴 High" | " 🟡 Medium" | " 🟢 Low" })}
                         className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                       >
-                        <option value="High">High</option>
-                        <option value="Medium">Medium</option>
-                        <option value="Low">Low</option>
+                        <option value=" 🔴 High"> 🔴 High</option>
+                        <option value=" 🟡 Medium"> 🟡 Medium</option>
+                        <option value=" 🟢 Low"> 🟢 Low</option>
                       </select>
                     </div>
                     <div>
@@ -2023,7 +2027,7 @@ function LeadDetail({
               className="flex-none gap-2 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
               onClick={() => onClone(lead)}
             >
-              <Copy className="h-4 w-4" /> Clone
+              <Copy className="h-4 w-4" /> Copy
             </Button>
           )}
           <Button
@@ -2510,7 +2514,7 @@ function LeadsPage() {
               className="gap-2 rounded-xl"
               style={{ background: "var(--gradient-brand)" }}
             >
-              <Plus className="h-4 w-4" /> Add Lead
+              <Plus className="h-4 w-4" /> Add Leads
             </Button>
           </div>
         </div>
@@ -2873,7 +2877,7 @@ function LeadsPage() {
         onOpenChange={setIsImportOpen}
         onImport={handleImportLeads}
         allowedStatuses={STATUSES}
-        allowedPriorities={["High 🔴", "Medium 🟡", "Low 🟢"]}
+        allowedPriorities={[" 🔴 High", " 🟡 Medium", " 🟢 Low"]}
         allowedAssignees={assignees}
       />
       {showModal && (
