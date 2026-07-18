@@ -256,9 +256,25 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       newRow.remarks = JSON.stringify({ _isMeta: true, text: existingRemarks, ...requestMeta });
     }
 
+    if (tableName === "expenses") {
+      const existingDesc = newRow.description || "";
+      if (newRow.createdBy !== undefined) {
+        newRow.description = JSON.stringify({ _isMeta: true, text: existingDesc, createdBy: newRow.createdBy });
+        delete newRow.createdBy;
+      }
+    }
+
+    if (tableName === "payment_followups") {
+      const existingNotes = newRow.notes || "";
+      if (newRow.createdBy !== undefined) {
+        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, createdBy: newRow.createdBy });
+        delete newRow.createdBy;
+      }
+    }
+
     if (tableName === "transactions") {
       const transactionMeta: Record<string, any> = {};
-      const metaFields = ["reference", "status", "invoiceId", "receiptId"];
+      const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy"];
       
       const existingNotes = newRow.notes || "";
       let hasMeta = false;
