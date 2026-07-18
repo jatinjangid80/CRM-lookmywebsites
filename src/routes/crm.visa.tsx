@@ -557,10 +557,13 @@ function VisaPage() {
 
   // Visa Application Form state
   const [appModalOpen, setAppModalOpen] = useState(false);
+  const [appCustomerOpen, setAppCustomerOpen] = useState(false);
   const [appCustomer, setAppCustomer] = useState("");
   const [appCustomerPhone, setAppCustomerPhone] = useState("");
   const [appCustomerEmail, setAppCustomerEmail] = useState("");
+  const [appCountryOpen, setAppCountryOpen] = useState(false);
   const [appCountry, setAppCountry] = useState("");
+  const [appVisaTypeOpen, setAppVisaTypeOpen] = useState(false);
   const [appVisaType, setAppVisaType] = useState("");
 
   const [appTravelDate, setAppTravelDate] = useState("");
@@ -603,7 +606,22 @@ function VisaPage() {
 
   const handleAddApplication = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!appCustomer || !appCountry || !appVisaType || !appTravelDate) return;
+    if (!appCustomer) {
+      toast.error("Please select a Customer Name.");
+      return;
+    }
+    if (!appCountry) {
+      toast.error("Please select a Country.");
+      return;
+    }
+    if (!appVisaType) {
+      toast.error("Please select a Visa Type.");
+      return;
+    }
+    if (!appTravelDate) {
+      toast.error("Please select a Travel Date.");
+      return;
+    }
 
     const match = requirements.find(
       (r) =>
@@ -2050,30 +2068,61 @@ function VisaPage() {
               <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                 Customer Name <span className="text-red-500">*</span>
               </label>
-              <select
-                value={appCustomer}
-                onChange={(e) => {
-                  const custName = e.target.value;
-                  setAppCustomer(custName);
-                  const cust = customers.find(c => c.name === custName);
-                  if (cust) {
-                    setAppCustomerPhone(cust.phone || "");
-                    setAppCustomerEmail(cust.email || "");
-                  } else {
-                    setAppCustomerPhone("");
-                    setAppCustomerEmail("");
-                  }
-                }}
-                required
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">Select a customer</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.name}>
-                    {c.name}
-                  </option>
-                ))}
-              </select>
+              <Popover open={appCustomerOpen} onOpenChange={setAppCustomerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={appCustomerOpen}
+                    className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 h-auto text-sm focus:outline-none focus:ring-2 focus:ring-primary font-normal text-left"
+                  >
+                    {appCustomer
+                      ? customers.find((c) => c.name === appCustomer)?.name || appCustomer
+                      : "Select a customer..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search customer..." className="h-9 text-xs" />
+                    <CommandList>
+                      <CommandEmpty>No customer found.</CommandEmpty>
+                      <CommandGroup>
+                        {customers.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.name}
+                            onSelect={(currentValue) => {
+                              const custName = currentValue === appCustomer.toLowerCase() ? "" : currentValue;
+                              const cust = customers.find(x => x.name.toLowerCase() === custName.toLowerCase());
+                              if (cust) {
+                                setAppCustomerPhone(cust.phone || "");
+                                setAppCustomerEmail(cust.email || "");
+                                setAppCustomer(cust.name);
+                              } else {
+                                setAppCustomerPhone("");
+                                setAppCustomerEmail("");
+                                setAppCustomer("");
+                              }
+                              setAppCustomerOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={`mr-2 h-4 w-4 ${
+                                appCustomer === c.name ? "opacity-100" : "opacity-0"
+                              }`}
+                            />
+                            <div className="flex flex-col">
+                              <span>{c.name}</span>
+                              {c.phone && <span className="text-[10px] text-muted-foreground">{c.phone}</span>}
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -2081,38 +2130,96 @@ function VisaPage() {
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Country <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={appCountry}
-                  onChange={(e) => setAppCountry(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select Country</option>
-                  {COUNTRIES_LIST.map((c) => (
-                    <option key={c} value={c}>
-                      {c}
-                    </option>
-                  ))}
-                </select>
+                <Popover open={appCountryOpen} onOpenChange={setAppCountryOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={appCountryOpen}
+                      className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 h-auto text-sm focus:outline-none focus:ring-2 focus:ring-primary font-normal text-left"
+                    >
+                      {appCountry || "Select Country"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search country..." className="h-9 text-xs" />
+                      <CommandList>
+                        <CommandEmpty>No country found.</CommandEmpty>
+                        <CommandGroup>
+                          {COUNTRIES_LIST.map((c) => (
+                            <CommandItem
+                              key={c}
+                              value={c}
+                              onSelect={(currentValue) => {
+                                const country = currentValue === appCountry.toLowerCase() ? "" : currentValue;
+                                const actualCountry = COUNTRIES_LIST.find(x => x.toLowerCase() === country.toLowerCase()) || "";
+                                setAppCountry(actualCountry);
+                                setAppCountryOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  appCountry === c ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              {c}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
 
               <div>
                 <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
                   Visa Type <span className="text-red-500">*</span>
                 </label>
-                <select
-                  value={appVisaType}
-                  onChange={(e) => setAppVisaType(e.target.value)}
-                  required
-                  className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                >
-                  <option value="">Select Visa Type</option>
-                  {VISA_TYPES_LIST.map((t) => (
-                    <option key={t} value={t}>
-                      {t}
-                    </option>
-                  ))}
-                </select>
+                <Popover open={appVisaTypeOpen} onOpenChange={setAppVisaTypeOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={appVisaTypeOpen}
+                      className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 h-auto text-sm focus:outline-none focus:ring-2 focus:ring-primary font-normal text-left"
+                    >
+                      {appVisaType || "Select Visa Type"}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[var(--radix-popover-trigger-width)] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Search visa type..." className="h-9 text-xs" />
+                      <CommandList>
+                        <CommandEmpty>No visa type found.</CommandEmpty>
+                        <CommandGroup>
+                          {VISA_TYPES_LIST.map((t) => (
+                            <CommandItem
+                              key={t}
+                              value={t}
+                              onSelect={(currentValue) => {
+                                const vType = currentValue === appVisaType.toLowerCase() ? "" : currentValue;
+                                const actualVType = VISA_TYPES_LIST.find(x => x.toLowerCase() === vType.toLowerCase()) || "";
+                                setAppVisaType(actualVType);
+                                setAppVisaTypeOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={`mr-2 h-4 w-4 ${
+                                  appVisaType === t ? "opacity-100" : "opacity-0"
+                                }`}
+                              />
+                              {t}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
             </div>
 

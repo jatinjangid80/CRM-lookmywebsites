@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown } from "lucide-react";
@@ -133,6 +134,9 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
 
   // Details Object
   const [details, setDetails] = useState<any>({});
+  
+  // Included Services for Packages
+  const [includedServices, setIncludedServices] = useState({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
 
   // Reset form when modal opens
   useEffect(() => {
@@ -162,6 +166,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
       setTransactionId("");
 
       setDetails({});
+      setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
     }
   }, [open]);
 
@@ -639,6 +644,186 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
                     </div>
                   ))}
                 </div>
+
+                <div className="col-span-1 md:col-span-2 mt-4 space-y-4 border-t pt-4">
+                  <Label className="text-sm font-bold tracking-tight">Included Services</Label>
+                  <div className="flex flex-wrap items-center gap-6">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-flight" checked={includedServices.flight} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, flight: !!c }))} />
+                      <label htmlFor="include-flight" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Flight</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-hotel" checked={includedServices.hotel} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, hotel: !!c }))} />
+                      <label htmlFor="include-hotel" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Hotel</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-taxi" checked={includedServices.taxi} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, taxi: !!c }))} />
+                      <label htmlFor="include-taxi" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Taxi</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-train" checked={includedServices.train} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, train: !!c }))} />
+                      <label htmlFor="include-train" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Train Ticket</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-bus" checked={includedServices.bus} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, bus: !!c }))} />
+                      <label htmlFor="include-bus" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Bus Ticket</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-visa" checked={includedServices.visa} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, visa: !!c }))} />
+                      <label htmlFor="include-visa" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Visa</label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox id="include-insurance" checked={includedServices.insurance} onCheckedChange={(c) => setIncludedServices(p => ({ ...p, insurance: !!c }))} />
+                      <label htmlFor="include-insurance" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">Travel Insurance</label>
+                    </div>
+                  </div>
+                </div>
+
+                {includedServices.flight && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Plane className="h-4 w-4" /> Flight Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Airline</Label><Input value={details.airline || ""} onChange={(e) => updateDetail("airline", e.target.value)} placeholder="IndiGo" /></div>
+                      <div className="space-y-2"><Label>Flight Number</Label><Input value={details.flightNumber || ""} onChange={(e) => updateDetail("flightNumber", e.target.value)} placeholder="6E-123" /></div>
+                      <div className="space-y-2"><Label>PNR</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="XYZ123" /></div>
+                      <div className="space-y-2"><Label>Departure Airport</Label><Input value={details.departureAirport || ""} onChange={(e) => updateDetail("departureAirport", e.target.value)} placeholder="DEL" /></div>
+                      <div className="space-y-2"><Label>Departure Time</Label><Input type="datetime-local" value={details.departureTime || ""} onChange={(e) => updateDetail("departureTime", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Arrival Airport</Label><Input value={details.arrivalAirport || ""} onChange={(e) => updateDetail("arrivalAirport", e.target.value)} placeholder="BOM" /></div>
+                      <div className="space-y-2"><Label>Arrival Time</Label><Input type="datetime-local" value={details.arrivalTime || ""} onChange={(e) => updateDetail("arrivalTime", e.target.value)} /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.hotel && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Hotel className="h-4 w-4" /> Hotel Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Hotel Name</Label><Input value={details.hotelName || ""} onChange={(e) => updateDetail("hotelName", e.target.value)} placeholder="Taj Hotel" /></div>
+                      <div className="space-y-2"><Label>City</Label><Input value={details.city || ""} onChange={(e) => updateDetail("city", e.target.value)} placeholder="Mumbai" /></div>
+                      <div className="space-y-2"><Label>Check In</Label><Input type="date" value={details.checkIn || ""} onChange={(e) => updateDetail("checkIn", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Check Out</Label><Input type="date" value={details.checkOut || ""} onChange={(e) => updateDetail("checkOut", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Room Type</Label><Input value={details.roomType || ""} onChange={(e) => updateDetail("roomType", e.target.value)} placeholder="Deluxe" /></div>
+                      <div className="space-y-2"><Label>Meal Plan</Label><Input value={details.mealPlan || ""} onChange={(e) => updateDetail("mealPlan", e.target.value)} placeholder="CP" /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.taxi && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Car className="h-4 w-4" /> Taxi Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Trip Type</Label><Input value={details.tripType || ""} onChange={(e) => updateDetail("tripType", e.target.value)} placeholder="One Way / Round Trip" /></div>
+                      <div className="space-y-2"><Label>Vehicle Type</Label><Input value={details.vehicleType || ""} onChange={(e) => updateDetail("vehicleType", e.target.value)} placeholder="Sedan, SUV" /></div>
+                      <div className="space-y-2"><Label>Pickup Location</Label><Input value={details.pickupLocation || ""} onChange={(e) => updateDetail("pickupLocation", e.target.value)} placeholder="Airport" /></div>
+                      <div className="space-y-2"><Label>Drop Location</Label><Input value={details.dropLocation || ""} onChange={(e) => updateDetail("dropLocation", e.target.value)} placeholder="Hotel" /></div>
+                      <div className="space-y-2"><Label>Pickup Time</Label><Input type="datetime-local" value={details.pickupTime || ""} onChange={(e) => updateDetail("pickupTime", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Driver Name</Label><Input value={details.driverName || ""} onChange={(e) => updateDetail("driverName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2"><Label>Vehicle Number</Label><Input value={details.vehicleNumber || ""} onChange={(e) => updateDetail("vehicleNumber", e.target.value)} placeholder="MH 01 AB 1234" /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.train && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Train className="h-4 w-4" /> Train Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Train Name/No.</Label><Input value={details.trainName || ""} onChange={(e) => updateDetail("trainName", e.target.value)} placeholder="Rajdhani Exp" /></div>
+                      <div className="space-y-2"><Label>PNR</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="PNR12345" /></div>
+                      <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MUM" /></div>
+                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.bus && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Bus className="h-4 w-4" /> Bus Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Bus Operator</Label><Input value={details.busOperator || ""} onChange={(e) => updateDetail("busOperator", e.target.value)} placeholder="Zingbus" /></div>
+                      <div className="space-y-2"><Label>PNR / Ticket No.</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="TKT123" /></div>
+                      <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MANALI" /></div>
+                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.visa && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><FileText className="h-4 w-4" /> Visa Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2"><Label>Country</Label><Input value={details.country || ""} onChange={(e) => updateDetail("country", e.target.value)} placeholder="Dubai" /></div>
+                      <div className="space-y-2"><Label>Visa Type</Label><Input value={details.visaType || ""} onChange={(e) => updateDetail("visaType", e.target.value)} placeholder="Tourist 30 Days" /></div>
+                      <div className="space-y-2"><Label>Process Date</Label><Input type="date" value={details.processDate || ""} onChange={(e) => updateDetail("processDate", e.target.value)} /></div>
+                      <div className="space-y-2"><Label>Application Status</Label><Input value={details.applicationStatus || ""} onChange={(e) => updateDetail("applicationStatus", e.target.value)} placeholder="Submitted" /></div>
+                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                    </div>
+                  </div>
+                )}
+
+                {includedServices.insurance && (
+                  <div className="col-span-1 md:col-span-2 space-y-4 border rounded-xl p-4 bg-secondary/10 mt-4">
+                    <h4 className="text-sm font-semibold flex items-center gap-2"><Shield className="h-4 w-4" /> Travel Insurance Details</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Policy Type *</Label>
+                        <Select required value={details.policyType || ""} onValueChange={(val) => updateDetail("policyType", val)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Policy Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Four Wheeler">Four Wheeler</SelectItem>
+                            <SelectItem value="Two Wheeler">Two Wheeler</SelectItem>
+                            <SelectItem value="Health">Health</SelectItem>
+                            <SelectItem value="Travel">Travel</SelectItem>
+                            <SelectItem value="Life">Life</SelectItem>
+                            <SelectItem value="General">General</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Query Type</Label>
+                        <Select value={details.queryType || ""} onValueChange={(val) => updateDetail("queryType", val)}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select Query Type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="New">New</SelectItem>
+                            <SelectItem value="Renewal">Renewal</SelectItem>
+                            <SelectItem value="Portability">Portability</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Insurance Date *</Label>
+                        <Input
+                          type="date"
+                          required
+                          value={details.insuranceDate || ""}
+                          onChange={(e) => updateDetail("insuranceDate", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Expiry Date</Label>
+                        <Input
+                          type="date"
+                          value={details.expiryDate || ""}
+                          onChange={(e) => updateDetail("expiryDate", e.target.value)}
+                        />
+                      </div>
+                      <div className="space-y-2 col-span-1 md:col-span-2">
+                        <Label>Client / Company</Label>
+                        <Input
+                          value={details.clientCompany || ""}
+                          onChange={(e) => updateDetail("clientCompany", e.target.value)}
+                          placeholder="e.g. Acme Corp or Customer Name"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                )}
+
               </>
             )}
 
@@ -1011,52 +1196,65 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
             )}
 
             {bookingType === "Travel Insurance" && (
-              <>
-                <div className="space-y-2">
-                  <Label>Country *</Label>
-                  <Input
-                    required
-                    value={details.country || ""}
-                    onChange={(e) => updateDetail("country", e.target.value)}
-                    placeholder="Schengen"
-                  />
+              <div className="col-span-1 md:col-span-2 border rounded-xl p-6 bg-secondary/5 space-y-6">
+                <h4 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">Trip Details</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-2">
+                    <Label>Policy Type *</Label>
+                    <Select required value={details.policyType || ""} onValueChange={(val) => updateDetail("policyType", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Policy Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="Four Wheeler">Four Wheeler</SelectItem>
+                        <SelectItem value="Two Wheeler">Two Wheeler</SelectItem>
+                        <SelectItem value="Health">Health</SelectItem>
+                        <SelectItem value="Travel">Travel</SelectItem>
+                        <SelectItem value="Life">Life</SelectItem>
+                        <SelectItem value="General">General</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Query Type</Label>
+                    <Select value={details.queryType || ""} onValueChange={(val) => updateDetail("queryType", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Query Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="New">New</SelectItem>
+                        <SelectItem value="Renewal">Renewal</SelectItem>
+                        <SelectItem value="Portability">Portability</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Insurance Date *</Label>
+                    <Input
+                      type="date"
+                      required
+                      value={details.insuranceDate || ""}
+                      onChange={(e) => updateDetail("insuranceDate", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Expiry Date</Label>
+                    <Input
+                      type="date"
+                      value={details.expiryDate || ""}
+                      onChange={(e) => updateDetail("expiryDate", e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2">
+                    <Label>Client / Company</Label>
+                    <Input
+                      value={details.clientCompany || ""}
+                      onChange={(e) => updateDetail("clientCompany", e.target.value)}
+                      placeholder="e.g. Acme Corp or Customer Name"
+                    />
+                  </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Insurance Type *</Label>
-                  <Input
-                    required
-                    value={details.insuranceType || ""}
-                    onChange={(e) => updateDetail("insuranceType", e.target.value)}
-                    placeholder="Comprehensive"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Process Date *</Label>
-                  <Input
-                    type="date"
-                    required
-                    value={details.processDate || ""}
-                    onChange={(e) => updateDetail("processDate", e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Passenger Name"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Policy No.</Label>
-                  <Input
-                    value={details.policyNo || ""}
-                    onChange={(e) => updateDetail("policyNo", e.target.value)}
-                    placeholder="Policy Number"
-                  />
-                </div>
-              </>
+              </div>
             )}
 
 

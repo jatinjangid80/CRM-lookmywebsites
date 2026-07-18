@@ -75,12 +75,14 @@ interface BookingFile {
   size: number;
   type: string;
   priority: "High" | "Medium" | "Low";
+  category?: string;
   uploadedAt: string;
   dataUrl: string;
 }
 
 interface ExtBooking extends Booking {
   files?: BookingFile[];
+  details?: Record<string, any>;
 }
 
 export const Route = createFileRoute("/crm/bookings")({
@@ -291,6 +293,8 @@ function BookingsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
+  const [manageTab, setManageTab] = useState<"Details" | "Payments" | "Documents" | "Timeline">("Details");
+  const [uploadCategory, setUploadCategory] = useState("Invoice");
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
 
   // Tab state for filtering
@@ -485,6 +489,7 @@ function BookingsPage() {
         size: uploadFile.size,
         type: uploadFile.type || "application/octet-stream",
         priority: uploadPriority,
+        category: uploadCategory,
         uploadedAt: new Date().toISOString(),
         dataUrl,
       };
@@ -498,6 +503,7 @@ function BookingsPage() {
       setManagingBooking(updatedBooking);
       setUploadFile(null);
       setUploadPriority("Medium");
+      setUploadCategory("Invoice");
       const fileInput = document.getElementById("booking-doc-file") as HTMLInputElement;
       if (fileInput) fileInput.value = "";
     } catch (err) {
@@ -674,6 +680,350 @@ function BookingsPage() {
 
     return false;
   });
+
+  const renderManageDetails = (booking: ExtBooking) => {
+    return (
+      <div className="space-y-6">
+        <div className="grid grid-cols-2 gap-4">
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Customer</p>
+            <p className="font-semibold">{booking.customer}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Travel Date</p>
+            <p className="font-semibold">{booking.travelDate}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Booking Type</p>
+            <p className="font-semibold">{booking.bookingType}</p>
+          </div>
+          {booking.bookingType === "Taxi" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Pickup Time</p><p className="font-semibold">{booking.details?.pickupTime || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Pickup Location</p><p className="font-semibold">{booking.details?.pickupLocation || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Drop Location</p><p className="font-semibold">{booking.details?.dropLocation || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Trip Type</p><p className="font-semibold">{booking.details?.tripType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Vehicle Type</p><p className="font-semibold">{booking.details?.vehicleType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Driver Name</p><p className="font-semibold">{booking.details?.driverName || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Vehicle Number</p><p className="font-semibold">{booking.details?.vehicleNumber || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Air Ticket" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Airline</p><p className="font-semibold">{booking.details?.airline || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Flight Number</p><p className="font-semibold">{booking.details?.flightNumber || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details?.pnr || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details?.departureAirport || "—"} at {booking.details?.departureTime || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details?.arrivalAirport || "—"} at {booking.details?.arrivalTime || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Hotel" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Hotel Name</p><p className="font-semibold">{booking.package || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">City</p><p className="font-semibold">{booking.details?.city || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Check In</p><p className="font-semibold">{booking.details?.checkIn || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Check Out</p><p className="font-semibold">{booking.details?.checkOut || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Room Type</p><p className="font-semibold">{booking.details?.roomType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Meal Plan</p><p className="font-semibold">{booking.details?.mealPlan || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Visa" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Country</p><p className="font-semibold">{booking.details?.country || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Visa Type</p><p className="font-semibold">{booking.details?.visaType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Passport Number</p><p className="font-semibold">{booking.details?.passportNumber || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Submission Date</p><p className="font-semibold">{booking.details?.submissionDate || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Travel Insurance" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Policy Type</p><p className="font-semibold">{booking.details?.policyType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Query Type</p><p className="font-semibold">{booking.details?.queryType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Insurance Date</p><p className="font-semibold">{booking.details?.insuranceDate || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Expiry Date</p><p className="font-semibold">{booking.details?.expiryDate || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Client / Company</p><p className="font-semibold">{booking.details?.clientCompany || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Train Ticket" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Train Number/Name</p><p className="font-semibold">{booking.details?.trainNumber || "—"} {booking.details?.trainName || ""}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details?.pnr || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">From - To</p><p className="font-semibold">{booking.details?.from || "—"} → {booking.details?.to || "—"}</p></div>
+            </>
+          )}
+          {booking.bookingType === "Bus Ticket" && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Operator</p><p className="font-semibold">{booking.details?.operator || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Bus Type</p><p className="font-semibold">{booking.details?.busType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Boarding - Dropping</p><p className="font-semibold">{booking.details?.boardingPoint || "—"} → {booking.details?.droppingPoint || "—"}</p></div>
+            </>
+          )}
+          {(booking.bookingType === "Holiday Package" || !booking.bookingType) && (
+            <>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Destination</p><p className="font-semibold">{booking.package || booking.details?.destination || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Package Type</p><p className="font-semibold">{booking.details?.packageType || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Travel Dates</p><p className="font-semibold">{booking.details?.travelFrom || "—"} to {booking.details?.travelTo || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Pax</p><p className="font-semibold">{booking.details?.noOfPax || "—"} ({booking.details?.leaderName || "—"})</p></div>
+
+              {booking.details?.airline && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">✈️ Flight Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Airline</p><p className="font-semibold">{booking.details.airline} {booking.details.flightNumber}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details.departureAirport || "—"} at {booking.details.departureTime ? new Date(booking.details.departureTime).toLocaleString() : "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details.arrivalAirport || "—"} at {booking.details.arrivalTime ? new Date(booking.details.arrivalTime).toLocaleString() : "—"}</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.hotelName && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🏨 Hotel Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Hotel</p><p className="font-semibold">{booking.details.hotelName} ({booking.details.city || "—"})</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Dates</p><p className="font-semibold">{booking.details.checkIn || "—"} to {booking.details.checkOut || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Room Type</p><p className="font-semibold">{booking.details.roomType || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Meal Plan</p><p className="font-semibold">{booking.details.mealPlan || "—"}</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.vehicleType && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🚕 Taxi Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Vehicle</p><p className="font-semibold">{booking.details.vehicleType} ({booking.details.tripType || "—"})</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Pickup Time</p><p className="font-semibold">{booking.details.pickupTime ? new Date(booking.details.pickupTime).toLocaleString() : "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Route</p><p className="font-semibold">{booking.details.pickupLocation || "—"} → {booking.details.dropLocation || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Driver</p><p className="font-semibold">{booking.details.driverName || "—"} ({booking.details.vehicleNumber || "—"})</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.trainName && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🚆 Train Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Train</p><p className="font-semibold">{booking.details.trainName}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Travel Date</p><p className="font-semibold">{booking.details.travelDate || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Sector</p><p className="font-semibold">{booking.details.sector || "—"}</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.busOperator && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🚌 Bus Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Operator</p><p className="font-semibold">{booking.details.busOperator}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Ticket No. / PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Travel Date</p><p className="font-semibold">{booking.details.travelDate || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Sector</p><p className="font-semibold">{booking.details.sector || "—"}</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.visaType && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">📄 Visa Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Country</p><p className="font-semibold">{booking.details.country || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Visa Type</p><p className="font-semibold">{booking.details.visaType}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Process Date</p><p className="font-semibold">{booking.details.processDate || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Status</p><p className="font-semibold">{booking.details.applicationStatus || "—"}</p></div>
+                  </div>
+                </div>
+              )}
+
+              {booking.details?.policyType && (
+                <div className="col-span-2 mt-4 space-y-3 p-4 rounded-xl border bg-secondary/5">
+                  <h4 className="text-sm font-semibold flex items-center gap-2">🛡️ Insurance Details</h4>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Policy Type</p><p className="font-semibold">{booking.details.policyType}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Query Type</p><p className="font-semibold">{booking.details.queryType || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Insurance Date</p><p className="font-semibold">{booking.details.insuranceDate || "—"}</p></div>
+                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Expiry Date</p><p className="font-semibold">{booking.details.expiryDate || "—"}</p></div>
+                    <div className="col-span-2"><p className="text-xs text-muted-foreground uppercase mb-1">Client / Company</p><p className="font-semibold">{booking.details.clientCompany || "—"}</p></div>
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+      </div>
+    );
+  };
+
+  const renderManagePayments = (booking: ExtBooking) => (
+    <div className="space-y-6">
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div className="bg-secondary/10 p-4 rounded-xl border border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Selling Price</p>
+          <p className="text-xl font-bold">{formatINR(booking.amount || 0)}</p>
+        </div>
+        <div className="bg-secondary/10 p-4 rounded-xl border border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Purchase Price</p>
+          <p className="text-xl font-bold">{formatINR(booking.purchasePrice || 0)}</p>
+        </div>
+        <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl border border-emerald-200">
+          <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Amount Received</p>
+          <p className="text-xl font-bold">{formatINR(booking.paid || 0)}</p>
+        </div>
+        <div className="bg-rose-50 text-rose-800 p-4 rounded-xl border border-rose-200">
+          <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Pending Amount</p>
+          <p className="text-xl font-bold">{formatINR((booking.amount || 0) - (booking.paid || 0))}</p>
+        </div>
+        <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200">
+          <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Profit</p>
+          <p className="text-xl font-bold">{formatINR(booking.profit || 0)}</p>
+        </div>
+        <div className="bg-purple-50 text-purple-800 p-4 rounded-xl border border-purple-200">
+          <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Margin</p>
+          <p className="text-xl font-bold">{booking.margin || 0}%</p>
+        </div>
+      </div>
+      <div>
+         <p className="text-sm font-semibold mb-2">Payment Status</p>
+         <span className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${statusColor[booking.status]}`}>
+            {booking.status}
+         </span>
+      </div>
+    </div>
+  );
+
+  const documentCategories = [
+    "Invoice", "Voucher", "Passport", "Visa", "Flight Ticket", "Hotel Voucher", "Insurance Policy", "Driver Details", "Train Ticket", "Bus Ticket", "Customer ID", "Receipt", "Other Files"
+  ];
+
+  const renderManageDocuments = (booking: ExtBooking) => (
+    <div className="space-y-6">
+      <form onSubmit={handleAddFile} className="space-y-4 rounded-xl border border-border bg-secondary/10 p-5">
+        <h3 className="text-sm font-bold tracking-tight">Upload Document</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="booking-doc-file" className="text-xs">Document File (.pdf, image, etc.)</Label>
+            <Input
+              id="booking-doc-file"
+              type="file"
+              required
+              accept=".pdf,.xls,.xlsx,.doc,.docx,image/*"
+              onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
+              className="h-10 text-xs rounded-lg cursor-pointer bg-background"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="booking-doc-category" className="text-xs">Category</Label>
+            <Select value={uploadCategory} onValueChange={setUploadCategory}>
+              <SelectTrigger id="booking-doc-category" className="h-10 bg-background text-xs">
+                <SelectValue placeholder="Select Category" />
+              </SelectTrigger>
+              <SelectContent>
+                {documentCategories.map(cat => <SelectItem key={cat} value={cat}>{cat}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="booking-doc-priority" className="text-xs">Priority</Label>
+            <Select value={uploadPriority} onValueChange={(val: any) => setUploadPriority(val)}>
+              <SelectTrigger id="booking-doc-priority" className="h-10 bg-background text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="High">🔴 High</SelectItem>
+                <SelectItem value="Medium">🟡 Medium</SelectItem>
+                <SelectItem value="Low">🟢 Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+        <div className="flex justify-end pt-2">
+            <Button
+              type="submit"
+              disabled={uploading || !uploadFile}
+              className="h-10 px-8 rounded-lg text-sm font-semibold"
+              style={{ background: "var(--gradient-brand)" }}
+            >
+              {uploading ? "Uploading..." : "Upload Document"}
+            </Button>
+        </div>
+      </form>
+
+      <div className="space-y-3">
+        <h3 className="text-sm font-bold tracking-tight">Attached Files</h3>
+        {!booking.files || booking.files.length === 0 ? (
+          <div className="text-center py-8 text-sm text-muted-foreground border border-dashed rounded-xl bg-secondary/10">
+            No documents attached yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {booking.files.map((file) => (
+              <div key={file.name} className="flex items-center justify-between rounded-xl border border-border p-4 bg-card shadow-sm hover:shadow-md transition-shadow">
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="p-2 bg-secondary/20 rounded-lg">
+                    {getFileIcon(file.type, file.name)}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm truncate text-foreground">{file.name}</p>
+                        <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                            {file.category || "Other Files"}
+                        </span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      {fmtSize(file.size)} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3 shrink-0 ml-4">
+                  <span className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold ${priorityColor[file.priority]}`}>
+                    {file.priority}
+                  </span>
+                  <a href={file.dataUrl} download={file.name} className="rounded-lg p-2 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors" title="Download file">
+                    <Download className="h-4 w-4" />
+                  </a>
+                  {isAdmin && (
+                    <button type="button" onClick={() => handleDeleteFile(file.name)} className="rounded-lg p-2 text-rose-500 hover:bg-rose-50 transition-colors" title="Delete file">
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const renderManageTimeline = (booking: ExtBooking) => {
+    const events = [
+      { id: 1, title: "Booking Created", date: booking.bookingDate, status: "completed" },
+      { id: 2, title: "Payment Pending", date: booking.bookingDate, status: booking.paid > 0 ? "completed" : "current" },
+      { id: 3, title: "Documents Uploaded", date: "Pending", status: booking.files && booking.files.length > 0 ? "completed" : (booking.paid > 0 ? "current" : "upcoming") },
+      { id: 4, title: "Booking Confirmed", date: "Pending", status: booking.status === "Confirmed" ? "completed" : (booking.files && booking.files.length > 0 ? "current" : "upcoming") },
+    ];
+    return (
+      <div className="space-y-6">
+        <h3 className="text-sm font-bold tracking-tight">Booking Timeline</h3>
+        <div className="relative pl-6 space-y-6">
+          <div className="absolute left-[11px] top-2 bottom-2 w-0.5 bg-border rounded-full" />
+          {events.map((event, index) => (
+            <div key={event.id} className="relative">
+              <div className={`absolute -left-[30px] top-0.5 h-4 w-4 rounded-full border-2 bg-background flex items-center justify-center ${event.status === 'completed' ? 'border-emerald-500 bg-emerald-500 text-white' : event.status === 'current' ? 'border-primary ring-2 ring-primary/20' : 'border-muted-foreground/30'}`}>
+                {event.status === 'completed' && <CheckCircle2 className="h-3 w-3" />}
+              </div>
+              <div className="flex flex-col gap-1">
+                <p className={`text-sm font-semibold ${event.status === 'upcoming' ? 'text-muted-foreground' : 'text-foreground'}`}>{event.title}</p>
+                <p className="text-xs text-muted-foreground">{event.date}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div className="space-y-6">
@@ -1031,223 +1381,48 @@ function BookingsPage() {
       />
 
       <Dialog open={isManageOpen} onOpenChange={setIsManageOpen}>
-        <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-6 shadow-2xl bg-card">
-          <DialogHeader>
-            <DialogTitle className="font-display text-lg font-bold">
-              Manage Booking Details
-            </DialogTitle>
-            <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Upload visa documents, tickets, hotel vouchers, and set document priorities.
-            </DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-3xl max-h-[90vh] flex flex-col overflow-hidden rounded-2xl border border-border p-0 shadow-2xl bg-card">
+          <div className="flex items-center justify-between border-b border-border p-6 pb-4">
+            <div>
+              <DialogTitle className="font-display text-lg font-bold">
+                Booking Summary
+              </DialogTitle>
+              <DialogDescription className="text-xs text-muted-foreground mt-1">
+                {managingBooking?.customer} • {managingBooking?.id}
+              </DialogDescription>
+            </div>
+            <div className="flex items-center gap-2">
+               {managingBooking && (
+                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusColor[managingBooking.status]}`}>
+                   {managingBooking.status}
+                 </span>
+               )}
+            </div>
+          </div>
 
           {managingBooking && (
-            <div className="space-y-6 py-4">
-              {/* Booking Info Card */}
-              <div className="rounded-xl border border-border bg-secondary/20 p-4 space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="font-mono text-xs font-semibold text-primary">
-                    {managingBooking.id}
-                  </span>
-                  <div className="flex items-center gap-2">
-                    <Button variant="outline" size="sm" onClick={() => setIsEditing(!isEditing)} className="h-7 text-xs">
-                      {isEditing ? "Cancel" : "Edit"}
-                    </Button>
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-semibold ${statusColor[managingBooking.status]}`}
-                    >
-                      {managingBooking.status}
-                    </span>
-                  </div>
-                </div>
-                {isEditing ? (
-                  <form onSubmit={handleSaveEdit} className="grid grid-cols-2 gap-4 text-sm mt-2">
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Customer</Label>
-                      <Input value={editForm.customer || ""} onChange={e => setEditForm({ ...editForm, customer: e.target.value })} className="rounded-3xl px-4" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Travel Date</Label>
-                      <Input type="date" value={editForm.travelDate || ""} onChange={e => setEditForm({ ...editForm, travelDate: e.target.value })} className="rounded-3xl px-4" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Service <span className="text-red-500">*</span></Label>
-                      <select
-                        value={editForm.bookingType || ""}
-                        onChange={e => setEditForm({ ...editForm, bookingType: e.target.value as any })}
-                        className="w-full rounded-3xl border border-border bg-background px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-                      >
-                        <option value="">Select a service</option>
-                        {SERVICES.map((g) => (
-                          <optgroup key={g.group} label={g.group}>
-                            {g.items.map((i) => (
-                              <option key={i.label} value={i.label}>
-                                {i.icon} {i.label}
-                              </option>
-                            ))}
-                          </optgroup>
-                        ))}
-                      </select>
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Destination <span className="text-red-500">*</span></Label>
-                      <Input placeholder="e.g. Bali, Paris..." value={editForm.package || ""} onChange={e => setEditForm({ ...editForm, package: e.target.value })} className="rounded-3xl px-4" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Total Budget (₹)</Label>
-                      <Input type="number" placeholder="e.g. 85000" value={editForm.amount || 0} onChange={e => setEditForm({ ...editForm, amount: Number(e.target.value) })} className="rounded-3xl px-4" />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-sm font-semibold">Amount Paid (₹)</Label>
-                      <Input type="number" value={editForm.paid || 0} onChange={e => setEditForm({ ...editForm, paid: Number(e.target.value) })} className="rounded-3xl px-4" />
-                    </div>
-                    <div className="col-span-2 flex justify-end mt-2">
-                      <Button type="submit" className="rounded-full px-6 bg-rose-500 hover:bg-rose-600 text-white font-semibold">Save Changes</Button>
-                    </div>
-                  </form>
-                ) : (
-                  <div className="grid grid-cols-2 gap-4 text-sm mt-2">
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Customer</p>
-                      <p className="font-semibold">{managingBooking.customer}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Travel Date</p>
-                      <p className="font-semibold">{managingBooking.travelDate}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Service</p>
-                      <p className="font-semibold text-muted-foreground">{managingBooking.bookingType}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Destination</p>
-                      <p className="font-semibold text-muted-foreground">{managingBooking.package}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Total Budget</p>
-                      <p className="font-bold text-primary">{formatINR(managingBooking.amount)}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Amount Paid</p>
-                      <p className="font-bold text-emerald-700">{formatINR(managingBooking.paid)}</p>
-                    </div>
-                  </div>
-                )}
-              </div>
-
-              {/* Upload Document Form */}
-              <form onSubmit={handleAddFile} className="space-y-4 border-t border-border pt-4">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Attach Document
-                </h3>
-                <div className="grid grid-cols-3 gap-3">
-                  {/* File Selector */}
-                  <div className="col-span-2 space-y-1">
-                    <Label htmlFor="booking-doc-file" className="text-xs">
-                      Document File (.pdf, .xlsx, .doc, image)
-                    </Label>
-                    <Input
-                      id="booking-doc-file"
-                      type="file"
-                      required
-                      accept=".pdf,.xls,.xlsx,.doc,.docx,image/*"
-                      onChange={(e) => setUploadFile(e.target.files?.[0] || null)}
-                      className="h-9 text-xs rounded-lg cursor-pointer"
-                    />
-                  </div>
-
-                  {/* Priority Selector */}
-                  <div className="space-y-1">
-                    <Label htmlFor="booking-doc-priority" className="text-xs">
-                      File Priority
-                    </Label>
-                    <select
-                      id="booking-doc-priority"
-                      value={uploadPriority}
-                      onChange={(e) =>
-                        setUploadPriority(e.target.value as "High" | "Medium" | "Low")
-                      }
-                      className="flex h-9 w-full items-center justify-between rounded-lg border border-input bg-background px-3 py-1.5 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary"
-                    >
-                      <option value="High">🔴 High</option>
-                      <option value="Medium">🟡 Medium</option>
-                      <option value="Low">🟢 Low</option>
-                    </select>
-                  </div>
-                </div>
-
-                <Button
-                  type="submit"
-                  disabled={uploading || !uploadFile}
-                  className="w-full h-9 rounded-lg text-xs gap-1.5"
-                  style={{ background: "var(--gradient-brand)" }}
-                >
-                  {uploading ? "Saving File..." : <Upload className="h-3.5 w-3.5" />}
-                  {uploading ? "Uploading..." : "Attach Document"}
-                </Button>
-              </form>
-
-              {/* Uploaded Documents List */}
-              <div className="border-t border-border pt-4 space-y-3">
-                <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                  Attached Files
-                </h3>
-
-                {!managingBooking.files || managingBooking.files.length === 0 ? (
-                  <div className="text-center py-6 text-xs text-muted-foreground border border-dashed rounded-xl p-4 bg-secondary/15">
-                    No documents attached yet. Upload flights, hotels, or visa documents.
-                  </div>
-                ) : (
-                  <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
-                    {managingBooking.files.map((file) => (
-                      <div
-                        key={file.name}
-                        className="flex items-center justify-between rounded-xl border border-border p-3 bg-secondary/10 hover:bg-secondary/20 transition-all text-xs"
-                      >
-                        <div className="flex items-center gap-2.5 min-w-0 flex-1">
-                          {getFileIcon(file.type, file.name)}
-                          <div className="min-w-0 flex-1">
-                            <p className="font-semibold truncate text-foreground">{file.name}</p>
-                            <p className="text-[10px] text-muted-foreground">
-                              {fmtSize(file.size)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-center gap-2.5 ml-3 shrink-0">
-                          <span
-                            className={`inline-flex items-center rounded-md border px-2 py-0.5 text-[10px] font-bold ${priorityColor[file.priority]}`}
-                          >
-                            {file.priority}
-                          </span>
-                          <a
-                            href={file.dataUrl}
-                            download={file.name}
-                            className="rounded-lg p-1 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                            title="Download file"
-                          >
-                            <Download className="h-3.5 w-3.5" />
-                          </a>
-                          {isAdmin && (
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteFile(file.name)}
-                              className="rounded-lg p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                              title="Delete file (Admin only)"
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
+            <div className="flex flex-col flex-1 overflow-hidden">
+               <div className="flex items-center gap-6 px-6 border-b border-border bg-secondary/10">
+                 {["Details", "Payments", "Documents", "Timeline"].map((tab) => (
+                   <button
+                     key={tab}
+                     onClick={() => setManageTab(tab as any)}
+                     className={`py-3 text-sm font-semibold transition-colors border-b-2 -mb-[1px] ${manageTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                   >
+                     {tab}
+                   </button>
+                 ))}
+               </div>
+               <div className="flex-1 overflow-y-auto p-6">
+                 {manageTab === "Details" && renderManageDetails(managingBooking)}
+                 {manageTab === "Payments" && renderManagePayments(managingBooking)}
+                 {manageTab === "Documents" && renderManageDocuments(managingBooking)}
+                 {manageTab === "Timeline" && renderManageTimeline(managingBooking)}
+               </div>
             </div>
           )}
 
-          <DialogFooter className="border-t border-border pt-4">
+          <DialogFooter className="border-t border-border p-4 bg-secondary/10 mt-auto">
             <Button
               type="button"
               variant="outline"

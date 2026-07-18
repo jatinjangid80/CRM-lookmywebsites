@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin } from "lucide-react";
+import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -52,6 +52,7 @@ function CustomersPage() {
   const [customerList, setCustomerList] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [leads] = useSupabaseTable<any[]>("leads", []);
   const [bookings] = useSupabaseTable<any[]>("bookings", []);
+  const [tasks] = useSupabaseTable<any[]>("tasks", []);
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
@@ -507,22 +508,35 @@ function CustomersPage() {
                 </div>
               </DialogHeader>
 
-              <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
-                <div className="px-6 border-t border-border pt-6 pb-2">
-                  <TabsList className="h-12 bg-secondary/30 rounded-full w-full justify-between p-1">
-                    <TabsTrigger value="overview" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
-                      Info
-                    </TabsTrigger>
-                    <TabsTrigger value="bookings" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
-                      Bookings
-                    </TabsTrigger>
-                    <TabsTrigger value="payments" className="w-full data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
-                      Payments
-                    </TabsTrigger>
-                  </TabsList>
-                </div>
+              {(() => {
+                const custBookings = bookings.filter((b: any) => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
+                const custLeads = leads.filter((l: any) => l.phone === selectedCustomer.phone);
+                const custTasks = tasks.filter((t: any) => t.customer_id === selectedCustomer.name || t.customer_id === selectedCustomer.id);
+                const totalSpent = custBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
-                <div className="flex-1 overflow-y-auto p-6">
+                return (
+                  <Tabs defaultValue="overview" className="flex-1 flex flex-col min-h-0">
+                    <div className="px-6 border-t border-border pt-6 pb-2">
+                      <TabsList className="h-12 bg-secondary/30 rounded-full w-full justify-between p-1">
+                        <TabsTrigger value="overview" className="flex-1 data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                          Info
+                        </TabsTrigger>
+                        <TabsTrigger value="bookings" className="flex-1 data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                          Bookings ({custBookings.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="payments" className="flex-1 data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                          Payments
+                        </TabsTrigger>
+                        <TabsTrigger value="leads" className="flex-1 data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                          Leads ({custLeads.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="tasks" className="flex-1 data-[state=active]:border-orange-500 data-[state=active]:border-2 data-[state=active]:bg-card data-[state=active]:shadow-sm rounded-full py-2 text-sm font-medium border-2 border-transparent text-muted-foreground hover:text-foreground">
+                          Tasks ({custTasks.length})
+                        </TabsTrigger>
+                      </TabsList>
+                    </div>
+
+                    <div className="flex-1 overflow-y-auto p-6">
                   <TabsContent value="overview" className="m-0 outline-none">
                     <div className="bg-card border border-border rounded-[24px] p-6 shadow-sm">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-8">
@@ -571,16 +585,30 @@ function CustomersPage() {
                           <p className="font-medium text-lg text-foreground">{selectedCustomer.createdAt}</p>
                         </div>
                       </div>
+
+                      <div className="mt-8 pt-6 border-t grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="bg-secondary/20 p-4 rounded-xl border text-center">
+                          <p className="text-2xl font-bold font-display">{custBookings.length}</p>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mt-1">Bookings</p>
+                        </div>
+                        <div className="bg-secondary/20 p-4 rounded-xl border text-center">
+                          <p className="text-2xl font-bold font-display">{custLeads.length}</p>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mt-1">Leads</p>
+                        </div>
+                        <div className="bg-secondary/20 p-4 rounded-xl border text-center">
+                          <p className="text-2xl font-bold font-display">{custTasks.length}</p>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mt-1">Tasks</p>
+                        </div>
+                        <div className="bg-secondary/20 p-4 rounded-xl border text-center">
+                          <p className="text-2xl font-bold font-display">{formatINR(totalSpent)}</p>
+                          <p className="text-xs text-muted-foreground uppercase font-medium mt-1">Total Spent</p>
+                        </div>
+                      </div>
                     </div>
                   </TabsContent>
 
                   <TabsContent value="bookings" className="m-0 outline-none">
                     {(() => {
-                      // Filter derived bookings implicitly by matching customer phone
-                      // Wait, we need real bookings, not just hardcoded.
-                      // Currently `bookings` is just the mock data, we don't have useSupabaseTable for bookings in customers page.
-                      // Let's use the local mock `bookings` array for demonstration, matching by customer name or phone.
-                      const custBookings = bookings.filter((b: any) => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
                       if (custBookings.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
@@ -612,7 +640,6 @@ function CustomersPage() {
 
                   <TabsContent value="payments" className="m-0 outline-none">
                      {(() => {
-                      const custBookings = bookings.filter((b: any) => b.customer === selectedCustomer.name || b.mobileNumber === selectedCustomer.phone);
                       if (custBookings.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
@@ -642,7 +669,6 @@ function CustomersPage() {
 
                   <TabsContent value="leads" className="m-0 outline-none">
                      {(() => {
-                      const custLeads = leads.filter(l => l.phone === selectedCustomer.phone);
                       if (custLeads.length === 0) {
                         return (
                           <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
@@ -671,8 +697,44 @@ function CustomersPage() {
                       );
                     })()}
                   </TabsContent>
+
+                  <TabsContent value="tasks" className="m-0 outline-none">
+                     {(() => {
+                      if (custTasks.length === 0) {
+                        return (
+                          <div className="flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-xl border border-dashed">
+                            <CheckSquare className="h-12 w-12 mb-4 opacity-50" />
+                            <p>No tasks associated with this customer.</p>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="space-y-3">
+                          {custTasks.map((t: any) => (
+                            <div key={t.id} className="bg-card border border-border p-4 rounded-xl shadow-sm flex items-center justify-between">
+                              <div>
+                                <h4 className="font-semibold text-sm">{t.title}</h4>
+                                <p className="text-xs text-muted-foreground mt-1">Due {t.due_date} • Priority: {t.priority}</p>
+                              </div>
+                              <div className="text-right">
+                                <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md ${
+                                  t.status === "Completed" ? "bg-emerald-100 text-emerald-700" :
+                                  t.status === "In Progress" ? "bg-blue-100 text-blue-700" :
+                                  "bg-amber-100 text-amber-700"
+                                }`}>
+                                  {t.status}
+                                </span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })()}
+                  </TabsContent>
                 </div>
               </Tabs>
+              );
+              })()}
             </>
           )}
         </DialogContent>
