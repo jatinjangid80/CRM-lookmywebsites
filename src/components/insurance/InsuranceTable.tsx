@@ -36,11 +36,11 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
     if (diffDays < 0 || policy.status === 'Expired') {
-      return <span className="rounded-full bg-rose-100 text-rose-700 px-2 py-1 text-[10px] font-bold tracking-wider uppercase">Expired</span>;
+      return <span className="rounded-full bg-rose-500/100/10 text-rose-500 border-rose-500/20 border px-2 py-1 text-[10px] font-bold tracking-wider uppercase">Expired</span>;
     } else if (diffDays <= 30) {
-      return <span className="rounded-full bg-amber-100 text-amber-700 px-2 py-1 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> Expiring ({diffDays}d)</span>;
+      return <span className="rounded-full bg-amber-500/100/10 text-amber-500 border-amber-500/20 border px-2 py-1 text-[10px] font-bold tracking-wider uppercase flex items-center gap-1"><ShieldAlert className="w-3 h-3" /> Expiring ({diffDays}d)</span>;
     }
-    return <span className="rounded-full bg-emerald-100 text-emerald-700 px-2 py-1 text-[10px] font-bold tracking-wider uppercase">Active</span>;
+    return <span className="rounded-full bg-emerald-500/100/10 text-emerald-500 border-emerald-500/20 border px-2 py-1 text-[10px] font-bold tracking-wider uppercase">Active</span>;
   };
 
   const getPaymentBadge = (status: string) => {
@@ -53,7 +53,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
         <table className="w-full text-left text-sm">
-          <thead className="bg-slate-50/50 border-b border-border">
+          <thead className="bg-muted/30 border-b border-border">
             <tr>
               <th className="px-4 py-3 font-semibold text-muted-foreground">Policy No.</th>
               <th className="px-4 py-3 font-semibold text-muted-foreground">Customer</th>
@@ -74,7 +74,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
               </tr>
             ) : (
               policies.map((p, i) => (
-                <tr key={p.id || i} className="hover:bg-slate-50/50 transition-colors">
+                <tr key={p.id || i} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-blue-600">{p.policy_number || "Draft"}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-foreground">{p.customer_name}</div>
@@ -107,7 +107,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                   <td className="px-4 py-3 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 rounded-lg text-xs bg-slate-100 hover:bg-slate-200">
+                        <Button variant="ghost" size="sm" className="h-8 px-2 rounded-lg text-xs bg-muted hover:bg-muted/80">
                           Options
                         </Button>
                       </DropdownMenuTrigger>
@@ -121,7 +121,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                         <DropdownMenuItem className="cursor-pointer gap-2 py-2 rounded-lg">
                           <FileText className="h-4 w-4 text-emerald-600" /> Print
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onDelete(p)} className="cursor-pointer gap-2 py-2 rounded-lg text-rose-600 hover:text-rose-700 hover:bg-rose-50">
+                        <DropdownMenuItem onClick={() => onDelete(p)} className="cursor-pointer gap-2 py-2 rounded-lg text-rose-600 hover:text-rose-500 hover:bg-rose-500/10">
                           <Trash2 className="h-4 w-4" /> Delete
                         </DropdownMenuItem>
                       </DropdownMenuContent>

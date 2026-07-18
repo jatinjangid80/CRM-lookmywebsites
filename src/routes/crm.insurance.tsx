@@ -131,11 +131,11 @@ function GeneralInsurancePage() {
   };
 
   return (
-    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 h-full overflow-y-auto w-full max-w-full m-0 bg-slate-50/50">
+    <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 h-full overflow-y-auto w-full max-w-full m-0 bg-muted/30">
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-3xl font-display font-bold tracking-tight text-foreground flex items-center gap-3">
-            <div className="p-2 bg-blue-100 text-blue-600 rounded-xl">
+            <div className="p-2 bg-primary/10 text-primary rounded-xl">
               <Shield className="w-6 h-6" />
             </div>
             General Insurance
@@ -156,11 +156,11 @@ function GeneralInsurancePage() {
 
       <InsuranceDashboard stats={stats} />
 
-      <div className="flex items-center gap-1 bg-slate-200/50 p-1 rounded-xl w-fit">
+      <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit">
         <Button 
           variant={activeTab === "Policies" ? "default" : "ghost"}
           size="sm"
-          className={activeTab === "Policies" ? "bg-white text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          className={activeTab === "Policies" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
           onClick={() => setActiveTab("Policies")}
         >
           All Policies
@@ -168,7 +168,7 @@ function GeneralInsurancePage() {
         <Button 
           variant={activeTab === "Renewals" ? "default" : "ghost"}
           size="sm"
-          className={activeTab === "Renewals" ? "bg-white text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          className={activeTab === "Renewals" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
           onClick={() => setActiveTab("Renewals")}
         >
           Upcoming Renewals

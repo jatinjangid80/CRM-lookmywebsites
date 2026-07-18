@@ -97,11 +97,11 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
              </div>
           )}
 
-          {renderSection("Expiring Today", categorizedPolicies.todayList, <AlertCircle className="w-5 h-5" />, "bg-rose-50", "text-rose-700")}
-          {renderSection("Next 7 Days", categorizedPolicies.next7Days, <CalendarClock className="w-5 h-5" />, "bg-amber-50", "text-amber-700")}
-          {renderSection("Next 15 Days", categorizedPolicies.next15Days, <CalendarClock className="w-5 h-5" />, "bg-yellow-50", "text-yellow-700")}
-          {renderSection("Next 30 Days", categorizedPolicies.next30Days, <CalendarClock className="w-5 h-5" />, "bg-blue-50", "text-blue-700")}
-          {renderSection("Already Expired", categorizedPolicies.expired, <History className="w-5 h-5" />, "bg-slate-100", "text-slate-700")}
+          {renderSection("Expiring Today", categorizedPolicies.todayList, <AlertCircle className="w-5 h-5" />, "bg-rose-500/10", "text-rose-500")}
+          {renderSection("Next 7 Days", categorizedPolicies.next7Days, <CalendarClock className="w-5 h-5" />, "bg-amber-500/10", "text-amber-500")}
+          {renderSection("Next 15 Days", categorizedPolicies.next15Days, <CalendarClock className="w-5 h-5" />, "bg-yellow-500/10", "text-yellow-500")}
+          {renderSection("Next 30 Days", categorizedPolicies.next30Days, <CalendarClock className="w-5 h-5" />, "bg-blue-500/10", "text-blue-500")}
+          {renderSection("Already Expired", categorizedPolicies.expired, <History className="w-5 h-5" />, "bg-muted", "text-foreground")}
         </div>
 
         <div className="xl:col-span-1">

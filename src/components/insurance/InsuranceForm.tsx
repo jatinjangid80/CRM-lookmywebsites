@@ -183,7 +183,7 @@ export function InsuranceForm({
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4 bg-card">
           <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-100 text-blue-600">
+            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
               <Shield className="h-5 w-5" />
             </div>
             <div>
@@ -206,7 +206,7 @@ export function InsuranceForm({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 bg-slate-50/50 space-y-8">
+        <div className="flex-1 overflow-y-auto p-6 bg-muted/30 space-y-8">
           
           {/* Section 1: Customer & Reference */}
           <section className="bg-card p-5 rounded-2xl border border-border shadow-sm">
@@ -230,12 +230,12 @@ export function InsuranceForm({
                     onFocus={() => setShowCustomerDropdown(true)}
                   />
                   {showCustomerDropdown && customerSearch && (
-                    <div className="absolute z-10 w-full mt-1 bg-white border border-border rounded-lg shadow-lg">
+                    <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg">
                       {filteredCustomers.length > 0 ? (
                         filteredCustomers.map(c => (
                           <div 
                             key={c.id} 
-                            className="p-2 hover:bg-slate-50 cursor-pointer text-sm flex justify-between"
+                            className="p-2 hover:bg-muted cursor-pointer text-sm flex justify-between"
                             onClick={() => selectCustomer(c)}
                           >
                             <span className="font-medium">{c.name}</span>
@@ -526,9 +526,9 @@ export function InsuranceForm({
                   <option value="18">18%</option>
                 </select>
               </div>
-              <div className="space-y-1 bg-blue-50 p-2 rounded-lg border border-blue-100">
-                <Label className="text-blue-700">Total Premium</Label>
-                <p className="text-lg font-bold text-blue-700 pt-1">₹{form.total_premium}</p>
+              <div className="space-y-1 bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
+                <Label className="text-blue-500">Total Premium</Label>
+                <p className="text-lg font-bold text-blue-500 pt-1">₹{form.total_premium}</p>
               </div>
             </div>
           </section>
@@ -570,9 +570,9 @@ export function InsuranceForm({
                   <option>Online Link</option>
                 </select>
               </div>
-              <div className={`space-y-1 p-2 rounded-lg border flex flex-col justify-center ${form.profit >= 0 ? 'bg-emerald-50 border-emerald-100' : 'bg-rose-50 border-rose-100'}`}>
-                <Label className={form.profit >= 0 ? 'text-emerald-700' : 'text-rose-700'}>Calculated Profit</Label>
-                <p className={`text-lg font-bold pt-1 ${form.profit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
+              <div className={`space-y-1 p-2 rounded-lg border flex flex-col justify-center ${form.profit >= 0 ? 'bg-emerald-500/100/10 border-emerald-500/20' : 'bg-rose-500/100/10 border-rose-500/20'}`}>
+                <Label className={form.profit >= 0 ? 'text-emerald-700' : 'text-rose-500'}>Calculated Profit</Label>
+                <p className={`text-lg font-bold pt-1 ${form.profit >= 0 ? 'text-emerald-700' : 'text-rose-500'}`}>
                   ₹{form.profit}
                 </p>
               </div>

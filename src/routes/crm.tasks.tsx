@@ -54,16 +54,16 @@ const PRIORITIES: Priority[] = ["High", "Medium", "Low"];
 const STATUSES: TaskStatus[] = ["Pending", "In Progress", "Completed"];
 
 const PRIORITY_COLORS: Record<string, string> = {
-  High: "bg-red-100 text-red-800 border-red-200",
-  Medium: "bg-amber-100 text-amber-800 border-amber-200",
-  Low: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  High: "bg-red-500/10 text-red-500 border-red-500/20",
+  Medium: "bg-amber-500/10 text-amber-500 border-amber-500/20",
+  Low: "bg-emerald-500/10 text-emerald-500 border-bordermerald-500/20",
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  Pending: "bg-slate-100 text-slate-800 border-slate-200",
-  "In Progress": "bg-blue-100 text-blue-800 border-blue-200",
-  Completed: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  Done: "bg-emerald-100 text-emerald-800 border-emerald-200",
+  Pending: "bg-muted0/10 text-muted-foreground border-slate-500/20",
+  "In Progress": "bg-blue-500/10 text-blue-500 border-blue-500/20",
+  Completed: "bg-emerald-500/10 text-emerald-500 border-bordermerald-500/20",
+  Done: "bg-emerald-500/10 text-emerald-500 border-bordermerald-500/20",
 };
 
 function TasksPage() {
@@ -404,12 +404,12 @@ function TasksPage() {
   };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)] flex-col bg-slate-50/50 p-6 overflow-hidden">
+    <div className="flex h-[calc(100vh-4rem)] flex-col bg-muted/30 p-6 overflow-hidden">
       {/* Dashboard Top Row */}
       <div className="mb-6 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Task Management</h1>
-          <p className="text-sm text-slate-500">Track and manage your team's workflow</p>
+          <h1 className="text-2xl font-bold tracking-tight text-foreground">Task Management</h1>
+          <p className="text-sm text-muted-foreground">Track and manage your team's workflow</p>
         </div>
         <Button onClick={() => { setIsEditing(null); setShowCreateModal(true); }} className="gap-2">
           <Plus className="h-4 w-4" />
@@ -418,30 +418,30 @@ function TasksPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 mb-6">
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">Total Tasks</p>
-          <p className="mt-2 text-3xl font-bold text-slate-900">{totalTasks}</p>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
+          <p className="mt-2 text-3xl font-bold text-foreground">{totalTasks}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">Pending</p>
-          <p className="mt-2 text-3xl font-bold text-slate-700">{pendingTasks}</p>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">Pending</p>
+          <p className="mt-2 text-3xl font-bold text-foreground">{pendingTasks}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">In Progress</p>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">In Progress</p>
           <p className="mt-2 text-3xl font-bold text-blue-600">{inProgressTasks}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">Completed</p>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">Completed</p>
           <p className="mt-2 text-3xl font-bold text-emerald-600">{completedTasks}</p>
         </div>
-        <div className="rounded-xl border bg-white p-4 shadow-sm">
-          <p className="text-sm font-medium text-slate-500">Overdue</p>
+        <div className="rounded-xl border bg-card p-4 shadow-sm">
+          <p className="text-sm font-medium text-muted-foreground">Overdue</p>
           <p className="mt-2 text-3xl font-bold text-red-600">{overdueTasks}</p>
         </div>
       </div>
 
       {/* Main Content Area */}
-      <div className="flex-1 rounded-xl border bg-white shadow-sm overflow-hidden flex flex-col">
+      <div className="flex-1 rounded-xl border bg-card shadow-sm overflow-hidden flex flex-col">
         <div className="border-b px-4 py-3 flex justify-end gap-2">
           <Button variant="ghost" size="sm" onClick={() => setCurrentView("list")} className={`gap-2 ${currentView === "list" ? "text-primary font-semibold hover:text-primary hover:bg-transparent" : "text-muted-foreground"}`}>
             <List className="h-4 w-4" /> List View
@@ -476,17 +476,17 @@ function TasksPage() {
               <TableBody>
                 {visibleTasks.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center py-8 text-slate-500">No tasks found.</TableCell>
+                    <TableCell colSpan={9} className="text-center py-8 text-muted-foreground">No tasks found.</TableCell>
                   </TableRow>
                 ) : visibleTasks.filter(t => !t.parent_id && (currentView === "group" ? t.task_type === "Group" : true)).map((task) => {
                   const subTasks = visibleTasks.filter(st => st.parent_id === task.id);
                   return (
                     <React.Fragment key={task.id}>
-                      <TableRow key={task.id} className={task.task_type === "Group" ? "bg-slate-50/50" : ""}>
-                        <TableCell className="font-medium text-slate-500">#{getDisplayId(task)}</TableCell>
+                      <TableRow key={task.id} className={task.task_type === "Group" ? "bg-muted/30" : ""}>
+                        <TableCell className="font-medium text-muted-foreground">#{getDisplayId(task)}</TableCell>
                         <TableCell className="font-semibold">{task.title}</TableCell>
                         <TableCell className="align-top min-w-[200px]">
-                          <div className="mb-2 font-medium text-gray-800">{task.assigned_to || (task as any).assignee || "-"}</div>
+                          <div className="mb-2 font-medium text-foreground">{task.assigned_to || (task as any).assignee || "-"}</div>
                           <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
                             <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
                               {task.notes && task.notes.length > 0 && (
@@ -510,7 +510,7 @@ function TasksPage() {
                                     autoFocus
                                     value={tableEditNoteText}
                                     onChange={(e) => setTableEditNoteText(e.target.value)}
-                                    className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                    className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-card focus:outline-none focus:ring-1 focus:ring-blue-500"
                                     placeholder="Write a note..."
                                     onKeyDown={(e) => {
                                       if (e.key === "Enter" && !e.shiftKey) {
@@ -544,13 +544,13 @@ function TasksPage() {
                         </TableCell>
                         <TableCell>{task.customer_id || (task as any).lead || "-"}</TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={PRIORITY_COLORS[task.priority] || "bg-slate-100 text-slate-800"}>{task.priority}</Badge>
+                          <Badge variant="outline" className={PRIORITY_COLORS[task.priority] || "bg-muted text-foreground"}>{task.priority}</Badge>
                         </TableCell>
                         <TableCell>
-                          <Badge variant="outline" className={STATUS_COLORS[task.status] || "bg-slate-100 text-slate-800"}>{task.status}</Badge>
+                          <Badge variant="outline" className={STATUS_COLORS[task.status] || "bg-muted text-foreground"}>{task.status}</Badge>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-1.5 text-slate-600 text-sm">
+                          <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                             <CalendarDays className="h-3.5 w-3.5" />
                             {(task.due_date || (task as any).dueDate)
                               ? new Date(task.due_date || (task as any).dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
@@ -564,7 +564,7 @@ function TasksPage() {
                               return (
                                 <>
                                   <Progress value={p} className="h-2 w-16" />
-                                  <span className="text-xs text-slate-500">{p}%</span>
+                                  <span className="text-xs text-muted-foreground">{p}%</span>
                                 </>
                               );
                             })()}
@@ -574,11 +574,11 @@ function TasksPage() {
                           <div className="flex justify-end items-center gap-1">
                             {isAdmin && (
                               <Button variant="ghost" size="icon" onClick={() => handleEditTask(task)}>
-                                <Edit className="h-4 w-4 text-slate-500" />
+                                <Edit className="h-4 w-4 text-muted-foreground" />
                               </Button>
                             )}
                             <Button variant="ghost" size="icon" onClick={() => setViewingTask(task)}>
-                              <Eye className="h-4 w-4 text-slate-500" />
+                              <Eye className="h-4 w-4 text-muted-foreground" />
                             </Button>
                             {isAdmin && (
                               <Button variant="ghost" size="icon" onClick={() => handleCloneTask(task)}>
@@ -594,11 +594,11 @@ function TasksPage() {
                         </TableCell>
                       </TableRow>
                       {subTasks.length > 0 && subTasks.map((st) => (
-                        <TableRow className="bg-slate-50/80" key={st.id}>
-                          <TableCell className="font-medium text-slate-500 pl-8 relative"><div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-slate-300"></div><div className="absolute left-3 top-0 bottom-1/2 w-[1px] bg-slate-300"></div>#{getDisplayId(st)}</TableCell>
+                        <TableRow className="bg-muted/50" key={st.id}>
+                          <TableCell className="font-medium text-muted-foreground pl-8 relative"><div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-slate-300"></div><div className="absolute left-3 top-0 bottom-1/2 w-[1px] bg-slate-300"></div>#{getDisplayId(st)}</TableCell>
                           <TableCell className="font-semibold">{st.title}</TableCell>
                           <TableCell className="align-top min-w-[200px]">
-                            <div className="mb-2 font-medium text-gray-800">{st.assigned_to || (st as any).assignee || "-"}</div>
+                            <div className="mb-2 font-medium text-foreground">{st.assigned_to || (st as any).assignee || "-"}</div>
                             <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
                               <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
                                 {st.notes && st.notes.length > 0 && (
@@ -622,7 +622,7 @@ function TasksPage() {
                                       autoFocus
                                       value={tableEditNoteText}
                                       onChange={(e) => setTableEditNoteText(e.target.value)}
-                                      className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-white focus:outline-none focus:ring-1 focus:ring-blue-500"
+                                      className="w-full text-sm border border-input rounded-md px-2 py-1.5 min-h-[60px] bg-card focus:outline-none focus:ring-1 focus:ring-blue-500"
                                       placeholder="Write a note..."
                                       onKeyDown={(e) => {
                                         if (e.key === "Enter" && !e.shiftKey) {
@@ -656,13 +656,13 @@ function TasksPage() {
                           </TableCell>
                           <TableCell>{st.customer_id || (st as any).lead || "-"}</TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={PRIORITY_COLORS[st.priority] || "bg-slate-100 text-slate-800"}>{st.priority}</Badge>
+                            <Badge variant="outline" className={PRIORITY_COLORS[st.priority] || "bg-muted text-foreground"}>{st.priority}</Badge>
                           </TableCell>
                           <TableCell>
-                            <Badge variant="outline" className={STATUS_COLORS[st.status] || "bg-slate-100 text-slate-800"}>{st.status}</Badge>
+                            <Badge variant="outline" className={STATUS_COLORS[st.status] || "bg-muted text-foreground"}>{st.status}</Badge>
                           </TableCell>
                           <TableCell>
-                            <div className="flex items-center gap-1.5 text-slate-600 text-sm">
+                            <div className="flex items-center gap-1.5 text-muted-foreground text-sm">
                               <CalendarDays className="h-3.5 w-3.5" />
                               {(st.due_date || (st as any).dueDate)
                                 ? new Date(st.due_date || (st as any).dueDate).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })
@@ -676,7 +676,7 @@ function TasksPage() {
                                 return (
                                   <>
                                     <Progress value={p} className="h-2 w-16" />
-                                    <span className="text-xs text-slate-500">{p}%</span>
+                                    <span className="text-xs text-muted-foreground">{p}%</span>
                                   </>
                                 );
                               })()}
@@ -686,11 +686,11 @@ function TasksPage() {
                             <div className="flex justify-end items-center gap-1">
                               {isAdmin && (
                                 <Button variant="ghost" size="icon" onClick={() => handleEditTask(st)}>
-                                  <Edit className="h-4 w-4 text-slate-500" />
+                                  <Edit className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                               )}
                               <Button variant="ghost" size="icon" onClick={() => setViewingTask(st)}>
-                                <Eye className="h-4 w-4 text-slate-500" />
+                                <Eye className="h-4 w-4 text-muted-foreground" />
                               </Button>
                               {isAdmin && (
                                 <Button variant="ghost" size="icon" onClick={() => handleCloneTask(st)}>
@@ -716,9 +716,9 @@ function TasksPage() {
           {currentView === "individual" && (
             <div className="p-6">
               {visibleTasks.length === 0 ? (
-                <div className="text-center py-20 text-slate-500 flex flex-col items-center justify-center border-2 border-dashed border-slate-200 rounded-xl bg-slate-50/50">
+                <div className="text-center py-20 text-muted-foreground flex flex-col items-center justify-center border-2 border-borderashed border-border rounded-xl bg-muted/30">
                   <Users className="h-12 w-12 text-slate-300 mb-4" />
-                  <h3 className="text-lg font-medium text-slate-900">No Tasks Found</h3>
+                  <h3 className="text-lg font-medium text-foreground">No Tasks Found</h3>
                   <p className="max-w-sm mx-auto mt-2">There are currently no tasks assigned to any employees.</p>
                 </div>
               ) : (
@@ -727,19 +727,19 @@ function TasksPage() {
                     const empTasks = visibleTasks.filter(t => (t.assigned_to || (t as any).assignee || "Unassigned") === assigneeName);
                     if (empTasks.length === 0) return null;
                     return (
-                      <div key={assigneeName} className="rounded-xl border bg-slate-50 p-4">
+                      <div key={assigneeName} className="rounded-xl border bg-muted p-4">
                         <div className="flex items-center gap-3 mb-4">
                           <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center font-bold text-brand uppercase">
                             {assigneeName.charAt(0)}
                           </div>
                           <div>
-                            <h3 className="font-bold text-slate-900">{assigneeName}</h3>
-                            <p className="text-xs text-slate-500">{empTasks.length} Assigned Tasks</p>
+                            <h3 className="font-bold text-foreground">{assigneeName}</h3>
+                            <p className="text-xs text-muted-foreground">{empTasks.length} Assigned Tasks</p>
                           </div>
                         </div>
                         <div className="space-y-3">
                           {empTasks.map(t => (
-                            <div key={t.id} className="group flex items-start gap-3 rounded-lg border bg-white p-3 shadow-sm hover:border-brand/50">
+                            <div key={t.id} className="group flex items-start gap-3 rounded-lg border bg-card p-3 shadow-sm hover:border-brand/50">
                               <div className="mt-0.5">
                                 {t.status === "Completed" ? (
                                   <CheckCircle2 className="h-5 w-5 text-emerald-500" />
@@ -748,14 +748,14 @@ function TasksPage() {
                                 )}
                               </div>
                               <div className="flex-1">
-                                <p onClick={() => setViewingTask(t)} className={`cursor-pointer text-sm font-medium ${t.status === "Completed" ? "text-slate-400 line-through" : "text-slate-900"}`}>
+                                <p onClick={() => setViewingTask(t)} className={`cursor-pointer text-sm font-medium ${t.status === "Completed" ? "text-slate-400 line-through" : "text-foreground"}`}>
                                   {t.task_type === "Subtask" && <Badge variant="secondary" className="mr-2 text-[9px] px-1 py-0 h-4 bg-brand/10 text-brand border-brand/20">Sub-Task</Badge>}
                                   {t.title}
                                 </p>
                                 <div className="mt-1 flex items-center justify-between">
                                   <div className="flex items-center gap-2">
-                                    <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${PRIORITY_COLORS[t.priority] || "bg-slate-100"}`}>{t.priority}</Badge>
-                                    <span className="text-[10px] text-slate-500">
+                                    <Badge variant="outline" className={`text-[10px] px-1 py-0 h-4 ${PRIORITY_COLORS[t.priority] || "bg-muted"}`}>{t.priority}</Badge>
+                                    <span className="text-[10px] text-muted-foreground">
                                       {(t.due_date || (t as any).dueDate)
                                         ? new Date(t.due_date || (t as any).dueDate).toLocaleDateString()
                                         : "N/A"}
@@ -806,9 +806,9 @@ function TasksPage() {
             const daysArray = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
 
             return (
-              <div className="bg-white rounded-xl border shadow-sm p-6 overflow-hidden">
+              <div className="bg-card rounded-xl border shadow-sm p-6 overflow-hidden">
                 <div className="flex items-center justify-between mb-6">
-                  <h2 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                  <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-brand" />
                     {monthName}
                   </h2>
@@ -819,15 +819,15 @@ function TasksPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-7 gap-px bg-slate-200 border bg-slate-200 rounded-lg overflow-hidden">
+                <div className="grid grid-cols-7 gap-px bg-muted/80 border bg-muted/80 rounded-lg overflow-hidden">
                   {weekDays.map(day => (
-                    <div key={day} className="bg-slate-50 p-3 text-center text-sm font-semibold text-slate-600">
+                    <div key={day} className="bg-muted p-3 text-center text-sm font-semibold text-muted-foreground">
                       {day}
                     </div>
                   ))}
 
                   {Array.from({ length: startDay }).map((_, i) => (
-                    <div key={`empty-${i}`} className="bg-white p-2 min-h-[120px]" />
+                    <div key={`empty-${i}`} className="bg-card p-2 min-h-[120px]" />
                   ))}
 
                   {daysArray.map(date => {
@@ -836,13 +836,13 @@ function TasksPage() {
                     const dayTasks = visibleTasks.filter(t => (t.due_date || (t as any).dueDate)?.startsWith(dateStr));
 
                     return (
-                      <div key={date.toISOString()} className={`bg-white p-2 min-h-[120px] transition-colors hover:bg-slate-50/50 ${isToday ? 'bg-blue-50/30' : ''}`}>
+                      <div key={date.toISOString()} className={`bg-card p-2 min-h-[120px] transition-colors hover:bg-muted/30 ${isToday ? 'bg-blue-50/30' : ''}`}>
                         <div className="flex justify-between items-start mb-2">
-                          <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary text-primary-foreground shadow-sm' : 'text-slate-700'}`}>
+                          <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground'}`}>
                             {date.getDate()}
                           </span>
                           {dayTasks.length > 0 && (
-                            <Badge variant="secondary" className="text-[10px] px-1.5 h-5 bg-slate-100">{dayTasks.length}</Badge>
+                            <Badge variant="secondary" className="text-[10px] px-1.5 h-5 bg-muted">{dayTasks.length}</Badge>
                           )}
                         </div>
                         <div className="space-y-1.5 overflow-y-auto max-h-[80px] pr-1 scrollbar-thin">
@@ -850,9 +850,9 @@ function TasksPage() {
                             <div
                               key={t.id}
                               onClick={() => setViewingTask(t)}
-                              className={`text-[10px] px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 border ${t.status === 'Completed' ? 'bg-emerald-50 text-emerald-700 border-emerald-200' :
-                                t.priority === 'High' ? 'bg-red-50 text-red-700 border-red-200' :
-                                  'bg-white text-slate-700 border-slate-200 shadow-sm'
+                              className={`text-[10px] px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 border ${t.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500 border-bordermerald-500/20' :
+                                t.priority === 'High' ? 'bg-red-500/10 text-red-500 border-red-500/20' :
+                                  'bg-card text-foreground border-border shadow-sm'
                                 }`}
                             >
                               {t.title}
@@ -880,16 +880,16 @@ function TasksPage() {
           </DialogHeader>
 
           {!isEditing && (
-            <div className="flex bg-slate-100 p-1 rounded-lg w-fit mt-2">
+            <div className="flex bg-muted p-1 rounded-lg w-fit mt-2">
               <button
                 onClick={() => setTaskType("Individual")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Individual" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Individual" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 Individual Task
               </button>
               <button
                 onClick={() => setTaskType("Group")}
-                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Group" ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"}`}
+                className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${taskType === "Group" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"}`}
               >
                 Group Task
               </button>
@@ -976,11 +976,11 @@ function TasksPage() {
                 </div>
 
                 {subTasks.length === 0 ? (
-                  <p className="text-xs text-slate-500 text-center py-2">No sub-tasks added yet.</p>
+                  <p className="text-xs text-muted-foreground text-center py-2">No sub-tasks added yet.</p>
                 ) : (
                   <div className="space-y-3">
                     {subTasks.map((st, idx) => (
-                      <div key={idx} className="flex items-start gap-2 bg-white p-2 rounded border shadow-sm">
+                      <div key={idx} className="flex items-start gap-2 bg-card p-2 rounded border shadow-sm">
                         <div className="flex-1 space-y-2">
                           <Input
                             placeholder="Sub-task title..."
@@ -1026,22 +1026,22 @@ function TasksPage() {
               </div>
             )}
 
-            <div className="col-span-2 mt-2 space-y-3 rounded-lg border p-4 bg-slate-50">
+            <div className="col-span-2 mt-2 space-y-3 rounded-lg border p-4 bg-muted">
               <p className="text-sm font-medium">Reminders & Attachments</p>
               <div className="flex gap-6">
                 <div className="flex items-center gap-2">
                   <Checkbox id="email-rem" />
-                  <label htmlFor="email-rem" className="text-sm text-slate-600">Email Reminder</label>
+                  <label htmlFor="email-rem" className="text-sm text-muted-foreground">Email Reminder</label>
                 </div>
                 <div className="flex items-center gap-2">
                   <Checkbox id="wa-rem" />
-                  <label htmlFor="wa-rem" className="text-sm text-slate-600">WhatsApp Reminder</label>
+                  <label htmlFor="wa-rem" className="text-sm text-muted-foreground">WhatsApp Reminder</label>
                 </div>
               </div>
               <Button
                 variant="outline"
                 size="sm"
-                className="mt-2 w-full border-dashed gap-2"
+                className="mt-2 w-full border-borderashed gap-2"
                 onClick={() => document.getElementById('task-file-upload')?.click()}
               >
                 <Paperclip className="h-4 w-4" /> Upload Files
@@ -1052,7 +1052,7 @@ function TasksPage() {
                     <div key={idx} className="flex items-center justify-between p-2 text-xs bg-background border border-border rounded-lg shadow-sm">
                       <div className="flex items-center gap-2 overflow-hidden">
                         <Paperclip className="h-3 w-3 shrink-0 text-muted-foreground" />
-                        <span className="truncate font-medium text-slate-700">{file.name}</span>
+                        <span className="truncate font-medium text-foreground">{file.name}</span>
                         <span className="text-[10px] text-muted-foreground shrink-0">
                           ({(file.size / 1024).toFixed(1)} KB)
                         </span>
@@ -1096,7 +1096,7 @@ function TasksPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between pr-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-slate-500 text-sm font-normal">#{getDisplayId(viewingTask)}</span>
+                    <span className="text-muted-foreground text-sm font-normal">#{getDisplayId(viewingTask)}</span>
                     <span>Task Details</span>
                   </div>
                   <Badge variant="outline" className={STATUS_COLORS[viewingTask.status]}>{viewingTask.status}</Badge>
@@ -1104,26 +1104,26 @@ function TasksPage() {
               </DialogHeader>
               <div className="py-4 space-y-6">
                 <div>
-                  <h2 className="text-xl font-bold text-slate-900">{viewingTask.title}</h2>
-                  <p className="mt-2 text-sm text-slate-600">{viewingTask.description || "No description provided."}</p>
+                  <h2 className="text-xl font-bold text-foreground">{viewingTask.title}</h2>
+                  <p className="mt-2 text-sm text-muted-foreground">{viewingTask.description || "No description provided."}</p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-y-4 text-sm">
                   <div>
-                    <p className="text-slate-500 font-medium">Assigned To</p>
+                    <p className="text-muted-foreground font-medium">Assigned To</p>
                     <p className="font-semibold">{viewingTask.assigned_to || (viewingTask as any).assignee || "Unassigned"}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-medium">Customer</p>
+                    <p className="text-muted-foreground font-medium">Customer</p>
                     <p className="font-semibold">{viewingTask.customer_id || (viewingTask as any).lead || "-"}</p>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-medium">Priority</p>
-                    <Badge variant="outline" className={`mt-1 ${PRIORITY_COLORS[viewingTask.priority] || "bg-slate-100"}`}>{viewingTask.priority}</Badge>
+                    <p className="text-muted-foreground font-medium">Priority</p>
+                    <Badge variant="outline" className={`mt-1 ${PRIORITY_COLORS[viewingTask.priority] || "bg-muted"}`}>{viewingTask.priority}</Badge>
                   </div>
                   <div>
-                    <p className="text-slate-500 font-medium">Due Date</p>
-                    <div className="flex items-center gap-1.5 mt-1 font-semibold text-slate-700">
+                    <p className="text-muted-foreground font-medium">Due Date</p>
+                    <div className="flex items-center gap-1.5 mt-1 font-semibold text-foreground">
                       <CalendarDays className="h-4 w-4 text-slate-400" />
                       {(viewingTask.due_date || (viewingTask as any).dueDate)
                         ? new Date(viewingTask.due_date || (viewingTask as any).dueDate).toLocaleDateString()
@@ -1134,8 +1134,8 @@ function TasksPage() {
 
                 <div className="space-y-2">
                   <div className="flex justify-between text-sm">
-                    <span className="font-medium text-slate-700">Progress</span>
-                    <span className="font-bold text-slate-900">{viewingTask.progress ?? ((viewingTask.status === "Completed" || viewingTask.status === "Done" as any) ? 100 : 0)}%</span>
+                    <span className="font-medium text-foreground">Progress</span>
+                    <span className="font-bold text-foreground">{viewingTask.progress ?? ((viewingTask.status === "Completed" || viewingTask.status === "Done" as any) ? 100 : 0)}%</span>
                   </div>
                   <Progress value={viewingTask.progress ?? ((viewingTask.status === "Completed" || viewingTask.status === "Done" as any) ? 100 : 0)} className="h-2.5" />
                 </div>
@@ -1157,7 +1157,7 @@ function TasksPage() {
                   </Button>
                   <Button
                     variant={viewingTask.status === "Completed" ? "default" : "outline"}
-                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-emerald-200"
+                    className="flex-1 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border-bordermerald-200"
                     onClick={() => updateTaskStatus(viewingTask.id, "Completed")}
                   >
                     Completed
@@ -1166,8 +1166,8 @@ function TasksPage() {
 
                 {viewingTask.attachments && viewingTask.attachments.length > 0 && (
                   <div className="pt-6 border-t mt-6">
-                    <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                      <Paperclip className="h-4 w-4 text-slate-500" />
+                    <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                      <Paperclip className="h-4 w-4 text-muted-foreground" />
                       Attachments
                     </h3>
                     <div className="grid grid-cols-2 gap-3">
@@ -1177,10 +1177,10 @@ function TasksPage() {
                           href={file.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="flex items-center gap-2 p-3 bg-slate-50 rounded-lg border hover:border-brand/50 transition-colors"
+                          className="flex items-center gap-2 p-3 bg-muted rounded-lg border hover:border-brand/50 transition-colors"
                         >
                           <FileText className="h-5 w-5 text-brand" />
-                          <span className="text-sm font-medium text-slate-700 truncate">{file.name}</span>
+                          <span className="text-sm font-medium text-foreground truncate">{file.name}</span>
                         </a>
                       ))}
                     </div>
@@ -1189,24 +1189,24 @@ function TasksPage() {
 
                 {/* Notes / Comments Section */}
                 <div className="pt-6 border-t mt-6">
-                  <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
-                    <MessageSquare className="h-4 w-4 text-slate-500" />
+                  <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                    <MessageSquare className="h-4 w-4 text-muted-foreground" />
                     Task Notes & Updates
                   </h3>
 
                   <div className="space-y-4 max-h-[200px] overflow-y-auto mb-4 pr-2">
                     {(!viewingTask.notes || viewingTask.notes.length === 0) ? (
-                      <p className="text-sm text-slate-500 italic text-center py-4 bg-slate-50 rounded-lg">No notes yet. Be the first to add an update!</p>
+                      <p className="text-sm text-muted-foreground italic text-center py-4 bg-muted rounded-lg">No notes yet. Be the first to add an update!</p>
                     ) : (
                       viewingTask.notes.map(note => (
-                        <div key={note.id} className="bg-slate-50 rounded-lg p-3">
+                        <div key={note.id} className="bg-muted rounded-lg p-3">
                           <div className="flex justify-between items-start mb-1">
-                            <span className="text-xs font-semibold text-slate-700">{note.created_by}</span>
+                            <span className="text-xs font-semibold text-foreground">{note.created_by}</span>
                             <span className="text-[10px] text-slate-400">
                               {new Date(note.created_at).toLocaleDateString()} {new Date(note.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           </div>
-                          <p className="text-sm text-slate-600 whitespace-pre-wrap">{note.content}</p>
+                          <p className="text-sm text-muted-foreground whitespace-pre-wrap">{note.content}</p>
                         </div>
                       ))
                     )}
