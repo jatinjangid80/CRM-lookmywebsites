@@ -199,7 +199,9 @@ export const Route = createFileRoute("/crm/accounts")({
 
 function AccountsPage() {
   const auth = getAuth();
-  const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
+  const isManagement = auth?.name === "Deepak Yogi" || auth?.name === "Pushpa Yogi";
+  const canViewExpenses = !isManagement;
+
   const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
 
   // Entities for Receipts & Payments
@@ -519,13 +521,16 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full sm:w-[800px] grid-cols-2 sm:grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
-          <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+        <TabsList className={`grid w-full sm:w-[800px] ${canViewExpenses ? "grid-cols-4" : "grid-cols-3"} bg-secondary/50 rounded-xl p-1 shadow-sm`}>
+          {canViewExpenses && (
+            <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+          )}
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
         </TabsList>
 
+        {canViewExpenses && (
         <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -645,6 +650,7 @@ function AccountsPage() {
             </table>
           </div>
         </TabsContent>
+        )}
 
         <TabsContent value="follow-ups" className="space-y-6 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
