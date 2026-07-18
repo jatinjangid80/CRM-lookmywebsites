@@ -252,7 +252,7 @@ function AccountsPage() {
   });
   const [isLogFollowUpOpen, setIsLogFollowUpOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "Expense" | "Follow-up" | "Transaction" } | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string, type: "Expense" | "Follow-up" | "Transaction" | "PaymentRequest" } | null>(null);
   const [invoiceMatchStatus, setInvoiceMatchStatus] = useState<"typing" | "found" | "not_found" | null>(null);
   const [followUpsList, setFollowUpsList] = useSupabaseTable<PaymentFollowUp[]>("payment_followups", []);
   const [selectedFuId, setSelectedFuId] = useState<string | null>(null);
@@ -299,7 +299,7 @@ function AccountsPage() {
     if (!newExpense.amount || !newExpense.category) return;
 
     const exp: Expense = {
-      id: `EXP-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: `EXP-${String(expenseList.length + 1).padStart(3, '0')}`,
       date: newExpense.date || new Date().toISOString().split("T")[0],
       category: newExpense.category,
       amount: newExpense.amount,
@@ -307,6 +307,7 @@ function AccountsPage() {
       reference: newExpense.reference || "",
       description: newExpense.description || "",
       status: newExpense.status as any || "Paid",
+      createdBy: auth?.name || "Unknown",
     };
 
     setExpenseList([exp, ...expenseList]);
@@ -341,7 +342,7 @@ function AccountsPage() {
     setSelectedFuId(null);
   };
 
-  const handleDelete = (id: string, type: "Expense" | "Follow-up" | "Transaction") => {
+  const handleDelete = (id: string, type: "Expense" | "Follow-up" | "Transaction" | "PaymentRequest") => {
     setDeleteTarget({ id, type });
     setIsDeleteModalOpen(true);
   };
@@ -354,6 +355,8 @@ function AccountsPage() {
       setFollowUpsList(prev => prev.filter(f => f.id !== deleteTarget.id));
     } else if (deleteTarget.type === "Transaction") {
       setTransactions(prev => prev.filter(t => t.id !== deleteTarget.id));
+    } else if (deleteTarget.type === "PaymentRequest") {
+      setPaymentRequests(prev => prev.filter(r => r.id !== deleteTarget.id));
     }
     setIsDeleteModalOpen(false);
     setDeleteTarget(null);
@@ -371,7 +374,7 @@ function AccountsPage() {
     const entityPhone = entity ? (entity.phone || entity.mobile || "N/A") : "N/A";
 
     const newFu = {
-      id: `PFU-${Math.floor(Math.random() * 10000)}`,
+      id: `PFU-${String(followUpsList.length + 1).padStart(3, '0')}`,
       invoiceId: newFollowUp.invoiceId || "INV-NEW",
       customerId: newFollowUp.entityId,
       customerName: String(entityName),
@@ -384,6 +387,7 @@ function AccountsPage() {
       repeat: "None" as const,
       notificationReminder: 1,
       notes: newFollowUp.remark || "New follow-up created",
+      createdBy: auth?.name || "Unknown",
     };
 
     setFollowUpsList([newFu, ...followUpsList]);
@@ -414,7 +418,7 @@ function AccountsPage() {
     }
 
     const newReq: PaymentRequest = {
-      id: `PRQ-${Math.floor(Math.random() * 10000)}`,
+      id: `PRQ-${String(paymentRequests.length + 1).padStart(3, '0')}`,
       date: newPaymentRequest.date || new Date().toISOString().split('T')[0],
       employeeId: auth?.id || "EMP-001",
       employeeName: auth?.name || "Current User",
@@ -471,7 +475,7 @@ function AccountsPage() {
 
       if (actionPopupType === "Paid") {
         const newTx = {
-          id: `TXN-${Math.floor(10000 + Math.random() * 90000)}`,
+          id: `TXN-${String(transactions.length + 1).padStart(3, '0')}`,
           date: new Date().toISOString().split('T')[0],
           type: "Payment",
           entityType: req.entityType,
@@ -481,7 +485,8 @@ function AccountsPage() {
           paymentMode: "Bank Transfer",
           reference: `Auto-generated for PRQ ${req.id}`,
           status: "Completed",
-          invoiceId: req.invoiceId
+          invoiceId: req.invoiceId,
+          createdBy: auth?.name || "Unknown",
         };
         setTransactions([newTx, ...transactions]);
         showToast("Payment Marked as Paid", `Receipt ${newTx.id} generated successfully.`);
@@ -514,20 +519,14 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full sm:w-[800px] ${isManagement ? 'grid-cols-1' : 'grid-cols-4'} bg-secondary/50 rounded-xl p-1 shadow-sm`}>
-          {!isManagement && (
-            <>
-              <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-              <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
-              <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
-            </>
-          )}
+        <TabsList className="grid w-full sm:w-[800px] grid-cols-2 sm:grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
+          <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+          <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
+          <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
         </TabsList>
 
-        {!isManagement && (
-          <>
-            <TabsContent value="expenses" className="space-y-6 mt-6">
+        <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
@@ -544,7 +543,7 @@ function AccountsPage() {
                 <AlertCircle className="h-6 w-6" />
               </div>
               <div>
-                <p className="text-sm font-semibold text-muted-foreground">Pending Expenses</p>
+                <p className="text-sm font-semibold text-muted-foreground">Pending Approvals</p>
                 <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(pendingExpenses)}</p>
               </div>
             </div>
@@ -569,6 +568,7 @@ function AccountsPage() {
                   <th className="px-6 py-4 font-semibold">Description</th>
                   <th className="px-6 py-4 font-semibold">Payment Mode</th>
                   <th className="px-6 py-4 font-semibold">Amount</th>
+                  <th className="px-6 py-4 font-semibold">Added By</th>
                   <th className="px-6 py-4 font-semibold text-center">Status</th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
@@ -601,6 +601,9 @@ function AccountsPage() {
                     <td className="px-6 py-4 font-bold text-foreground">
                       {formatINR(exp.amount)}
                     </td>
+                    <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
+                      {exp.createdBy || auth?.name || "System"}
+                    </td>
                     <td className="px-6 py-4 text-center">
                       <Popover>
                         <PopoverTrigger asChild>
@@ -617,12 +620,10 @@ function AccountsPage() {
                           {(["Paid", "Pending", "Cancelled"] as Expense["status"][]).map((s) => (
                             <button
                               key={s}
-                              className={`w-full flex items-center gap-2 rounded px-2 py-1 text-xs hover:bg-secondary transition-colors ${exp.status === s ? 'bg-secondary font-semibold' : ''}`}
+                              className="w-full text-left px-2 py-1.5 text-xs rounded-sm hover:bg-secondary transition-colors mt-0.5"
                               onClick={() => setExpenseList(expenseList.map(e => e.id === exp.id ? { ...e, status: s } : e))}
                             >
-                              <span className={`inline-block w-2 h-2 rounded-full ${s === 'Paid' ? 'bg-emerald-500' : s === 'Cancelled' ? 'bg-gray-400' : 'bg-rose-500'}`} />
                               {s}
-                              {exp.status === s && <Check className="h-3 w-3 ml-auto text-primary" />}
                             </button>
                           ))}
                         </PopoverContent>
@@ -690,6 +691,10 @@ function AccountsPage() {
                     <span className="text-muted-foreground">Notes:</span>
                     <span className="font-medium text-right max-w-[200px] truncate">{fu.notes}</span>
                   </div>
+                  <div className="flex items-center justify-between text-sm mt-1">
+                    <span className="text-muted-foreground">Added By:</span>
+                    <span className="font-medium">{fu.createdBy || auth?.name || "System"}</span>
+                  </div>
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-border gap-4">
@@ -752,6 +757,7 @@ function AccountsPage() {
                     <th className="px-6 py-4">Entity</th>
                     <th className="px-6 py-4">Mode</th>
                     <th className="px-6 py-4 text-right">Amount</th>
+                    <th className="px-6 py-4 text-right">Added By</th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -772,6 +778,9 @@ function AccountsPage() {
                       <td className={`px-6 py-4 text-right font-bold ${tx.type === 'Receipt' ? 'text-emerald-600' : 'text-rose-600'}`}>
                         {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
                       </td>
+                      <td className="px-6 py-4 text-right text-xs text-muted-foreground font-medium">
+                        {tx.createdBy || auth?.name || "System"}
+                      </td>
                       <td className="px-6 py-4 text-right">
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
                           <Trash2 className="h-4 w-4" />
@@ -784,8 +793,6 @@ function AccountsPage() {
             </div>
           )}
         </TabsContent>
-        </>
-        )}
 
         <TabsContent value="payments-approval" className="space-y-6 mt-6">
           <div className="flex justify-between items-center">
@@ -880,6 +887,11 @@ function AccountsPage() {
                                 {req.status === 'Paid' && req.receiptId && (
                                   <Button size="sm" variant="outline" className="h-8 text-blue-600 border-blue-200 hover:bg-blue-50" onClick={() => { setReceiptReqId(req.id); setIsReceiptViewerOpen(true); }}>
                                     View Receipt
+                                  </Button>
+                                )}
+                                {auth?.role === 'admin' && (
+                                  <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(req.id, "PaymentRequest")}>
+                                    <Trash2 className="h-4 w-4" />
                                   </Button>
                                 )}
                               </td>
@@ -1064,9 +1076,10 @@ function AccountsPage() {
               }
 
               const txWithId = {
-                id: `TX-${Math.floor(10000 + Math.random() * 90000)}`,
+                id: `TXN-${String(transactions.length + 1).padStart(3, '0')}`,
                 ...newTx,
-                entityName
+                entityName,
+                createdBy: auth?.name || "Unknown",
               };
 
               // Update booking paid amount if invoiceId exists

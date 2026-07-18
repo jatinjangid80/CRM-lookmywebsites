@@ -305,6 +305,7 @@ export type PaymentFollowUp = {
   repeat: "None" | "Daily" | "Weekly";
   notificationReminder: number;
   notes: string;
+  createdBy?: string;
 };
 
 
@@ -318,6 +319,7 @@ export type Expense = {
   reference: string;
   description: string;
   status: "Paid" | "Pending" | "Cancelled";
+  createdBy?: string;
 };
 
 
