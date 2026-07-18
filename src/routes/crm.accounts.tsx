@@ -602,7 +602,7 @@ function AccountsPage() {
                       {formatINR(exp.amount)}
                     </td>
                     <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
-                      {exp.createdBy || auth?.name || "System"}
+                      {exp.createdBy || "-"}
                     </td>
                     <td className="px-6 py-4 text-center">
                       <Popover>
@@ -693,7 +693,7 @@ function AccountsPage() {
                   </div>
                   <div className="flex items-center justify-between text-sm mt-1">
                     <span className="text-muted-foreground">Added By:</span>
-                    <span className="font-medium">{fu.createdBy || auth?.name || "System"}</span>
+                    <span className="font-medium">{fu.createdBy || "-"}</span>
                   </div>
                 </div>
 
@@ -779,7 +779,7 @@ function AccountsPage() {
                         {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
                       </td>
                       <td className="px-6 py-4 text-right text-xs text-muted-foreground font-medium">
-                        {tx.createdBy || auth?.name || "System"}
+                        {tx.createdBy || "-"}
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
