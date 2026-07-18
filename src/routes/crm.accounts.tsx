@@ -50,7 +50,7 @@ export function EntityCombobox({
     const name = nameParts[0] || item.id || `Unknown ${entityType}`;
     const phone = nameParts[1] || item.phone || "";
     const email = item.email || "";
-    
+
     return {
       value: item.id,
       label: name,
@@ -125,13 +125,13 @@ export function BookingCombobox({
   onChange: (val: string, booking: any) => void;
 }) {
   const [open, setOpen] = useState(false);
-  
+
   const displayItems = (bookings || []).map(b => {
     const isVendor = !!b.supplier;
     const entityName = b.customer || b.supplier || "Unknown Entity";
     const invoiceNo = b.saleInvoiceNo || b.purchaseInvoiceNo || b.id || "N/A";
     const label = `${invoiceNo} - ${entityName.split('---META---')[0]}`;
-    
+
     return {
       value: String(b.id),
       invoiceNo: String(invoiceNo),
@@ -199,9 +199,7 @@ export const Route = createFileRoute("/crm/accounts")({
 
 function AccountsPage() {
   const auth = getAuth();
-  const isManagement = auth?.name === "Deepak Yogi" || auth?.name === "Pushpa Yogi";
-  const canViewExpenses = !isManagement;
-
+  const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
   const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
 
   // Entities for Receipts & Payments
@@ -276,7 +274,7 @@ function AccountsPage() {
 
   // Advanced Payment Approvals UI State
   const [activePaymentTab, setActivePaymentTab] = useState("unpaid");
-  
+
   const [isActionPopupOpen, setIsActionPopupOpen] = useState(false);
   const [actionPopupType, setActionPopupType] = useState<PaymentRequest["status"] | "">("");
   const [actionPopupReqId, setActionPopupReqId] = useState<string | null>(null);
@@ -289,9 +287,9 @@ function AccountsPage() {
   const [receiptReqId, setReceiptReqId] = useState<string | null>(null);
 
   // Toast Notification Mock (Since we don't have a real toast system imported)
-  const [toastMessage, setToastMessage] = useState<{title: string, desc: string} | null>(null);
+  const [toastMessage, setToastMessage] = useState<{ title: string, desc: string } | null>(null);
   const showToast = (title: string, desc: string) => {
-    setToastMessage({title, desc});
+    setToastMessage({ title, desc });
     setTimeout(() => setToastMessage(null), 3000);
   };
   const totalExpenses = expenseList.reduce((sum, e) => sum + e.amount, 0);
@@ -494,7 +492,7 @@ function AccountsPage() {
         showToast("Payment Marked as Paid", `Receipt ${newTx.id} generated successfully.`);
         return { ...req, status: actionPopupType, receiptId: newTx.id, auditLog: newAuditLog };
       }
-      
+
       showToast("Status Updated", `Request marked as ${actionPopupType}`);
       return { ...req, status: actionPopupType, auditLog: newAuditLog };
     }));
@@ -512,7 +510,7 @@ function AccountsPage() {
           <span className="text-xs text-gray-300 mt-1">{toastMessage.desc}</span>
         </div>
       )}
-      
+
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Accounts</h1>
@@ -521,16 +519,13 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className={`grid w-full sm:w-[800px] ${canViewExpenses ? "grid-cols-4" : "grid-cols-3"} bg-secondary/50 rounded-xl p-1 shadow-sm`}>
-          {canViewExpenses && (
-            <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
-          )}
+        <TabsList className="grid w-full sm:w-[800px] grid-cols-2 sm:grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
+          <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
         </TabsList>
 
-        {canViewExpenses && (
         <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -613,9 +608,8 @@ function AccountsPage() {
                       <Popover>
                         <PopoverTrigger asChild>
                           <button
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity ${
-                              exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : exp.status === 'Cancelled' ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-rose-100 text-rose-700 border-rose-200'
-                            }`}
+                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity ${exp.status === 'Paid' ? 'bg-emerald-100 text-emerald-700 border-emerald-200' : exp.status === 'Cancelled' ? 'bg-gray-100 text-gray-600 border-gray-200' : 'bg-rose-100 text-rose-700 border-rose-200'
+                              }`}
                           >
                             {exp.status} <ChevronDown className="h-2.5 w-2.5" />
                           </button>
@@ -650,7 +644,6 @@ function AccountsPage() {
             </table>
           </div>
         </TabsContent>
-        )}
 
         <TabsContent value="follow-ups" className="space-y-6 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -807,7 +800,7 @@ function AccountsPage() {
               <Plus className="mr-2 h-4 w-4" /> Request Payment
             </Button>
           </div>
-          
+
           <Tabs value={activePaymentTab} onValueChange={setActivePaymentTab} className="w-full">
             <TabsList className="mb-4">
               <TabsTrigger value="unpaid">Unpaid / Pending</TabsTrigger>
@@ -815,7 +808,7 @@ function AccountsPage() {
             </TabsList>
 
             {["unpaid", "paid"].map(tabValue => {
-              const filteredRequests = paymentRequests.filter(req => 
+              const filteredRequests = paymentRequests.filter(req =>
                 tabValue === "paid" ? req.status === "Paid" : req.status !== "Paid"
               );
 
@@ -856,13 +849,12 @@ function AccountsPage() {
                                 {formatINR(req.amount)}
                               </td>
                               <td className="px-6 py-4">
-                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${
-                                  req.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
-                                  req.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
-                                  req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                  req.status === 'Accounts Verified' ? 'bg-purple-100 text-purple-700' :
-                                  'bg-orange-100 text-orange-700'
-                                }`}>
+                                <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${req.status === 'Paid' ? 'bg-emerald-100 text-emerald-700' :
+                                    req.status === 'Approved' ? 'bg-blue-100 text-blue-700' :
+                                      req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                        req.status === 'Accounts Verified' ? 'bg-purple-100 text-purple-700' :
+                                          'bg-orange-100 text-orange-700'
+                                  }`}>
                                   {req.status}
                                 </span>
                               </td>
@@ -1095,7 +1087,7 @@ function AccountsPage() {
                   String(b.saleInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
                   String(b.purchaseInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase()
                 );
-                
+
                 if (targetBooking) {
                   const currentPaid = targetBooking.paid || 0;
                   const updatedBooking = {
@@ -1317,11 +1309,11 @@ function AccountsPage() {
                         }
                       }
                     }
-                    setNewFollowUp({ 
-                      ...newFollowUp, 
-                      entityId: v, 
-                      pendingAmount: pending > 0 ? String(pending) : newFollowUp.pendingAmount, 
-                      invoiceId: invoiceId || newFollowUp.invoiceId 
+                    setNewFollowUp({
+                      ...newFollowUp,
+                      entityId: v,
+                      pendingAmount: pending > 0 ? String(pending) : newFollowUp.pendingAmount,
+                      invoiceId: invoiceId || newFollowUp.invoiceId
                     });
                   }}
                   customers={customers}
@@ -1583,9 +1575,9 @@ function AccountsPage() {
           <DialogHeader>
             <DialogTitle>
               {actionPopupType === "Accounts Verified" ? "Verify Request" :
-               actionPopupType === "Approved" ? "Approve Request" :
-               actionPopupType === "Rejected" ? "Reject Request" :
-               actionPopupType === "Paid" ? "Mark as Paid" : "Update Status"}
+                actionPopupType === "Approved" ? "Approve Request" :
+                  actionPopupType === "Rejected" ? "Reject Request" :
+                    actionPopupType === "Paid" ? "Mark as Paid" : "Update Status"}
             </DialogTitle>
             <DialogDescription>
               Please provide any remarks or justification (optional).
@@ -1594,9 +1586,9 @@ function AccountsPage() {
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label>Remark / Notes</Label>
-              <Textarea 
-                placeholder="Type your notes here..." 
-                className="min-h-[100px]" 
+              <Textarea
+                placeholder="Type your notes here..."
+                className="min-h-[100px]"
                 value={actionPopupRemark}
                 onChange={(e) => setActionPopupRemark(e.target.value)}
               />
@@ -1604,7 +1596,7 @@ function AccountsPage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsActionPopupOpen(false)}>Cancel</Button>
-            <Button 
+            <Button
               onClick={handleActionPopupSubmit}
               className={actionPopupType === 'Rejected' ? 'bg-red-600 hover:bg-red-700 text-white' : ''}
             >
@@ -1668,10 +1660,10 @@ function AccountsPage() {
               </div>
               <h2 className="text-2xl font-bold mb-2">Payment Successful</h2>
               <p className="text-muted-foreground mb-8">
-                Request ID: {receiptReqId} <br/>
+                Request ID: {receiptReqId} <br />
                 Receipt ID: {paymentRequests.find(r => r.id === receiptReqId)?.receiptId}
               </p>
-              
+
               <div className="bg-secondary/30 rounded-xl p-6 text-left grid grid-cols-2 gap-y-4">
                 <div>
                   <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Date</p>

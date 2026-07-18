@@ -549,12 +549,32 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const parsed = JSON.parse(newRow.notes);
         if (parsed._isMeta) {
           newRow.notes = parsed.text;
-          const metaFields = ["reference", "status", "invoiceId", "receiptId"];
+          const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy"];
           for (const field of metaFields) {
             if (parsed[field] !== undefined) {
               newRow[field] = parsed[field];
             }
           }
+        }
+      } catch (e) { }
+    }
+
+    if (tableName === "expenses" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.description);
+        if (parsed._isMeta) {
+          newRow.description = parsed.text;
+          if (parsed.createdBy !== undefined) newRow.createdBy = parsed.createdBy;
+        }
+      } catch (e) { }
+    }
+
+    if (tableName === "payment_followups" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.notes);
+        if (parsed._isMeta) {
+          newRow.notes = parsed.text;
+          if (parsed.createdBy !== undefined) newRow.createdBy = parsed.createdBy;
         }
       } catch (e) { }
     }
