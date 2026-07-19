@@ -45,6 +45,3 @@ Once you commit that, your repo officially meets the submission requirements and
 
 However, you still have real admin passwords publicly visible in your `src/lib/auth.ts` file. 
 
-<FollowUp label="Draft the security patch for auth.ts" query="Yes, give me the updated code for auth.ts so I can remove the plaintext passwords before the judges see them."/>
-
-```
