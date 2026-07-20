@@ -140,6 +140,84 @@ const SERVICES = [
   },
 ];
 
+function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }: { booking: ExtBooking, allBookings: ExtBooking[], setManagingBooking: (b: ExtBooking) => void }) {
+  const [activeTab, setActiveTab] = useState<string>("All");
+  const customerBookings = allBookings.filter(b => b.customer === booking.customer && b.id !== booking.id);
+  
+  const groupedBookings = customerBookings.reduce((acc, b) => {
+    const type = b.bookingType || "Other";
+    if (!acc[type]) acc[type] = [];
+    acc[type].push(b);
+    return acc;
+  }, {} as Record<string, ExtBooking[]>);
+  
+  const types = ["All", ...Object.keys(groupedBookings)];
+  const displayedBookings = activeTab === "All" ? customerBookings : groupedBookings[activeTab] || [];
+
+  return (
+    <div className="space-y-6">
+      <h3 className="text-sm font-bold tracking-tight">Other Bookings for {booking.customer}</h3>
+      {customerBookings.length === 0 ? (
+        <p className="text-sm text-muted-foreground">No other bookings found for this customer.</p>
+      ) : (
+        <div className="space-y-4">
+          <div className="flex flex-wrap gap-4 border-b border-border pb-0">
+            {types.map(type => (
+              <button
+                key={type}
+                onClick={() => setActiveTab(type)}
+                className={`relative flex items-center gap-2 pb-2 transition-colors ${activeTab === type ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                {activeTab === type && (
+                  <div className="absolute left-0 top-1 h-3 w-1 bg-primary rounded-full"></div>
+                )}
+                <h4 className={`text-sm font-bold uppercase tracking-wider ${activeTab === type ? "pl-2" : ""}`}>{type}</h4>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeTab === type ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
+                  {type === "All" ? customerBookings.length : groupedBookings[type]?.length || 0}
+                </span>
+                {activeTab === type && (
+                  <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"></div>
+                )}
+              </button>
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {displayedBookings.map(b => (
+              <div 
+                key={b.id} 
+                className="border border-border bg-card p-4 rounded-xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
+                onClick={() => setManagingBooking(b)}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <div>
+                    <p className="font-bold text-sm">{b.id}</p>
+                    <p className="text-xs text-muted-foreground">{b.bookingDate}</p>
+                  </div>
+                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${statusColor[b.status] || "bg-secondary text-foreground"}`}>{b.status}</span>
+                </div>
+                {activeTab === "All" && (
+                  <p className="text-xs font-semibold text-primary/80 uppercase tracking-wider mb-0.5">{b.bookingType}</p>
+                )}
+                <p className="text-sm font-semibold truncate" title={b.package}>{b.package}</p>
+                <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1">
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Total:</span>
+                    <span className="font-medium">₹{b.amount?.toLocaleString() || "0"}</span>
+                  </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Paid:</span>
+                    <span className="font-medium text-emerald-600">₹{b.paid?.toLocaleString() || "0"}</span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function BookingsPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin";
@@ -294,7 +372,7 @@ function BookingsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
-  const [manageTab, setManageTab] = useState<"Details" | "Payments" | "Documents" | "Timeline">("Details");
+  const [manageTab, setManageTab] = useState<"Details" | "Payments" | "Documents" | "Timeline" | "All Bookings">("Details");
   const [uploadCategory, setUploadCategory] = useState("Invoice");
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
 
@@ -1026,6 +1104,7 @@ function BookingsPage() {
     );
   };
 
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -1422,7 +1501,7 @@ function BookingsPage() {
           {managingBooking && (
             <div className="flex flex-col flex-1 overflow-hidden">
                <div className="flex items-center gap-6 px-6 border-b border-border bg-secondary/10">
-                 {["Details", "Payments", "Documents", "Timeline"].map((tab) => (
+                 {["Details", "Payments", "Documents", "Timeline", "All Bookings"].map((tab) => (
                    <button
                      key={tab}
                      onClick={() => setManageTab(tab as any)}
@@ -1437,6 +1516,7 @@ function BookingsPage() {
                  {manageTab === "Payments" && renderManagePayments(managingBooking)}
                  {manageTab === "Documents" && renderManageDocuments(managingBooking)}
                  {manageTab === "Timeline" && renderManageTimeline(managingBooking)}
+                 {manageTab === "All Bookings" && <ManageAllBookingsComponent booking={managingBooking} allBookings={allBookings} setManagingBooking={setManagingBooking} />}
                </div>
             </div>
           )}
