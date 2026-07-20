@@ -265,6 +265,34 @@ function Dashboard() {
     })
     .sort((a, b) => b.completionRate - a.completionRate || b.totalTasks - a.totalTasks);
 
+  // Top Clients Aggregation
+  const clientStatsMap: Record<
+    string,
+    {
+      name: string;
+      totalBookings: number;
+      totalRevenue: number;
+    }
+  > = {};
+
+  bookingsList.forEach((b) => {
+    const name = b.customer;
+    if (!name) return;
+    if (!clientStatsMap[name]) {
+      clientStatsMap[name] = {
+        name,
+        totalBookings: 0,
+        totalRevenue: 0,
+      };
+    }
+    clientStatsMap[name].totalBookings += 1;
+    clientStatsMap[name].totalRevenue += b.amount || 0;
+  });
+
+  const topClients = Object.values(clientStatsMap)
+    .sort((a, b) => b.totalRevenue - a.totalRevenue || b.totalBookings - a.totalBookings)
+    .slice(0, 5); // top 5
+
   // Booking Trend
   const bookingTrendData = useMemo(() => {
     const monthlyRev: Record<string, { bookings: number; revenue: number }> = {};
@@ -982,7 +1010,7 @@ function Dashboard() {
                           day: "numeric",
                         })}
                       </p>
-                      <p className="text-[10px] text-muted-foreground mt-1">
+                  <p className="text-[10px] text-muted-foreground mt-1">
                         {event.daysUntil === 0 ? "Today!" : `In ${event.daysUntil} days`}
                       </p>
                     </div>
@@ -1000,6 +1028,72 @@ function Dashboard() {
             </div>
           </div>
           {upcomingEvents.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full mt-4 text-xs font-semibold rounded-xl text-primary hover:text-primary-foreground hover:bg-primary"
+              asChild
+            >
+              <Link to="/crm/customers" className="flex items-center justify-center gap-1">
+                View all customers <ChevronRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Top Clients */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Star className="h-5 w-5 text-primary" /> Top Clients
+                </h3>
+                <p className="text-xs text-muted-foreground">
+                  Highest contributing customers by revenue
+                </p>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              {topClients.length > 0 ? (
+                topClients.map((client, idx) => (
+                  <div
+                    key={`${client.name}-${idx}`}
+                    className="flex items-center justify-between gap-3 p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors"
+                  >
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                        <span className="font-bold text-primary">
+                          {client.name.substring(0, 2).toUpperCase()}
+                        </span>
+                      </div>
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold truncate text-foreground">{client.name}</p>
+                        <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
+                          <span>{client.totalBookings} {client.totalBookings === 1 ? "Booking" : "Bookings"}</span>
+                        </p>
+                      </div>
+                    </div>
+                    <div className="shrink-0 text-right">
+                      <p className="text-sm font-bold text-foreground">
+                        {formatLakhs(client.totalRevenue)}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
+                  <Star className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">No top clients yet</p>
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Complete some bookings to see your top clients here.
+                  </p>
+                </div>
+              )}
+            </div>
+          </div>
+          {topClients.length > 0 && (
             <Button
               variant="ghost"
               size="sm"
