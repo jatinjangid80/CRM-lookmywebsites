@@ -191,6 +191,22 @@ export function InsuranceForm({
       }
     });
 
+    const isUUID = (str: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(str);
+
+    // If IDs are not valid UUIDs, move them to notes and set to null to avoid Supabase errors
+    if (payload.customer_id && !isUUID(payload.customer_id)) {
+      payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Customer ID: ${payload.customer_id}`;
+      payload.customer_id = null;
+    }
+    if (payload.company_id && payload.company_id !== "other" && !isUUID(payload.company_id)) {
+      payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Company: ${payload.company_id}`;
+      payload.company_id = null;
+    }
+    if (payload.vendor_id && payload.vendor_id !== "other" && !isUUID(payload.vendor_id)) {
+      payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Vendor: ${payload.vendor_id}`;
+      payload.vendor_id = null;
+    }
+
     if (payload.company_id === "other") {
       payload.company_id = null;
       if (payload.custom_company) {
