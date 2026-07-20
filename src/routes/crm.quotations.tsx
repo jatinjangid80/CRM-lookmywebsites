@@ -26,7 +26,23 @@ import {
   Edit2,
   Eye,
   Copy,
+  Check,
+  ChevronsUpDown,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -182,6 +198,10 @@ function QuotationsPage() {
   const [form, setForm] = useState<QuoteForm>({ ...DEFAULT_FORM });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+
+  // Combobox states
+  const [customerOpen, setCustomerOpen] = useState(false);
+  const [packageOpen, setPackageOpen] = useState(false);
 
   // Sync itinerary days count with durationDays
   useEffect(() => {
@@ -501,18 +521,52 @@ function QuotationsPage() {
               >
                 Auto-fill Customer Profile
               </Label>
-              <select
-                id="cust-select"
-                onChange={(e) => handleCustomerSelect(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">-- Select Existing Client --</option>
-                {customers.map((c) => (
-                  <option key={c.id} value={c.id}>
-                    {c.name} ({c.phone})
-                  </option>
-                ))}
-              </select>
+              <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={customerOpen}
+                    className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+                  >
+                    <span className="truncate">
+                      {form.customerName
+                        ? customers.find((c) => c.name === form.customerName)?.name ||
+                          "-- Select Existing Client --"
+                        : "-- Select Existing Client --"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search client..." className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>No client found.</CommandEmpty>
+                      <CommandGroup>
+                        {customers.map((c) => (
+                          <CommandItem
+                            key={c.id}
+                            value={c.name}
+                            onSelect={() => {
+                              handleCustomerSelect(c.id);
+                              setCustomerOpen(false);
+                            }}
+                          >
+                            {c.name} ({c.phone})
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                form.customerName === c.name ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
             <div>
               <Label
@@ -521,18 +575,52 @@ function QuotationsPage() {
               >
                 Auto-fill Package Template
               </Label>
-              <select
-                id="pkg-select"
-                onChange={(e) => handlePackageSelect(e.target.value)}
-                className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
-              >
-                <option value="">-- Select Package --</option>
-                {packages.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.title}
-                  </option>
-                ))}
-              </select>
+              <Popover open={packageOpen} onOpenChange={setPackageOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={packageOpen}
+                    className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+                  >
+                    <span className="truncate">
+                      {form.packageName && form.packageName !== "Custom Holiday Package"
+                        ? packages.find((p) => p.title === form.packageName)?.title ||
+                          "-- Select Package --"
+                        : "-- Select Package --"}
+                    </span>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[300px] p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search package..." className="h-9" />
+                    <CommandList>
+                      <CommandEmpty>No package found.</CommandEmpty>
+                      <CommandGroup>
+                        {packages.map((p) => (
+                          <CommandItem
+                            key={p.id}
+                            value={p.title}
+                            onSelect={() => {
+                              handlePackageSelect(p.id);
+                              setPackageOpen(false);
+                            }}
+                          >
+                            {p.title}
+                            <Check
+                              className={cn(
+                                "ml-auto h-4 w-4",
+                                form.packageName === p.title ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
 
