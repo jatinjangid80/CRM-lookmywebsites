@@ -10,6 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
@@ -359,7 +360,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
             {renderSectionHeader("Booking Details")}
 
             {/* DYNAMIC FORM FIELDS BASED ON TYPE */}
-            {(bookingType === "Train Ticket" || bookingType === "Air Ticket") && (
+            {bookingType === "Train Ticket" && (
               <>
                 <div className="space-y-2">
                   <Label>Travel Date *</Label>
@@ -379,24 +380,133 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     placeholder="DEL - MUM"
                   />
                 </div>
-                {bookingType === "Train Ticket" ? (
-                  <div className="space-y-2">
-                    <Label>Train Name *</Label>
-                    <Input
-                      required
-                      value={details.trainName || ""}
-                      onChange={(e) => updateDetail("trainName", e.target.value)}
-                      placeholder="Rajdhani Exp"
-                    />
+                <div className="space-y-2">
+                  <Label>Train Name *</Label>
+                  <Input
+                    required
+                    value={details.trainName || ""}
+                    onChange={(e) => updateDetail("trainName", e.target.value)}
+                    placeholder="Rajdhani Exp"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>PNR *</Label>
+                  <Input
+                    required
+                    value={details.pnr || ""}
+                    onChange={(e) => updateDetail("pnr", e.target.value)}
+                    placeholder="PNR12345"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Lead Passenger Name"
+                  />
+                </div>
+                <div className="space-y-2 ">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
                   </div>
-                ) : (
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {bookingType === "Air Ticket" && (
+              <>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Trip Type *</Label>
+                  <div className="flex bg-slate-100 p-1 rounded-full w-full max-w-md border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("tripType", "One Way")}
+                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${
+                        (!details.tripType || details.tripType === "One Way")
+                          ? "bg-white text-[#E42E3D] shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      One Way
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => updateDetail("tripType", "Round Trip")}
+                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${
+                        details.tripType === "Round Trip"
+                          ? "bg-white text-[#E42E3D] shadow-sm"
+                          : "text-slate-500 hover:text-slate-700"
+                      }`}
+                    >
+                      Round Trip
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Dep. Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.travelDate || ""}
+                    onChange={(e) => updateDetail("travelDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Sector *</Label>
+                  <Input
+                    required
+                    value={details.sector || ""}
+                    onChange={(e) => updateDetail("sector", e.target.value)}
+                    placeholder="DEL - MUM"
+                  />
+                </div>
+                {details.tripType === "Round Trip" && (
                   <div className="space-y-2">
-                    <Label>Airline *</Label>
+                    <Label>Arrival Date</Label>
                     <Input
-                      required
-                      value={details.airline || ""}
-                      onChange={(e) => updateDetail("airline", e.target.value)}
-                      placeholder="IndiGo"
+                      type="date"
+                      value={details.arrivalDate || ""}
+                      onChange={(e) => updateDetail("arrivalDate", e.target.value)}
                     />
                   </div>
                 )}
@@ -410,14 +520,78 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Passenger Name *</Label>
+                  <Label>Airline *</Label>
+                  <Input
+                    required
+                    value={details.airline || ""}
+                    onChange={(e) => updateDetail("airline", e.target.value)}
+                    placeholder="IndiGo"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>No. of Pax *</Label>
+                  <Input
+                    type="number"
+                    required
+                    min="1"
+                    value={details.noOfPax || ""}
+                    onChange={(e) => updateDetail("noOfPax", e.target.value)}
+                    placeholder="1"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
                   <Input
                     required
                     value={details.passengerName || ""}
                     onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Passenger Name"
+                    placeholder="Lead Passenger Name"
                   />
                 </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+
               </>
             )}
 
@@ -733,7 +907,21 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       <div className="space-y-2"><Label>PNR</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="PNR12345" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MUM" /></div>
-                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Additional Passengers</Label>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
+                            <Plus className="h-3 w-3 mr-1" /> Add Name
+                          </Button>
+                        </div>
+                        {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                          <div key={index} className="flex items-center gap-2 mt-2">
+                            <Input value={name} onChange={(e) => { const n = [...(details.additionalNames as string[])]; n[index] = e.target.value; updateDetail("additionalNames", n); }} placeholder="Passenger Name" />
+                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-red-500 hover:bg-red-50" onClick={() => { const n = [...(details.additionalNames as string[])]; n.splice(index, 1); updateDetail("additionalNames", n); }}><X className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -746,7 +934,21 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       <div className="space-y-2"><Label>PNR / Ticket No.</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="TKT123" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MANALI" /></div>
-                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Additional Passengers</Label>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
+                            <Plus className="h-3 w-3 mr-1" /> Add Name
+                          </Button>
+                        </div>
+                        {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                          <div key={index} className="flex items-center gap-2 mt-2">
+                            <Input value={name} onChange={(e) => { const n = [...(details.additionalNames as string[])]; n[index] = e.target.value; updateDetail("additionalNames", n); }} placeholder="Passenger Name" />
+                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-red-500 hover:bg-red-50" onClick={() => { const n = [...(details.additionalNames as string[])]; n.splice(index, 1); updateDetail("additionalNames", n); }}><X className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -759,7 +961,21 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       <div className="space-y-2"><Label>Visa Type</Label><Input value={details.visaType || ""} onChange={(e) => updateDetail("visaType", e.target.value)} placeholder="Tourist 30 Days" /></div>
                       <div className="space-y-2"><Label>Process Date</Label><Input type="date" value={details.processDate || ""} onChange={(e) => updateDetail("processDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Application Status</Label><Input value={details.applicationStatus || ""} onChange={(e) => updateDetail("applicationStatus", e.target.value)} placeholder="Submitted" /></div>
-                      <div className="space-y-2"><Label>Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="flex items-center justify-between">
+                          <Label>Additional Passengers</Label>
+                          <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
+                            <Plus className="h-3 w-3 mr-1" /> Add Name
+                          </Button>
+                        </div>
+                        {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                          <div key={index} className="flex items-center gap-2 mt-2">
+                            <Input value={name} onChange={(e) => { const n = [...(details.additionalNames as string[])]; n[index] = e.target.value; updateDetail("additionalNames", n); }} placeholder="Passenger Name" />
+                            <Button type="button" variant="ghost" size="icon" className="h-9 w-9 shrink-0 text-red-500 hover:bg-red-50" onClick={() => { const n = [...(details.additionalNames as string[])]; n.splice(index, 1); updateDetail("additionalNames", n); }}><X className="h-4 w-4" /></Button>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 )}
@@ -1186,13 +1402,56 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Passenger Name *</Label>
+                  <Label>Lead Passenger Name *</Label>
                   <Input
                     required
                     value={details.passengerName || ""}
                     onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Passenger Name"
+                    placeholder="Lead Passenger Name"
                   />
+                </div>
+                <div className="space-y-2 ">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
@@ -1298,13 +1557,56 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Passenger Name *</Label>
+                  <Label>Lead Passenger Name *</Label>
                   <Input
                     required
                     value={details.passengerName || ""}
                     onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Passenger Name"
+                    placeholder="Lead Passenger Name"
                   />
+                </div>
+                <div className="space-y-2 ">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               </>
             )}
