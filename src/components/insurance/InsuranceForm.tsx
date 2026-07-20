@@ -38,11 +38,11 @@ const DEFAULT_VENDORS = [
   { id: "maruti-sanga", name: "Maruti Sanga" },
 ];
 
-export function InsuranceForm({ 
-  onClose, 
+export function InsuranceForm({
+  onClose,
   onSave,
-  initialData = null 
-}: { 
+  initialData = null
+}: {
   onClose: () => void;
   onSave: (data: any) => void;
   initialData?: any;
@@ -50,7 +50,7 @@ export function InsuranceForm({
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [companies] = useSupabaseTable<any[]>("insurance_companies", []);
   const [vendors] = useSupabaseTable<any[]>("insurance_vendors", []);
-  
+
   const [form, setForm] = useState<any>({
     school_name: "",
     reference_name: "",
@@ -62,10 +62,10 @@ export function InsuranceForm({
     city: "",
     state: "",
     customer_id: null,
-    
+
     company_id: "",
     vendor_id: "",
-    
+
     policy_number: "",
     issue_date: new Date().toISOString().split('T')[0],
     expiry_date: "",
@@ -81,13 +81,13 @@ export function InsuranceForm({
     previous_policy_number: "",
     previous_insurer: "",
     ncb_percentage: "",
-    
+
     od_premium: 0,
     tp_premium: 0,
     net_premium: 0,
     gst: 0,
     total_premium: 0,
-    
+
     customer_paid: 0,
     vendor_paid: 0,
     profit: 0,
@@ -155,8 +155,8 @@ export function InsuranceForm({
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
 
-  const filteredCustomers = customers.filter(c => 
-    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) || 
+  const filteredCustomers = customers.filter(c =>
+    c.name?.toLowerCase().includes(customerSearch.toLowerCase()) ||
     c.phone?.includes(customerSearch)
   ).slice(0, 5);
 
@@ -174,7 +174,42 @@ export function InsuranceForm({
   };
 
   const handleSave = () => {
-    onSave(form);
+    const payload = { ...form };
+    
+    // Scrub empty strings to null for UUIDs, dates, and numbers
+    const fieldsToScrub = [
+      "customer_id", "company_id", "vendor_id", 
+      "registration_date", "payment_date", "issue_date", "expiry_date",
+      "seating_capacity", "idv_value", "ncb_percentage",
+      "od_premium", "tp_premium", "net_premium", "gst", "total_premium", 
+      "customer_paid", "vendor_paid", "profit"
+    ];
+    
+    fieldsToScrub.forEach(field => {
+      if (payload[field] === "") {
+        payload[field] = null;
+      }
+    });
+
+    if (payload.company_id === "other") {
+      payload.company_id = null;
+      if (payload.custom_company) {
+        payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Custom Company: ${payload.custom_company}`;
+      }
+    }
+    
+    if (payload.vendor_id === "other") {
+      payload.vendor_id = null;
+      if (payload.custom_vendor) {
+        payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Custom Vendor: ${payload.custom_vendor}`;
+      }
+    }
+
+    delete payload.custom_company;
+    delete payload.custom_vendor;
+    delete payload.gst_percentage;
+    
+    onSave(payload);
   };
 
   return (
@@ -207,7 +242,7 @@ export function InsuranceForm({
 
         {/* Content */}
         <div className="flex-1 overflow-y-auto p-6 bg-muted/30 space-y-8">
-          
+
           {/* Section 1: Customer & Reference */}
           <section className="bg-card p-5 rounded-2xl border border-border shadow-sm">
             <div className="flex items-center gap-2 mb-4">
@@ -219,8 +254,8 @@ export function InsuranceForm({
                 <Label>Search Existing Customer</Label>
                 <div className="relative">
                   <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    placeholder="Search by name or phone..." 
+                  <Input
+                    placeholder="Search by name or phone..."
                     className="pl-9"
                     value={customerSearch}
                     onChange={(e) => {
@@ -233,8 +268,8 @@ export function InsuranceForm({
                     <div className="absolute z-10 w-full mt-1 bg-card border border-border rounded-lg shadow-lg">
                       {filteredCustomers.length > 0 ? (
                         filteredCustomers.map(c => (
-                          <div 
-                            key={c.id} 
+                          <div
+                            key={c.id}
                             className="p-2 hover:bg-muted cursor-pointer text-sm flex justify-between"
                             onClick={() => selectCustomer(c)}
                           >
@@ -251,71 +286,71 @@ export function InsuranceForm({
               </div>
               <div className="space-y-1">
                 <Label>School Name</Label>
-                <Input 
+                <Input
                   value={form.school_name}
-                  onChange={(e) => setForm({...form, school_name: e.target.value})}
+                  onChange={(e) => setForm({ ...form, school_name: e.target.value })}
                   placeholder="E.g. DPS"
                 />
               </div>
               <div className="space-y-1">
                 <Label>Reference Name</Label>
-                <Input 
+                <Input
                   value={form.reference_name}
-                  onChange={(e) => setForm({...form, reference_name: e.target.value})}
+                  onChange={(e) => setForm({ ...form, reference_name: e.target.value })}
                   placeholder="Referred by..."
                 />
               </div>
 
               <div className="space-y-1 col-span-2">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Customer Name</Label>
-                <Input 
+                <Input
                   value={form.customer_name}
-                  onChange={(e) => setForm({...form, customer_name: e.target.value})}
+                  onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                   placeholder="Full Name"
                 />
               </div>
               <div className="space-y-1">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Mobile Number</Label>
-                <Input 
+                <Input
                   value={form.mobile_number}
-                  onChange={(e) => setForm({...form, mobile_number: e.target.value})}
+                  onChange={(e) => setForm({ ...form, mobile_number: e.target.value })}
                   placeholder="+91..."
                 />
               </div>
               <div className="space-y-1">
                 <Label>Alt. Mobile</Label>
-                <Input 
+                <Input
                   value={form.alternate_mobile}
-                  onChange={(e) => setForm({...form, alternate_mobile: e.target.value})}
+                  onChange={(e) => setForm({ ...form, alternate_mobile: e.target.value })}
                 />
               </div>
               <div className="space-y-1 col-span-2">
                 <Label>Email</Label>
-                <Input 
+                <Input
                   type="email"
                   value={form.email}
-                  onChange={(e) => setForm({...form, email: e.target.value})}
+                  onChange={(e) => setForm({ ...form, email: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>City</Label>
-                <Input 
+                <Input
                   value={form.city}
-                  onChange={(e) => setForm({...form, city: e.target.value})}
+                  onChange={(e) => setForm({ ...form, city: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>State</Label>
-                <Input 
+                <Input
                   value={form.state}
-                  onChange={(e) => setForm({...form, state: e.target.value})}
+                  onChange={(e) => setForm({ ...form, state: e.target.value })}
                 />
               </div>
               <div className="space-y-1 col-span-4">
                 <Label>Address</Label>
-                <Input 
+                <Input
                   value={form.address}
-                  onChange={(e) => setForm({...form, address: e.target.value})}
+                  onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
               </div>
             </div>
@@ -330,10 +365,10 @@ export function InsuranceForm({
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Insurance Company</Label>
-                <select 
+                <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.company_id}
-                  onChange={(e) => setForm({...form, company_id: e.target.value})}
+                  onChange={(e) => setForm({ ...form, company_id: e.target.value })}
                 >
                   <option value="">Select Company</option>
                   {(companies && companies.length > 0 ? companies : DEFAULT_COMPANIES).map(c => (
@@ -342,20 +377,20 @@ export function InsuranceForm({
                   <option value="other">Other</option>
                 </select>
                 {form.company_id === "other" && (
-                  <Input 
+                  <Input
                     className="mt-2"
                     placeholder="Enter Custom Company Name"
                     value={form.custom_company || ""}
-                    onChange={(e) => setForm({...form, custom_company: e.target.value})}
+                    onChange={(e) => setForm({ ...form, custom_company: e.target.value })}
                   />
                 )}
               </div>
               <div className="space-y-1">
                 <Label>Vendor</Label>
-                <select 
+                <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.vendor_id}
-                  onChange={(e) => setForm({...form, vendor_id: e.target.value})}
+                  onChange={(e) => setForm({ ...form, vendor_id: e.target.value })}
                 >
                   <option value="">Select Vendor</option>
                   {(vendors && vendors.length > 0 ? vendors : DEFAULT_VENDORS).map(v => (
@@ -364,11 +399,11 @@ export function InsuranceForm({
                   <option value="other">Other</option>
                 </select>
                 {form.vendor_id === "other" && (
-                  <Input 
+                  <Input
                     className="mt-2"
                     placeholder="Enter Custom Vendor Name"
                     value={form.custom_vendor || ""}
-                    onChange={(e) => setForm({...form, custom_vendor: e.target.value})}
+                    onChange={(e) => setForm({ ...form, custom_vendor: e.target.value })}
                   />
                 )}
               </div>
@@ -384,66 +419,66 @@ export function InsuranceForm({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1 col-span-2">
                 <Label>Policy Number</Label>
-                <Input 
+                <Input
                   value={form.policy_number}
-                  onChange={(e) => setForm({...form, policy_number: e.target.value})}
+                  onChange={(e) => setForm({ ...form, policy_number: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Issue Date</Label>
-                <Input 
+                <Input
                   type="date"
                   value={form.issue_date}
-                  onChange={(e) => setForm({...form, issue_date: e.target.value})}
+                  onChange={(e) => setForm({ ...form, issue_date: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Expiry Date</Label>
-                <Input 
+                <Input
                   type="date"
                   value={form.expiry_date}
-                  onChange={(e) => setForm({...form, expiry_date: e.target.value})}
+                  onChange={(e) => setForm({ ...form, expiry_date: e.target.value })}
                 />
               </div>
 
               <div className="space-y-1 col-span-2">
                 <Label>Vehicle Number</Label>
-                <Input 
+                <Input
                   value={form.vehicle_number}
-                  onChange={(e) => setForm({...form, vehicle_number: e.target.value})}
+                  onChange={(e) => setForm({ ...form, vehicle_number: e.target.value })}
                   placeholder="e.g. MH 01 AB 1234"
                 />
               </div>
               <div className="space-y-1 col-span-2">
                 <Label>Vehicle Model</Label>
-                <Input 
+                <Input
                   value={form.vehicle_model}
-                  onChange={(e) => setForm({...form, vehicle_model: e.target.value})}
+                  onChange={(e) => setForm({ ...form, vehicle_model: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Seating Capacity</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.seating_capacity}
-                  onChange={(e) => setForm({...form, seating_capacity: e.target.value})}
+                  onChange={(e) => setForm({ ...form, seating_capacity: e.target.value })}
                 />
               </div>
 
               <div className="space-y-1">
                 <Label>Registration Date</Label>
-                <Input 
+                <Input
                   type="date"
                   value={form.registration_date}
-                  onChange={(e) => setForm({...form, registration_date: e.target.value})}
+                  onChange={(e) => setForm({ ...form, registration_date: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Policy Type</Label>
-                <select 
+                <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.policy_type}
-                  onChange={(e) => setForm({...form, policy_type: e.target.value})}
+                  onChange={(e) => setForm({ ...form, policy_type: e.target.value })}
                 >
                   <option>Comprehensive</option>
                   <option>Third Party</option>
@@ -454,32 +489,32 @@ export function InsuranceForm({
               </div>
               <div className="space-y-1">
                 <Label>IDV Value</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.idv_value}
-                  onChange={(e) => setForm({...form, idv_value: e.target.value})}
+                  onChange={(e) => setForm({ ...form, idv_value: e.target.value })}
                 />
               </div>
               <div className="space-y-1 col-span-2">
                 <Label>Previous Policy No.</Label>
-                <Input 
+                <Input
                   value={form.previous_policy_number}
-                  onChange={(e) => setForm({...form, previous_policy_number: e.target.value})}
+                  onChange={(e) => setForm({ ...form, previous_policy_number: e.target.value })}
                 />
               </div>
               <div className="space-y-1 col-span-1">
                 <Label>Previous Insurer</Label>
-                <Input 
+                <Input
                   value={form.previous_insurer}
-                  onChange={(e) => setForm({...form, previous_insurer: e.target.value})}
+                  onChange={(e) => setForm({ ...form, previous_insurer: e.target.value })}
                 />
               </div>
               <div className="space-y-1 col-span-1">
                 <Label>NCB %</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.ncb_percentage}
-                  onChange={(e) => setForm({...form, ncb_percentage: e.target.value})}
+                  onChange={(e) => setForm({ ...form, ncb_percentage: e.target.value })}
                 />
               </div>
             </div>
@@ -494,34 +529,34 @@ export function InsuranceForm({
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="space-y-1">
                 <Label>OD Premium</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.od_premium}
-                  onChange={(e) => setForm({...form, od_premium: e.target.value})}
+                  onChange={(e) => setForm({ ...form, od_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>TP Premium</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.tp_premium}
-                  onChange={(e) => setForm({...form, tp_premium: e.target.value})}
+                  onChange={(e) => setForm({ ...form, tp_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Net Premium</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.net_premium}
-                  onChange={(e) => setForm({...form, net_premium: e.target.value})}
+                  onChange={(e) => setForm({ ...form, net_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>GST</Label>
-                <select 
+                <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.gst_percentage || 18}
-                  onChange={(e) => setForm({...form, gst_percentage: Number(e.target.value)})}
+                  onChange={(e) => setForm({ ...form, gst_percentage: Number(e.target.value) })}
                 >
                   <option value="18">18%</option>
                 </select>
@@ -542,26 +577,26 @@ export function InsuranceForm({
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
                 <Label>Customer Paid</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.customer_paid}
-                  onChange={(e) => setForm({...form, customer_paid: e.target.value})}
+                  onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Vendor Paid</Label>
-                <Input 
+                <Input
                   type="number"
                   value={form.vendor_paid}
-                  onChange={(e) => setForm({...form, vendor_paid: e.target.value})}
+                  onChange={(e) => setForm({ ...form, vendor_paid: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Payment Mode</Label>
-                <select 
+                <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.payment_mode}
-                  onChange={(e) => setForm({...form, payment_mode: e.target.value})}
+                  onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
                 >
                   <option>Bank Transfer</option>
                   <option>UPI</option>
@@ -579,17 +614,17 @@ export function InsuranceForm({
 
               <div className="space-y-1 col-span-2">
                 <Label>Transaction Ref.</Label>
-                <Input 
+                <Input
                   value={form.transaction_reference}
-                  onChange={(e) => setForm({...form, transaction_reference: e.target.value})}
+                  onChange={(e) => setForm({ ...form, transaction_reference: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>Payment Date</Label>
-                <Input 
+                <Input
                   type="date"
                   value={form.payment_date}
-                  onChange={(e) => setForm({...form, payment_date: e.target.value})}
+                  onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
                 />
               </div>
               <div className="space-y-1">

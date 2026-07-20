@@ -49,6 +49,81 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
     return <span className="text-rose-600 font-semibold text-xs">Pending</span>;
   };
 
+  const handlePrint = (policy: any) => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const css = `
+      body { font-family: sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+      h2 { color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-bottom: 20px; }
+      .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 30px; }
+      .field { margin-bottom: 15px; }
+      .label { font-size: 12px; color: #64748b; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px; }
+      .value { font-size: 15px; font-weight: 500; color: #0f172a; }
+      .section { background: #f8fafc; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; }
+    `;
+    
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = `Insurance Policy - ${policy.policy_number || "New"}`;
+    printWindow.document.head.appendChild(titleEl);
+
+    const bodyHtml = `
+      <h2>Insurance Policy Details</h2>
+      
+      <div class="grid">
+        <div class="section">
+          <div class="field"><div class="label">Customer Name</div><div class="value">${policy.customer_name || "-"}</div></div>
+          <div class="field"><div class="label">Mobile Number</div><div class="value">${policy.mobile_number || "-"}</div></div>
+          <div class="field"><div class="label">Email</div><div class="value">${policy.email || "-"}</div></div>
+          <div class="field"><div class="label">Address</div><div class="value">${policy.address || "-"}, ${policy.city || "-"}, ${policy.state || "-"}</div></div>
+        </div>
+        
+        <div class="section">
+          <div class="field"><div class="label">Policy Number</div><div class="value">${policy.policy_number || "-"}</div></div>
+          <div class="field"><div class="label">Insurance Company</div><div class="value">${getCompanyName(policy)}</div></div>
+          <div class="field"><div class="label">Vendor</div><div class="value">${getVendorName(policy)}</div></div>
+          <div class="field"><div class="label">Policy Type</div><div class="value">${policy.policy_type || "-"}</div></div>
+        </div>
+      </div>
+      
+      <div class="grid">
+        <div class="section">
+          <div class="field"><div class="label">Issue Date</div><div class="value">${policy.issue_date ? new Date(policy.issue_date).toLocaleDateString("en-IN") : "-"}</div></div>
+          <div class="field"><div class="label">Expiry Date</div><div class="value">${policy.expiry_date ? new Date(policy.expiry_date).toLocaleDateString("en-IN") : "-"}</div></div>
+          <div class="field"><div class="label">Status</div><div class="value">${policy.status || "Active"}</div></div>
+        </div>
+        
+        <div class="section">
+          <div class="field"><div class="label">Vehicle Number</div><div class="value">${policy.vehicle_number || "-"}</div></div>
+          <div class="field"><div class="label">Vehicle Model</div><div class="value">${policy.vehicle_model || "-"}</div></div>
+          <div class="field"><div class="label">IDV Value</div><div class="value">${policy.idv_value ? formatINR(policy.idv_value) : "-"}</div></div>
+        </div>
+      </div>
+      
+      <div class="grid">
+        <div class="section">
+          <div class="field"><div class="label">Total Premium</div><div class="value">${formatINR(policy.total_premium || 0)}</div></div>
+          <div class="field"><div class="label">Payment Status</div><div class="value">${policy.payment_status || "Pending"}</div></div>
+        </div>
+      </div>
+      
+      ${policy.notes ? `<div class="section" style="grid-column: 1 / -1;"><div class="field"><div class="label">Notes</div><div class="value">${policy.notes}</div></div></div>` : ""}
+    `;
+    
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    
+    const script = printWindow.document.createElement("script");
+    script.textContent = "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
+    printWindow.document.close();
+  };
+
   return (
     <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
       <div className="overflow-x-auto">
@@ -118,7 +193,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                         <DropdownMenuItem onClick={() => onDuplicate(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <Copy className="h-4 w-4 text-amber-600" /> Duplicate
                         </DropdownMenuItem>
-                        <DropdownMenuItem className="cursor-pointer gap-2 py-2 rounded-lg">
+                        <DropdownMenuItem onClick={() => handlePrint(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <FileText className="h-4 w-4 text-emerald-600" /> Print
                         </DropdownMenuItem>
                         <DropdownMenuItem onClick={() => onDelete(p)} className="cursor-pointer gap-2 py-2 rounded-lg text-rose-600 hover:text-rose-500 hover:bg-rose-500/10">

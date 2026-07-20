@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/lib/supabase";
 
 /**
@@ -8,6 +8,8 @@ import { supabase } from "@/lib/supabase";
 export function useSupabaseTable<T extends Array<any>>(tableName: string, initialValue: T) {
   const [data, setData] = useState<T>(initialValue);
   const [isLoaded, setIsLoaded] = useState(false);
+  const lastSyncedData = useRef<T>(initialValue);
+  const isPendingSync = useRef(false);
 
   // Fetch initial data
   useEffect(() => {
@@ -19,8 +21,11 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       }
 
       if (remoteData && remoteData.length > 0) {
-        setData(remoteData.map(unSanitizeRow) as T);
+        const unsanitized = remoteData.map(unSanitizeRow) as T;
+        lastSyncedData.current = unsanitized;
+        setData(unsanitized);
       } else {
+        lastSyncedData.current = [] as any;
         setData([] as any);
       }
       setIsLoaded(true);
@@ -718,6 +723,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       console.log(`[${tableName}] Inserting rows:`, JSON.stringify(toInsert, null, 2));
       const { error, data } = await supabase.from(tableName).insert(toInsert).select();
       if (error) {
+        alert(`Supabase Error (${tableName}): ` + error.message);
         console.error(`[${tableName}] INSERT error:`, error.message, error.details, error.hint);
 
         // If error is about unknown columns (new migration not run yet), retry with base columns only
@@ -819,18 +825,27 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
   const setSupabaseData = useCallback(
     (value: T | ((val: T) => T)) => {
-      setData((prevData) => {
-        const newData = value instanceof Function ? value(prevData) : value;
-        // Optimistically update state
-        // Then sync to Supabase asynchronously
-        syncToSupabase(prevData, newData).catch((err) => {
-          console.error(`Error syncing ${tableName} to Supabase:`, err);
-        });
-        return newData;
-      });
+      isPendingSync.current = true;
+      setData(value);
     },
-    [tableName],
+    [],
   );
+
+  // Sync mutations to Supabase when data changes
+  useEffect(() => {
+    if (!isLoaded) return;
+    if (isPendingSync.current) {
+      isPendingSync.current = false;
+      const oldData = lastSyncedData.current;
+      lastSyncedData.current = data;
+      syncToSupabase(oldData, data).catch((err) => {
+        console.error(`Error syncing ${tableName} to Supabase:`, err);
+      });
+    } else {
+      // Realtime update or initial load
+      lastSyncedData.current = data;
+    }
+  }, [data, isLoaded, tableName]);
 
   return [data, setSupabaseData, isLoaded] as const;
 }

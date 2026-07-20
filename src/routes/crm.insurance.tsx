@@ -9,13 +9,17 @@ import { InsuranceDashboard } from "@/components/insurance/InsuranceDashboard";
 import { InsuranceTable } from "@/components/insurance/InsuranceTable";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 import { RenewalsView } from "@/components/insurance/RenewalsView";
+import { InsuranceVendorsView } from "@/components/insurance/InsuranceVendorsView";
+import { InsuranceCompaniesView } from "@/components/insurance/InsuranceCompaniesView";
 
 export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
 });
 
+export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies";
+
 function GeneralInsurancePage() {
-  const [activeTab, setActiveTab] = useState<"Policies" | "Renewals">("Policies");
+  const [activeTab, setActiveTab] = useState<TabType>("Policies");
   const [showForm, setShowForm] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<any>(null);
   const [policyToDelete, setPolicyToDelete] = useState<any>(null);
@@ -26,16 +30,16 @@ function GeneralInsurancePage() {
 
   const stats = useMemo(() => {
     const today = new Date();
-    today.setHours(0,0,0,0);
-    
+    today.setHours(0, 0, 0, 0);
+
     let active = 0, expired = 0, todaysRenewals = 0;
     let pending = 0, fullPaid = 0;
     let totalPremium = 0, totalProfit = 0;
 
     policies.forEach(p => {
       const expiry = new Date(p.expiry_date);
-      expiry.setHours(0,0,0,0);
-      
+      expiry.setHours(0, 0, 0, 0);
+
       if (p.status === 'Expired' || expiry.getTime() < today.getTime()) expired++;
       else active++;
 
@@ -82,7 +86,7 @@ function GeneralInsurancePage() {
     dup.customer_paid = 0;
     dup.vendor_paid = 0;
     dup.transaction_reference = "";
-    
+
     // Auto increment dates by 1 year for quick renewals
     if (dup.issue_date) {
       const issue = new Date(dup.issue_date);
@@ -112,18 +116,14 @@ function GeneralInsurancePage() {
   };
 
   const handleSavePolicy = (updatedData: any) => {
-    // In a real app we might do some extra validation
-    
     if (updatedData.id) {
-      // Update existing
       const newPolicies = policies.map(p => p.id === updatedData.id ? updatedData : p);
       setPolicies(newPolicies);
     } else {
-      // Create new (assign a temp UUID if not handled by backend)
-      const newPolicy = { 
-        ...updatedData, 
-        id: crypto.randomUUID(), 
-        created_at: new Date().toISOString() 
+      const newPolicy = {
+        ...updatedData,
+        id: crypto.randomUUID(),
+        created_at: new Date().toISOString()
       };
       setPolicies([newPolicy, ...policies]);
     }
@@ -156,8 +156,8 @@ function GeneralInsurancePage() {
 
       <InsuranceDashboard stats={stats} />
 
-      <div className="flex items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit">
-        <Button 
+      <div className="flex flex-wrap items-center gap-1 bg-muted/50 p-1 rounded-xl w-fit">
+        <Button
           variant={activeTab === "Policies" ? "default" : "ghost"}
           size="sm"
           className={activeTab === "Policies" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
@@ -165,7 +165,7 @@ function GeneralInsurancePage() {
         >
           All Policies
         </Button>
-        <Button 
+        <Button
           variant={activeTab === "Renewals" ? "default" : "ghost"}
           size="sm"
           className={activeTab === "Renewals" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
@@ -173,12 +173,28 @@ function GeneralInsurancePage() {
         >
           Upcoming Renewals
         </Button>
+        <Button
+          variant={activeTab === "Vendors" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "Vendors" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          onClick={() => setActiveTab("Vendors")}
+        >
+          Vendors
+        </Button>
+        <Button
+          variant={activeTab === "Companies" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "Companies" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          onClick={() => setActiveTab("Companies")}
+        >
+          Companies
+        </Button>
       </div>
 
       <div className="mt-4">
         {activeTab === "Policies" && (
           <div className="animate-in fade-in duration-300">
-            <InsuranceTable 
+            <InsuranceTable
               policies={policies}
               companies={companies}
               vendors={vendors}
@@ -190,7 +206,7 @@ function GeneralInsurancePage() {
         )}
 
         {activeTab === "Renewals" && (
-          <RenewalsView 
+          <RenewalsView
             policies={policies}
             companies={companies}
             vendors={vendors}
@@ -199,17 +215,20 @@ function GeneralInsurancePage() {
             onDelete={handleDelete}
           />
         )}
+
+        {activeTab === "Vendors" && <InsuranceVendorsView />}
+        {activeTab === "Companies" && <InsuranceCompaniesView />}
       </div>
 
       {showForm && (
-        <InsuranceForm 
-          onClose={() => setShowForm(false)} 
+        <InsuranceForm
+          onClose={() => setShowForm(false)}
           initialData={editingPolicy}
           onSave={handleSavePolicy}
         />
       )}
 
-      <DeleteConfirmModal 
+      <DeleteConfirmModal
         isOpen={!!policyToDelete}
         onClose={() => setPolicyToDelete(null)}
         onConfirm={confirmDeletePolicy}
