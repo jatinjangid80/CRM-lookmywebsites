@@ -185,9 +185,11 @@ function QuotationsPage() {
 
   // Sync itinerary days count with durationDays
   useEffect(() => {
-    const targetDays = Number(form.durationDays) || 1;
+    const targetDays = Math.max(2, Number(form.durationDays) || 2);
     setForm((f) => {
-      const current = [...f.itinerary];
+      let current = [...f.itinerary];
+      let updated = false;
+
       if (current.length < targetDays) {
         // Add days
         for (let i = current.length + 1; i <= targetDays; i++) {
@@ -197,11 +199,17 @@ function QuotationsPage() {
             description: "Activity details to be specified.",
           });
         }
+        updated = true;
       } else if (current.length > targetDays) {
         // Trim days
         current.length = targetDays;
+        updated = true;
       }
-      return { ...f, itinerary: current };
+
+      if (updated || Number(f.durationDays) !== targetDays) {
+        return { ...f, itinerary: current, durationDays: targetDays };
+      }
+      return f;
     });
   }, [form.durationDays]);
 
@@ -610,8 +618,9 @@ function QuotationsPage() {
                   <Input
                     id="days"
                     type="number"
+                    min="2"
                     value={form.durationDays}
-                    onChange={(e) => setForm({ ...form, durationDays: Number(e.target.value) })}
+                    onChange={(e) => setForm({ ...form, durationDays: Math.max(2, Number(e.target.value)) })}
                     className="rounded-full h-10"
                   />
                 </div>
@@ -751,19 +760,37 @@ function QuotationsPage() {
               {form.itinerary.map((day, idx) => (
                 <div
                   key={idx}
-                  className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2"
+                  className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2 relative group"
                 >
                   <div className="flex items-center gap-2">
-                    <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold">
+                    <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
                       Day {day.day}
                     </span>
                     <Input
                       placeholder="Day Title"
                       value={day.title}
                       onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
-                      className="rounded-xl h-8 text-xs bg-background"
+                      className="rounded-xl h-8 text-xs bg-background pr-8"
                     />
                   </div>
+                  {idx >= 2 && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                      onClick={() => {
+                        setForm(f => {
+                          const newItin = [...f.itinerary];
+                          newItin.splice(idx, 1);
+                          newItin.forEach((d, i) => d.day = i + 1);
+                          return { ...f, itinerary: newItin, durationDays: newItin.length };
+                        });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </Button>
+                  )}
                   <Textarea
                     placeholder="Day details and highlights"
                     value={day.description}
