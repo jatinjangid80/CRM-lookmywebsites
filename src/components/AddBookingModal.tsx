@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown } from "lucide-react";
@@ -769,7 +770,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Policy Type *</Label>
-                        <Select required value={details.policyType || ""} onValueChange={(val) => updateDetail("policyType", val)}>
+                        <Select required value={details.policyType} onValueChange={(val) => updateDetail("policyType", val)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select Policy Type" />
                           </SelectTrigger>
@@ -785,7 +786,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       </div>
                       <div className="space-y-2">
                         <Label>Query Type</Label>
-                        <Select value={details.queryType || ""} onValueChange={(val) => updateDetail("queryType", val)}>
+                        <Select value={details.queryType} onValueChange={(val) => updateDetail("queryType", val)}>
                           <SelectTrigger>
                             <SelectValue placeholder="Select Query Type" />
                           </SelectTrigger>
@@ -1202,7 +1203,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <Label>Policy Type *</Label>
-                    <Select required value={details.policyType || ""} onValueChange={(val) => updateDetail("policyType", val)}>
+                    <Select required value={details.policyType} onValueChange={(val) => updateDetail("policyType", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Policy Type" />
                       </SelectTrigger>
@@ -1218,7 +1219,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                   </div>
                   <div className="space-y-2">
                     <Label>Query Type</Label>
-                    <Select value={details.queryType || ""} onValueChange={(val) => updateDetail("queryType", val)}>
+                    <Select value={details.queryType} onValueChange={(val) => updateDetail("queryType", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select Query Type" />
                       </SelectTrigger>
