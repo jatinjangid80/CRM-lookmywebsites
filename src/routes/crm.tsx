@@ -100,7 +100,6 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Customers",
       "General Insurance",
       "Documents",
-      "Employees",
       "Attendance",
       "Vendors",
       "Accounts",
