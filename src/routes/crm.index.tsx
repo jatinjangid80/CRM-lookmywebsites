@@ -40,6 +40,7 @@ import {
   revenueByMonth,
   destinationPerformance,
   customers as seedCustomers,
+  SEED_TASKS,
   formatINR,
 } from "@/lib/mock-data";
 import { getAuth } from "@/lib/auth";
@@ -135,7 +136,7 @@ function Dashboard() {
   const [customersList] = useSupabaseTable<any[]>("customers", seedCustomers);
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const [packagesList] = useSupabaseTable<any[]>("packages", SEED_PACKAGES);
-  const [tasksList, setTasksList] = useSupabaseTable<any[]>("tasks", []);
+  const [tasksList, setTasksList] = useSupabaseTable<any[]>("tasks", SEED_TASKS);
 
   const todayStr = new Date().toISOString().slice(0, 10);
 

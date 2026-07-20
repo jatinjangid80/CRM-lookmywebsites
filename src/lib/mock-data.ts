@@ -138,15 +138,45 @@ export type BookingType =
   | "Air Ticket"
   | "Train Ticket"
   | "Hotel"
+  | "Visa"
+  | "Tour Package"
+  | "Forex"
+  | "Insurance"
   | "Holiday Package"
   | "Taxi"
-  | "Visa"
   | "Travel Insurance"
   | "General Insurance"
   | "Bus Ticket"
   | "Legacy";
 export type PaymentMode = "Cash" | "UPI" | "Card" | "Bank Transfer" | "Cheque" | "";
 export type PaymentStatus = "Pending" | "Partial" | "Paid" | "Refunded";
+
+export const SEED_TASKS = [
+  {
+    id: "t1",
+    title: "Follow up with John Doe for payment",
+    assignee: "Admin",
+    dueDate: new Date(Date.now() + 86400000).toISOString().slice(0, 10),
+    status: "Pending",
+    priority: "High",
+  },
+  {
+    id: "t2",
+    title: "Send final itinerary to Smith family",
+    assignee: "Admin",
+    dueDate: new Date(Date.now() + 2 * 86400000).toISOString().slice(0, 10),
+    status: "Pending",
+    priority: "Medium",
+  },
+  {
+    id: "t3",
+    title: "Confirm hotel booking for Dubai trip",
+    assignee: "Admin",
+    dueDate: new Date(Date.now() + 3 * 86400000).toISOString().slice(0, 10),
+    status: "Pending",
+    priority: "High",
+  },
+];
 
 export type Booking = {
   id: string;
