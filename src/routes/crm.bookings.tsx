@@ -141,7 +141,6 @@ const SERVICES = [
 ];
 
 function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }: { booking: ExtBooking, allBookings: ExtBooking[], setManagingBooking: (b: ExtBooking) => void }) {
-  const [activeTab, setActiveTab] = useState<string>("All");
   const customerBookings = allBookings.filter(b => b.customer === booking.customer && b.id !== booking.id);
   
   const groupedBookings = customerBookings.reduce((acc, b) => {
@@ -151,8 +150,10 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
     return acc;
   }, {} as Record<string, ExtBooking[]>);
   
-  const types = ["All", ...Object.keys(groupedBookings)];
-  const displayedBookings = activeTab === "All" ? customerBookings : groupedBookings[activeTab] || [];
+  const types = Object.keys(groupedBookings);
+  const [activeTab, setActiveTab] = useState<string>(types[0] || "");
+  const currentTab = types.includes(activeTab) ? activeTab : (types[0] || "");
+  const displayedBookings = groupedBookings[currentTab] || [];
 
   return (
     <div className="space-y-6">
@@ -166,16 +167,16 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
               <button
                 key={type}
                 onClick={() => setActiveTab(type)}
-                className={`relative flex items-center gap-2 pb-2 transition-colors ${activeTab === type ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                className={`relative flex items-center gap-2 pb-2 transition-colors ${currentTab === type ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}
               >
-                {activeTab === type && (
+                {currentTab === type && (
                   <div className="absolute left-0 top-1 h-3 w-1 bg-primary rounded-full"></div>
                 )}
-                <h4 className={`text-sm font-bold uppercase tracking-wider ${activeTab === type ? "pl-2" : ""}`}>{type}</h4>
-                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${activeTab === type ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
-                  {type === "All" ? customerBookings.length : groupedBookings[type]?.length || 0}
+                <h4 className={`text-sm font-bold uppercase tracking-wider ${currentTab === type ? "pl-2" : ""}`}>{type}</h4>
+                <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${currentTab === type ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
+                  {groupedBookings[type]?.length || 0}
                 </span>
-                {activeTab === type && (
+                {currentTab === type && (
                   <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"></div>
                 )}
               </button>
@@ -195,9 +196,6 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
                   </div>
                   <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${statusColor[b.status] || "bg-secondary text-foreground"}`}>{b.status}</span>
                 </div>
-                {activeTab === "All" && (
-                  <p className="text-xs font-semibold text-primary/80 uppercase tracking-wider mb-0.5">{b.bookingType}</p>
-                )}
                 <p className="text-sm font-semibold truncate" title={b.package}>{b.package}</p>
                 <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1">
                   <div className="flex justify-between text-xs">
