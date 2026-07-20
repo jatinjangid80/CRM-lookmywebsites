@@ -1140,9 +1140,9 @@ function QuotationsPage() {
                         </Button>
 
                         <Button
-                          variant="destructive"
+                          variant="outline"
                           size="sm"
-                          className="h-6 text-[10px] px-2 rounded-lg"
+                          className="h-6 text-[10px] px-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40"
                           onClick={() => {
                             setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
                             toast.success(`Quote ${q.id} deleted`);
