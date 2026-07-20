@@ -290,6 +290,7 @@ function BookingsPage() {
     };
   }, [allBookings]);
   const [isAddOpen, setIsAddOpen] = useState(false);
+  const [addBookingCustomer, setAddBookingCustomer] = useState<string | undefined>();
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -1037,13 +1038,20 @@ function BookingsPage() {
 
         <div className="flex gap-2">
 
-          <Button className="btn-hero" onClick={() => setIsAddOpen(true)}>
+          <Button className="btn-hero" onClick={() => {
+            setAddBookingCustomer(undefined);
+            setIsAddOpen(true);
+          }}>
             <Plus className="mr-2 h-4 w-4" /> New booking
           </Button>
           <AddBookingModal
             open={isAddOpen}
-            onOpenChange={setIsAddOpen}
+            onOpenChange={(open) => {
+              setIsAddOpen(open);
+              if (!open) setAddBookingCustomer(undefined);
+            }}
             onSave={handleAddBookingSave}
+            defaultCustomer={addBookingCustomer}
           />
         </div>
       </div>
@@ -1325,7 +1333,7 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.reference || "-"}</td>
                     <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <Select
-                        value={b.status}
+                        value={b.status || "Pending"}
                         onValueChange={(val: Booking["status"]) => updateBookingStatus(b.id, val)}
                       >
                         <SelectTrigger className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}>
@@ -1392,6 +1400,17 @@ function BookingsPage() {
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
+               <Button 
+                 size="sm" 
+                 variant="outline"
+                 className="rounded-xl h-8 mr-2"
+                 onClick={() => {
+                   setAddBookingCustomer(managingBooking?.customer);
+                   setIsAddOpen(true);
+                 }}
+               >
+                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Booking
+               </Button>
                {managingBooking && (
                  <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusColor[managingBooking.status]}`}>
                    {managingBooking.status}

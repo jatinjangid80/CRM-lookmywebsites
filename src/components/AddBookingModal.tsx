@@ -21,6 +21,7 @@ interface AddBookingModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (booking: Booking) => void;
+  defaultCustomer?: string;
 }
 
 const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
@@ -99,7 +100,7 @@ function SearchableSelect({
   );
 }
 
-export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalProps) {
+export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }: AddBookingModalProps) {
   const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
@@ -144,7 +145,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
       setBookingType("Holiday Package");
       setSupplier("");
       setBookingDate(new Date().toISOString().slice(0, 10));
-      setCustomer("");
+      setCustomer(defaultCustomer || "");
       setMobileNumber("");
       setBookedBy("");
       setCompany("");
@@ -168,7 +169,7 @@ export function AddBookingModal({ open, onOpenChange, onSave }: AddBookingModalP
       setDetails({});
       setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
     }
-  }, [open]);
+  }, [open, defaultCustomer]);
 
   // Handle Detail Change
   const updateDetail = (key: string, value: any) => {

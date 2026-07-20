@@ -94,7 +94,18 @@ function getNavForUser(auth: AuthUser): NavItem[] {
   const empSpecificNav = FULL_NAV.filter((n) => !["Employees", "Settings", "Payments"].includes(n.label));
 
   if (auth.name.toLowerCase().includes("nikita")) {
-    return FULL_NAV.filter((n) => ["Leads", "Tasks", "Settings"].includes(n.label));
+    return FULL_NAV.filter((n) => [
+      "Leads",
+      "Tasks",
+      "Customers",
+      "General Insurance",
+      "Documents",
+      "Employees",
+      "Attendance",
+      "Vendors",
+      "Accounts",
+      "Settings"
+    ].includes(n.label));
   }
   if (auth.name.toLowerCase().includes("aman")) {
     return FULL_NAV.filter((n) => ["Vendors", "Settings", "Tasks"].includes(n.label));
