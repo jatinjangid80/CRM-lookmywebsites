@@ -27,13 +27,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetDescription,
-  SheetFooter,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+  DialogFooter,
+} from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Command,
@@ -2052,16 +2052,16 @@ function VisaPage() {
         description="Are you sure you want to delete this customer's visa application? All checklist progress will be lost."
       />
 
-      <Sheet open={appModalOpen} onOpenChange={setAppModalOpen}>
-        <SheetContent className="sm:max-w-md overflow-y-auto rounded-l-2xl border-l border-border bg-card p-6 shadow-2xl">
-          <SheetHeader>
-            <SheetTitle className="font-display text-lg font-bold">
+      <Dialog open={appModalOpen} onOpenChange={setAppModalOpen}>
+        <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-lg font-bold">
               New Visa Application
-            </SheetTitle>
-            <SheetDescription className="text-xs text-muted-foreground mt-1">
+            </DialogTitle>
+            <DialogDescription className="text-xs text-muted-foreground mt-1">
               Add a new visa application track for a customer.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
 
           <form onSubmit={handleAddApplication} className="space-y-4 py-4">
             <div>
@@ -2123,6 +2123,32 @@ function VisaPage() {
                   </Command>
                 </PopoverContent>
               </Popover>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Mobile Number
+                </label>
+                <Input
+                  value={appCustomerPhone}
+                  onChange={(e) => setAppCustomerPhone(e.target.value)}
+                  className="rounded-xl bg-background border-border h-10 text-sm px-3"
+                  placeholder="e.g. 9876543210"
+                />
+              </div>
+              <div>
+                <label className="mb-1.5 block text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Email Address
+                </label>
+                <Input
+                  type="email"
+                  value={appCustomerEmail}
+                  onChange={(e) => setAppCustomerEmail(e.target.value)}
+                  className="rounded-xl bg-background border-border h-10 text-sm px-3"
+                  placeholder="e.g. email@example.com"
+                />
+              </div>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
@@ -2238,22 +2264,26 @@ function VisaPage() {
               </div>
             </div>
 
-            <SheetFooter className="border-t border-border pt-4 mt-6">
+            <DialogFooter className="border-t border-border pt-4 mt-6">
               <Button
                 type="button"
                 variant="outline"
-                className="rounded-xl"
+                className="rounded-xl px-6"
                 onClick={() => setAppModalOpen(false)}
               >
                 Cancel
               </Button>
-              <Button type="submit" className="rounded-xl" style={BRAND_STYLE}>
+              <Button
+                type="submit"
+                className="rounded-xl px-6 text-white"
+                style={BRAND_STYLE}
+              >
                 Add Application
               </Button>
-            </SheetFooter>
+            </DialogFooter>
           </form>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

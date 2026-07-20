@@ -534,13 +534,15 @@ function PackageFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: a
   );
 }
 
-function InsuranceFields({ form, set }: { form: typeof EMPTY_FORM; set: any }) {
+function InsuranceFields({ form, set, service }: { form: typeof EMPTY_FORM; set: any; service?: string }) {
   return (
     <div className="grid gap-4 grid-cols-2 sm:grid-cols-4">
       <div className="col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Policy Type *</label>
         <select value={form.policyType} onChange={set("policyType")} className={FIELD_CLS}>
-          {(form.leadSection === "General Insurance"
+          {(service === "Travel Insurance"
+            ? ["Single Trip", "Multi Trip", "Student Travel", "Senior Citizen", "Family Travel", "Corporate Travel", "Domestic", "International"]
+            : form.leadSection === "General Insurance"
             ? ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle","Fire","Marine","Property","Liability","Life"]
             : ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"]
           ).map(p => <option key={p}>{p}</option>)}
@@ -766,7 +768,7 @@ function DynamicFormStep({
           {formType === "hotel" && <HotelFields form={form} set={set} setForm={setForm} />}
           {formType === "visa" && <VisaFields form={form} set={set} />}
           {formType === "package" && <PackageFields form={form} set={set} setForm={setForm} />}
-          {formType === "insurance" && <InsuranceFields form={form} set={set} />}
+          {formType === "insurance" && <InsuranceFields form={form} set={set} service={service} />}
           {formType === "corporate" && <CorporateFields form={form} set={set} />}
           {formType === "generic" && <GenericTravelFields form={form} set={set} label={getGenericDestLabel(service)} />}
         </div>
@@ -1197,8 +1199,10 @@ function LeadDetail({
                 className="h-16 w-16 rounded-2xl object-cover shrink-0"
               />
             ) : (
-              <div className="h-16 w-16 rounded-2xl bg-gray-100 border border-border flex items-center justify-center shrink-0">
-                <User className="h-8 w-8 text-gray-400" />
+              <div className="h-16 w-16 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                <span className="text-2xl font-bold text-primary">
+                  {lead.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
+                </span>
               </div>
             )}
             <div>
@@ -2149,8 +2153,10 @@ function KanbanCol({
                   className="h-7 w-7 rounded-lg object-cover shrink-0"
                 />
               ) : (
-                <div className="h-7 w-7 rounded-lg bg-gray-100 border border-border flex items-center justify-center shrink-0">
-                  <User className="h-4 w-4 text-gray-400" />
+                <div className="h-7 w-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
+                  <span className="text-[10px] font-bold text-primary">
+                    {l.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
+                  </span>
                 </div>
               )}
               <div className="min-w-0">

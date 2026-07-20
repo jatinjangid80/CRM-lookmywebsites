@@ -1198,14 +1198,6 @@ function QuotationsPage() {
                     alt="Look My Holidays Logo"
                     className="h-16 w-auto mix-blend-multiply"
                   />
-                  <div>
-                    <h2 className="font-display font-extrabold text-2xl text-primary tracking-tight">
-                      Look My Holidays
-                    </h2>
-                    <p className="text-xs text-muted-foreground">
-                      Expert Travel Consultants & Visa Solutions
-                    </p>
-                  </div>
                 </div>
                 <div className="text-right">
                   <p className="font-mono text-xs font-semibold uppercase px-2.5 py-1 rounded-md bg-secondary text-primary border border-primary/20 inline-block mb-1">

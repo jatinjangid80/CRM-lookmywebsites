@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin, CheckSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -421,7 +421,7 @@ function CustomersPage() {
           <form onSubmit={handleSaveCustomer} className="grid grid-cols-2 gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Customer Name <span className="text-red-500">*</span></Label>
-              <Input id="name" placeholder="e.g. jatin jangid" required value={newCustomer.name || ""} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} />
+              <Input id="name" autoComplete="off" name="customer_name_field" placeholder="e.g. jatin jangid" required value={newCustomer.name || ""} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Mobile Number <span className="text-red-500">*</span></Label>
@@ -607,7 +607,13 @@ function CustomersPage() {
                     </div>
                   </TabsContent>
 
-                  <TabsContent value="bookings" className="m-0 outline-none">
+                  <TabsContent value="bookings" className="m-0 outline-none flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-semibold text-lg">Booking History</h3>
+                      <Link to="/crm/bookings" search={{ customer: selectedCustomer.phone || selectedCustomer.name }} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                        <Plus className="h-4 w-4 mr-2" /> Add Booking
+                      </Link>
+                    </div>
                     {(() => {
                       if (custBookings.length === 0) {
                         return (
@@ -638,7 +644,13 @@ function CustomersPage() {
                     })()}
                   </TabsContent>
 
-                  <TabsContent value="payments" className="m-0 outline-none">
+                  <TabsContent value="payments" className="m-0 outline-none flex flex-col h-full">
+                    <div className="flex justify-between items-center mb-4">
+                      <h3 className="font-semibold text-lg">Payment History</h3>
+                      <Link to="/crm/payments" search={{ customer: selectedCustomer.phone || selectedCustomer.name }} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                        <Plus className="h-4 w-4 mr-2" /> Add Payment
+                      </Link>
+                    </div>
                      {(() => {
                       if (custBookings.length === 0) {
                         return (

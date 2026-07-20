@@ -13,6 +13,18 @@ import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { format } from "date-fns";
+function formatTime12Hour(timeStr?: string) {
+  if (!timeStr) return "";
+  const parts = timeStr.split(':');
+  if (parts.length < 2) return timeStr;
+  const h = parseInt(parts[0], 10);
+  const m = parseInt(parts[1], 10);
+  if (isNaN(h) || isNaN(m)) return timeStr;
+  const ampm = h >= 12 ? 'PM' : 'AM';
+  const hour12 = h % 12 || 12;
+  return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
 export const Route = createFileRoute("/crm/attendance")({
   component: AttendancePage,
 });
@@ -207,7 +219,7 @@ function AttendancePage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Clocked In:</span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{record.checkin} ({record.location})</span>
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatTime12Hour(record.checkin)} ({record.location})</span>
                         </div>
                         {record.checkout && (
                           <div className="flex justify-between items-center pt-1 border-t border-border/40">
@@ -255,10 +267,10 @@ function AttendancePage() {
                         .map((record, i) => (
                           <tr key={record.id || i} className="hover:bg-secondary/20 transition-colors">
                             <td className="px-5 py-4 font-semibold text-foreground">{record.date}</td>
-                            <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">{record.checkin}</td>
+                            <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">{formatTime12Hour(record.checkin)}</td>
                             <td className="px-5 py-4 font-bold text-rose-600 dark:text-rose-400">
                               {record.checkout ? (
-                                record.checkout
+                                formatTime12Hour(record.checkout)
                               ) : (
                                 <span className="text-amber-500 font-medium flex items-center gap-1">
                                   <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
@@ -397,10 +409,10 @@ function AttendancePage() {
                             </div>
                           </td>
                           <td className="px-6 py-4 text-muted-foreground font-medium">{empDetails.role}</td>
-                          <td className="px-6 py-4 font-bold text-emerald-600">{record.checkin}</td>
+                          <td className="px-6 py-4 font-bold text-emerald-600">{formatTime12Hour(record.checkin)}</td>
                           <td className="px-6 py-4 font-semibold text-amber-500">
                             {record.checkout ? (
-                              <span className="text-foreground">{record.checkout}</span>
+                              <span className="text-foreground">{formatTime12Hour(record.checkout)}</span>
                             ) : (
                               "• Clocked In"
                             )}
@@ -503,11 +515,24 @@ function AttendancePage() {
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                               <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
                                 <Clock className="h-3 w-3" />
-                                {record.checkin} {record.checkout ? `- ${record.checkout}` : ""}
+                                {formatTime12Hour(record.checkin)} {record.checkout ? `- ${formatTime12Hour(record.checkout)}` : ""}
                               </span>
                               <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
-                                <Building2 className="h-3 w-3 shrink-0" /> Office
+                                <Building2 className="h-3 w-3 shrink-0" /> {record.location || "Office"}
                               </span>
+                              {record.checkout && (
+                                <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                                  {(() => {
+                                    const [inH, inM] = record.checkin.split(':').map(Number);
+                                    const [outH, outM] = record.checkout.split(':').map(Number);
+                                    let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                                    if (diff < 0) diff += 24 * 60;
+                                    const h = Math.floor(diff / 60);
+                                    const m = diff % 60;
+                                    return `${h}h ${m}m`;
+                                  })()}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

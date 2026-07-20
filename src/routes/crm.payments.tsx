@@ -628,14 +628,6 @@ function PaymentsPage() {
                 <div className="flex justify-between items-center border-b-2 border-primary/20 pb-4">
                   <div className="flex items-center gap-3">
                     <img src={logoImg} alt="Logo" className="h-12 w-auto mix-blend-multiply" />
-                    <div>
-                      <h2 className="font-display font-extrabold text-lg text-primary">
-                        Look My Holidays
-                      </h2>
-                      <p className="text-[10px] text-muted-foreground">
-                        Expert Travel Consultants & Visa Solutions
-                      </p>
-                    </div>
                   </div>
                   <div className="text-right">
                     <p className="font-mono text-xs font-bold bg-secondary text-primary px-2 py-0.5 rounded border border-primary/20 inline-block mb-1">

@@ -683,8 +683,10 @@ function Dashboard() {
                             className="h-10 w-10 rounded-xl object-cover border border-border"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-xl bg-gray-100 border border-border flex items-center justify-center">
-                            <User className="h-5 w-5 text-gray-400" />
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                            <span className="text-sm font-bold text-primary">
+                              {staff.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
+                            </span>
                           </div>
                         )}
                       </div>
@@ -699,7 +701,7 @@ function Dashboard() {
                     <div className="flex flex-col items-end shrink-0 text-right min-w-[120px]">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-muted-foreground">
-                          {staff.completedTasks}/{staff.totalTasks} Tasks
+                          {staff.totalTasks - staff.completedTasks} Pending Tasks
                         </span>
                         <span
                           className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}`}
