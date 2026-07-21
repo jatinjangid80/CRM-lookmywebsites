@@ -255,6 +255,8 @@ function GeneralInsurancePage() {
           onClose={() => setShowForm(false)}
           initialData={editingPolicy}
           onSave={handleSavePolicy}
+          companies={companies}
+          vendors={vendors}
         />
       )}
 

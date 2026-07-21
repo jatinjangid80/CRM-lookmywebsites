@@ -31,6 +31,7 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
     const next7Days: any[] = [];
     const next15Days: any[] = [];
     const next30Days: any[] = [];
+    const later: any[] = [];
 
     policies.forEach(p => {
       const days = getDaysUntilExpiry(p.expiry_date);
@@ -39,9 +40,10 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
       else if (days <= 7) next7Days.push(p);
       else if (days <= 15) next15Days.push(p);
       else if (days <= 30) next30Days.push(p);
+      else later.push(p);
     });
 
-    return { expired, todayList, next7Days, next15Days, next30Days };
+    return { expired, todayList, next7Days, next15Days, next30Days, later };
   }, [policies]);
 
   const renderSection = (title: string, list: any[], icon: React.ReactNode, bgColor: string, textColor: string) => {
@@ -67,7 +69,7 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
 
   const selectedDatePolicies = useMemo(() => {
     if (!date) return [];
-    const dateStr = date.toISOString().split('T')[0];
+    const dateStr = new Date(date.getTime() - date.getTimezoneOffset() * 60000).toISOString().split('T')[0];
     return policies.filter(p => {
       if (!p.expiry_date) return false;
       return p.expiry_date.startsWith(dateStr);
@@ -89,10 +91,11 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
            categorizedPolicies.next7Days.length === 0 && 
            categorizedPolicies.next15Days.length === 0 && 
            categorizedPolicies.next30Days.length === 0 && 
+           categorizedPolicies.later.length === 0 && 
            categorizedPolicies.expired.length === 0 && (
              <div className="py-20 text-center flex flex-col items-center justify-center text-muted-foreground bg-card border border-border rounded-2xl">
                 <CalendarClock className="w-16 h-16 opacity-20 mb-4" />
-                <p className="text-lg font-semibold">No upcoming renewals in the next 30 days.</p>
+                <p className="text-lg font-semibold">No upcoming renewals found.</p>
                 <p className="text-sm mt-1">You are all caught up!</p>
              </div>
           )}
@@ -101,6 +104,7 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
           {renderSection("Next 7 Days", categorizedPolicies.next7Days, <CalendarClock className="w-5 h-5" />, "bg-amber-500/10", "text-amber-500")}
           {renderSection("Next 15 Days", categorizedPolicies.next15Days, <CalendarClock className="w-5 h-5" />, "bg-yellow-500/10", "text-yellow-500")}
           {renderSection("Next 30 Days", categorizedPolicies.next30Days, <CalendarClock className="w-5 h-5" />, "bg-blue-500/10", "text-blue-500")}
+          {renderSection("Future Renewals (> 30 Days)", categorizedPolicies.later, <CalendarClock className="w-5 h-5" />, "bg-emerald-500/10", "text-emerald-500")}
           {renderSection("Already Expired", categorizedPolicies.expired, <History className="w-5 h-5" />, "bg-muted", "text-foreground")}
         </div>
 
@@ -132,7 +136,7 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
               {selectedDatePolicies.length > 0 ? (
                 <div className="space-y-3">
                   {selectedDatePolicies.map(p => {
-                    const customerName = p.customer_id ? p.customer_id : "Unknown";
+                    const customerName = p.customer_name ? p.customer_name : "Unknown";
                     return (
                       <div key={p.id} className="p-3 bg-secondary/30 rounded-xl border border-border text-sm">
                         <div className="font-semibold">{p.policy_number || "No Policy #"}</div>

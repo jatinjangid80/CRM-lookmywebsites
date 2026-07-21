@@ -142,14 +142,14 @@ const SERVICES = [
 
 function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }: { booking: ExtBooking, allBookings: ExtBooking[], setManagingBooking: (b: ExtBooking) => void }) {
   const customerBookings = allBookings.filter(b => b.customer === booking.customer && b.id !== booking.id);
-  
+
   const groupedBookings = customerBookings.reduce((acc, b) => {
     const type = b.bookingType || "Other";
     if (!acc[type]) acc[type] = [];
     acc[type].push(b);
     return acc;
   }, {} as Record<string, ExtBooking[]>);
-  
+
   const types = Object.keys(groupedBookings);
   const [activeTab, setActiveTab] = useState<string>(types[0] || "");
   const currentTab = types.includes(activeTab) ? activeTab : (types[0] || "");
@@ -184,8 +184,8 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {displayedBookings.map(b => (
-              <div 
-                key={b.id} 
+              <div
+                key={b.id}
                 className="border border-border bg-card p-4 rounded-xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
                 onClick={() => setManagingBooking(b)}
               >
@@ -766,7 +766,6 @@ function BookingsPage() {
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Airline</p><p className="font-semibold">{booking.details?.airline || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Flight Number</p><p className="font-semibold">{booking.details?.flightNumber || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details?.pnr || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details?.departureAirport || "—"} at {booking.details?.departureTime || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details?.arrivalAirport || "—"} at {booking.details?.arrivalTime || "—"}</p></div>
             </>
@@ -801,7 +800,6 @@ function BookingsPage() {
           {booking.bookingType === "Train Ticket" && (
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Train Number/Name</p><p className="font-semibold">{booking.details?.trainNumber || "—"} {booking.details?.trainName || ""}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details?.pnr || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">From - To</p><p className="font-semibold">{booking.details?.from || "—"} → {booking.details?.to || "—"}</p></div>
             </>
           )}
@@ -824,7 +822,6 @@ function BookingsPage() {
                   <h4 className="text-sm font-semibold flex items-center gap-2">✈️ Flight Details</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Airline</p><p className="font-semibold">{booking.details.airline} {booking.details.flightNumber}</p></div>
-                    <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details.departureAirport || "—"} at {booking.details.departureTime ? new Date(booking.details.departureTime).toLocaleString() : "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details.arrivalAirport || "—"} at {booking.details.arrivalTime ? new Date(booking.details.arrivalTime).toLocaleString() : "—"}</p></div>
                   </div>
@@ -860,7 +857,6 @@ function BookingsPage() {
                   <h4 className="text-sm font-semibold flex items-center gap-2">🚆 Train Details</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Train</p><p className="font-semibold">{booking.details.trainName}</p></div>
-                    <div><p className="text-xs text-muted-foreground uppercase mb-1">PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Travel Date</p><p className="font-semibold">{booking.details.travelDate || "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Sector</p><p className="font-semibold">{booking.details.sector || "—"}</p></div>
                   </div>
@@ -872,7 +868,6 @@ function BookingsPage() {
                   <h4 className="text-sm font-semibold flex items-center gap-2">🚌 Bus Details</h4>
                   <div className="grid grid-cols-2 gap-4">
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Operator</p><p className="font-semibold">{booking.details.busOperator}</p></div>
-                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Ticket No. / PNR</p><p className="font-semibold">{booking.details.pnr || "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Travel Date</p><p className="font-semibold">{booking.details.travelDate || "—"}</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Sector</p><p className="font-semibold">{booking.details.sector || "—"}</p></div>
                   </div>
@@ -939,10 +934,10 @@ function BookingsPage() {
         </div>
       </div>
       <div>
-         <p className="text-sm font-semibold mb-2">Payment Status</p>
-         <span className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${statusColor[booking.status]}`}>
-            {booking.status}
-         </span>
+        <p className="text-sm font-semibold mb-2">Payment Status</p>
+        <span className={`inline-block rounded-full px-3 py-1 text-sm font-semibold ${statusColor[booking.status]}`}>
+          {booking.status}
+        </span>
       </div>
     </div>
   );
@@ -993,14 +988,14 @@ function BookingsPage() {
           </div>
         </div>
         <div className="flex justify-end pt-2">
-            <Button
-              type="submit"
-              disabled={uploading || !uploadFile}
-              className="h-10 px-8 rounded-lg text-sm font-semibold"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              {uploading ? "Uploading..." : "Upload Document"}
-            </Button>
+          <Button
+            type="submit"
+            disabled={uploading || !uploadFile}
+            className="h-10 px-8 rounded-lg text-sm font-semibold"
+            style={{ background: "var(--gradient-brand)" }}
+          >
+            {uploading ? "Uploading..." : "Upload Document"}
+          </Button>
         </div>
       </form>
 
@@ -1020,10 +1015,10 @@ function BookingsPage() {
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                        <p className="font-semibold text-sm truncate text-foreground">{file.name}</p>
-                        <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
-                            {file.category || "Other Files"}
-                        </span>
+                      <p className="font-semibold text-sm truncate text-foreground">{file.name}</p>
+                      <span className="rounded bg-secondary px-2 py-0.5 text-[10px] font-semibold text-muted-foreground">
+                        {file.category || "Other Files"}
+                      </span>
                     </div>
                     <p className="text-xs text-muted-foreground mt-0.5">
                       {fmtSize(file.size)} • Uploaded {new Date(file.uploadedAt).toLocaleDateString()}
@@ -1360,9 +1355,7 @@ function BookingsPage() {
                 <th className="px-4 py-3 whitespace-nowrap">Purchase Price (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Profit (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Booked By</th>
-                <th className="px-4 py-3 whitespace-nowrap">Reference</th>
                 <th className="px-4 py-3 whitespace-nowrap">Payment Status</th>
-                <th className="px-4 py-3 whitespace-nowrap">Remarks</th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
@@ -1384,7 +1377,6 @@ function BookingsPage() {
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookedBy || "-"}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.reference || "-"}</td>
                     <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                       <Select
                         value={b.status || "Pending"}
@@ -1403,7 +1395,6 @@ function BookingsPage() {
                         </SelectContent>
                       </Select>
                     </td>
-                    <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate" title={b.remarks || "-"}>{b.remarks || "-"}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                         {isAdmin && (
@@ -1447,45 +1438,45 @@ function BookingsPage() {
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2">
-               <Button 
-                 size="sm" 
-                 variant="outline"
-                 className="rounded-xl h-8 mr-2"
-                 onClick={() => {
-                   setAddBookingCustomer(managingBooking?.customer);
-                   setIsAddOpen(true);
-                 }}
-               >
-                 <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Booking
-               </Button>
-               {managingBooking && (
-                 <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusColor[managingBooking.status]}`}>
-                   {managingBooking.status}
-                 </span>
-               )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="rounded-xl h-8 mr-2"
+                onClick={() => {
+                  setAddBookingCustomer(managingBooking?.customer);
+                  setIsAddOpen(true);
+                }}
+              >
+                <Plus className="mr-1.5 h-3.5 w-3.5" /> Add Booking
+              </Button>
+              {managingBooking && (
+                <span className={`rounded-full px-2.5 py-1 text-xs font-semibold ${statusColor[managingBooking.status]}`}>
+                  {managingBooking.status}
+                </span>
+              )}
             </div>
           </div>
 
           {managingBooking && (
             <div className="flex flex-col flex-1 overflow-hidden">
-               <div className="flex items-center gap-6 px-6 border-b border-border bg-secondary/10">
-                 {["Details", "Payments", "Documents", "Timeline", "All Bookings"].map((tab) => (
-                   <button
-                     key={tab}
-                     onClick={() => setManageTab(tab as any)}
-                     className={`py-3 text-sm font-semibold transition-colors border-b-2 -mb-[1px] ${manageTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
-                   >
-                     {tab}
-                   </button>
-                 ))}
-               </div>
-               <div className="flex-1 overflow-y-auto p-6">
-                 {manageTab === "Details" && renderManageDetails(managingBooking)}
-                 {manageTab === "Payments" && renderManagePayments(managingBooking)}
-                 {manageTab === "Documents" && renderManageDocuments(managingBooking)}
-                 {manageTab === "Timeline" && renderManageTimeline(managingBooking)}
-                 {manageTab === "All Bookings" && <ManageAllBookingsComponent booking={managingBooking} allBookings={allBookings} setManagingBooking={setManagingBooking} />}
-               </div>
+              <div className="flex items-center gap-6 px-6 border-b border-border bg-secondary/10">
+                {["Details", "Payments", "Documents", "Timeline", "All Bookings"].map((tab) => (
+                  <button
+                    key={tab}
+                    onClick={() => setManageTab(tab as any)}
+                    className={`py-3 text-sm font-semibold transition-colors border-b-2 -mb-[1px] ${manageTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                  >
+                    {tab}
+                  </button>
+                ))}
+              </div>
+              <div className="flex-1 overflow-y-auto p-6">
+                {manageTab === "Details" && renderManageDetails(managingBooking)}
+                {manageTab === "Payments" && renderManagePayments(managingBooking)}
+                {manageTab === "Documents" && renderManageDocuments(managingBooking)}
+                {manageTab === "Timeline" && renderManageTimeline(managingBooking)}
+                {manageTab === "All Bookings" && <ManageAllBookingsComponent booking={managingBooking} allBookings={allBookings} setManagingBooking={setManagingBooking} />}
+              </div>
             </div>
           )}
 

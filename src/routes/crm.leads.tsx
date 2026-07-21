@@ -61,6 +61,7 @@ import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import type { ExtCustomer } from "./crm.customers";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { toast } from "sonner";
+import { supabase } from "@/lib/supabase";
 
 export const Route = createFileRoute("/crm/leads")({ component: LeadsPage });
 
@@ -2401,7 +2402,55 @@ function LeadsPage() {
 
     if (["on conform", "Confirmed", "in process"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
-      if (lead && lead.phone) {
+      if (lead) {
+        // Auto push to respective module based on lead service
+        (async () => {
+          try {
+            const service = lead.service || "";
+            if (service === "Visa") {
+              const newVisa = {
+                id: `VISA-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+                customer: lead.name,
+                phone: lead.phone || "",
+                email: lead.email || "",
+                avatar: "",
+                country: lead.destination || "",
+                flag: "",
+                visaType: lead.visaType || "",
+                appliedOn: new Date().toISOString().slice(0, 10),
+                travelDate: lead.travelDate || "",
+                status: "Pending Documents",
+                docs: []
+              };
+              await supabase.from("visa").insert([newVisa]);
+            } else if (service === "General Insurance" || service === "Travel Insurance") {
+              const newInsurance = {
+                customer_name: lead.name,
+                mobile_number: lead.phone || "",
+                email: lead.email || "",
+                policy_type: service === "Travel Insurance" ? "Travel" : "Comprehensive",
+                payment_status: "Pending",
+                total_premium: Number(lead.budget) || 0
+              };
+              await supabase.from("insurance_policies").insert([newInsurance]);
+            } else {
+              const newBooking = {
+                id: `BK-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+                customer: lead.name,
+                mobileNumber: lead.phone || "",
+                bookingType: service || "Other",
+                status: "Pending",
+                bookingDate: new Date().toISOString().slice(0, 10),
+                amount: Number(lead.budget) || 0
+              };
+              await supabase.from("bookings").insert([newBooking]);
+            }
+          } catch (err) {
+            console.error("Failed to auto-create service record:", err);
+          }
+        })();
+
+        if (lead.phone) {
         setCustomers((prev) => {
           const exists = prev.find((c) => c.phone === lead.phone);
           if (exists) {
@@ -2436,6 +2485,7 @@ function LeadsPage() {
             ];
           }
         });
+        }
       }
     }
   };

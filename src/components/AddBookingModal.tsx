@@ -137,7 +137,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
 
   // Details Object
   const [details, setDetails] = useState<any>({});
-  
+
   // Included Services for Packages
   const [includedServices, setIncludedServices] = useState({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
 
@@ -278,8 +278,8 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     type="button"
                     onClick={() => setBookingType(bt.type)}
                     className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${isSelected
-                        ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20"
-                        : "bg-secondary/40 border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+                      ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20"
+                      : "bg-secondary/40 border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
                       }`}
                   >
                     <Icon className="h-4 w-4" />
@@ -461,22 +461,20 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     <button
                       type="button"
                       onClick={() => updateDetail("tripType", "One Way")}
-                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${
-                        (!details.tripType || details.tripType === "One Way")
+                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${(!details.tripType || details.tripType === "One Way")
                           ? "bg-white text-[#E42E3D] shadow-sm"
                           : "text-slate-500 hover:text-slate-700"
-                      }`}
+                        }`}
                     >
                       One Way
                     </button>
                     <button
                       type="button"
                       onClick={() => updateDetail("tripType", "Round Trip")}
-                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${
-                        details.tripType === "Round Trip"
+                      className={`flex-1 rounded-full py-2 text-sm font-medium transition-all ${details.tripType === "Round Trip"
                           ? "bg-white text-[#E42E3D] shadow-sm"
                           : "text-slate-500 hover:text-slate-700"
-                      }`}
+                        }`}
                     >
                       Round Trip
                     </button>
@@ -861,7 +859,6 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Airline</Label><Input value={details.airline || ""} onChange={(e) => updateDetail("airline", e.target.value)} placeholder="IndiGo" /></div>
                       <div className="space-y-2"><Label>Flight Number</Label><Input value={details.flightNumber || ""} onChange={(e) => updateDetail("flightNumber", e.target.value)} placeholder="6E-123" /></div>
-                      <div className="space-y-2"><Label>PNR</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="XYZ123" /></div>
                       <div className="space-y-2"><Label>Departure Airport</Label><Input value={details.departureAirport || ""} onChange={(e) => updateDetail("departureAirport", e.target.value)} placeholder="DEL" /></div>
                       <div className="space-y-2"><Label>Departure Time</Label><Input type="datetime-local" value={details.departureTime || ""} onChange={(e) => updateDetail("departureTime", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Arrival Airport</Label><Input value={details.arrivalAirport || ""} onChange={(e) => updateDetail("arrivalAirport", e.target.value)} placeholder="BOM" /></div>
@@ -904,7 +901,6 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     <h4 className="text-sm font-semibold flex items-center gap-2"><Train className="h-4 w-4" /> Train Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Train Name/No.</Label><Input value={details.trainName || ""} onChange={(e) => updateDetail("trainName", e.target.value)} placeholder="Rajdhani Exp" /></div>
-                      <div className="space-y-2"><Label>PNR</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="PNR12345" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MUM" /></div>
                       <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
@@ -931,7 +927,6 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                     <h4 className="text-sm font-semibold flex items-center gap-2"><Bus className="h-4 w-4" /> Bus Details</h4>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                       <div className="space-y-2"><Label>Bus Operator</Label><Input value={details.busOperator || ""} onChange={(e) => updateDetail("busOperator", e.target.value)} placeholder="Zingbus" /></div>
-                      <div className="space-y-2"><Label>PNR / Ticket No.</Label><Input value={details.pnr || ""} onChange={(e) => updateDetail("pnr", e.target.value)} placeholder="TKT123" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MANALI" /></div>
                       <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
@@ -1053,8 +1048,8 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       type="button"
                       onClick={() => updateDetail("taxiPricingMode", "day")}
                       className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode !== "km"
-                          ? "bg-background shadow text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                        ? "bg-background shadow text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                         }`}
                     >
                       Day Wise Pricing
@@ -1063,8 +1058,8 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       type="button"
                       onClick={() => updateDetail("taxiPricingMode", "km")}
                       className={`flex-1 text-sm font-semibold py-2 rounded-md transition-all ${details.taxiPricingMode === "km"
-                          ? "bg-background shadow text-primary"
-                          : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                        ? "bg-background shadow text-primary"
+                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
                         }`}
                     >
                       KM Wise Pricing

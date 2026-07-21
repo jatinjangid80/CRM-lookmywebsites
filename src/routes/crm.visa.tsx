@@ -100,132 +100,6 @@ interface VisaRequirement {
   supportFiles?: { name: string; data: string; size: number }[];
 }
 
-/* ─── Mock data ─── */
-const APPS: VisaApp[] = [
-  {
-    id: "V-2201", customer: "Ananya Verma", avatar: "https://i.pravatar.cc/80?img=47",
-    country: "Indonesia", flag: "🇮🇩", visaType: "Tourist – Visa on Arrival",
-    appliedOn: "2026-06-10", travelDate: "2026-08-14", status: "Pending Documents",
-    docs: [
-      { name: "Passport copy (front & back)", received: true },
-      { name: "Passport-size photo", received: true },
-      { name: "Flight itinerary", received: false },
-      { name: "Hotel confirmation", received: false },
-      { name: "Bank statement (3 months)", received: false },
-    ],
-  },
-  {
-    id: "V-2200", customer: "Rohan Mehta", avatar: "https://i.pravatar.cc/80?img=12",
-    country: "France / Schengen", flag: "🇫🇷", visaType: "Schengen Tourist",
-    appliedOn: "2026-06-05", travelDate: "2026-10-04", status: "Under Review",
-    embassyRef: "SCH-IN-20260605-4471",
-    docs: [
-      { name: "Passport (valid 6+ months)", received: true },
-      { name: "Travel insurance €30k", received: true },
-      { name: "ITR last 2 years", received: true },
-      { name: "Bank statement (6 months)", received: true },
-      { name: "Leave letter from employer", received: true },
-    ],
-  },
-  {
-    id: "V-2199", customer: "Neha Kapoor", avatar: "https://i.pravatar.cc/80?img=5",
-    country: "Maldives", flag: "🇲🇻", visaType: "Free 30-day on Arrival",
-    appliedOn: "2026-06-14", travelDate: "2026-09-05", status: "Approved",
-    embassyRef: "MV-FREEOA",
-    docs: [
-      { name: "Passport copy", received: true },
-      { name: "Hotel/resort booking", received: true },
-      { name: "Return ticket", received: true },
-    ],
-  },
-  {
-    id: "V-2198", customer: "Karan Patel", avatar: "https://i.pravatar.cc/80?img=33",
-    country: "Singapore", flag: "🇸🇬", visaType: "Tourist e-Visa",
-    appliedOn: "2026-05-28", travelDate: "2026-07-30", status: "Rejected",
-    embassyRef: "SG-EV-8823",
-    docs: [
-      { name: "Passport copy", received: true },
-      { name: "Bank statement", received: true },
-      { name: "Sponsor letter", received: false },
-    ],
-  },
-  {
-    id: "V-2197", customer: "Aditya Rao", avatar: "https://i.pravatar.cc/80?img=15",
-    country: "UAE", flag: "🇦🇪", visaType: "30-day Tourist Visa",
-    appliedOn: "2026-06-18", travelDate: "2026-07-22", status: "Submitted",
-    embassyRef: "UAE-T30-66712",
-    docs: [
-      { name: "Passport (6 months validity)", received: true },
-      { name: "Colour photo – white background", received: true },
-      { name: "Bank statement (3 months)", received: true },
-      { name: "Return flight ticket", received: true },
-    ],
-  },
-];
-
-const INITIAL_REQUIREMENTS: VisaRequirement[] = [
-  {
-    id: "REQ-01",
-    country: "Indonesia",
-    visaType: "Tourist – Visa on Arrival",
-    docs: [
-      { name: "Passport copy (front & back)", shortName: "passport_copy" },
-      { name: "Passport-size photo", shortName: "photo" },
-      { name: "Flight itinerary", shortName: "flights" }
-    ],
-    formUrls: ["https://molina.imigrasi.go.id/"],
-    currency: "INR",
-    visaFees: 2700,
-    vfsFees: 0,
-    otherFees: 0,
-    serviceFees: 500,
-    consulateFees: 0,
-    urgentFees: 0,
-    urgentFees2: 0,
-    extraName1: "",
-    extraFees1: 0,
-    extraName2: "",
-    extraFees2: 0,
-    extraName3: "",
-    extraFees3: 0,
-    timeRequired: "1-2 Working Days",
-    remark1: "Passport must be valid for at least 6 months",
-    remark2: "Return tickets must be confirmed",
-    remark3: "Hotel bookings should be pre-arranged"
-  },
-  {
-    id: "REQ-02",
-    country: "France / Schengen",
-    visaType: "Schengen Tourist",
-    docs: [
-      { name: "Passport (valid 6+ months)", shortName: "passport_original" },
-      { name: "Travel insurance €30k", shortName: "insurance" },
-      { name: "ITR last 2 years", shortName: "itr" },
-      { name: "Bank statement (6 months)", shortName: "bank_statement" },
-      { name: "Leave letter from employer", shortName: "leave_letter" }
-    ],
-    formUrls: ["https://visa.vfsglobal.com/ind/en/fra"],
-    currency: "EUR",
-    visaFees: 80,
-    vfsFees: 2300,
-    otherFees: 500,
-    serviceFees: 2500,
-    consulateFees: 0,
-    urgentFees: 5000,
-    urgentFees2: 0,
-    extraName1: "Courier Charge",
-    extraFees1: 450,
-    extraName2: "SMS Charge",
-    extraFees2: 150,
-    extraName3: "",
-    extraFees3: 0,
-    timeRequired: "15 Calendar Days",
-    remark1: "Biometrics are mandatory at VFS center",
-    remark2: "All documents must be in English or translated",
-    remark3: "No digital photo print, must be studio print"
-  }
-];
-
 const STATUS_STYLE: Record<VisaStatus, string> = {
   "Pending Documents": "bg-amber-100 text-amber-700",
   "Documents Complete": "bg-cyan-100 text-cyan-700",
@@ -666,11 +540,11 @@ function VisaPage() {
   const auth = getAuth();
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
 
-  const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa", APPS);
+  const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa", []);
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [requirements, setRequirements] = useSupabaseTable<VisaRequirement[]>(
     "visa_requirements",
-    INITIAL_REQUIREMENTS,
+    []
   );
   const [activeSubTab, setActiveSubTab] = useState<"applications" | "requirements">("applications");
 

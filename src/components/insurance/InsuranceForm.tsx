@@ -41,15 +41,17 @@ const DEFAULT_VENDORS = [
 export function InsuranceForm({
   onClose,
   onSave,
-  initialData = null
+  initialData = null,
+  companies = [],
+  vendors = []
 }: {
   onClose: () => void;
   onSave: (data: any) => void;
   initialData?: any;
+  companies?: any[];
+  vendors?: any[];
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
-  const [companies] = useSupabaseTable<any[]>("insurance_companies", []);
-  const [vendors] = useSupabaseTable<any[]>("insurance_vendors", []);
 
   const [form, setForm] = useState<any>({
     school_name: "",

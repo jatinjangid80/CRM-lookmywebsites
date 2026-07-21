@@ -34,7 +34,7 @@ export function InsuranceCompaniesView() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+      <div className="mb-6">
         <h3 className="text-lg font-semibold mb-4">{editingId ? "Edit Company" : "Add New Company"}</h3>
         <div className="flex gap-4 items-end">
           <div className="flex-1 max-w-sm">
