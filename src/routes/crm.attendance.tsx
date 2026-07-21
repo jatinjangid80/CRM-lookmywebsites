@@ -30,6 +30,9 @@ export const Route = createFileRoute("/crm/attendance")({
 });
 
 function AttendancePage() {
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+
   const [time, setTime] = useState(new Date());
   const [shiftNote, setShiftNote] = useState("");
   const [selectedHistoryEmpId, setSelectedHistoryEmpId] = useState<string>("");
@@ -503,13 +506,15 @@ function AttendancePage() {
                                   }`}>
                                   {record.checkout ? "Completed" : "Active"}
                                 </span>
-                                <button
-                                  onClick={() => handleDeleteRecord(record.id)}
-                                  className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
-                                  title="Remove Record"
-                                >
-                                  <Trash2 className="w-3.5 h-3.5" />
-                                </button>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => handleDeleteRecord(record.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
+                                    title="Remove Record"
+                                  >
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                  </button>
+                                )}
                               </div>
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">

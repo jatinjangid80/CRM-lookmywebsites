@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users } from "lucide-react";
+import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users, Plus, Trash2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
 const DEFAULT_COMPANIES = [
@@ -54,7 +54,9 @@ export function InsuranceForm({
   const [form, setForm] = useState<any>({
     school_name: "",
     reference_name: "",
+    client_company: "",
     customer_name: "",
+    additional_passengers: [],
     mobile_number: "",
     alternate_mobile: "",
     email: "",
@@ -318,6 +320,15 @@ export function InsuranceForm({
               </div>
 
               <div className="space-y-1 col-span-2">
+                <Label>Client / Company</Label>
+                <Input
+                  value={form.client_company}
+                  onChange={(e) => setForm({ ...form, client_company: e.target.value })}
+                  placeholder="e.g. Acme Corp or Customer Name"
+                />
+              </div>
+
+              <div className="space-y-1 col-span-2">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Customer Name</Label>
                 <Input
                   value={form.customer_name}
@@ -368,6 +379,48 @@ export function InsuranceForm({
                   value={form.address}
                   onChange={(e) => setForm({ ...form, address: e.target.value })}
                 />
+              </div>
+
+              <div className="space-y-2 col-span-2 md:col-span-4">
+                <div className="flex items-center justify-between">
+                  <Label>Additional Passenger Names</Label>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    className="h-6 px-2 text-xs"
+                    onClick={() => {
+                      const current = Array.isArray(form.additional_passengers) ? form.additional_passengers : [];
+                      setForm({ ...form, additional_passengers: [...current, ""] });
+                    }}
+                  >
+                    <Plus className="h-3 w-3 mr-1" /> Add Name
+                  </Button>
+                </div>
+                {(Array.isArray(form.additional_passengers) ? form.additional_passengers : []).map((name: string, index: number) => (
+                  <div key={index} className="flex items-center gap-2 mt-2">
+                    <Input
+                      value={name}
+                      onChange={(e) => {
+                        const newNames = [...(form.additional_passengers as string[])];
+                        newNames[index] = e.target.value;
+                        setForm({ ...form, additional_passengers: newNames });
+                      }}
+                      placeholder="Passenger Name"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => {
+                        const newNames = form.additional_passengers.filter((_: any, i: number) => i !== index);
+                        setForm({ ...form, additional_passengers: newNames });
+                      }}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
               </div>
             </div>
           </section>

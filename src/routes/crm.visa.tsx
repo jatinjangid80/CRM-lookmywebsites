@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { getAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import {
   FileText,
@@ -100,9 +101,130 @@ interface VisaRequirement {
 }
 
 /* ─── Mock data ─── */
-const APPS: VisaApp[] = [];
+const APPS: VisaApp[] = [
+  {
+    id: "V-2201", customer: "Ananya Verma", avatar: "https://i.pravatar.cc/80?img=47",
+    country: "Indonesia", flag: "🇮🇩", visaType: "Tourist – Visa on Arrival",
+    appliedOn: "2026-06-10", travelDate: "2026-08-14", status: "Pending Documents",
+    docs: [
+      { name: "Passport copy (front & back)", received: true },
+      { name: "Passport-size photo", received: true },
+      { name: "Flight itinerary", received: false },
+      { name: "Hotel confirmation", received: false },
+      { name: "Bank statement (3 months)", received: false },
+    ],
+  },
+  {
+    id: "V-2200", customer: "Rohan Mehta", avatar: "https://i.pravatar.cc/80?img=12",
+    country: "France / Schengen", flag: "🇫🇷", visaType: "Schengen Tourist",
+    appliedOn: "2026-06-05", travelDate: "2026-10-04", status: "Under Review",
+    embassyRef: "SCH-IN-20260605-4471",
+    docs: [
+      { name: "Passport (valid 6+ months)", received: true },
+      { name: "Travel insurance €30k", received: true },
+      { name: "ITR last 2 years", received: true },
+      { name: "Bank statement (6 months)", received: true },
+      { name: "Leave letter from employer", received: true },
+    ],
+  },
+  {
+    id: "V-2199", customer: "Neha Kapoor", avatar: "https://i.pravatar.cc/80?img=5",
+    country: "Maldives", flag: "🇲🇻", visaType: "Free 30-day on Arrival",
+    appliedOn: "2026-06-14", travelDate: "2026-09-05", status: "Approved",
+    embassyRef: "MV-FREEOA",
+    docs: [
+      { name: "Passport copy", received: true },
+      { name: "Hotel/resort booking", received: true },
+      { name: "Return ticket", received: true },
+    ],
+  },
+  {
+    id: "V-2198", customer: "Karan Patel", avatar: "https://i.pravatar.cc/80?img=33",
+    country: "Singapore", flag: "🇸🇬", visaType: "Tourist e-Visa",
+    appliedOn: "2026-05-28", travelDate: "2026-07-30", status: "Rejected",
+    embassyRef: "SG-EV-8823",
+    docs: [
+      { name: "Passport copy", received: true },
+      { name: "Bank statement", received: true },
+      { name: "Sponsor letter", received: false },
+    ],
+  },
+  {
+    id: "V-2197", customer: "Aditya Rao", avatar: "https://i.pravatar.cc/80?img=15",
+    country: "UAE", flag: "🇦🇪", visaType: "30-day Tourist Visa",
+    appliedOn: "2026-06-18", travelDate: "2026-07-22", status: "Submitted",
+    embassyRef: "UAE-T30-66712",
+    docs: [
+      { name: "Passport (6 months validity)", received: true },
+      { name: "Colour photo – white background", received: true },
+      { name: "Bank statement (3 months)", received: true },
+      { name: "Return flight ticket", received: true },
+    ],
+  },
+];
 
-const INITIAL_REQUIREMENTS: VisaRequirement[] = [];
+const INITIAL_REQUIREMENTS: VisaRequirement[] = [
+  {
+    id: "REQ-01",
+    country: "Indonesia",
+    visaType: "Tourist – Visa on Arrival",
+    docs: [
+      { name: "Passport copy (front & back)", shortName: "passport_copy" },
+      { name: "Passport-size photo", shortName: "photo" },
+      { name: "Flight itinerary", shortName: "flights" }
+    ],
+    formUrls: ["https://molina.imigrasi.go.id/"],
+    currency: "INR",
+    visaFees: 2700,
+    vfsFees: 0,
+    otherFees: 0,
+    serviceFees: 500,
+    consulateFees: 0,
+    urgentFees: 0,
+    urgentFees2: 0,
+    extraName1: "",
+    extraFees1: 0,
+    extraName2: "",
+    extraFees2: 0,
+    extraName3: "",
+    extraFees3: 0,
+    timeRequired: "1-2 Working Days",
+    remark1: "Passport must be valid for at least 6 months",
+    remark2: "Return tickets must be confirmed",
+    remark3: "Hotel bookings should be pre-arranged"
+  },
+  {
+    id: "REQ-02",
+    country: "France / Schengen",
+    visaType: "Schengen Tourist",
+    docs: [
+      { name: "Passport (valid 6+ months)", shortName: "passport_original" },
+      { name: "Travel insurance €30k", shortName: "insurance" },
+      { name: "ITR last 2 years", shortName: "itr" },
+      { name: "Bank statement (6 months)", shortName: "bank_statement" },
+      { name: "Leave letter from employer", shortName: "leave_letter" }
+    ],
+    formUrls: ["https://visa.vfsglobal.com/ind/en/fra"],
+    currency: "EUR",
+    visaFees: 80,
+    vfsFees: 2300,
+    otherFees: 500,
+    serviceFees: 2500,
+    consulateFees: 0,
+    urgentFees: 5000,
+    urgentFees2: 0,
+    extraName1: "Courier Charge",
+    extraFees1: 450,
+    extraName2: "SMS Charge",
+    extraFees2: 150,
+    extraName3: "",
+    extraFees3: 0,
+    timeRequired: "15 Calendar Days",
+    remark1: "Biometrics are mandatory at VFS center",
+    remark2: "All documents must be in English or translated",
+    remark3: "No digital photo print, must be studio print"
+  }
+];
 
 const STATUS_STYLE: Record<VisaStatus, string> = {
   "Pending Documents": "bg-amber-100 text-amber-700",
@@ -541,7 +663,10 @@ const VISA_TYPES_LIST = [
 const CURRENCY_LIST = ["INR", "USD", "EUR", "AED", "SGD", "THB", "GBP", "IDR"];
 
 function VisaPage() {
-  const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa_apps", APPS);
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+
+  const [apps, setApps] = useSupabaseTable<VisaApp[]>("visa", APPS);
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [requirements, setRequirements] = useSupabaseTable<VisaRequirement[]>(
     "visa_requirements",
@@ -625,12 +750,12 @@ function VisaPage() {
 
     const match = requirements.find(
       (r) =>
-        r.country.toLowerCase() === appCountry.toLowerCase() &&
-        r.visaType.toLowerCase() === appVisaType.toLowerCase(),
+        (r.country || "").toLowerCase() === appCountry.toLowerCase() &&
+        (r.visaType || "").toLowerCase() === appVisaType.toLowerCase(),
     );
 
     const initialDocs = match
-      ? match.docs.map((d) => ({ name: d.name, received: false }))
+      ? (match.docs || []).map((d) => ({ name: d.name, received: false }))
       : [
           { name: "Passport copy (front & back)", received: false },
           { name: "Passport-size photo", received: false },
@@ -748,8 +873,8 @@ function VisaPage() {
     setEditingReq(req);
     setFormCountry(req.country);
     setFormVisaType(req.visaType);
-    setFormDocs(req.docs.length > 0 ? req.docs : [{ name: "", shortName: "" }]);
-    setFormUrls(req.formUrls.length > 0 ? req.formUrls : [""]);
+    setFormDocs((req.docs || []).length > 0 ? (req.docs || []) : [{ name: "", shortName: "" }]);
+    setFormUrls((req.formUrls || []).length > 0 ? req.formUrls : [""]);
     setFormCurrency(req.currency);
     setFormVisaFees(req.visaFees ? String(req.visaFees) : "");
     setFormVfsFees(req.vfsFees ? String(req.vfsFees) : "");
@@ -892,43 +1017,20 @@ function VisaPage() {
     }
   };
 
-  const handleCloneVisaApp = (appToClone: VisaApp) => {
-    try {
-      const maxNumber = apps.reduce((max, a) => {
-        const match = a.id?.match(/\d+/);
-        if (match) {
-          const val = parseInt(match[0]);
-          return val > max ? val : max;
-        }
-        return max;
-      }, 0);
-      const newId = `V-${String(maxNumber + 1).padStart(3, "0")}`;
-      const newApp: VisaApp = {
-        ...appToClone,
-        id: newId,
-        applicant_name: `${appToClone.applicant_name} (Copy)`,
-        created_at: new Date().toISOString(),
-      };
-      setApps((prev) => [newApp, ...prev]);
-      toast.success(`Visa application cloned successfully as ${newId}!`);
-    } catch (err) {
-      toast.error("Failed to clone visa application");
-    }
-  };
 
   const filteredApps = apps.filter(
     (a) =>
       (filter === "All" || a.status === filter) &&
       (q === "" ||
-        a.customer.toLowerCase().includes(q.toLowerCase()) ||
-        a.country.toLowerCase().includes(q.toLowerCase())),
+        (a.customer || "").toLowerCase().includes(q.toLowerCase()) ||
+        (a.country || "").toLowerCase().includes(q.toLowerCase())),
   );
 
   const filteredReqs = requirements.filter(
     (r) =>
       reqQ === "" ||
-      r.country.toLowerCase().includes(reqQ.toLowerCase()) ||
-      r.visaType.toLowerCase().includes(reqQ.toLowerCase()),
+      (r.country || "").toLowerCase().includes(reqQ.toLowerCase()) ||
+      (r.visaType || "").toLowerCase().includes(reqQ.toLowerCase()),
   );
 
   const counts: Record<string, number> = { All: apps.length };
@@ -940,7 +1042,7 @@ function VisaPage() {
     setApps(
       apps.map((app) => {
         if (app.id === appId) {
-          const newDocs = app.docs.map((doc) =>
+          const newDocs = (app.docs || []).map((doc) =>
             doc.name === docName ? { name: doc.name, received: !doc.received } : doc,
           );
           
@@ -1620,7 +1722,7 @@ function VisaPage() {
               {/* Applications list */}
               <div className="space-y-3">
                 {filteredApps.map((app) => {
-                  const docsReceived = app.docs.filter((d) => d.received).length;
+                  const docsReceived = (app.docs || []).filter((d) => d.received).length;
                   const isOpen = expanded === app.id;
                   return (
                     <div
@@ -1661,14 +1763,14 @@ function VisaPage() {
                         {/* Doc progress */}
                         <div className="hidden w-28 sm:block">
                           <p className="mb-1 text-xs text-muted-foreground">
-                            Docs {docsReceived}/{app.docs.length}
+                            Docs {docsReceived}/{(app.docs || []).length}
                           </p>
                           <div className="h-1.5 w-full overflow-hidden rounded-full bg-secondary">
                             <div
                               className="h-full rounded-full bg-primary transition-all"
                               style={Object.assign(
                                 {},
-                                { width: `${Math.round((docsReceived / app.docs.length) * 100)}%` },
+                                { width: `${(app.docs || []).length > 0 ? Math.round((docsReceived / (app.docs || []).length) * 100) : 0}%` },
                               )}
                             />
                           </div>
@@ -1767,22 +1869,17 @@ function VisaPage() {
                               </div>
 
                               <div className="flex gap-2 border-t border-border pt-4 mt-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 rounded-xl text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                  onClick={() => setDeleteAppTargetId(app.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  className="flex-1 rounded-xl text-xs font-semibold text-green-600 hover:text-green-700 hover:bg-green-50 border-green-200"
-                                  onClick={() => handleCloneVisaApp(app)}
-                                >
-                                  <Copy className="h-4 w-4" />
-                                </Button>
+                                {isAdmin && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="flex-1 rounded-xl text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                                    onClick={() => setDeleteAppTargetId(app.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
+
                                 <Button
                                   size="sm"
                                   className="flex-[4] rounded-xl text-xs font-semibold shadow-sm"
@@ -1803,7 +1900,7 @@ function VisaPage() {
                                 <Stamp className="h-3.5 w-3.5" /> Document Checklist
                               </p>
                               <div className="grid gap-2 sm:grid-cols-2">
-                                {app.docs.map((doc) => (
+                                {(app.docs || []).map((doc) => (
                                   <button
                                     key={doc.name}
                                     onClick={() => toggleDoc(app.id, doc.name)}
@@ -1884,18 +1981,18 @@ function VisaPage() {
                             </td>
                             <td className="px-5 py-4">
                               <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-semibold border border-blue-100">
-                                {req.docs.length} Documents
+                                {(req.docs || []).length} Documents
                               </span>
                             </td>
                             <td className="px-5 py-4">
                               {(() => {
                                 const totalForms =
-                                  req.formUrls.length + (req.supportFiles?.length || 0);
+                                  (req.formUrls || []).length + (req.supportFiles?.length || 0);
                                 if (totalForms === 0)
                                   return <span className="text-muted-foreground/60">—</span>;
 
                                 if (totalForms === 1) {
-                                  if (req.formUrls.length === 1) {
+                                  if ((req.formUrls || []).length === 1) {
                                     const url = req.formUrls[0];
                                     const formattedUrl = url.startsWith("http")
                                       ? url
@@ -1942,13 +2039,13 @@ function VisaPage() {
                                     </PopoverTrigger>
                                     <PopoverContent className="w-64 p-3 text-sm" align="start">
                                       <div className="space-y-3">
-                                        {req.formUrls.length > 0 && (
+                                        {(req.formUrls || []).length > 0 && (
                                           <div>
                                             <div className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
                                               Web Links
                                             </div>
                                             <div className="space-y-1">
-                                              {req.formUrls.map((url, i) => {
+                                              {(req.formUrls || []).map((url, i) => {
                                                 const formattedUrl = url.startsWith("http")
                                                   ? url
                                                   : `https://${url}`;
@@ -2016,14 +2113,16 @@ function VisaPage() {
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                  onClick={() => handleDeleteReq(req.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                                {isAdmin && (
+                                  <Button
+                                    size="icon"
+                                    variant="ghost"
+                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg"
+                                    onClick={() => handleDeleteReq(req.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </td>
                           </tr>

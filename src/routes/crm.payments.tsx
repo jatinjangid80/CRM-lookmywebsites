@@ -37,6 +37,7 @@ export const Route = createFileRoute("/crm/payments")({ component: PaymentsPage 
 
 function PaymentsPage() {
   const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -376,15 +377,17 @@ function PaymentsPage() {
                         >
                           <Share2 className="h-4 w-4" />
                         </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(b.id)}
-                          className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors opacity-0 group-hover:opacity-100"
-                          title="Delete Invoice"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(b.id)}
+                            className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-100 dark:hover:bg-red-900/30 transition-colors opacity-0 group-hover:opacity-100"
+                            title="Delete Invoice"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   );

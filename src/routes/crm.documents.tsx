@@ -24,6 +24,7 @@ import {
   Link2,
   Unlink,
 } from "lucide-react";
+import { getAuth } from "@/lib/auth";
 import { useLocalStorage } from "@/lib/use-local-storage";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { useGoogleLogin } from "@react-oauth/google";
@@ -302,6 +303,9 @@ function FolderCard({
   onDelete: (id: string) => void;
   onOpen: (folder: FolderItem) => void;
 }) {
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+
   const [menuOpen, setMenuOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -311,7 +315,7 @@ function FolderCard({
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setMenuOpen(false);
     };
     if (menuOpen) document.addEventListener("mousedown", h);
-    return () => document.removeEventListener("mousedown", h);
+    return () => window.removeEventListener("mousedown", h);
   }, [menuOpen]);
 
   const totalSize = folder.files.reduce((s, f) => s + f.size, 0);
@@ -340,15 +344,20 @@ function FolderCard({
             >
               <Pencil className="h-3.5 w-3.5" /> Rename
             </button>
-            <button
-              onClick={() => {
-                onDelete(folder.id);
-                setMenuOpen(false);
-              }}
-              className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
-            >
-              <Trash2 className="h-3.5 w-3.5" /> Delete
-            </button>
+            {isAdmin && (
+              <div className="py-1">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onDelete(folder.id);
+                    setMenuOpen(false);
+                  }}
+                  className="flex w-full items-center gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                >
+                  <Trash2 className="h-3.5 w-3.5" /> Delete
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -491,6 +500,8 @@ function FileRow({
   onDelete: (id: string) => void;
   onPreview: (file: UploadedFile) => void;
 }) {
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   return (
     <tr className="group border-b border-border/60 transition-colors hover:bg-secondary/40">
       <td className="py-3 pl-4 pr-2">
@@ -521,13 +532,15 @@ function FileRow({
           >
             <Download className="h-3.5 w-3.5" />
           </a>
-          <button
-            onClick={() => onDelete(file.id)}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-            title="Delete"
-          >
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
+          {isAdmin && (
+            <button
+              onClick={() => onDelete(file.id)}
+              className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+              title="Delete"
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          )}
         </div>
       </td>
     </tr>
@@ -734,6 +747,9 @@ function FolderDetail({
 
 /* ─── Main Page ─── */
 function FoldersPage() {
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+
   // Load from Supabase, fall back to seed
   const [folders, setFolders] = useSupabaseTable<FolderItem[]>("folders", SEED_FOLDERS);
   const [search, setSearch] = useState("");

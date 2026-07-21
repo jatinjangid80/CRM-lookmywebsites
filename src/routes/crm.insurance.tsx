@@ -16,7 +16,7 @@ export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
 });
 
-export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies";
+export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus";
 
 function GeneralInsurancePage() {
   const [activeTab, setActiveTab] = useState<TabType>("Policies");
@@ -189,6 +189,22 @@ function GeneralInsurancePage() {
         >
           Companies
         </Button>
+        <Button
+          variant={activeTab === "CustomerStatus" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "CustomerStatus" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          onClick={() => setActiveTab("CustomerStatus")}
+        >
+          Customer Status
+        </Button>
+        <Button
+          variant={activeTab === "VendorStatus" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "VendorStatus" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          onClick={() => setActiveTab("VendorStatus")}
+        >
+          Vendor Status
+        </Button>
       </div>
 
       <div className="mt-4">
@@ -218,6 +234,20 @@ function GeneralInsurancePage() {
 
         {activeTab === "Vendors" && <InsuranceVendorsView />}
         {activeTab === "Companies" && <InsuranceCompaniesView />}
+        
+        {activeTab === "CustomerStatus" && (
+          <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Customer Payment Status</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">Track and manage customer payments, follow-ups, and statuses here.</p>
+          </div>
+        )}
+        
+        {activeTab === "VendorStatus" && (
+          <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Vendor Payment Status</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">Track and manage vendor payments, follow-ups, and statuses here.</p>
+          </div>
+        )}
       </div>
 
       {showForm && (

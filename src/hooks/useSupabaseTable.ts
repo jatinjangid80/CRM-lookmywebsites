@@ -145,7 +145,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.empId;
     }
 
-    if (tableName === "visa_apps") {
+    if (tableName === "visa" || tableName === "visa_apps") {
       // Pack extra app-only fields (not in Supabase schema) into docs JSONB as metadata
       const visaMeta: any = {};
       if (newRow.phone !== undefined) { visaMeta._phone = newRow.phone; delete newRow.phone; }
@@ -438,7 +438,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       newRow.empId = newRow.employeeId;
     }
 
-    if (tableName === "visa_apps") {
+    if (tableName === "visa" || tableName === "visa_apps") {
       // Unpack docs JSONB — extract meta and restore extra fields
       try {
         const docsRaw = newRow.docs;

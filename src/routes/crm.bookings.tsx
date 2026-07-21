@@ -608,29 +608,6 @@ function BookingsPage() {
     toast.success("Booking deleted successfully!");
   };
 
-  const handleCloneBooking = (bookingToClone: ExtBooking) => {
-    try {
-      const maxNumber = bookingList.reduce((max, b) => {
-        const match = b.id?.match(/\d+/);
-        if (match) {
-          const val = parseInt(match[0]);
-          return val > max ? val : max;
-        }
-        return max;
-      }, 0);
-      const newId = `BK-${String(maxNumber + 1).padStart(3, "0")}`;
-      const newBooking: ExtBooking = {
-        ...bookingToClone,
-        id: newId,
-        customer: `${bookingToClone.customer} (Copy)`,
-        bookingDate: new Date().toISOString().slice(0, 10),
-      };
-      setBookingList((prev) => [newBooking, ...prev]);
-      toast.success(`Booking cloned successfully as ${newId}!`);
-    } catch (err) {
-      toast.error("Failed to clone booking");
-    }
-  };
 
   function getFileIcon(type: string, name: string) {
     const lowercaseName = name.toLowerCase();
@@ -1429,24 +1406,17 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm text-muted-foreground max-w-[200px] truncate" title={b.remarks || "-"}>{b.remarks || "-"}</td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-green-500 hover:text-green-700 hover:bg-green-50 h-8 w-8 p-0 rounded-xl"
-                          onClick={() => handleCloneBooking(b)}
-                          title="Clone Booking"
-                        >
-                          <Copy className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
-                          onClick={() => setDeleteTarget(b)}
-                          title="Delete Booking"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
+                            onClick={() => setDeleteTarget(b)}
+                            title="Delete Booking"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>

@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
+import { getAuth } from "@/lib/auth";
 import {
   Plus,
   Search,
@@ -165,6 +166,8 @@ function VendorsPage() {
   };
 
   const normalizedVendors = useMemo(() => vendors.map(normalizeVendor), [vendors]);
+  const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
 
   // Search & Filters
   const [q, setQ] = useState("");
@@ -400,50 +403,7 @@ function VendorsPage() {
     setDialogType(null);
   };
 
-  const handleCloneVendor = (vendorToClone: Vendor) => {
-    try {
-      let maxNum = vendors.reduce((max, v) => {
-        const n = parseInt(v.id.replace("VND-", ""));
-        return isNaN(n) ? max : Math.max(max, n);
-      }, 0);
-      const nextId = `VND-${String(maxNum + 1).padStart(3, "0")}`;
-      
-      const newVendorData = {
-        id: nextId,
-        name: `${vendorToClone.name} (Copy)`,
-        category: vendorToClone.vendorType,
-        contactperson: vendorToClone.contactPerson,
-        email: vendorToClone.email,
-        phone: vendorToClone.mobile,
-        location: vendorToClone.place,
-        status: vendorToClone.status,
-        created_at: new Date().toISOString(),
-        notes: JSON.stringify({
-          contacts: vendorToClone.contacts || [],
-          officeCity: vendorToClone.officeCity,
-          website: vendorToClone.website,
-          notes: vendorToClone.notes
-        })
-      };
 
-      supabase.from("vendors").insert([newVendorData]).select().then(({ data, error }) => {
-        if (error) {
-          toast.error("Failed to clone vendor: " + error.message);
-        } else if (data) {
-          const clonedVendor: Vendor = {
-            ...vendorToClone,
-            id: nextId,
-            name: `${vendorToClone.name} (Copy)`,
-            createdAt: data[0].created_at.slice(0, 10),
-          };
-          setVendors((prev) => [clonedVendor, ...prev]);
-          toast.success(`Vendor cloned successfully as ${nextId}!`);
-        }
-      });
-    } catch (err) {
-      toast.error("Failed to clone vendor");
-    }
-  };
 
   const handleImport = async (data: any[]) => {
     let maxNum = vendors.reduce((max, v) => {
@@ -639,9 +599,7 @@ function VendorsPage() {
                       <DropdownMenuItem onClick={() => openEdit(v)}>
                         <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
                       </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleCloneVendor(v)}>
-                        <Copy className="mr-2 h-4 w-4" /> Clone Vendor
-                      </DropdownMenuItem>
+
                       <DropdownMenuSeparator />
                       {v.mobile && (
                         <DropdownMenuItem asChild>
@@ -665,12 +623,14 @@ function VendorsPage() {
                         </DropdownMenuItem>
                       )}
                       <DropdownMenuSeparator />
-                      <DropdownMenuItem
-                        className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                        onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
-                      >
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
+                      {isAdmin && (
+                        <DropdownMenuItem
+                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                          onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
+                        >
+                          <Trash2 className="mr-2 h-4 w-4" /> Delete
+                        </DropdownMenuItem>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </div>

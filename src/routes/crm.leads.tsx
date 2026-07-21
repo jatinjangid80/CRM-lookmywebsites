@@ -1127,7 +1127,6 @@ function LeadDetail({
   assignees?: string[];
   onEditNote?: (id: string, newNote: string) => void;
   onUpdateLead?: (id: string, updates: Partial<ExtLead>) => void;
-  onClone?: (lead: ExtLead) => void;
 }) {
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [editNoteText, setEditNoteText] = useState(lead.notes || "");
@@ -2025,15 +2024,7 @@ function LeadDetail({
               <X className="h-4 w-4" /> Delete
             </Button>
           )}
-          {onClone && (
-            <Button
-              variant="outline"
-              className="flex-none gap-2 rounded-xl bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-              onClick={() => onClone(lead)}
-            >
-              <Copy className="h-4 w-4" /> Copy
-            </Button>
-          )}
+
           <Button
             variant="outline"
             className="flex-1 gap-2 rounded-xl"
@@ -2454,31 +2445,7 @@ function LeadsPage() {
     setSelected(null);
   };
 
-  const cloneLead = (leadToClone: ExtLead) => {
-    try {
-      const maxNumber = leads.reduce((max, l) => {
-        const match = l.id?.match(/\d+/);
-        if (match) {
-          const val = parseInt(match[0]);
-          return val > max ? val : max;
-        }
-        return max;
-      }, 0);
-      const newId = `L-${String(maxNumber + 1).padStart(3, "0")}`;
-      const newLead = {
-        ...leadToClone,
-        id: newId,
-        name: `${leadToClone.name} (Copy)`,
-        createdAt: new Date().toISOString().slice(0, 10),
-        createdTime: new Date().toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' }),
-      };
-      setLeads([newLead, ...leads]);
-      setSelected(null);
-      toast.success(`Lead cloned successfully as ${newId}!`);
-    } catch (err) {
-      toast.error("Failed to clone lead");
-    }
-  };
+
 
   /* Stats */
   const totalBudget = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
@@ -2902,7 +2869,7 @@ function LeadsPage() {
           onClose={() => setSelected(null)}
           onStatusChange={updateStatus}
           onDelete={deleteLead}
-          onClone={cloneLead}
+
           isAdmin={isAdmin}
           assignees={assignees}
           onEditNote={(id, newNote) => {

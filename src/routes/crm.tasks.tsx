@@ -149,52 +149,6 @@ function TasksPage() {
     }
   };
 
-  const handleCloneTask = (taskToClone: Task) => {
-    try {
-      const maxNumber = tasks.reduce((max, t) => {
-        const match = t.id?.match(/\d+/);
-        if (match) {
-          const val = parseInt(match[0]);
-          return val > max ? val : max;
-        }
-        return max;
-      }, 0);
-      const newId = `T-${String(maxNumber + 1).padStart(3, "0")}`;
-      const newTasksToAdd = [];
-
-      const clonedMainTask = {
-        ...taskToClone,
-        id: newId,
-        title: `${taskToClone.title} (Copy)`,
-        created_at: new Date().toISOString(),
-        completed_at: null,
-        status: "Pending" as const,
-        progress: 0,
-      };
-      newTasksToAdd.push(clonedMainTask);
-
-      const subTasks = tasks.filter(t => t.parent_id === taskToClone.id);
-      subTasks.forEach((st, idx) => {
-        const newSubId = `T-${String(maxNumber + 2 + idx).padStart(3, "0")}`;
-        newTasksToAdd.push({
-          ...st,
-          id: newSubId,
-          parent_id: newId,
-          title: st.title,
-          created_at: new Date().toISOString(),
-          completed_at: null,
-          status: "Pending" as const,
-          progress: 0,
-        });
-      });
-
-      setTasks((prev: Task[]) => [...prev, ...newTasksToAdd]);
-      toast.success(`Task cloned successfully as ${newId}!`);
-    } catch (err) {
-      toast.error("Failed to clone task");
-    }
-  };
-
   const handleSaveTask = () => {
     if (!formData.title?.trim()) return;
 
@@ -580,11 +534,7 @@ function TasksPage() {
                             <Button variant="ghost" size="icon" onClick={() => setViewingTask(task)}>
                               <Eye className="h-4 w-4 text-muted-foreground" />
                             </Button>
-                            {isAdmin && (
-                              <Button variant="ghost" size="icon" onClick={() => handleCloneTask(task)}>
-                                <Copy className="h-4 w-4 text-green-500" />
-                              </Button>
-                            )}
+
                             {isAdmin && (
                               <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
                                 <Trash2 className="h-4 w-4 text-red-500" />
@@ -692,11 +642,7 @@ function TasksPage() {
                               <Button variant="ghost" size="icon" onClick={() => setViewingTask(st)}>
                                 <Eye className="h-4 w-4 text-muted-foreground" />
                               </Button>
-                              {isAdmin && (
-                                <Button variant="ghost" size="icon" onClick={() => handleCloneTask(st)}>
-                                  <Copy className="h-4 w-4 text-green-500" />
-                                </Button>
-                              )}
+
                               {isAdmin && (
                                 <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
                                   <Trash2 className="h-4 w-4 text-red-500" />
@@ -770,11 +716,7 @@ function TasksPage() {
                                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingTask(t)}>
                                       <Eye className="h-3.5 w-3.5 text-slate-400" />
                                     </Button>
-                                    {isAdmin && (
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleCloneTask(t)}>
-                                        <Copy className="h-3.5 w-3.5 text-green-400" />
-                                      </Button>
-                                    )}
+
                                     {isAdmin && (
                                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
                                         <Trash2 className="h-3.5 w-3.5 text-red-400" />

@@ -199,6 +199,7 @@ export const Route = createFileRoute("/crm/accounts")({
 
 function AccountsPage() {
   const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
   const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
 
@@ -210,6 +211,8 @@ function AccountsPage() {
 
   // Transactions State
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
+  const [txSearchQuery, setTxSearchQuery] = useState("");
+  const [txTypeFilter, setTxTypeFilter] = useState("All");
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [invoiceMatchStatusTx, setInvoiceMatchStatusTx] = useState<"found" | "not_found" | null>(null);
   const [newTx, setNewTx] = useState({
@@ -502,6 +505,16 @@ function AccountsPage() {
     setActionPopupRemark("");
   };
 
+  const filteredTransactions = [...transactions]
+    .filter((tx) => {
+      const matchesSearch = txSearchQuery === "" || 
+        tx.entityName?.toLowerCase().includes(txSearchQuery.toLowerCase()) || 
+        tx.id?.toLowerCase().includes(txSearchQuery.toLowerCase());
+      const matchesType = txTypeFilter === "All" || tx.type === txTypeFilter;
+      return matchesSearch && matchesType;
+    })
+    .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+
   return (
     <main className="flex-1 p-4 sm:p-8 space-y-6 relative">
       {toastMessage && (
@@ -519,11 +532,13 @@ function AccountsPage() {
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid w-full sm:w-[800px] grid-cols-2 sm:grid-cols-4 bg-secondary/50 rounded-xl p-1 shadow-sm">
+        <TabsList className="grid w-full overflow-x-auto sm:overflow-visible flex-nowrap sm:w-auto grid-cols-2 sm:grid-cols-6 bg-secondary/50 rounded-xl p-1 shadow-sm gap-1 overflow-x-auto min-w-max">
           <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
+          <TabsTrigger value="customer-status" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Customer Status</TabsTrigger>
+          <TabsTrigger value="vendor-status" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Vendor Status</TabsTrigger>
         </TabsList>
 
         <TabsContent value="expenses" className="space-y-6 mt-6">
@@ -633,9 +648,11 @@ function AccountsPage() {
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50" onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }}>
                           <Pencil className="h-4 w-4" />
                         </Button>
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </div>
                     </td>
                   </tr>
@@ -687,12 +704,12 @@ function AccountsPage() {
                     <span className="font-medium">{formatINR(fu.totalAmount)}</span>
                   </div>
                   <div className="flex items-center justify-between text-sm mt-1">
-                    <span className="text-muted-foreground">Notes:</span>
-                    <span className="font-medium text-right max-w-[200px] truncate">{fu.notes}</span>
-                  </div>
-                  <div className="flex items-center justify-between text-sm mt-1">
                     <span className="text-muted-foreground">Added By:</span>
                     <span className="font-medium">{fu.createdBy || "none"}</span>
+                  </div>
+                  <div className="flex flex-col text-sm mt-2 border-t border-border/40 pt-2">
+                    <span className="text-muted-foreground mb-1">Notes:</span>
+                    <span className="font-medium text-left whitespace-pre-wrap break-words">{fu.notes}</span>
                   </div>
                 </div>
 
@@ -703,9 +720,11 @@ function AccountsPage() {
                   </div>
 
                   <div className="flex items-center gap-2">
-                    <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(fu.id, "Follow-up")}>
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
+                    {isAdmin && (
+                      <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(fu.id, "Follow-up")}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
                     <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
                       setSelectedFuId(fu.id);
                       setLogNotes(fu.notes);
@@ -726,8 +745,23 @@ function AccountsPage() {
             <div className="flex gap-4 items-center flex-1">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input placeholder="Search transactions..." className="pl-9 bg-background h-10 rounded-xl" />
+                <Input 
+                  placeholder="Search transactions..." 
+                  className="pl-9 bg-background h-10 rounded-xl"
+                  value={txSearchQuery}
+                  onChange={(e) => setTxSearchQuery(e.target.value)}
+                />
               </div>
+              <Select value={txTypeFilter} onValueChange={setTxTypeFilter}>
+                <SelectTrigger className="w-[150px] bg-background h-10 rounded-xl">
+                  <SelectValue placeholder="Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Types</SelectItem>
+                  <SelectItem value="Receipt">Receipts</SelectItem>
+                  <SelectItem value="Payment">Payments</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
             <Button className="shadow-sm rounded-xl px-5 h-10" onClick={() => setIsAddTxOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
@@ -735,7 +769,7 @@ function AccountsPage() {
             </Button>
           </div>
 
-          {transactions.length === 0 ? (
+          {filteredTransactions.length === 0 ? (
             <div className="rounded-3xl border border-border bg-card p-8 text-center shadow-sm">
               <h3 className="text-lg font-semibold text-foreground mb-2">No Receipts or Payments Yet</h3>
               <p className="text-muted-foreground text-sm max-w-md mx-auto mb-6">
@@ -761,7 +795,7 @@ function AccountsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border">
-                  {transactions.map((tx, idx) => (
+                  {filteredTransactions.map((tx, idx) => (
                     <tr key={idx} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 font-medium">{tx.date}</td>
                       <td className="px-6 py-4">
@@ -781,9 +815,11 @@ function AccountsPage() {
                         {tx.createdBy || "none"}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+                        {isAdmin && (
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -903,6 +939,20 @@ function AccountsPage() {
               );
             })}
           </Tabs>
+        </TabsContent>
+
+        <TabsContent value="customer-status" className="space-y-6 mt-6">
+          <div className="rounded-3xl border border-border bg-card p-12 text-center animate-in fade-in duration-300">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Customer Payment Status</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">Track and manage customer payments, follow-ups, and statuses here.</p>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="vendor-status" className="space-y-6 mt-6">
+          <div className="rounded-3xl border border-border bg-card p-12 text-center animate-in fade-in duration-300">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">Vendor Payment Status</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">Track and manage vendor payments, follow-ups, and statuses here.</p>
+          </div>
         </TabsContent>
       </Tabs>
 

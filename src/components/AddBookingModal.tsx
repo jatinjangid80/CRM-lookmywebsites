@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown } from "lucide-react";
+import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown, Trash2 } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -1513,6 +1513,47 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
                       onChange={(e) => updateDetail("clientCompany", e.target.value)}
                       placeholder="e.g. Acme Corp or Customer Name"
                     />
+                  </div>
+                  <div className="space-y-2 col-span-1 md:col-span-2">
+                    <div className="flex items-center justify-between">
+                      <Label>Additional Passenger Names</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-2 text-xs"
+                        onClick={() => {
+                          const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                          updateDetail("additionalNames", [...current, ""]);
+                        }}
+                      >
+                        <Plus className="h-3 w-3 mr-1" /> Add Name
+                      </Button>
+                    </div>
+                    {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                      <div key={index} className="flex items-center gap-2 mt-2">
+                        <Input
+                          value={name}
+                          onChange={(e) => {
+                            const newNames = [...(details.additionalNames as string[])];
+                            newNames[index] = e.target.value;
+                            updateDetail("additionalNames", newNames);
+                          }}
+                          placeholder="Passenger Name"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => {
+                            const newNames = (details.additionalNames as string[]).filter((_, i) => i !== index);
+                            updateDetail("additionalNames", newNames);
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4 text-destructive" />
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </div>

@@ -2496,14 +2496,16 @@ function EmployeesPage() {
                                     />
                                   </td>
                                   <td className="px-2 py-1.5 text-right">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      onClick={() => deleteProfileCareer(i)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    {isAdmin && (
+  <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => deleteProfileCareer(i)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+)}
                                   </td>
                                 </tr>
                               ))
@@ -2637,14 +2639,16 @@ function EmployeesPage() {
                                     />
                                   </td>
                                   <td className="px-2 py-1.5 text-right">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      onClick={() => deleteProfileAcademic(i)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    {isAdmin && (
+  <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => deleteProfileAcademic(i)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+)}
                                   </td>
                                 </tr>
                               ))
@@ -2753,14 +2757,16 @@ function EmployeesPage() {
                                     />
                                   </td>
                                   <td className="px-2 py-1.5 text-right">
-                                    <Button
-                                      size="icon"
-                                      variant="ghost"
-                                      className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                      onClick={() => deleteProfileFamily(i)}
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                    </Button>
+                                    {isAdmin && (
+  <Button
+                                        size="icon"
+                                        variant="ghost"
+                                        className="h-7 w-7 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                        onClick={() => deleteProfileFamily(i)}
+                                      >
+                                        <Trash2 className="h-3.5 w-3.5" />
+                                      </Button>
+)}
                                   </td>
                                 </tr>
                               ))
@@ -2893,20 +2899,22 @@ function EmployeesPage() {
                                                       </span>
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setLeaves(
-                                                            leaves.filter(
-                                                              (item) => item.id !== l.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setLeaves(
+                                                              leaves.filter(
+                                                                (item) => item.id !== l.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3035,20 +3043,22 @@ function EmployeesPage() {
                                                       </span>
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setAttendance(
-                                                            attendance.filter(
-                                                              (item) => item.id !== a.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setAttendance(
+                                                              attendance.filter(
+                                                                (item) => item.id !== a.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3172,20 +3182,22 @@ function EmployeesPage() {
                                                       {r.date}
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setReviews(
-                                                            reviews.filter(
-                                                              (item) => item.id !== r.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setReviews(
+                                                              reviews.filter(
+                                                                (item) => item.id !== r.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3304,20 +3316,22 @@ function EmployeesPage() {
                                                       {d.date}
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setHrFiles(
-                                                            hrFiles.filter(
-                                                              (item) => item.id !== d.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setHrFiles(
+                                                              hrFiles.filter(
+                                                                (item) => item.id !== d.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3419,20 +3433,22 @@ function EmployeesPage() {
                                                       </span>
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setPayroll(
-                                                            payroll.filter(
-                                                              (item) => item.id !== p.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setPayroll(
+                                                              payroll.filter(
+                                                                (item) => item.id !== p.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3537,20 +3553,22 @@ function EmployeesPage() {
                                                       {a.date}
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setAssets(
-                                                            assets.filter(
-                                                              (item) => item.id !== a.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setAssets(
+                                                              assets.filter(
+                                                                (item) => item.id !== a.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}
@@ -3660,20 +3678,22 @@ function EmployeesPage() {
                                                       {c.date}
                                                     </td>
                                                     <td className="p-2.5 text-right">
-                                                      <Button
-                                                        variant="ghost"
-                                                        size="icon"
-                                                        className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                                        onClick={() =>
-                                                          setCertificates(
-                                                            certificates.filter(
-                                                              (item) => item.id !== c.id,
-                                                            ),
-                                                          )
-                                                        }
-                                                      >
-                                                        <Trash2 className="h-3.5 w-3.5" />
-                                                      </Button>
+                                                      {isAdmin && (
+  <Button
+                                                          variant="ghost"
+                                                          size="icon"
+                                                          className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                                          onClick={() =>
+                                                            setCertificates(
+                                                              certificates.filter(
+                                                                (item) => item.id !== c.id,
+                                                              ),
+                                                            )
+                                                          }
+                                                        >
+                                                          <Trash2 className="h-3.5 w-3.5" />
+                                                        </Button>
+)}
                                                     </td>
                                                   </tr>
                                                 ))}

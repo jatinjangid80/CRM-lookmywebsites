@@ -190,6 +190,7 @@ const DEFAULT_FORM: QuoteForm = {
 
 function QuotationsPage() {
   const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
   const [quotations, setQuotations] = useSupabaseTable<any[]>("quotations", []);
@@ -1102,54 +1103,19 @@ function QuotationsPage() {
                           <Edit2 className="h-3 w-3 mr-1" /> Edit
                         </Button>
 
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 text-[10px] px-2 rounded-lg bg-green-50 text-green-600 hover:bg-green-100 border-green-200"
-                          onClick={() => {
-                            try {
-                              const maxNumber = quotations.reduce((max: number, quote: any) => {
-                                const match = quote.id?.match(/\d+/);
-                                if (match) {
-                                  const val = parseInt(match[0]);
-                                  return val > max ? val : max;
-                                }
-                                return max;
-                              }, 0);
-                              const newId = `QT-${String(maxNumber + 1).padStart(3, "0")}`;
-                              let parsedDetails = q.details;
-                              if (typeof parsedDetails === "string") {
-                                parsedDetails = JSON.parse(parsedDetails);
-                              }
-                              const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                              const newQuote = {
-                                ...q,
-                                id: newId,
-                                customer_name: `${q.customer_name} (Copy)`,
-                                details: clonedDetails,
-                                created_at: new Date().toISOString()
-                              };
-                              setQuotations([newQuote, ...quotations]);
-                              toast.success(`Quotation cloned as ${newId}`);
-                            } catch (err) {
-                              toast.error("Failed to clone quotation");
-                            }
-                          }}
-                        >
-                          <Copy className="h-3 w-3 mr-1" /> Clone
-                        </Button>
-
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 text-[10px] px-2 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 border-red-200 dark:bg-red-950/30 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-900/40"
-                          onClick={() => {
-                            setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
-                            toast.success(`Quote ${q.id} deleted`);
-                          }}
-                        >
-                          <Trash2 className="h-3 w-3 mr-1" /> Delete
-                        </Button>
+                        {isAdmin && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
+                            onClick={() => {
+                              setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
+                              toast.success(`Quote ${q.id} deleted`);
+                            }}
+                          >
+                            <Trash2 className="h-3 w-3 mr-1" /> Delete
+                          </Button>
+                        )}
                       </div>
                     </div>
                     

@@ -428,28 +428,6 @@ function PackagesPage() {
     toast.success("Package deleted successfully!");
   };
 
-  const handleClonePackage = (pkgToClone: Package) => {
-    try {
-      const maxNumber = packages.reduce((max, p) => {
-        const match = p.id?.match(/\d+/);
-        if (match) {
-          const val = parseInt(match[0]);
-          return val > max ? val : max;
-        }
-        return max;
-      }, 0);
-      const newId = `PKG-${String(maxNumber + 1).padStart(3, "0")}`;
-      const newPkg: Package = {
-        ...pkgToClone,
-        id: newId,
-        title: `${pkgToClone.title} (Copy)`,
-      };
-      setPackages((prev) => [newPkg, ...prev]);
-      toast.success(`Package cloned successfully as ${newId}!`);
-    } catch (err) {
-      toast.error("Failed to clone package");
-    }
-  };
 
   // ── Toggle active ────────────────────────────────────────────────────────
   const toggleActive = (id: string) => {
@@ -724,13 +702,7 @@ function PackagesPage() {
                     >
                       <Edit2 className="h-3.5 w-3.5" />
                     </button>
-                    <button
-                      onClick={() => handleClonePackage(pkg)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-green-50 hover:text-green-600 transition-colors"
-                      title="Clone"
-                    >
-                      <Copy className="h-3.5 w-3.5" />
-                    </button>
+
                     {isAdmin && (
                       <button
                         onClick={() => setDeleteTarget(pkg)}
@@ -1108,14 +1080,16 @@ function PackagesPage() {
                           >
                             <Download className="h-3.5 w-3.5" />
                           </a>
-                          <button
-                            type="button"
-                            onClick={() => handleDeleteFile(file.name)}
-                            className="rounded-lg p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                            title="Delete file"
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteFile(file.name)}
+                              className="rounded-lg p-1 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
+                              title="Delete file"
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     ))}

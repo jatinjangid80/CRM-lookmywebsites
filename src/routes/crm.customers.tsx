@@ -57,6 +57,7 @@ function CustomersPage() {
   
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
+  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
   const assignees = Array.from(new Set([...employees.map((e) => e.name), ...(auth?.name ? [auth.name] : []), "Unassigned"]));
 
   const [isAddOpen, setIsAddOpen] = useState(false);
@@ -128,25 +129,7 @@ function CustomersPage() {
     setNewCustomer({ name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned" });
   };
 
-  const handleCloneCustomer = (customerToClone: ExtCustomer) => {
-    try {
-      const currentMaxId = customerList.reduce((max, c) => {
-        const num = parseInt(c.id.replace("CRN", ""));
-        return !isNaN(num) && num > max ? num : max;
-      }, 0);
-      const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
-      const clonedCustomer: ExtCustomer = {
-        ...customerToClone,
-        id: nextId,
-        name: `${customerToClone.name} (Copy)`,
-        createdAt: new Date().toISOString().slice(0, 10),
-      };
-      setCustomerList((prev) => [clonedCustomer, ...prev]);
-      toast.success(`Customer cloned successfully as ${nextId}!`);
-    } catch (err) {
-      toast.error("Failed to clone customer");
-    }
-  };
+
 
   const handleImportCustomers = (data: any[]) => {
     let currentMaxId = customerList.reduce((max, c) => {
@@ -354,13 +337,12 @@ function CustomersPage() {
                     <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
                       <FileText className="mr-2 h-4 w-4" /> Edit Customer
                     </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => handleCloneCustomer(c)}>
-                      <Copy className="mr-2 h-4 w-4" /> Clone Customer
-                    </DropdownMenuItem>
                     <DropdownMenuSeparator />
-                    <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
-                      <Trash2 className="mr-2 h-4 w-4" /> Delete
-                    </DropdownMenuItem>
+                    {isAdmin && (
+                      <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
+                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                      </DropdownMenuItem>
+                    )}
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -629,7 +611,10 @@ function CustomersPage() {
                             <div key={b.id} className="bg-card border border-border p-4 rounded-xl shadow-sm flex items-center justify-between">
                               <div>
                                 <h4 className="font-semibold text-sm">{b.package || b.bookingType}</h4>
-                                <p className="text-xs text-muted-foreground mt-1">{b.id} • {b.bookingDate}</p>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                  {b.id} • {b.bookingDate}
+                                  {b.supplier ? ` • ${b.supplier}` : ""}
+                                </p>
                               </div>
                               <div className="text-right">
                                 <p className="font-display font-bold text-primary">{formatINR(b.amount)}</p>

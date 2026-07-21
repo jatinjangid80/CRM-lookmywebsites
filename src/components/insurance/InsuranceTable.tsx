@@ -13,11 +13,10 @@ interface InsuranceTableProps {
   companies: any[];
   vendors: any[];
   onEdit: (policy: any) => void;
-  onDuplicate: (policy: any) => void;
   onDelete: (policy: any) => void;
 }
 
-export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplicate, onDelete }: InsuranceTableProps) {
+export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete }: InsuranceTableProps) {
   const getCompanyName = (p: any) => p.company_id === "other" ? (p.custom_company || "Other") : (companies.find(c => c.id === p.company_id)?.name || p.company_id);
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
@@ -190,9 +189,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                         <DropdownMenuItem onClick={() => onEdit(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <Eye className="h-4 w-4 text-blue-600" /> View / Edit
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => onDuplicate(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
-                          <Copy className="h-4 w-4 text-amber-600" /> Duplicate
-                        </DropdownMenuItem>
+
                         <DropdownMenuItem onClick={() => handlePrint(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <FileText className="h-4 w-4 text-emerald-600" /> Print
                         </DropdownMenuItem>
