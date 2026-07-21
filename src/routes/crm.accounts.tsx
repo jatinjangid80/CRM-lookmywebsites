@@ -15,11 +15,12 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 
 export function EntityCombobox({
@@ -214,6 +215,7 @@ function AccountsPage() {
   const [txSearchQuery, setTxSearchQuery] = useState("");
   const [txTypeFilter, setTxTypeFilter] = useState("All");
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
+  const [editingTxId, setEditingTxId] = useState<string | null>(null);
   const [invoiceMatchStatusTx, setInvoiceMatchStatusTx] = useState<"found" | "not_found" | null>(null);
   const [newTx, setNewTx] = useState({
     type: "Receipt",
@@ -644,16 +646,23 @@ function AccountsPage() {
                       </Popover>
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <div className="flex items-center justify-end gap-1">
-                        <Button size="icon" variant="ghost" className="h-8 w-8 text-blue-500 hover:text-blue-700 hover:bg-blue-50" onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }}>
-                          <Pencil className="h-4 w-4" />
-                        </Button>
-                        {isAdmin && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(exp.id, "Expense")}>
-                            <Trash2 className="h-4 w-4" />
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                            <MoreVertical className="h-4 w-4" />
                           </Button>
-                        )}
-                      </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32 rounded-xl">
+                          <DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                            <Pencil className="h-4 w-4" /> Edit
+                          </DropdownMenuItem>
+                          {isAdmin && (
+                            <DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                              <Trash2 className="h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 ))}
@@ -675,14 +684,17 @@ function AccountsPage() {
 
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
             {followUpsList.map(fu => (
-              <div key={fu.id} className="bg-card border border-border rounded-2xl p-5 shadow-sm hover:border-primary/40 transition-colors">
+              <div key={fu.id} className={cn("rounded-2xl border p-5 shadow-sm transition-all", fu.status === 'Completed' ? "bg-emerald-50/40 border-emerald-100" : "bg-card border-border hover:shadow-md")}>
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-orange-100 text-orange-600 flex items-center justify-center font-bold border border-orange-200 shrink-0">
                       {fu.customerName.charAt(0)}
                     </div>
                     <div>
-                      <h3 className="font-semibold text-foreground">{fu.customerName}</h3>
+                      <h3 className="font-semibold text-foreground flex items-center gap-2">
+                        {fu.customerName}
+                        {fu.status === 'Completed' && <span className="text-[10px] font-bold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full flex items-center"><CheckCircle2 className="w-3 h-3 mr-1" /> Completed</span>}
+                      </h3>
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                         <PhoneCall className="h-3 w-3" /> {fu.customerPhone}
                       </p>
@@ -725,13 +737,20 @@ function AccountsPage() {
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button size="sm" className="h-8 text-xs shadow-sm" onClick={() => {
+                    {fu.status !== 'Completed' && (
+                      <Button size="sm" variant="outline" className="h-8 text-xs shadow-sm border-emerald-200 text-emerald-700 hover:bg-emerald-50" onClick={() => {
+                        setFollowUpsList(followUpsList.map(item => item.id === fu.id ? { ...item, status: 'Completed' } : item));
+                      }}>
+                        <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Complete Now
+                      </Button>
+                    )}
+                    <Button size="sm" className="h-8 text-xs shadow-sm" variant={fu.status === 'Completed' ? 'secondary' : 'default'} onClick={() => {
                       setSelectedFuId(fu.id);
                       setLogNotes(fu.notes);
                       setLogDate(fu.nextFollowUpDate);
                       setIsLogFollowUpOpen(true);
                     }}>
-                      Log Follow-up
+                      {fu.status === 'Completed' ? 'View Log' : 'Log Follow-up'}
                     </Button>
                   </div>
                 </div>
@@ -816,9 +835,34 @@ function AccountsPage() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         {isAdmin && (
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50" onClick={() => handleDelete(tx.id, "Transaction")}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-32 rounded-xl">
+                              <DropdownMenuItem onClick={() => {
+                                setNewTx({
+                                  date: tx.date || new Date().toISOString().split('T')[0],
+                                  type: tx.type || "Receipt",
+                                  entityType: tx.entityType || "Customer",
+                                  entityId: tx.entityId || "",
+                                  amount: tx.amount || 0,
+                                  paymentMode: tx.paymentMode || "Cash",
+                                  invoiceId: tx.invoiceId || "",
+                                  notes: tx.notes || ""
+                                });
+                                setEditingTxId(tx.id);
+                                setIsAddTxOpen(true);
+                              }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                                <Pencil className="h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </td>
                     </tr>
@@ -957,11 +1001,14 @@ function AccountsPage() {
       </Tabs>
 
       {/* Add Transaction Dialog */}
-      <Dialog open={isAddTxOpen} onOpenChange={setIsAddTxOpen}>
+      <Dialog open={isAddTxOpen} onOpenChange={(open) => {
+        setIsAddTxOpen(open);
+        if (!open) setEditingTxId(null);
+      }}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Add Transaction</DialogTitle>
-            <DialogDescription>Record a new receipt or payment.</DialogDescription>
+            <DialogTitle>{editingTxId ? "Edit Transaction" : "Add Transaction"}</DialogTitle>
+            <DialogDescription>{editingTxId ? "Modify transaction details." : "Record a new receipt or payment."}</DialogDescription>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
@@ -1108,7 +1155,7 @@ function AccountsPage() {
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsAddTxOpen(false)}>Cancel</Button>
+            <Button variant="outline" onClick={() => { setIsAddTxOpen(false); setEditingTxId(null); }}>Cancel</Button>
             <Button onClick={() => {
               if (!newTx.entityId) return;
               let entityName = "";
@@ -1148,10 +1195,15 @@ function AccountsPage() {
                 }
               }
 
-              setTransactions([txWithId, ...transactions]);
+              if (editingTxId) {
+                setTransactions(transactions.map(t => t.id === editingTxId ? { ...txWithId, id: editingTxId } : t));
+              } else {
+                setTransactions([txWithId, ...transactions]);
+              }
               setIsAddTxOpen(false);
+              setEditingTxId(null);
               setNewTx({ ...newTx, entityId: "", amount: 0, notes: "" });
-            }}>Save Transaction</Button>
+            }}>{editingTxId ? "Update Transaction" : "Save Transaction"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

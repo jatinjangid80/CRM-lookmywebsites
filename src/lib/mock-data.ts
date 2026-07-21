@@ -336,6 +336,7 @@ export type PaymentFollowUp = {
   notificationReminder: number;
   notes: string;
   createdBy?: string;
+  status?: "Pending" | "Completed";
 };
 
 

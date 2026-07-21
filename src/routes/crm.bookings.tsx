@@ -27,6 +27,8 @@ import {
   CreditCard,
   ChevronDown,
   Copy,
+  MoreVertical,
+  Pencil,
 } from "lucide-react";
 import {
   BarChart,
@@ -54,6 +56,12 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { Label } from "@/components/ui/label";
 import {
   Dialog,
@@ -367,6 +375,7 @@ function BookingsPage() {
   }, [allBookings]);
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [addBookingCustomer, setAddBookingCustomer] = useState<string | undefined>();
+  const [editingAddBooking, setEditingAddBooking] = useState<ExtBooking | undefined>();
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
@@ -1089,6 +1098,7 @@ function BookingsPage() {
 
           <Button className="btn-hero" onClick={() => {
             setAddBookingCustomer(undefined);
+            setEditingAddBooking(undefined);
             setIsAddOpen(true);
           }}>
             <Plus className="mr-2 h-4 w-4" /> New booking
@@ -1097,10 +1107,14 @@ function BookingsPage() {
             open={isAddOpen}
             onOpenChange={(open) => {
               setIsAddOpen(open);
-              if (!open) setAddBookingCustomer(undefined);
+              if (!open) {
+                setAddBookingCustomer(undefined);
+                setEditingAddBooking(undefined);
+              }
             }}
             onSave={handleAddBookingSave}
             defaultCustomer={addBookingCustomer}
+            editingBooking={editingAddBooking}
           />
         </div>
       </div>
@@ -1398,15 +1412,38 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>
                         {isAdmin && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-rose-500 hover:text-rose-700 hover:bg-rose-50 h-8 w-8 p-0 rounded-xl"
-                            onClick={() => setDeleteTarget(b)}
-                            title="Delete Booking"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-8 w-8 p-0 rounded-xl hover:bg-secondary"
+                              >
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-32 rounded-xl">
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingAddBooking(b);
+                                  setIsAddOpen(true);
+                                }}
+                                className="cursor-pointer gap-2 py-2"
+                              >
+                                <Pencil className="h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setDeleteTarget(b);
+                                }}
+                                className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700"
+                              >
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
                         )}
                       </div>
                     </td>

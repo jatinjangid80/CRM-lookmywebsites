@@ -20,6 +20,7 @@ import {
   Paperclip,
   FileImage,
   Copy,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -32,6 +33,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { toast } from "sonner";
 
@@ -685,33 +692,45 @@ function PackagesPage() {
                 <div className="mt-2 flex items-center justify-between pt-3 border-t border-border">
                   <span className="font-bold text-primary text-lg">{pkg.price}</span>
                   <div className="flex gap-1">
-                    <button
-                      onClick={() => {
-                        setManagingFilesPkg(pkg);
-                        setIsFilesOpen(true);
-                      }}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                      title="Manage Attachments"
-                    >
-                      <Paperclip className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      onClick={() => openEdit(pkg)}
-                      className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-                      title="Edit"
-                    >
-                      <Edit2 className="h-3.5 w-3.5" />
-                    </button>
-
-                    {isAdmin && (
-                      <button
-                        onClick={() => setDeleteTarget(pkg)}
-                        className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-                        title="Delete (Admin only)"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
-                    )}
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors">
+                          <MoreVertical className="h-4 w-4" />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setManagingFilesPkg(pkg);
+                            setIsFilesOpen(true);
+                          }}
+                          className="cursor-pointer gap-2 py-2"
+                        >
+                          <Paperclip className="h-4 w-4" /> Attachments
+                        </DropdownMenuItem>
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEdit(pkg);
+                          }}
+                          className="cursor-pointer gap-2 py-2"
+                        >
+                          <Edit2 className="h-4 w-4" /> Edit
+                        </DropdownMenuItem>
+                        {isAdmin && (
+                          <DropdownMenuItem
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setDeleteTarget(pkg);
+                            }}
+                            className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+                          >
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </div>
               </div>

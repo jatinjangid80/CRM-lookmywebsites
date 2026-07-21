@@ -24,6 +24,7 @@ import {
   Download,
   Filter,
   Copy,
+  MoreVertical,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -45,6 +46,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const BRAND_STYLE = { background: "var(--gradient-brand)" };
 
@@ -1608,9 +1610,12 @@ function VisaPage() {
                         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20">
                           {app.customer.charAt(0).toUpperCase()}
                         </div>
-                        <div className="min-w-0 flex-1">
+                        <div
+                          className="min-w-0 flex-1 cursor-pointer"
+                          onClick={() => setExpanded(isOpen ? null : app.id)}
+                        >
                           <div className="flex flex-wrap items-center gap-2">
-                            <p className="font-semibold">{app.customer}</p>
+                            <p className="font-semibold hover:text-primary transition-colors">{app.customer}</p>
                             <span className="text-xs text-muted-foreground">{app.id}</span>
                           </div>
                           <p className="mt-0.5 text-xs text-muted-foreground">
@@ -1681,128 +1686,111 @@ function VisaPage() {
                           </PopoverContent>
                         </Popover>
 
-                        {/* Expand */}
-                        <button
-                          onClick={() => setExpanded(isOpen ? null : app.id)}
-                          className="rounded-lg p-2 hover:bg-secondary transition-colors"
-                        >
-                          {isOpen ? (
-                            <ChevronUp className="h-4 w-4" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4" />
-                          )}
-                        </button>
                       </div>
 
-                      {/* Document checklist (expanded) */}
-                      {isOpen && (
-                        <div className="border-t border-border bg-secondary/35 px-5 py-5">
-                          <div className="grid gap-6 md:grid-cols-3">
-                            {/* Left column: Application Details */}
-                            <div className="space-y-4 rounded-xl border border-border bg-card p-4 shadow-sm">
-                              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                                Application Details
-                              </p>
-
-                              <div className="space-y-3 text-sm">
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="text-xs font-semibold text-muted-foreground">
-                                    Visa Type
-                                  </label>
-                                  <Input
-                                    value={app.visaType}
-                                    onChange={(e) => {
-                                      setApps(
-                                        apps.map((a) =>
-                                          a.id === app.id ? { ...a, visaType: e.target.value } : a,
-                                        ),
-                                      );
-                                    }}
-                                    className="h-8 text-sm rounded-lg bg-background"
-                                  />
-                                </div>
-                                <div className="flex flex-col gap-1.5">
-                                  <label className="text-xs font-semibold text-muted-foreground">
-                                    Travel Date
-                                  </label>
-                                  <Input
-                                    type="date"
-                                    value={app.travelDate}
-                                    onChange={(e) => {
-                                      setApps(
-                                        apps.map((a) =>
-                                          a.id === app.id
-                                            ? { ...a, travelDate: e.target.value }
-                                            : a,
-                                        ),
-                                      );
-                                    }}
-                                    className="h-8 text-sm rounded-lg bg-background"
-                                  />
-                                </div>
-                              </div>
-
-                              <div className="flex gap-2 border-t border-border pt-4 mt-2">
-                                {isAdmin && (
-                                  <Button
-                                    variant="outline"
-                                    size="sm"
-                                    className="flex-1 rounded-xl text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
-                                    onClick={() => setDeleteAppTargetId(app.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
-
-                                <Button
-                                  size="sm"
-                                  className="flex-[4] rounded-xl text-xs font-semibold shadow-sm"
-                                  style={{ background: "var(--gradient-brand)" }}
-                                  onClick={() => {
-                                    toast.success("Application saved successfully");
-                                    setExpanded(null);
-                                  }}
-                                >
-                                  Save Changes
-                                </Button>
-                              </div>
-                            </div>
-
-                            {/* Right columns: Document Checklist */}
-                            <div className="md:col-span-2">
-                              <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
-                                <Stamp className="h-3.5 w-3.5" /> Document Checklist
-                              </p>
-                              <div className="grid gap-2 sm:grid-cols-2">
-                                {(app.docs || []).map((doc) => (
-                                  <button
-                                    key={doc.name}
-                                    onClick={() => toggleDoc(app.id, doc.name)}
-                                    className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm transition-colors text-left ${doc.received ? "border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50" : "border-border bg-background hover:bg-secondary/50"}`}
-                                  >
-                                    {doc.received ? (
-                                      <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
-                                    ) : (
-                                      <div className="h-4 w-4 shrink-0 rounded-full border-2 border-border transition-colors" />
-                                    )}
-                                    <span
-                                      className={
-                                        doc.received ? "text-foreground" : "text-muted-foreground"
-                                      }
-                                    >
-                                      {doc.name}
-                                    </span>
-                                  </button>
-                                ))}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      )}
                     </div>
                   );
                 })}
               </div>
+
+              {/* Application Detail Dialog */}
+              {(() => {
+                const detailApp = apps.find((a) => a.id === expanded);
+                if (!detailApp) return null;
+                const docsReceivedCount = (detailApp.docs || []).filter((d) => d.received).length;
+                return (
+                  <Dialog open={!!expanded} onOpenChange={(open) => { if (!open) setExpanded(null); }}>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20 text-sm">
+                            {detailApp.customer.charAt(0).toUpperCase()}
+                          </div>
+                          <div>
+                            <p className="text-base font-semibold">{detailApp.customer}</p>
+                            <p className="text-xs text-muted-foreground font-normal">{detailApp.id} · {detailApp.flag} {detailApp.country}</p>
+                          </div>
+                        </DialogTitle>
+                      </DialogHeader>
+
+                      <div className="grid gap-6 md:grid-cols-3 mt-2">
+                        {/* Left: Application Details */}
+                        <div className="space-y-4 rounded-xl border border-border bg-secondary/20 p-4">
+                          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Application Details</p>
+                          <div className="space-y-3 text-sm">
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-muted-foreground">Visa Type</label>
+                              <Input
+                                value={detailApp.visaType}
+                                onChange={(e) => setApps(apps.map((a) => a.id === detailApp.id ? { ...a, visaType: e.target.value } : a))}
+                                className="h-8 text-sm rounded-lg bg-background"
+                              />
+                            </div>
+                            <div className="flex flex-col gap-1.5">
+                              <label className="text-xs font-semibold text-muted-foreground">Travel Date</label>
+                              <Input
+                                type="date"
+                                value={detailApp.travelDate}
+                                onChange={(e) => setApps(apps.map((a) => a.id === detailApp.id ? { ...a, travelDate: e.target.value } : a))}
+                                className="h-8 text-sm rounded-lg bg-background"
+                              />
+                            </div>
+                            <div className="text-xs text-muted-foreground pt-1">
+                              Docs: {docsReceivedCount}/{(detailApp.docs || []).length} received
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Right: Document Checklist */}
+                        <div className="md:col-span-2">
+                          <p className="mb-3 text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2">
+                            <Stamp className="h-3.5 w-3.5" /> Document Checklist
+                          </p>
+                          <div className="grid gap-2 sm:grid-cols-2">
+                            {(detailApp.docs || []).map((doc) => (
+                              <button
+                                key={doc.name}
+                                onClick={() => toggleDoc(detailApp.id, doc.name)}
+                                className={`flex w-full items-center gap-3 rounded-xl border px-4 py-2.5 text-sm transition-colors text-left ${doc.received ? "border-emerald-200 bg-emerald-50/50 hover:bg-emerald-50" : "border-border bg-background hover:bg-secondary/50"}`}
+                              >
+                                {doc.received ? (
+                                  <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-500" />
+                                ) : (
+                                  <div className="h-4 w-4 shrink-0 rounded-full border-2 border-border" />
+                                )}
+                                <span className={doc.received ? "text-foreground" : "text-muted-foreground"}>
+                                  {doc.name}
+                                </span>
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      <DialogFooter className="mt-4 flex gap-2">
+                        {isAdmin && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="rounded-xl text-xs font-semibold text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                            onClick={() => { setDeleteAppTargetId(detailApp.id); setExpanded(null); }}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" /> Delete
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          className="rounded-xl text-xs font-semibold shadow-sm"
+                          style={{ background: "var(--gradient-brand)" }}
+                          onClick={() => { toast.success("Application saved successfully"); setExpanded(null); }}
+                        >
+                          Save Changes
+                        </Button>
+                      </DialogFooter>
+                    </DialogContent>
+                  </Dialog>
+                );
+              })()}
             </>
           ) : (
             <>
@@ -1979,24 +1967,23 @@ function VisaPage() {
                             </td>
                             <td className="px-5 py-4 text-right">
                               <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  size="icon"
-                                  variant="ghost"
-                                  className="h-8 w-8 text-muted-foreground hover:text-primary rounded-lg"
-                                  onClick={() => handleOpenEditReq(req)}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                {isAdmin && (
-                                  <Button
-                                    size="icon"
-                                    variant="ghost"
-                                    className="h-8 w-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg"
-                                    onClick={() => handleDeleteReq(req.id)}
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg">
+                                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                    <DropdownMenuItem onClick={() => handleOpenEditReq(req)} className="cursor-pointer gap-2 py-2">
+                                      <Edit className="h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                    {isAdmin && (
+                                      <DropdownMenuItem onClick={() => handleDeleteReq(req.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                        <Trash2 className="h-4 w-4" /> Delete
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </td>
                           </tr>

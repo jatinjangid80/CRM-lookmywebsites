@@ -271,9 +271,20 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     if (tableName === "payment_followups") {
       const existingNotes = newRow.notes || "";
+      let hasMeta = false;
+      const metaObj: any = { _isMeta: true, text: existingNotes };
       if (newRow.createdBy !== undefined) {
-        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, createdBy: newRow.createdBy });
+        metaObj.createdBy = newRow.createdBy;
         delete newRow.createdBy;
+        hasMeta = true;
+      }
+      if (newRow.status !== undefined) {
+        metaObj.status = newRow.status;
+        delete newRow.status;
+        hasMeta = true;
+      }
+      if (hasMeta) {
+        newRow.notes = JSON.stringify(metaObj);
       }
     }
 
@@ -580,6 +591,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         if (parsed._isMeta) {
           newRow.notes = parsed.text;
           if (parsed.createdBy !== undefined) newRow.createdBy = parsed.createdBy;
+          if (parsed.status !== undefined) newRow.status = parsed.status;
         }
       } catch (e) { }
     }

@@ -1,8 +1,14 @@
 import { useState } from "react";
-import { Plus, Edit2, Trash2, Building2 } from "lucide-react";
+import { Plus, Edit2, Trash2, Building2, MoreVertical } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export function InsuranceVendorsView() {
   const [vendors, setVendors, loading] = useSupabaseTable<any[]>("insurance_vendors", []);
@@ -115,12 +121,21 @@ export function InsuranceVendorsView() {
                     {v.office_city || "-"}
                   </td>
                   <td className="px-4 py-3 text-right">
-                    <Button variant="ghost" size="sm" onClick={() => handleEdit(v)} className="h-8 px-2 text-blue-600">
-                      <Edit2 className="w-4 h-4 mr-1" /> Edit
-                    </Button>
-                    <Button variant="ghost" size="sm" onClick={() => handleDelete(v.id)} className="h-8 px-2 text-rose-600">
-                      <Trash2 className="w-4 h-4 mr-1" /> Delete
-                    </Button>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-32 rounded-xl">
+                        <DropdownMenuItem onClick={() => handleEdit(v)} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                          <Edit2 className="w-4 h-4" /> Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDelete(v.id)} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                          <Trash2 className="w-4 h-4" /> Delete
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))

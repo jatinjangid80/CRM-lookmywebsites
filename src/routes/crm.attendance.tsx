@@ -152,9 +152,13 @@ function AttendancePage() {
           </div>
           <TabsList className="flex bg-muted p-1 rounded-xl w-fit border border-border/80 h-auto">
             <TabsTrigger value="my-attendance" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">My Attendance</TabsTrigger>
-            <TabsTrigger value="team" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Team Check-ins</TabsTrigger>
-            <TabsTrigger value="history" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Employee History</TabsTrigger>
-            <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
+            {isAdmin && (
+              <>
+                <TabsTrigger value="team" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Team Check-ins</TabsTrigger>
+                <TabsTrigger value="history" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Employee History</TabsTrigger>
+                <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
+              </>
+            )}
           </TabsList>
         </div>
 
@@ -323,7 +327,9 @@ function AttendancePage() {
           </div>
         </TabsContent>
 
-        <TabsContent value="team" className="m-0 border-none p-0 outline-none space-y-6">
+        {isAdmin && (
+          <>
+            <TabsContent value="team" className="m-0 border-none p-0 outline-none space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
@@ -506,15 +512,6 @@ function AttendancePage() {
                                   }`}>
                                   {record.checkout ? "Completed" : "Active"}
                                 </span>
-                                {isAdmin && (
-                                  <button
-                                    onClick={() => handleDeleteRecord(record.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 rounded-md text-rose-500 hover:bg-rose-50 dark:hover:bg-rose-500/10 transition-all"
-                                    title="Remove Record"
-                                  >
-                                    <Trash2 className="w-3.5 h-3.5" />
-                                  </button>
-                                )}
                               </div>
                             </div>
                             <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
@@ -704,6 +701,8 @@ function AttendancePage() {
           </div>
 
         </TabsContent>
+          </>
+        )}
       </Tabs>
 
       <Dialog open={isApplyLeaveOpen} onOpenChange={setIsApplyLeaveOpen}>

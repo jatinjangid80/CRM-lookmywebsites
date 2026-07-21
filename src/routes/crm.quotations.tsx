@@ -28,6 +28,7 @@ import {
   Copy,
   Check,
   ChevronsUpDown,
+  MoreVertical,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -57,6 +58,7 @@ import {
 } from "@/components/ui/dialog";
 import { generateWhatsAppLink, whatsappTemplates } from "@/lib/whatsapp";
 import logoImg from "../assets/Logo.svg";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/crm/quotations")({
   component: QuotationsPage,
@@ -141,8 +143,8 @@ const DEFAULT_FORM: QuoteForm = {
   customerEmail: "",
   packageName: "Custom Holiday Package",
   destination: "",
-  durationNights: 4,
-  durationDays: 5,
+  durationNights: 1,
+  durationDays: 2,
   hotels: [{ ...DEFAULT_HOTEL }],
   flights: [{ ...DEFAULT_FLIGHT }],
   basePrice: 25000,
@@ -165,23 +167,6 @@ const DEFAULT_FORM: QuoteForm = {
     },
     {
       day: 2,
-      title: "City Tour",
-      description:
-        "After breakfast, proceed for a guided city tour covering major tourist attractions.",
-    },
-    {
-      day: 3,
-      title: "Adventure Activities",
-      description: "Full day dedicated to local sightseeing and optional adventure sports.",
-    },
-    {
-      day: 4,
-      title: "Shopping & Relaxation",
-      description:
-        "Day at leisure. Explore the local markets for shopping and experience traditional cuisine.",
-    },
-    {
-      day: 5,
       title: "Departure",
       description: "Check out from the hotel. Transfer to the airport for your flight back home.",
     },
@@ -688,7 +673,7 @@ function QuotationsPage() {
                   placeholder="e.g. Dubai Marina & Desert Retreat"
                   value={form.packageName}
                   onChange={(e) => setForm({ ...form, packageName: e.target.value })}
-                  className="rounded-full h-10"
+                  className="rounded-xl h-10"
                 />
               </div>
               <div>
@@ -698,7 +683,7 @@ function QuotationsPage() {
                   placeholder="e.g. Dubai"
                   value={form.destination}
                   onChange={(e) => setForm({ ...form, destination: e.target.value })}
-                  className="rounded-full h-10"
+                  className="rounded-xl h-10"
                 />
               </div>
               <div className="grid grid-cols-2 gap-2">
@@ -710,7 +695,7 @@ function QuotationsPage() {
                     min="2"
                     value={form.durationDays}
                     onChange={(e) => setForm({ ...form, durationDays: Math.max(2, Number(e.target.value)) })}
-                    className="rounded-full h-10"
+                    className="rounded-xl h-10"
                   />
                 </div>
                 <div>
@@ -720,7 +705,7 @@ function QuotationsPage() {
                     type="number"
                     value={form.durationNights}
                     onChange={(e) => setForm({ ...form, durationNights: Number(e.target.value) })}
-                    className="rounded-full h-10"
+                    className="rounded-xl h-10"
                   />
                 </div>
               </div>
@@ -736,15 +721,15 @@ function QuotationsPage() {
 
               <div className="space-y-4">
                 {form.hotels?.map((hotel) => (
-                  <div key={hotel.id} className="rounded-2xl border border-border/80 p-5 space-y-5 relative">
-                    <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => handleRemoveHotel(hotel.id)}>
+                  <div key={hotel.id} className="rounded-2xl border border-border/80 p-5 space-y-5 relative group">
+                    <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveHotel(hotel.id)}>
                       <XCircle className="h-4 w-4" />
                     </Button>
 
                     <div className="grid gap-4 sm:grid-cols-12">
                       <div className="sm:col-span-5">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Hotel Name</Label>
-                        <Input placeholder="e.g. Hotel Shompen" className="rounded-full h-10 bg-background" value={hotel.hotelName} onChange={(e) => handleUpdateHotel(hotel.id, 'hotelName', e.target.value)} />
+                        <Input placeholder="e.g. Hotel Shompen" className="rounded-xl h-10 bg-background" value={hotel.hotelName} onChange={(e) => handleUpdateHotel(hotel.id, 'hotelName', e.target.value)} />
                       </div>
                       <div className="sm:col-span-3">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rating</Label>
@@ -756,7 +741,7 @@ function QuotationsPage() {
                       </div>
                       <div className="sm:col-span-4">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Location</Label>
-                        <Input placeholder="e.g. Port Blair" className="rounded-full h-10 bg-background" value={hotel.location} onChange={(e) => handleUpdateHotel(hotel.id, 'location', e.target.value)} />
+                        <Input placeholder="e.g. Port Blair" className="rounded-xl h-10 bg-background" value={hotel.location} onChange={(e) => handleUpdateHotel(hotel.id, 'location', e.target.value)} />
                       </div>
                     </div>
 
@@ -764,43 +749,43 @@ function QuotationsPage() {
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-in</Label>
                         <div className="relative">
-                          <Input placeholder="dd/mm/yyyy" className="rounded-full h-10 pl-3 pr-10 bg-background" value={hotel.checkIn} onChange={(e) => handleUpdateHotel(hotel.id, 'checkIn', e.target.value)} />
+                          <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkIn} onChange={(e) => handleUpdateHotel(hotel.id, 'checkIn', e.target.value)} />
                           <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-out</Label>
                         <div className="relative">
-                          <Input placeholder="dd/mm/yyyy" className="rounded-full h-10 pl-3 pr-10 bg-background" value={hotel.checkOut} onChange={(e) => handleUpdateHotel(hotel.id, 'checkOut', e.target.value)} />
+                          <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkOut} onChange={(e) => handleUpdateHotel(hotel.id, 'checkOut', e.target.value)} />
                           <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                         </div>
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rooms</Label>
-                        <Input placeholder="1" className="rounded-full h-10 bg-background" value={hotel.rooms} onChange={(e) => handleUpdateHotel(hotel.id, 'rooms', e.target.value)} />
+                        <Input placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.rooms} onChange={(e) => handleUpdateHotel(hotel.id, 'rooms', e.target.value)} />
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Adults</Label>
-                        <Input placeholder="2" className="rounded-full h-10 bg-background" value={hotel.adults} onChange={(e) => handleUpdateHotel(hotel.id, 'adults', e.target.value)} />
+                        <Input placeholder="2" className="rounded-xl h-10 bg-background" value={hotel.adults} onChange={(e) => handleUpdateHotel(hotel.id, 'adults', e.target.value)} />
                       </div>
                       <div>
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Children</Label>
-                        <Input placeholder="0" className="rounded-full h-10 bg-background" value={hotel.children} onChange={(e) => handleUpdateHotel(hotel.id, 'children', e.target.value)} />
+                        <Input placeholder="0" className="rounded-xl h-10 bg-background" value={hotel.children} onChange={(e) => handleUpdateHotel(hotel.id, 'children', e.target.value)} />
                       </div>
                     </div>
 
                     <div className="grid gap-4 sm:grid-cols-12">
                       <div className="sm:col-span-5">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Room Type</Label>
-                        <Input placeholder="Deluxe" className="rounded-full h-10 bg-background" value={hotel.roomType} onChange={(e) => handleUpdateHotel(hotel.id, 'roomType', e.target.value)} />
+                        <Input placeholder="Deluxe" className="rounded-xl h-10 bg-background" value={hotel.roomType} onChange={(e) => handleUpdateHotel(hotel.id, 'roomType', e.target.value)} />
                       </div>
                       <div className="sm:col-span-3">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Nights</Label>
-                        <Input type="number" placeholder="1" className="rounded-full h-10 bg-background" value={hotel.nights} onChange={(e) => handleUpdateHotel(hotel.id, 'nights', Number(e.target.value))} />
+                        <Input type="number" placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.nights} onChange={(e) => handleUpdateHotel(hotel.id, 'nights', Number(e.target.value))} />
                       </div>
                       <div className="sm:col-span-4">
                         <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Meal Type</Label>
-                        <Input placeholder="Half Board" className="rounded-full h-10 bg-background" value={hotel.mealPlan} onChange={(e) => handleUpdateHotel(hotel.id, 'mealPlan', e.target.value)} />
+                        <Input placeholder="Half Board" className="rounded-xl h-10 bg-background" value={hotel.mealPlan} onChange={(e) => handleUpdateHotel(hotel.id, 'mealPlan', e.target.value)} />
                       </div>
                     </div>
                   </div>
@@ -818,20 +803,20 @@ function QuotationsPage() {
 
               <div className="space-y-4">
                 {form.flights?.map((flight) => (
-                  <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-2 rounded-full border border-border/50">
+                  <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-4 rounded-2xl border border-border/50">
                     <div>
-                      <Input placeholder="Airline (e.g. Emirates)" className="rounded-full h-10 bg-background border-none shadow-none" value={flight.airline} onChange={(e) => handleUpdateFlight(flight.id, 'airline', e.target.value)} />
+                      <Input placeholder="Airline (e.g. Emirates)" className="rounded-xl h-10 bg-background" value={flight.airline} onChange={(e) => handleUpdateFlight(flight.id, 'airline', e.target.value)} />
                     </div>
                     <div>
-                      <Input placeholder="Flight No." className="rounded-full h-10 bg-background border-none shadow-none" value={flight.flightNo} onChange={(e) => handleUpdateFlight(flight.id, 'flightNo', e.target.value)} />
+                      <Input placeholder="Flight No." className="rounded-xl h-10 bg-background" value={flight.flightNo} onChange={(e) => handleUpdateFlight(flight.id, 'flightNo', e.target.value)} />
                     </div>
                     <div>
-                      <Input placeholder="Sector (e.g. DEL-DXB)" className="rounded-full h-10 bg-background border-none shadow-none" value={flight.sector} onChange={(e) => handleUpdateFlight(flight.id, 'sector', e.target.value)} />
+                      <Input placeholder="Sector (e.g. DEL-DXB)" className="rounded-xl h-10 bg-background" value={flight.sector} onChange={(e) => handleUpdateFlight(flight.id, 'sector', e.target.value)} />
                     </div>
                     <div>
-                      <Input placeholder="Date & Time" className="rounded-full h-10 bg-background border-none shadow-none" value={flight.dateTime} onChange={(e) => handleUpdateFlight(flight.id, 'dateTime', e.target.value)} />
+                      <Input placeholder="Date & Time" className="rounded-xl h-10 bg-background" value={flight.dateTime} onChange={(e) => handleUpdateFlight(flight.id, 'dateTime', e.target.value)} />
                     </div>
-                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full" onClick={() => handleRemoveFlight(flight.id)}>
+                    <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveFlight(flight.id)}>
                       <XCircle className="h-4 w-4" />
                     </Button>
                   </div>
@@ -859,27 +844,27 @@ function QuotationsPage() {
                       placeholder="Day Title"
                       value={day.title}
                       onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
-                      className="rounded-xl h-8 text-xs bg-background pr-8"
+                      className="rounded-xl h-8 text-xs bg-background"
                     />
+                    {idx >= 2 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={() => {
+                          setForm(f => {
+                            const newItin = [...f.itinerary];
+                            newItin.splice(idx, 1);
+                            newItin.forEach((d, i) => d.day = i + 1);
+                            return { ...f, itinerary: newItin, durationDays: newItin.length };
+                          });
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
-                  {idx >= 2 && (
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
-                      onClick={() => {
-                        setForm(f => {
-                          const newItin = [...f.itinerary];
-                          newItin.splice(idx, 1);
-                          newItin.forEach((d, i) => d.day = i + 1);
-                          return { ...f, itinerary: newItin, durationDays: newItin.length };
-                        });
-                      }}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </Button>
-                  )}
                   <Textarea
                     placeholder="Day details and highlights"
                     value={day.description}
@@ -1052,70 +1037,71 @@ function QuotationsPage() {
                     <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                       <span className="truncate max-w-[150px]">{q.package_name}</span>
                       <div className="flex gap-2">
-                        <Button
-                          variant="secondary"
-                          size="sm"
-                          className="h-6 text-[10px] px-2 rounded-lg"
-                          onClick={() => {
-                            if (q.details) {
-                              try {
-                                let parsedDetails = q.details;
-                                if (typeof parsedDetails === 'string') {
-                                  parsedDetails = JSON.parse(parsedDetails);
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon" className="h-7 w-7">
+                              <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (q.details) {
+                                  try {
+                                    let parsedDetails = q.details;
+                                    if (typeof parsedDetails === 'string') {
+                                      parsedDetails = JSON.parse(parsedDetails);
+                                    }
+                                    const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                    setForm(clonedDetails);
+                                    setEditingQuoteId(q.id);
+                                    setPreviewOpen(true);
+                                  } catch (error) {
+                                    console.error("Failed to parse quote details", error);
+                                    toast.error("Could not load quote details");
+                                  }
                                 }
-                                const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                setForm(clonedDetails);
-                                setEditingQuoteId(q.id);
-                                setPreviewOpen(true);
-                              } catch (error) {
-                                console.error("Failed to parse quote details", error);
-                                toast.error("Could not load quote details");
-                              }
-                            }
-                          }}
-                        >
-                          <Eye className="h-3 w-3 mr-1" /> View
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          className="h-6 text-[10px] px-2 rounded-lg"
-                          onClick={() => {
-                            if (q.details) {
-                              try {
-                                let parsedDetails = q.details;
-                                if (typeof parsedDetails === 'string') {
-                                  parsedDetails = JSON.parse(parsedDetails);
+                              }}
+                              className="cursor-pointer gap-2 py-2"
+                            >
+                              <Eye className="h-4 w-4" /> View
+                            </DropdownMenuItem>
+                            <DropdownMenuItem
+                              onClick={() => {
+                                if (q.details) {
+                                  try {
+                                    let parsedDetails = q.details;
+                                    if (typeof parsedDetails === 'string') {
+                                      parsedDetails = JSON.parse(parsedDetails);
+                                    }
+                                    const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                    setForm(clonedDetails);
+                                    setEditingQuoteId(q.id);
+                                    window.scrollTo({ top: 0, behavior: "smooth" });
+                                    toast.success(`Quote ${q.id} loaded for editing`);
+                                  } catch (error) {
+                                    console.error("Failed to parse quote details", error);
+                                    toast.error("Could not load quote details");
+                                  }
                                 }
-                                // Clone to avoid mutation
-                                const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                setForm(clonedDetails);
-                                setEditingQuoteId(q.id);
-                                window.scrollTo({ top: 0, behavior: "smooth" });
-                                toast.success(`Quote ${q.id} loaded for editing`);
-                              } catch (error) {
-                                console.error("Failed to parse quote details", error);
-                                toast.error("Could not load quote details");
-                              }
-                            }
-                          }}
-                        >
-                          <Edit2 className="h-3 w-3 mr-1" /> Edit
-                        </Button>
-
-                        {isAdmin && (
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            className="h-7 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
-                            onClick={() => {
-                              setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
-                              toast.success(`Quote ${q.id} deleted`);
-                            }}
-                          >
-                            <Trash2 className="h-3 w-3 mr-1" /> Delete
-                          </Button>
-                        )}
+                              }}
+                              className="cursor-pointer gap-2 py-2"
+                            >
+                              <Edit2 className="h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                            {isAdmin && (
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
+                                  toast.success(`Quote ${q.id} deleted`);
+                                }}
+                                className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+                              >
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
                       </div>
                     </div>
                     

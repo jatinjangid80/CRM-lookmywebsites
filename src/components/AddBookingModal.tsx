@@ -24,6 +24,7 @@ interface AddBookingModalProps {
   onOpenChange: (open: boolean) => void;
   onSave: (booking: Booking) => void;
   defaultCustomer?: string;
+  editingBooking?: Booking | any;
 }
 
 const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
@@ -102,7 +103,7 @@ function SearchableSelect({
   );
 }
 
-export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }: AddBookingModalProps) {
+export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, editingBooking }: AddBookingModalProps) {
   const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
@@ -144,34 +145,63 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
   // Reset form when modal opens
   useEffect(() => {
     if (open) {
-      setBookingType("Holiday Package");
-      setSupplier("");
-      setBookingDate(new Date().toISOString().slice(0, 10));
-      setCustomer(defaultCustomer || "");
-      setMobileNumber("");
-      setBookedBy("");
-      setCompany("");
-      setReference("");
-      setSaleInvoiceNo("");
-      setPurchaseInvoiceNo("");
-      setRemarks("");
+      if (editingBooking) {
+        setBookingType(editingBooking.bookingType || "Holiday Package");
+        setSupplier(editingBooking.supplier || "");
+        setBookingDate(editingBooking.bookingDate || new Date().toISOString().slice(0, 10));
+        setCustomer(editingBooking.customer || "");
+        setMobileNumber(editingBooking.mobileNumber || "");
+        setBookedBy(editingBooking.bookedBy || "");
+        setCompany(editingBooking.company || "");
+        setReference(editingBooking.reference || "");
+        setSaleInvoiceNo(editingBooking.saleInvoiceNo || "");
+        setPurchaseInvoiceNo(editingBooking.purchaseInvoiceNo || "");
+        setRemarks(editingBooking.remarks || "");
 
-      setSellingPrice(0);
-      setPurchasePrice(0);
-      setGstAmount(0);
-      setTicketAmount(0);
-      setRefundDate("");
-      setRefundAmount(0);
+        setSellingPrice(editingBooking.amount || editingBooking.sellingPrice || 0);
+        setPurchasePrice(editingBooking.purchasePrice || 0);
+        setGstAmount(editingBooking.gstAmount || 0);
+        setTicketAmount(editingBooking.ticketAmount || 0);
+        setRefundDate(editingBooking.refundDate || "");
+        setRefundAmount(editingBooking.refundAmount || 0);
 
-      setAmountPaid(0);
-      setPaymentMode("Cash");
-      setPaymentStatus("Pending");
-      setTransactionId("");
+        setAmountPaid(editingBooking.paid || editingBooking.amountPaid || 0);
+        setPaymentMode(editingBooking.paymentMode || "Cash");
+        setPaymentStatus(editingBooking.status || "Pending");
+        setTransactionId(editingBooking.transactionId || "");
 
-      setDetails({});
-      setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
+        setDetails(editingBooking.details || {});
+        setIncludedServices(editingBooking.includedServices || { flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
+      } else {
+        setBookingType("Holiday Package");
+        setSupplier("");
+        setBookingDate(new Date().toISOString().slice(0, 10));
+        setCustomer(defaultCustomer || "");
+        setMobileNumber("");
+        setBookedBy("");
+        setCompany("");
+        setReference("");
+        setSaleInvoiceNo("");
+        setPurchaseInvoiceNo("");
+        setRemarks("");
+
+        setSellingPrice(0);
+        setPurchasePrice(0);
+        setGstAmount(0);
+        setTicketAmount(0);
+        setRefundDate("");
+        setRefundAmount(0);
+
+        setAmountPaid(0);
+        setPaymentMode("Cash");
+        setPaymentStatus("Pending");
+        setTransactionId("");
+
+        setDetails({});
+        setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
+      }
     }
-  }, [open, defaultCustomer]);
+  }, [open, defaultCustomer, editingBooking]);
 
   // Handle Detail Change
   const updateDetail = (key: string, value: any) => {
@@ -199,7 +229,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer }:
     }
 
     const newBooking: Booking = {
-      id: `BK-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: editingBooking?.id || `BK-${Math.floor(1000 + Math.random() * 9000)}`,
       bookingType,
       supplier,
       bookingDate,

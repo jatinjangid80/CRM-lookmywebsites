@@ -21,6 +21,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { getAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/crm/tasks")({ component: TasksPage });
 
@@ -96,15 +97,23 @@ function TasksPage() {
   const [calendarDate, setCalendarDate] = useState(new Date());
 
   const visibleTasks = useMemo(() => {
-    if (isAdmin) return tasks;
-    return tasks.filter(task => {
-      if (task.parent_id) {
-        return task.assigned_to === currentUser;
-      }
-      if (task.task_type === "Group") {
-        return tasks.some(st => st.parent_id === task.id && st.assigned_to === currentUser);
-      }
-      return task.assigned_to === currentUser;
+    const filtered = isAdmin
+      ? [...tasks]
+      : tasks.filter(task => {
+          if (task.parent_id) {
+            return task.assigned_to === currentUser;
+          }
+          if (task.task_type === "Group") {
+            return tasks.some(st => st.parent_id === task.id && st.assigned_to === currentUser);
+          }
+          return task.assigned_to === currentUser;
+        });
+    // Sort newest first: highest task_number first, then by created_at descending
+    return filtered.sort((a, b) => {
+      const numA = a.task_number ?? 0;
+      const numB = b.task_number ?? 0;
+      if (numB !== numA) return numB - numA;
+      return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     });
   }, [tasks, isAdmin, currentUser]);
 
@@ -437,7 +446,7 @@ function TasksPage() {
                   return (
                     <React.Fragment key={task.id}>
                       <TableRow key={task.id} className={task.task_type === "Group" ? "bg-muted/30" : ""}>
-                        <TableCell className="font-medium text-muted-foreground">#{getDisplayId(task)}</TableCell>
+                        <TableCell className="font-medium text-muted-foreground">{getDisplayId(task)}</TableCell>
                         <TableCell className="font-semibold">{task.title}</TableCell>
                         <TableCell className="align-top min-w-[200px]">
                           <div className="mb-2 font-medium text-foreground">{task.assigned_to || (task as any).assignee || "-"}</div>
@@ -526,26 +535,34 @@ function TasksPage() {
                         </TableCell>
                         <TableCell className="text-right">
                           <div className="flex justify-end items-center gap-1">
-                            {isAdmin && (
-                              <Button variant="ghost" size="icon" onClick={() => handleEditTask(task)}>
-                                <Edit className="h-4 w-4 text-muted-foreground" />
-                              </Button>
-                            )}
-                            <Button variant="ghost" size="icon" onClick={() => setViewingTask(task)}>
-                              <Eye className="h-4 w-4 text-muted-foreground" />
-                            </Button>
-
-                            {isAdmin && (
-                              <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(task.id)}>
-                                <Trash2 className="h-4 w-4 text-red-500" />
-                              </Button>
-                            )}
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button variant="ghost" size="icon">
+                                  <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                {isAdmin && (
+                                  <DropdownMenuItem onClick={() => handleEditTask(task)} className="cursor-pointer gap-2 py-2">
+                                    <Edit className="h-4 w-4" /> Edit
+                                  </DropdownMenuItem>
+                                )}
+                                <DropdownMenuItem onClick={() => setViewingTask(task)} className="cursor-pointer gap-2 py-2">
+                                  <Eye className="h-4 w-4" /> View
+                                </DropdownMenuItem>
+                                {isAdmin && (
+                                  <DropdownMenuItem onClick={() => handleDeleteTask(task.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <Trash2 className="h-4 w-4" /> Delete
+                                  </DropdownMenuItem>
+                                )}
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       </TableRow>
                       {subTasks.length > 0 && subTasks.map((st) => (
                         <TableRow className="bg-muted/50" key={st.id}>
-                          <TableCell className="font-medium text-muted-foreground pl-8 relative"><div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-slate-300"></div><div className="absolute left-3 top-0 bottom-1/2 w-[1px] bg-slate-300"></div>#{getDisplayId(st)}</TableCell>
+                          <TableCell className="font-medium text-muted-foreground pl-8 relative"><div className="absolute left-3 top-1/2 -translate-y-1/2 w-3 h-[1px] bg-slate-300"></div><div className="absolute left-3 top-0 bottom-1/2 w-[1px] bg-slate-300"></div>{getDisplayId(st)}</TableCell>
                           <TableCell className="font-semibold">{st.title}</TableCell>
                           <TableCell className="align-top min-w-[200px]">
                             <div className="mb-2 font-medium text-foreground">{st.assigned_to || (st as any).assignee || "-"}</div>
@@ -634,20 +651,28 @@ function TasksPage() {
                           </TableCell>
                           <TableCell className="text-right">
                             <div className="flex justify-end items-center gap-1">
-                              {isAdmin && (
-                                <Button variant="ghost" size="icon" onClick={() => handleEditTask(st)}>
-                                  <Edit className="h-4 w-4 text-muted-foreground" />
-                                </Button>
-                              )}
-                              <Button variant="ghost" size="icon" onClick={() => setViewingTask(st)}>
-                                <Eye className="h-4 w-4 text-muted-foreground" />
-                              </Button>
-
-                              {isAdmin && (
-                                <Button variant="ghost" size="icon" onClick={() => handleDeleteTask(st.id)}>
-                                  <Trash2 className="h-4 w-4 text-red-500" />
-                                </Button>
-                              )}
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon">
+                                    <MoreVertical className="h-4 w-4 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                  {isAdmin && (
+                                    <DropdownMenuItem onClick={() => handleEditTask(st)} className="cursor-pointer gap-2 py-2">
+                                      <Edit className="h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                  )}
+                                  <DropdownMenuItem onClick={() => setViewingTask(st)} className="cursor-pointer gap-2 py-2">
+                                    <Eye className="h-4 w-4" /> View
+                                  </DropdownMenuItem>
+                                  {isAdmin && (
+                                    <DropdownMenuItem onClick={() => handleDeleteTask(st.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                      <Trash2 className="h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </div>
                           </TableCell>
                         </TableRow>
@@ -708,20 +733,28 @@ function TasksPage() {
                                     </span>
                                   </div>
                                   <div className="flex gap-1">
-                                    {isAdmin && (
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleEditTask(t)}>
-                                        <Edit className="h-3.5 w-3.5 text-slate-400" />
-                                      </Button>
-                                    )}
-                                    <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => setViewingTask(t)}>
-                                      <Eye className="h-3.5 w-3.5 text-slate-400" />
-                                    </Button>
-
-                                    {isAdmin && (
-                                      <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => handleDeleteTask(t.id)}>
-                                        <Trash2 className="h-3.5 w-3.5 text-red-400" />
-                                      </Button>
-                                    )}
+                                    <DropdownMenu>
+                                      <DropdownMenuTrigger asChild>
+                                        <Button variant="ghost" size="icon" className="h-7 w-7">
+                                          <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                        </Button>
+                                      </DropdownMenuTrigger>
+                                      <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                        {isAdmin && (
+                                          <DropdownMenuItem onClick={() => handleEditTask(t)} className="cursor-pointer gap-2 py-2">
+                                            <Edit className="h-4 w-4" /> Edit
+                                          </DropdownMenuItem>
+                                        )}
+                                        <DropdownMenuItem onClick={() => setViewingTask(t)} className="cursor-pointer gap-2 py-2">
+                                          <Eye className="h-4 w-4" /> View
+                                        </DropdownMenuItem>
+                                        {isAdmin && (
+                                          <DropdownMenuItem onClick={() => handleDeleteTask(t.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                            <Trash2 className="h-4 w-4" /> Delete
+                                          </DropdownMenuItem>
+                                        )}
+                                      </DropdownMenuContent>
+                                    </DropdownMenu>
                                   </div>
                                 </div>
                               </div>
@@ -1038,7 +1071,7 @@ function TasksPage() {
               <DialogHeader>
                 <DialogTitle className="flex items-center justify-between pr-4">
                   <div className="flex items-center gap-2">
-                    <span className="text-muted-foreground text-sm font-normal">#{getDisplayId(viewingTask)}</span>
+                    <span className="text-muted-foreground text-sm font-normal">{getDisplayId(viewingTask)}</span>
                     <span>Task Details</span>
                   </div>
                   <Badge variant="outline" className={STATUS_COLORS[viewingTask.status]}>{viewingTask.status}</Badge>
