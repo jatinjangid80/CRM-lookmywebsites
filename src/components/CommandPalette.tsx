@@ -163,7 +163,7 @@ export function CommandPalette() {
               <span>Go to Bookings</span>
             </CommandItem>
             <CommandItem
-              onSelect={() => runCommand(() => navigate({ to: "/crm/payments" }))}
+              onSelect={() => runCommand(() => navigate({ to: "/crm/accounts" }))}
               className="cursor-pointer"
             >
               <CreditCard className="mr-2 h-4 w-4 text-primary" />

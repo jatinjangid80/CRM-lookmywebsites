@@ -36,6 +36,7 @@ import {
   Building2,
   Calendar,
   Copy,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -146,7 +147,6 @@ const SERVICES = [
       { label: "Bus Ticket", icon: "🚌" },
       { label: "Taxi Booking", icon: "🚕" },
       { label: "Travel Insurance", icon: "🛡️" },
-      { label: "General Insurance", icon: "🧳" },
     ],
   },
   {
@@ -207,6 +207,12 @@ const STATUS_PILL: Record<LeadStatus, string> = {
   "in process": "bg-emerald-100 text-emerald-700",
   "Postponed": "bg-pink-100 text-pink-700",
   Lost: "bg-slate-100 text-slate-700",
+};
+
+const PRIORITY_PILL: Record<string, string> = {
+  High: "bg-red-100 text-red-700",
+  Medium: "bg-yellow-100 text-yellow-700",
+  Low: "bg-green-100 text-green-700",
 };
 
 const STATUS_ACCENT: Record<LeadStatus, string> = {
@@ -1068,12 +1074,6 @@ function AddLeadModal({
         {/* Modal header */}
         <div className="flex shrink-0 items-center justify-between border-b border-border px-6 pt-5 pb-4">
           <div className="flex items-center gap-3">
-            <span
-              className="grid h-9 w-9 place-items-center rounded-xl text-primary-foreground"
-              style={{ background: "var(--gradient-brand)" }}
-            >
-              <Plus className="h-4 w-4" />
-            </span>
             <div>
               <h2 className="font-display text-lg font-bold">
                 {selectedService ? `New ${selectedService} Lead` : "Create New Lead"}
@@ -1083,9 +1083,6 @@ function AddLeadModal({
               </p>
             </div>
           </div>
-          <button onClick={onClose} className="rounded-xl p-2 hover:bg-secondary transition-colors">
-            <X className="h-4 w-4" />
-          </button>
         </div>
 
         {/* Step content */}
@@ -1772,7 +1769,20 @@ function LeadDetail({
                         size="sm"
                         className="h-8 text-xs flex-1 rounded-lg"
                         onClick={() => {
-                          onUpdateLead?.(lead.id, bookingDetails);
+                          const currentNotes = Array.isArray(lead.allNotes) ? [...lead.allNotes] : [];
+                          if (lead.notes && currentNotes.length === 0) {
+                            currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
+                          }
+                          const noteDate = new Date().toISOString();
+                          const newNote = `Booking details updated. Vendor: ${bookingDetails.vendorName || "N/A"}, PNR: ${bookingDetails.bookingReference || "N/A"}`;
+                          currentNotes.push({ text: newNote, date: noteDate });
+
+                          onUpdateLead?.(lead.id, { 
+                            ...bookingDetails,
+                            notes: newNote,
+                            noteDate: noteDate,
+                            allNotes: currentNotes
+                          });
                           setIsEditingBooking(false);
                         }}
                       >
@@ -2026,6 +2036,16 @@ function LeadDetail({
             </Button>
           )}
 
+          <Button
+            variant="outline"
+            className="flex-1 gap-2 rounded-xl text-emerald-600 border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700"
+            onClick={() => {
+              const phone = lead.phone?.replace(/\D/g, '');
+              if (phone) window.open(`https://wa.me/${phone}`, '_blank');
+            }}
+          >
+            <MessageCircle className="h-4 w-4" /> WhatsApp
+          </Button>
           <Button
             variant="outline"
             className="flex-1 gap-2 rounded-xl"
@@ -2748,7 +2768,7 @@ function LeadsPage() {
                               setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
                             }}
                           >
-                            <SelectTrigger className="justify-between rounded-md border border-input ring-offset-background cursor-pointer data-[placeholder]:text-muted-foreground focus:outline-none focus:ring-ring disabled:cursor-not-allowed disabled:opacity-50 [&>span]:line-clamp-1 inline-flex items-center px-1 py-1 text-sm whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none bg-transparent hover:bg-transparent [&>svg]:hidden">
+                            <SelectTrigger className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${PRIORITY_PILL[l.priority || "Medium"] || "bg-secondary text-foreground"}`}>
                               <SelectValue placeholder="-" />
                               <ChevronDown className="h-4 w-4 opacity-50 ml-1" />
                             </SelectTrigger>

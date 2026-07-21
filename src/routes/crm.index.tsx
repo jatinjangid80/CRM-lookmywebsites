@@ -137,6 +137,10 @@ function Dashboard() {
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const [packagesList] = useSupabaseTable<any[]>("packages", SEED_PACKAGES);
   const [tasksList, setTasksList] = useSupabaseTable<any[]>("tasks", SEED_TASKS);
+  
+  // Accounts tables for KPIs
+  const [transactions] = useSupabaseTable<any[]>("transactions", []);
+  const [followUpsList] = useSupabaseTable<any[]>("payment_followups", []);
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -150,10 +154,12 @@ function Dashboard() {
   const activeBookingsCount = bookingsList.filter(
     (b) => b.status === "Confirmed" || b.status === "Pending",
   ).length;
-  const pendingPaymentsAmount = bookingsList.reduce(
-    (sum, b) => sum + ((b.amount || 0) - (b.paid || 0)),
-    0,
-  );
+  
+  // Pending Payments from Payment Follow-ups (Accounts)
+  const pendingPaymentsAmount = followUpsList
+    .filter(fu => fu.status !== "Completed")
+    .reduce((sum, fu) => sum + (Number(fu.pendingAmount) || 0), 0);
+    
   const followupsTodayCount = leadsList.filter(
     (l) => l.nextFollowUp && l.nextFollowUp.slice(0, 10) === todayStr,
   ).length;
@@ -169,7 +175,13 @@ function Dashboard() {
   );
   const conversionRate = leadsList.length > 0 ? ((convertedLeadsList.length / leadsList.length) * 100).toFixed(1) : "0.0";
   const convertedNames = convertedLeadsList.length > 0 ? convertedLeadsList.map((l) => l.name).join(", ") : "No conversions yet";
-  const monthlyRevenueTotal = bookingsList.reduce((sum, b) => sum + (b.paid || 0), 0);
+  
+  // Monthly Revenue from Transactions MTD (Accounts)
+  const currentMonth = new Date().getMonth();
+  const currentYear = new Date().getFullYear();
+  const monthlyRevenueTotal = transactions
+    .filter(tx => tx.type === "Receipt" && tx.date && new Date(tx.date).getMonth() === currentMonth && new Date(tx.date).getFullYear() === currentYear)
+    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
   // 2. Chart data aggregations
   // Lead Source Distribution
@@ -445,7 +457,7 @@ function Dashboard() {
       bg: "bg-rose-500/10",
       border: "border-rose-500/20",
       color: "text-rose-600",
-      link: "/crm/payment-requests",
+      link: "/crm/accounts",
     },
     {
       label: "Follow-ups Today",

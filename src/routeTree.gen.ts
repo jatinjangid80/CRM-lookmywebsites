@@ -20,8 +20,6 @@ import { Route as CrmSettingsRouteImport } from './routes/crm.settings'
 import { Route as CrmReportsRouteImport } from './routes/crm.reports'
 import { Route as CrmQuotationsRouteImport } from './routes/crm.quotations'
 import { Route as CrmPortalRouteImport } from './routes/crm.portal'
-import { Route as CrmPaymentsRouteImport } from './routes/crm.payments'
-import { Route as CrmPaymentRequestsRouteImport } from './routes/crm.payment-requests'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
@@ -96,16 +94,6 @@ const CrmQuotationsRoute = CrmQuotationsRouteImport.update({
 const CrmPortalRoute = CrmPortalRouteImport.update({
   id: '/portal',
   path: '/portal',
-  getParentRoute: () => CrmRoute,
-} as any)
-const CrmPaymentsRoute = CrmPaymentsRouteImport.update({
-  id: '/payments',
-  path: '/payments',
-  getParentRoute: () => CrmRoute,
-} as any)
-const CrmPaymentRequestsRoute = CrmPaymentRequestsRouteImport.update({
-  id: '/payment-requests',
-  path: '/payment-requests',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmPackagesRoute = CrmPackagesRouteImport.update({
@@ -226,8 +214,6 @@ export interface FileRoutesByFullPath {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
-  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
-  '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -260,8 +246,6 @@ export interface FileRoutesByTo {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
-  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
-  '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -296,8 +280,6 @@ export interface FileRoutesById {
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
-  '/crm/payment-requests': typeof CrmPaymentRequestsRoute
-  '/crm/payments': typeof CrmPaymentsRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -333,8 +315,6 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
-    | '/crm/payment-requests'
-    | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -367,8 +347,6 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
-    | '/crm/payment-requests'
-    | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -402,8 +380,6 @@ export interface FileRouteTypes {
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
-    | '/crm/payment-requests'
-    | '/crm/payments'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -506,20 +482,6 @@ declare module '@tanstack/react-router' {
       path: '/portal'
       fullPath: '/crm/portal'
       preLoaderRoute: typeof CrmPortalRouteImport
-      parentRoute: typeof CrmRoute
-    }
-    '/crm/payments': {
-      id: '/crm/payments'
-      path: '/payments'
-      fullPath: '/crm/payments'
-      preLoaderRoute: typeof CrmPaymentsRouteImport
-      parentRoute: typeof CrmRoute
-    }
-    '/crm/payment-requests': {
-      id: '/crm/payment-requests'
-      path: '/payment-requests'
-      fullPath: '/crm/payment-requests'
-      preLoaderRoute: typeof CrmPaymentRequestsRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/packages': {
@@ -677,8 +639,6 @@ interface CrmRouteChildren {
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
-  CrmPaymentRequestsRoute: typeof CrmPaymentRequestsRoute
-  CrmPaymentsRoute: typeof CrmPaymentsRoute
   CrmPortalRoute: typeof CrmPortalRoute
   CrmQuotationsRoute: typeof CrmQuotationsRoute
   CrmReportsRoute: typeof CrmReportsRoute
@@ -710,8 +670,6 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmLeadsRoute: CrmLeadsRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
-  CrmPaymentRequestsRoute: CrmPaymentRequestsRoute,
-  CrmPaymentsRoute: CrmPaymentsRoute,
   CrmPortalRoute: CrmPortalRoute,
   CrmQuotationsRoute: CrmQuotationsRoute,
   CrmReportsRoute: CrmReportsRoute,

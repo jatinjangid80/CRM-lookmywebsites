@@ -156,9 +156,9 @@ function AttendancePage() {
               <>
                 <TabsTrigger value="team" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Team Check-ins</TabsTrigger>
                 <TabsTrigger value="history" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Employee History</TabsTrigger>
-                <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
               </>
             )}
+            <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
           </TabsList>
         </div>
 
@@ -243,6 +243,33 @@ function AttendancePage() {
                       <div className="text-center py-4 text-muted-foreground text-xs">No punches today</div>
                     )}
                   </div>
+                </div>
+              </div>
+              
+              <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5 text-indigo-500" />
+                    <h3 className="font-semibold text-lg text-foreground">Upcoming Holidays</h3>
+                  </div>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { name: "Independence Day", date: "Aug 15, 2026", day: "Saturday", type: "National" },
+                    { name: "Raksha Bandhan", date: "Aug 28, 2026", day: "Friday", type: "Restricted" },
+                    { name: "Gandhi Jayanti", date: "Oct 2, 2026", day: "Friday", type: "National" },
+                    { name: "Diwali", date: "Nov 8, 2026", day: "Sunday", type: "National" },
+                  ].map((holiday, i) => (
+                    <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                      <div>
+                        <p className="text-sm font-bold">{holiday.name}</p>
+                        <p className="text-xs text-muted-foreground">{holiday.date} • {holiday.day}</p>
+                      </div>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${holiday.type === 'National' ? 'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400' : 'bg-orange-100 text-orange-700 dark:bg-orange-900/30 dark:text-orange-400'}`}>
+                        {holiday.type}
+                      </span>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -546,6 +573,8 @@ function AttendancePage() {
             )}
           </div>
         </TabsContent>
+          </>
+        )}
 
         <TabsContent value="leave" className="m-0 border-none p-0 outline-none space-y-6">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
@@ -701,8 +730,6 @@ function AttendancePage() {
           </div>
 
         </TabsContent>
-          </>
-        )}
       </Tabs>
 
       <Dialog open={isApplyLeaveOpen} onOpenChange={setIsApplyLeaveOpen}>

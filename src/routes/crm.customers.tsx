@@ -632,7 +632,7 @@ function CustomersPage() {
                   <TabsContent value="payments" className="m-0 outline-none flex flex-col h-full">
                     <div className="flex justify-between items-center mb-4">
                       <h3 className="font-semibold text-lg">Payment History</h3>
-                      <Link to="/crm/payments" search={{ customer: selectedCustomer.phone || selectedCustomer.name }} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
+                      <Link to="/crm/accounts" search={{ customer: selectedCustomer.phone || selectedCustomer.name }} className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground hover:bg-primary/90 h-9 px-4 py-2">
                         <Plus className="h-4 w-4 mr-2" /> Add Payment
                       </Link>
                     </div>

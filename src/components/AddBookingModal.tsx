@@ -27,16 +27,79 @@ interface AddBookingModalProps {
   editingBooking?: Booking | any;
 }
 
-const bookingTypes: { type: BookingType; icon: any; label: string }[] = [
-  { type: "Holiday Package", icon: Map, label: "Holiday Package" },
-  { type: "Hotel", icon: Hotel, label: "Hotel" },
-  { type: "Visa", icon: FileText, label: "Visa" },
-  { type: "Travel Insurance", icon: Shield, label: "Travel Insurance" },
-  { type: "Air Ticket", icon: Plane, label: "Air Ticket" },
-  { type: "Train Ticket", icon: Train, label: "Train Ticket" },
-  { type: "Taxi", icon: Car, label: "Taxi" },
-  { type: "Bus Ticket", icon: Bus, label: "Bus Ticket" },
+const getFormType = (bt: string) => {
+  if (!bt) return "";
+  if (bt === "Air Ticket") return "Air Ticket";
+  if (bt === "Hotel Booking") return "Hotel";
+  if (bt === "Visa") return "Visa";
+  if (bt === "Travel Insurance" || bt === "General Insurance") return "Travel Insurance";
+  if (bt === "Train Ticket") return "Train Ticket";
+  if (bt === "Bus Ticket") return "Bus Ticket";
+  if (bt === "Cruise Booking") return "Cruise";
+  if (bt === "Passport Assistance" || bt === "Visa Assistance") return "Assistance";
+  if (bt === "Forex Exchange") return "Forex";
+  if (bt === "Corporate Travel" || bt === "MICE Events" || bt === "Conference Booking") return "Corporate";
+  if (bt === "Taxi Booking" || bt === "Car Rental" || bt === "Airport Transfer") return "Taxi";
+  const packages = [
+    "International Package","Domestic Package","Honeymoon Package",
+    "Family Package","Group Tour","Corporate Tour","Luxury Tour","Adventure Tour",
+  ];
+  if (packages.includes(bt)) return "Holiday Package";
+  return "Generic";
+};
+
+const SERVICES = [
+  {
+    group: "Travel Services",
+    items: [
+      { label: "Air Ticket", icon: "✈️" },
+      { label: "Hotel Booking", icon: "🏨" },
+      { label: "Visa", icon: "🛂" },
+      { label: "Cruise Booking", icon: "🚢" },
+      { label: "Passport Assistance", icon: "📘" },
+      { label: "Forex Exchange", icon: "💱" },
+      { label: "Airport Transfer", icon: "🚕" },
+      { label: "Car Rental", icon: "🚗" },
+      { label: "Train Ticket", icon: "🚆" },
+      { label: "Bus Ticket", icon: "🚌" },
+      { label: "Taxi Booking", icon: "🚕" },
+      { label: "Travel Insurance", icon: "🛡️" },
+    ],
+  },
+  {
+    group: "Holiday Packages",
+    items: [
+      { label: "International Package", icon: "🌍" },
+      { label: "Domestic Package", icon: "🏝" },
+      { label: "Honeymoon Package", icon: "💖" },
+      { label: "Family Package", icon: "👨‍👩‍👧‍👦" },
+      { label: "Group Tour", icon: "🚌" },
+      { label: "Corporate Tour", icon: "🏢" },
+      { label: "Luxury Tour", icon: "✨" },
+      { label: "Adventure Tour", icon: "🧗" },
+    ],
+  },
+  {
+    group: "Business",
+    items: [
+      { label: "Corporate Travel", icon: "💼" },
+      { label: "MICE Events", icon: "🎤" },
+      { label: "Conference Booking", icon: "🎟" },
+    ],
+  },
 ];
+
+const SVC_COLOR: Record<string, string> = {
+  "Travel Services": "from-blue-500/10 to-sky-500/5 hover:from-blue-500/20 border-blue-200/60",
+  "Holiday Packages": "from-teal-500/10 to-emerald-500/5 hover:from-teal-500/20 border-teal-200/60",
+  Business: "from-violet-500/10 to-purple-500/5 hover:from-violet-500/20 border-violet-200/60",
+};
+
+const SVC_BADGE: Record<string, string> = {
+  "Travel Services": "bg-blue-100 text-blue-700",
+  "Holiday Packages": "bg-teal-100 text-teal-700",
+  Business: "bg-violet-100 text-violet-700",
+};
 
 function SearchableSelect({
   value,
@@ -104,7 +167,7 @@ function SearchableSelect({
 }
 
 export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, editingBooking }: AddBookingModalProps) {
-  const [bookingType, setBookingType] = useState<BookingType>("Holiday Package");
+  const [bookingType, setBookingType] = useState<BookingType | "">("");
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
@@ -173,7 +236,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
         setDetails(editingBooking.details || {});
         setIncludedServices(editingBooking.includedServices || { flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
       } else {
-        setBookingType("Holiday Package");
+        setBookingType("");
         setSupplier("");
         setBookingDate(new Date().toISOString().slice(0, 10));
         setCustomer(defaultCustomer || "");
@@ -275,7 +338,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
 
   const renderSectionHeader = (title: string) => (
     <div className="col-span-full border-b border-border pb-2 mt-4 mb-2 flex items-center gap-2">
-      <div className="h-4 w-1 bg-primary rounded-full"></div>
+      <div className="h-4 w-1 bg-red-500 rounded-full"></div>
       <h3 className="text-sm font-bold tracking-tight">{title}</h3>
     </div>
   );
@@ -283,45 +346,79 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-0 shadow-2xl bg-card">
-        <div className="sticky top-0 z-10 bg-card border-b border-border p-6 pb-4">
+        <div className="sticky top-0 z-10 bg-card border-b border-border p-6 pb-4 flex items-center justify-between">
           <DialogHeader>
-            <DialogTitle className="font-display text-xl font-bold">Add New Booking</DialogTitle>
+            <DialogTitle className="font-display text-xl font-bold flex items-center gap-2">
+              {editingBooking ? "Edit Booking" : (bookingType ? `New ${bookingType} Booking` : "Add New Booking")}
+            </DialogTitle>
             <DialogDescription className="text-xs mt-1">
-              Select a booking type and fill in the details below.
+              {bookingType ? "Fill in the details below." : "Select a booking type to continue."}
             </DialogDescription>
           </DialogHeader>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6 pt-2">
-          {/* Booking Type Selector */}
-          <div className="space-y-3">
-            <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Booking Type *
-            </Label>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
-              {bookingTypes.map((bt) => {
-                const Icon = bt.icon;
-                const isSelected = bookingType === bt.type;
-                return (
-                  <button
-                    key={bt.type}
-                    type="button"
-                    onClick={() => setBookingType(bt.type)}
-                    className={`flex items-center gap-2 p-2.5 rounded-xl border text-xs font-semibold transition-all ${isSelected
-                      ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20"
-                      : "bg-secondary/40 border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
-                      }`}
-                  >
-                    <Icon className="h-4 w-4" />
-                    {bt.label}
-                  </button>
-                );
-              })}
+        {bookingType && (
+          <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-secondary/30">
+            {!editingBooking && (
+              <button
+                type="button"
+                onClick={() => setBookingType("")}
+                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+              >
+                <span className="text-base">←</span>
+                <span className="hidden sm:inline">All Services</span>
+              </button>
+            )}
+            <div className="flex-1 flex items-center gap-2">
+              <span className="text-lg">{SERVICES.flatMap(g => g.items).find(i => i.label === bookingType)?.icon || "📋"}</span>
+              <span className="text-sm font-bold text-foreground">{bookingType}</span>
             </div>
           </div>
+        )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {renderSectionHeader("Common Details")}
+        <form onSubmit={handleSubmit} className="p-6 space-y-6 pt-2">
+          {/* Booking Type Selector */}
+          {!bookingType ? (
+            <div className="space-y-4">
+              <div className="flex flex-col gap-6">
+                {SERVICES.map((group) => (
+                  <div key={group.group}>
+                    <div className="flex items-center gap-2 mb-3">
+                      <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-gray-100 text-gray-600"}`}>
+                        {group.group}
+                      </span>
+                      <div className="flex-1 h-px bg-border" />
+                    </div>
+                    <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                      {group.items.map((item) => {
+                        const isSelected = bookingType === item.label;
+                        return (
+                          <button
+                            key={item.label}
+                            type="button"
+                            onClick={() => setBookingType(item.label as any)}
+                            className={`group relative flex flex-col items-center justify-center gap-2 rounded-2xl border bg-gradient-to-br p-3 text-center transition-all duration-200 hover:shadow-md hover:scale-[1.03] active:scale-[0.98] ${
+                              isSelected
+                                ? "bg-primary/10 border-primary/50 text-primary ring-1 ring-primary/20 scale-[1.03] shadow-md"
+                                : SVC_COLOR[group.group] ?? "hover:bg-secondary border-border"
+                            }`}
+                          >
+                            <span className="text-2xl leading-none">{item.icon}</span>
+                            <span className="text-[10px] sm:text-[11px] font-semibold leading-tight text-foreground line-clamp-2">
+                              {item.label}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {renderSectionHeader("Common Details")}
 
             <div className="space-y-2">
               <Label>Supplier *</Label>
@@ -390,7 +487,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
             {renderSectionHeader("Booking Details")}
 
             {/* DYNAMIC FORM FIELDS BASED ON TYPE */}
-            {bookingType === "Train Ticket" && (
+            {getFormType(bookingType) === "Train Ticket" && (
               <>
                 <div className="space-y-2">
                   <Label>Travel Date *</Label>
@@ -483,7 +580,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Air Ticket" && (
+            {getFormType(bookingType) === "Air Ticket" && (
               <>
                 <div className="space-y-2 md:col-span-2">
                   <Label>Trip Type *</Label>
@@ -623,7 +720,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Hotel" && (
+            {getFormType(bookingType) === "Hotel" && (
               <>
                 <div className="space-y-2">
                   <Label>Check In *</Label>
@@ -644,21 +741,21 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>City *</Label>
-                  <Input
-                    required
-                    value={details.city || ""}
-                    onChange={(e) => updateDetail("city", e.target.value)}
-                    placeholder="Goa"
-                  />
-                </div>
-                <div className="space-y-2">
                   <Label>Hotel Name *</Label>
                   <Input
                     required
                     value={details.hotelName || ""}
                     onChange={(e) => updateDetail("hotelName", e.target.value)}
                     placeholder="Taj Hotel"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>City *</Label>
+                  <Input
+                    required
+                    value={details.city || ""}
+                    onChange={(e) => updateDetail("city", e.target.value)}
+                    placeholder="Goa"
                   />
                 </div>
                 <div className="space-y-2">
@@ -673,8 +770,8 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                   <Label>Lead Passenger Name *</Label>
                   <Input
                     required
-                    value={details.leaderName || ""}
-                    onChange={(e) => updateDetail("leaderName", e.target.value)}
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
                     placeholder="Guest Name"
                   />
                 </div>
@@ -724,7 +821,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Holiday Package" && (
+            {getFormType(bookingType) === "Holiday Package" && (
               <>
                 <div className="col-span-1 md:col-span-2 mb-2">
                   <Label className="text-xs uppercase tracking-wider text-muted-foreground font-semibold">Auto-fill from Packages</Label>
@@ -1070,7 +1167,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Taxi" && (
+            {getFormType(bookingType) === "Taxi" && (
               <>
                 <div className="col-span-1 md:col-span-2">
                   <div className="flex p-1 bg-secondary/30 rounded-lg w-full mb-4 border">
@@ -1389,7 +1486,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Visa" && (
+            {getFormType(bookingType) === "Visa" && (
               <>
                 <div className="space-y-2">
                   <Label>Country *</Label>
@@ -1481,7 +1578,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               </>
             )}
 
-            {bookingType === "Travel Insurance" && (
+            {getFormType(bookingType) === "Travel Insurance" && (
               <div className="col-span-1 md:col-span-2 border rounded-xl p-6 bg-secondary/5 space-y-6">
                 <h4 className="text-sm font-semibold text-muted-foreground tracking-wider uppercase">Trip Details</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1492,12 +1589,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                         <SelectValue placeholder="Select Policy Type" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="Four Wheeler">Four Wheeler</SelectItem>
-                        <SelectItem value="Two Wheeler">Two Wheeler</SelectItem>
-                        <SelectItem value="Health">Health</SelectItem>
-                        <SelectItem value="Travel">Travel</SelectItem>
-                        <SelectItem value="Life">Life</SelectItem>
-                        <SelectItem value="General">General</SelectItem>
+                        <SelectItem value="Single Trip">Single Trip</SelectItem>
+                        <SelectItem value="Multi Trip">Multi Trip</SelectItem>
+                        <SelectItem value="Student Travel">Student Travel</SelectItem>
+                        <SelectItem value="Senior Citizen">Senior Citizen</SelectItem>
+                        <SelectItem value="Family Travel">Family Travel</SelectItem>
+                        <SelectItem value="Corporate Travel">Corporate Travel</SelectItem>
+                        <SelectItem value="Domestic">Domestic</SelectItem>
+                        <SelectItem value="International">International</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -1585,7 +1684,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
             )}
 
 
-            {bookingType === "Bus Ticket" && (
+            {getFormType(bookingType) === "Bus Ticket" && (
               <>
                 <div className="space-y-2">
                   <Label>Travel Date *</Label>
@@ -1632,6 +1731,358 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                   />
                 </div>
                 <div className="space-y-2 ">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {getFormType(bookingType) === "Cruise" && (
+              <>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label>Cruise Destination *</Label>
+                  <Input
+                    required
+                    value={details.cruiseDestination || ""}
+                    onChange={(e) => updateDetail("cruiseDestination", e.target.value)}
+                    placeholder="e.g. Dubai"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.cruiseDate || ""}
+                    onChange={(e) => updateDetail("cruiseDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Travellers</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={details.travellers || ""}
+                    onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Lead Passenger Name"
+                  />
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {getFormType(bookingType) === "Assistance" && (
+              <>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label>Applicant Location *</Label>
+                  <Input
+                    required
+                    value={details.applicantLocation || ""}
+                    onChange={(e) => updateDetail("applicantLocation", e.target.value)}
+                    placeholder="e.g. Dubai"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.assistanceDate || ""}
+                    onChange={(e) => updateDetail("assistanceDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Travellers</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={details.travellers || ""}
+                    onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Lead Passenger Name"
+                  />
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {getFormType(bookingType) === "Forex" && (
+              <>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label>Currency / Destination *</Label>
+                  <Input
+                    required
+                    value={details.currencyDestination || ""}
+                    onChange={(e) => updateDetail("currencyDestination", e.target.value)}
+                    placeholder="e.g. USD / Dubai"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.forexDate || ""}
+                    onChange={(e) => updateDetail("forexDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Travellers</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={details.travellers || ""}
+                    onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Lead Passenger Name"
+                  />
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <Label>Additional Passenger Names</Label>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 px-2 text-xs"
+                      onClick={() => {
+                        const current = Array.isArray(details.additionalNames) ? details.additionalNames : [];
+                        updateDetail("additionalNames", [...current, ""]);
+                      }}
+                    >
+                      <Plus className="h-3 w-3 mr-1" /> Add Name
+                    </Button>
+                  </div>
+                  {(Array.isArray(details.additionalNames) ? details.additionalNames : []).map((name: string, index: number) => (
+                    <div key={index} className="flex items-center gap-2 mt-2">
+                      <Input
+                        value={name}
+                        onChange={(e) => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames[index] = e.target.value;
+                          updateDetail("additionalNames", newNames);
+                        }}
+                        placeholder="Passenger Name"
+                      />
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        className="h-9 w-9 shrink-0 text-red-500 hover:text-red-600 hover:bg-red-50"
+                        onClick={() => {
+                          const newNames = [...(details.additionalNames as string[])];
+                          newNames.splice(index, 1);
+                          updateDetail("additionalNames", newNames);
+                        }}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {getFormType(bookingType) === "Corporate" && (
+              <>
+                <div className="space-y-2 col-span-1 md:col-span-2">
+                  <Label>Company Name *</Label>
+                  <Input
+                    required
+                    value={details.companyName || ""}
+                    onChange={(e) => updateDetail("companyName", e.target.value)}
+                    placeholder="e.g. TCS, Infosys..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Event / Trip Type</Label>
+                  <Input
+                    value={details.tripType || ""}
+                    onChange={(e) => updateDetail("tripType", e.target.value)}
+                    placeholder="e.g. Annual Meet, Team Outing..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Destination</Label>
+                  <Input
+                    value={details.corporateDestination || ""}
+                    onChange={(e) => updateDetail("corporateDestination", e.target.value)}
+                    placeholder="e.g. Goa, Singapore..."
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date *</Label>
+                  <Input
+                    type="date"
+                    required
+                    value={details.corporateDate || ""}
+                    onChange={(e) => updateDetail("corporateDate", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Pax</Label>
+                  <Input
+                    type="number"
+                    min="1"
+                    value={details.pax || ""}
+                    onChange={(e) => updateDetail("pax", parseInt(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Lead Passenger Name *</Label>
+                  <Input
+                    required
+                    value={details.passengerName || ""}
+                    onChange={(e) => updateDetail("passengerName", e.target.value)}
+                    placeholder="Lead Passenger Name"
+                  />
+                </div>
+                <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -1745,6 +2196,8 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               Save Booking
             </Button>
           </div>
+          </>
+          )}
         </form>
       </DialogContent>
     </Dialog>

@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getAuth } from "@/lib/auth";
-import { useState } from "react";
+import React, { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -15,7 +15,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2 } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -209,6 +209,12 @@ function AccountsPage() {
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
   const [employees] = useSupabaseTable<any[]>("employees", []);
   const [bookings, setBookings] = useSupabaseTable<any[]>("bookings", []);
+  const [leads] = useSupabaseTable<any[]>("leads", []);
+  const [tasks] = useSupabaseTable<any[]>("tasks", []);
+  const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
+  const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [vendorSearchQuery, setVendorSearchQuery] = useState("");
 
   // Transactions State
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
@@ -986,16 +992,363 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="customer-status" className="space-y-6 mt-6">
-          <div className="rounded-3xl border border-border bg-card p-12 text-center animate-in fade-in duration-300">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Customer Payment Status</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">Track and manage customer payments, follow-ups, and statuses here.</p>
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
+            <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Customer 360° Overview</h3>
+                <p className="text-sm text-muted-foreground">Track all leads, tasks, bookings, and revenue by customer. Click on a row to view details.</p>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search customers..."
+                  className="pl-9 bg-background/50"
+                  value={customerSearchQuery}
+                  onChange={(e) => setCustomerSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-secondary/50 text-muted-foreground font-semibold">
+                  <tr>
+                    <th className="px-6 py-4 rounded-tl-xl w-10"></th>
+                    <th className="px-6 py-4">Customer Name</th>
+                    <th className="px-6 py-4">Leads</th>
+                    <th className="px-6 py-4">Tasks</th>
+                    <th className="px-6 py-4">Bookings</th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Revenue</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {(() => {
+                    // Gather all unique customer names from all tables
+                    const allCustomerNames = new Set<string>();
+                    customers.forEach(c => c.name && allCustomerNames.add(c.name));
+                    leads.forEach(l => {
+                      if (l.name) allCustomerNames.add(l.name);
+                      if (l.customer) allCustomerNames.add(l.customer);
+                    });
+                    bookings.forEach(b => {
+                      if (b.customer) allCustomerNames.add(b.customer);
+                    });
+                    tasks.forEach(t => {
+                      if (t.customer_id) allCustomerNames.add(t.customer_id);
+                      if (t.lead) allCustomerNames.add(t.lead);
+                    });
+                    
+                    const uniqueCustomers = Array.from(allCustomerNames)
+                      .filter(Boolean)
+                      .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+                      .sort();
+                    
+                    return uniqueCustomers.length === 0 ? (
+                      <tr>
+                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Search className="h-8 w-8 opacity-20" />
+                            <p>No customers found.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : uniqueCustomers.map((customerName, index) => {
+                      // Attempt to find full customer object if it exists in the 'customers' table
+                      const customerData = customers.find(c => c.name === customerName) || { id: `synth-${index}`, name: customerName };
+                      
+                      const isExpanded = expandedCustomer === customerData.id;
+                      const cLeads = leads.filter(l => l.name === customerName || l.customer === customerName);
+                      const cTasks = tasks.filter(t => t.customer_id === customerName || t.lead === customerName);
+                      const cBookings = bookings.filter(b => b.customer === customerName);
+                      const cRevenue = transactions
+                        .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName) && tx.type === "Receipt")
+                        .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                      
+                      const activeLeads = cLeads.filter(l => !['Lost', 'Confirmed', 'Completed'].includes(l.status)).length;
+                      const pendingTasks = cTasks.filter(t => t.status !== 'Completed').length;
+                      
+                      const vendorSet = new Set<string>();
+                      cBookings.forEach(b => {
+                        if (b.supplier) vendorSet.add(b.supplier);
+                      });
+                      const cVendors = Array.from(vendorSet);
+                      
+                      return (
+                        <React.Fragment key={customerData.id}>
+                          <tr 
+                            onClick={() => setExpandedCustomer(isExpanded ? null : customerData.id)}
+                            className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                          >
+                            <td className="px-6 py-4">
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            </td>
+                            <td className="px-6 py-4 font-bold text-foreground">
+                              {customerName}
+                              {customerData.company && <div className="text-xs font-normal text-muted-foreground mt-0.5">{customerData.company}</div>}
+                            </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium">{cLeads.length} Total</span>
+                              {activeLeads > 0 && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full w-fit">{activeLeads} Active</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <div className="flex flex-col gap-1">
+                              <span className="font-medium">{cTasks.length} Total</span>
+                              {pendingTasks > 0 && <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded-full w-fit">{pendingTasks} Pending</span>}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-medium">{cBookings.length} Total</span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(cRevenue)}</span>
+                          </td>
+                        </tr>
+                        
+                        {isExpanded && (
+                          <tr className="bg-secondary/5 border-b border-border">
+                            <td colSpan={6} className="p-0">
+                              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top-2 duration-200">
+                                {/* Leads List */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Leads</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cLeads.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {cLeads.length > 0 ? cLeads.map((lead: any, i: number) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
+                                        <div className="flex justify-between items-start mb-1">
+                                          <span className="font-medium">{lead.destination || 'General Inquiry'}</span>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{lead.status}</span>
+                                        </div>
+                                        {lead.budget && <div className="text-muted-foreground mt-1">Budget: {formatINR(lead.budget)}</div>}
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No leads found.</div>}
+                                  </div>
+                                </div>
+                                
+                                {/* Tasks List */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Tasks</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cTasks.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {cTasks.length > 0 ? cTasks.map((task: any, i: number) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
+                                        <div className="flex justify-between items-start mb-1">
+                                          <span className="font-medium line-clamp-1" title={task.title}>{task.title}</span>
+                                        </div>
+                                        <div className="flex justify-between items-center mt-1">
+                                          <span className="text-muted-foreground">{task.assigned_to}</span>
+                                          <span className={`text-[9px] px-1.5 py-0.5 rounded-sm ${task.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{task.status}</span>
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No tasks found.</div>}
+                                  </div>
+                                </div>
+                                
+                                {/* Bookings List */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Bookings</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cBookings.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {cBookings.length > 0 ? cBookings.map((bk: any, i: number) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
+                                        <div className="flex justify-between items-start mb-1">
+                                          <span className="font-medium">{bk.bookingType}</span>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
+                                        </div>
+                                        <div className="text-muted-foreground mt-1">{bk.bookingDate}</div>
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No bookings found.</div>}
+                                  </div>
+                                </div>
+                                
+                                {/* Vendors & Suppliers */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Associated Vendors</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cVendors.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {cVendors.length > 0 ? cVendors.map((vendor, i) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium flex items-center gap-2">
+                                        <Building2 className="h-3 w-3 text-muted-foreground" />
+                                        {vendor}
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No vendors linked.</div>}
+                                  </div>
+                                </div>
+                                
+                              </div>
+                            </td>
+                          </tr>
+                        )}
+                      </React.Fragment>
+                    );
+                  })})()}
+                </tbody>
+              </table>
+            </div>
           </div>
         </TabsContent>
 
         <TabsContent value="vendor-status" className="space-y-6 mt-6">
-          <div className="rounded-3xl border border-border bg-card p-12 text-center animate-in fade-in duration-300">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Vendor Payment Status</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">Track and manage vendor payments, follow-ups, and statuses here.</p>
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
+            <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+              <div>
+                <h3 className="text-lg font-semibold text-foreground">Vendor 360° Overview</h3>
+                <p className="text-sm text-muted-foreground">Track all bookings, customers, and payments by vendor. Click on a row to view details.</p>
+              </div>
+              <div className="relative w-full sm:w-64">
+                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search vendors..."
+                  className="pl-9 bg-background/50"
+                  value={vendorSearchQuery}
+                  onChange={(e) => setVendorSearchQuery(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm text-left">
+                <thead className="bg-secondary/50 text-muted-foreground font-semibold">
+                  <tr>
+                    <th className="px-6 py-4 rounded-tl-xl w-10"></th>
+                    <th className="px-6 py-4">Vendor Name</th>
+                    <th className="px-6 py-4">Bookings</th>
+                    <th className="px-6 py-4">Customers Linked</th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Paid</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {(() => {
+                    const allVendorNames = new Set<string>();
+                    vendors.forEach(v => v.name && allVendorNames.add(v.name));
+                    bookings.forEach(b => {
+                      if (b.supplier) allVendorNames.add(b.supplier);
+                    });
+                    transactions.forEach(tx => {
+                      if (tx.entityType === "Vendor" && tx.entityId) {
+                        const vData = vendors.find(v => v.id === tx.entityId);
+                        if (vData && vData.name) allVendorNames.add(vData.name);
+                        else allVendorNames.add(tx.entityId);
+                      }
+                    });
+                    
+                    const uniqueVendors = Array.from(allVendorNames)
+                      .filter(Boolean)
+                      .filter(name => name.toLowerCase().includes(vendorSearchQuery.toLowerCase()))
+                      .sort();
+                    
+                    return uniqueVendors.length === 0 ? (
+                      <tr>
+                        <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                          <div className="flex flex-col items-center gap-2">
+                            <Search className="h-8 w-8 opacity-20" />
+                            <p>No vendors found.</p>
+                          </div>
+                        </td>
+                      </tr>
+                    ) : uniqueVendors.map((vendorName, index) => {
+                      const vendorData = vendors.find(v => v.name === vendorName) || { id: `synth-v-${index}`, name: vendorName };
+                      
+                      const isExpanded = expandedVendor === vendorData.id;
+                      const vBookings = bookings.filter(b => b.supplier === vendorName);
+                      
+                      const vSpend = transactions
+                        .filter(tx => tx.entityType === "Vendor" && (tx.entityId === vendorData.id || tx.entityId === vendorName) && tx.type === "Payment")
+                        .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                      
+                      const customerSet = new Set<string>();
+                      vBookings.forEach(b => {
+                        if (b.customer) customerSet.add(b.customer);
+                      });
+                      const vCustomers = Array.from(customerSet);
+                      
+                      return (
+                        <React.Fragment key={vendorData.id}>
+                          <tr 
+                            onClick={() => setExpandedVendor(isExpanded ? null : vendorData.id)}
+                            className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                          >
+                            <td className="px-6 py-4">
+                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                            </td>
+                            <td className="px-6 py-4 font-bold text-foreground">
+                              {vendorName}
+                              {vendorData.serviceType && <div className="text-xs font-normal text-muted-foreground mt-0.5">{vendorData.serviceType}</div>}
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-medium">{vBookings.length} Total</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-medium">{vCustomers.length} Total</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <span className="font-bold text-rose-600 dark:text-rose-400">{formatINR(vSpend)}</span>
+                            </td>
+                          </tr>
+                          
+                          {isExpanded && (
+                            <tr className="bg-secondary/5 border-b border-border">
+                              <td colSpan={5} className="p-0">
+                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
+                                  {/* Bookings List */}
+                                  <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                    <h4 className="font-semibold flex justify-between items-center text-sm">
+                                      <span>Bookings via Vendor</span>
+                                      <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vBookings.length}</span>
+                                    </h4>
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                      {vBookings.length > 0 ? vBookings.map((bk: any, i: number) => (
+                                        <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
+                                          <div className="flex justify-between items-start mb-1">
+                                            <span className="font-medium">{bk.bookingType}</span>
+                                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
+                                          </div>
+                                          <div className="flex justify-between mt-1">
+                                            <span className="text-muted-foreground">{bk.customer}</span>
+                                            <span className="text-muted-foreground">{bk.bookingDate}</span>
+                                          </div>
+                                        </div>
+                                      )) : <div className="text-xs text-muted-foreground italic">No bookings found for this vendor.</div>}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Customers List */}
+                                  <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                    <h4 className="font-semibold flex justify-between items-center text-sm">
+                                      <span>Associated Customers</span>
+                                      <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vCustomers.length}</span>
+                                    </h4>
+                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                      {vCustomers.length > 0 ? vCustomers.map((cust, i) => (
+                                        <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium flex justify-between items-center gap-2">
+                                          <span>{cust}</span>
+                                          <div className="text-[9px] bg-secondary px-1.5 py-0.5 rounded-full text-muted-foreground">
+                                            {vBookings.filter(b => b.customer === cust).length} Bookings
+                                          </div>
+                                        </div>
+                                      )) : <div className="text-xs text-muted-foreground italic">No customers linked.</div>}
+                                    </div>
+                                  </div>
+                                  
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </React.Fragment>
+                      );
+                    });
+                  })()}
+                </tbody>
+              </table>
+            </div>
           </div>
         </TabsContent>
       </Tabs>

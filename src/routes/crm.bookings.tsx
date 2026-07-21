@@ -75,6 +75,7 @@ import { ImportModal } from "@/components/ui/import-modal";
 import { formatINR, type Booking } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth } from "@/lib/auth";
+import { supabase } from "@/lib/supabase";
 import { AddBookingModal } from "@/components/AddBookingModal";
 import { BookingType } from "@/lib/mock-data";
 
@@ -700,29 +701,57 @@ function BookingsPage() {
     setBookingList((prev) => [...importedBookings, ...prev]);
   };
 
-  const handleAddBookingSave = (booking: Booking) => {
-    const isDuplicate = bookingList.some(
-      (b) =>
-        b.customer.toLowerCase() === booking.customer.toLowerCase() &&
-        b.bookingType === booking.bookingType &&
-        b.bookingDate === booking.bookingDate
-    );
-    if (isDuplicate) {
-      alert("A booking for this customer on this date with this type already exists.");
-      return;
+  const handleAddBookingSave = async (booking: Booking) => {
+    try {
+      const isEdit = bookingList.some((b) => b.id === booking.id);
+      
+      if (!isEdit) {
+        const isDuplicate = bookingList.some(
+          (b) =>
+            b.customer.toLowerCase() === booking.customer.toLowerCase() &&
+            b.bookingType === booking.bookingType &&
+            b.bookingDate === booking.bookingDate
+        );
+        if (isDuplicate) {
+          alert("A booking for this customer on this date with this type already exists.");
+          return;
+        }
+      }
+
+      let finalBooking = { ...booking };
+      if (!isEdit) {
+        const currentMaxId = bookingList.reduce((max, b) => {
+          const numStr = String(b.id || "").replace(/BK-?/i, "");
+          const num = parseInt(numStr, 10);
+          return !isNaN(num) && num > max ? num : max;
+        }, 0);
+        const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
+        finalBooking.id = nextId;
+        
+        // Insert into Supabase directly
+        const { error } = await supabase.from("bookings").insert([finalBooking]);
+        if (error) {
+          console.error("Error inserting booking:", error);
+          alert("Failed to save booking to database.");
+          return;
+        }
+      } else {
+        // Update Supabase directly
+        const { error } = await supabase.from("bookings").update(finalBooking).eq("id", finalBooking.id);
+        if (error) {
+          console.error("Error updating booking:", error);
+          alert("Failed to update booking in database.");
+          return;
+        }
+      }
+
+      setBookingList(prev => isEdit ? prev.map(b => b.id === finalBooking.id ? finalBooking : b) : [finalBooking, ...prev]);
+      setSuccessBooking(finalBooking);
+      setShowSuccess(true);
+    } catch (err) {
+      console.error("Unexpected error saving booking:", err);
+      alert("An unexpected error occurred.");
     }
-
-    const currentMaxId = bookingList.reduce((max, b) => {
-      const numStr = String(b.id || "").replace(/BK-?/i, "");
-      const num = parseInt(numStr, 10);
-      return !isNaN(num) && num > max ? num : max;
-    }, 0);
-    const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
-    const newBooking = { ...booking, id: nextId };
-
-    setBookingList([newBooking, ...bookingList]);
-    setSuccessBooking(newBooking);
-    setShowSuccess(true);
   };
 
   const filteredBookings = allBookings.filter((b) => {
