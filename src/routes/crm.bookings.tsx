@@ -1417,6 +1417,8 @@ function BookingsPage() {
                 <th className="px-4 py-3 whitespace-nowrap">Passenger Name</th>
                 <th className="px-4 py-3 whitespace-nowrap">Mobile No</th>
                 <th className="px-4 py-3 whitespace-nowrap">Selling Price (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap">Paid (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap">Pending (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Purchase Price (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Profit (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Booked By</th>
@@ -1439,6 +1441,8 @@ function BookingsPage() {
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-primary">{formatINR(b.sellingPrice || b.amount || 0)}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600 dark:text-emerald-400">{formatINR(b.paid || 0)}</td>
+                    <td className="px-4 py-3 font-medium whitespace-nowrap text-rose-600 dark:text-rose-400">{formatINR((b.sellingPrice || b.amount || 0) - (b.paid || 0))}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookedBy || "-"}</td>
