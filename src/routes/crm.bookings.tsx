@@ -727,13 +727,35 @@ function BookingsPage() {
         }, 0);
         const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
         finalBooking.id = nextId;
-        
+        finalBooking.paymentStatus = "Pending";
+
         // Insert into Supabase directly
         const { error } = await supabase.from("bookings").insert([finalBooking]);
         if (error) {
           console.error("Error inserting booking:", error);
           alert("Failed to save booking to database.");
           return;
+        }
+
+        // Update customer status to Payment Pending
+        if (finalBooking.customer) {
+          try {
+            // Find the customer by name matching
+            const { data: customerMatch } = await supabase
+              .from("customers")
+              .select("id")
+              .ilike("name", `%${finalBooking.customer}%`)
+              .limit(1);
+            
+            if (customerMatch && customerMatch.length > 0) {
+              await supabase
+                .from("customers")
+                .update({ status: "Payment Pending" })
+                .eq("id", customerMatch[0].id);
+            }
+          } catch (err) {
+            console.error("Failed to update customer status:", err);
+          }
         }
       } else {
         // Update Supabase directly
@@ -1421,22 +1443,9 @@ function BookingsPage() {
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookedBy || "-"}</td>
                     <td className="px-4 py-3 whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <Select
-                        value={b.status || "Pending"}
-                        onValueChange={(val: Booking["status"]) => updateBookingStatus(b.id, val)}
-                      >
-                        <SelectTrigger className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}>
-                          <SelectValue />
-                          <ChevronDown className="h-3 w-3 opacity-70 ml-1" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {["Confirmed", "Pending", "Cancelled", "Completed", "Partial", "Paid", "Refunded"].map((s) => (
-                            <SelectItem key={s} value={s} className="text-xs font-semibold">
-                              {s}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <span className={`inline-flex items-center rounded-full px-3 py-1 text-[10px] font-bold tracking-wider uppercase border-none h-auto w-auto ${statusColor[b.status as keyof typeof statusColor] || statusColor["Pending"]}`}>
+                        {b.status || "Pending"}
+                      </span>
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-1.5" onClick={(e) => e.stopPropagation()}>

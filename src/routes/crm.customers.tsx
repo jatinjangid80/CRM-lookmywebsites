@@ -22,6 +22,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import { formatINR, Customer as BaseCustomer } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { ImportCustomersModal } from "@/components/ui/import-customers-modal";
@@ -39,13 +47,13 @@ export interface ExtCustomer extends BaseCustomer {
   company?: string;
   city?: string;
   source?: string;
-  status: "Active" | "Inactive" | "VIP";
+  status: "Active" | "Inactive" | "VIP" | "Payment Pending" | "Partial Payment Received" | "Payment Received";
   createdAt: string;
   lastBookingDate?: string;
   assignedTo?: string;
 }
 
-const CUSTOMER_STATUSES = ["Active", "Inactive", "VIP"];
+const CUSTOMER_STATUSES = ["Active", "Inactive", "VIP", "Payment Pending", "Partial Payment Received", "Payment Received"];
 const SOURCES = ["Website", "Referral", "Facebook", "Instagram", "Ads", "Walk-in", "Other"];
 
 function CustomersPage() {
@@ -301,81 +309,100 @@ function CustomersPage() {
         </div>
       </div>
 
-      {/* Grid View */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-        {filtered.length === 0 ? (
-          <div className="col-span-full flex flex-col items-center justify-center py-12 text-muted-foreground bg-card rounded-2xl border border-dashed">
-            <User className="h-12 w-12 mb-4 opacity-50" />
-            <p>No customers found matching your criteria.</p>
-          </div>
-        ) : (
-          filtered.map((c) => (
-            <div key={c.id} className="bg-card rounded-[24px] border border-border p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col">
-              <div className="flex justify-between items-start mb-6">
-                <div className="flex items-center gap-4">
-                  <div className="h-12 w-12 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold text-lg shrink-0">
-                    {c.name.charAt(0).toUpperCase()}
+      {/* Table View */}
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50">
+              <TableHead>Customer Info</TableHead>
+              <TableHead>Contact Details</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {filtered.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center">
+                    <User className="h-10 w-10 mb-3 opacity-50" />
+                    <p>No customers found matching your criteria.</p>
                   </div>
-                  <div>
-                    <div className="font-bold text-foreground text-lg leading-tight flex items-center gap-2">
-                      {c.name}
-                      <StatusBadge status={c.status} />
+                </TableCell>
+              </TableRow>
+            ) : (
+              filtered.map((c) => (
+                <TableRow key={c.id} className="group">
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                        {c.name.charAt(0).toUpperCase()}
+                      </div>
+                      <div>
+                        <div className="font-semibold text-foreground">{c.name}</div>
+                        <div className="text-xs text-muted-foreground">{c.id}</div>
+                      </div>
                     </div>
-                    <div className="text-xs text-muted-foreground mt-0.5">{c.id}</div>
-                  </div>
-                </div>
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" className="h-8 w-8 p-0 opacity-50 hover:opacity-100 transition-opacity">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                    <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}>
-                      <User className="mr-2 h-4 w-4" /> View Profile
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
-                      <FileText className="mr-2 h-4 w-4" /> Edit Customer
-                    </DropdownMenuItem>
-                    <DropdownMenuSeparator />
-                    {isAdmin && (
-                      <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
-                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                      </DropdownMenuItem>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-center gap-2 text-sm text-foreground/80">
+                        <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                        {c.phone}
+                      </div>
+                      {c.email && (
+                        <div className="flex items-center gap-2 text-sm text-foreground/80">
+                          <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                          <span className="truncate max-w-[150px] sm:max-w-[200px]">{c.email}</span>
+                        </div>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {c.city ? (
+                      <div className="flex items-center gap-2 text-sm text-foreground/80">
+                        <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                        {c.city}
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-sm">-</span>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>
-
-              <div className="space-y-3 mb-6 flex-1">
-                <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                  <Phone className="h-4 w-4 text-foreground/50 shrink-0" /> 
-                  <span className="font-medium text-foreground/80">{c.phone}</span>
-                </div>
-                {c.email && (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <Mail className="h-4 w-4 text-foreground/50 shrink-0" />
-                    <span className="truncate font-medium text-foreground/80">{c.email}</span>
-                  </div>
-                )}
-                {c.city && (
-                  <div className="flex items-center gap-3 text-sm text-muted-foreground">
-                    <MapPin className="h-4 w-4 text-foreground/50 shrink-0" />
-                    <span className="font-medium text-foreground/80">{c.city}</span>
-                  </div>
-                )}
-              </div>
-
-              <Button 
-                variant="outline" 
-                className="w-full rounded-xl bg-transparent border-border hover:bg-secondary/50 h-10 font-semibold"
-                onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}
-              >
-                View History
-              </Button>
-            </div>
-          ))
-        )}
+                  </TableCell>
+                  <TableCell>
+                    <StatusBadge status={c.status} />
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="ghost" size="icon" className="opacity-50 group-hover:opacity-100 transition-opacity">
+                          <MoreVertical className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                        <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}>
+                          <User className="mr-2 h-4 w-4" /> View Profile
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}>
+                          <History className="mr-2 h-4 w-4" /> View History
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
+                          <FileText className="mr-2 h-4 w-4" /> Edit Customer
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        {isAdmin && (
+                          <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
+                            <Trash2 className="mr-2 h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        )}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* ── Modals ── */}

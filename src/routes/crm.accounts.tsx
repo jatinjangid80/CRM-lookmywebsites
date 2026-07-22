@@ -1014,9 +1014,9 @@ function AccountsPage() {
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
                     <th className="px-6 py-4">Customer Name</th>
-                    <th className="px-6 py-4">Leads</th>
-                    <th className="px-6 py-4">Tasks</th>
-                    <th className="px-6 py-4">Bookings</th>
+                    <th className="px-6 py-4">Phone No.</th>
+                    <th className="px-6 py-4">Payments Pending</th>
+                    <th className="px-6 py-4">Received Amounts</th>
                     <th className="px-6 py-4 text-right rounded-tr-xl">Total Revenue</th>
                   </tr>
                 </thead>
@@ -1081,6 +1081,9 @@ function AccountsPage() {
                         if (b.supplier) vendorSet.add(b.supplier);
                       });
                       const cVendors = Array.from(vendorSet);
+                      const cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                      const cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                      const cPendingBalance = cTotalRevenue - cReceivedAmount;
                       
                       return (
                         <React.Fragment key={customerData.id}>
@@ -1095,23 +1098,21 @@ function AccountsPage() {
                               {customerName}
                               {customerData.company && <div className="text-xs font-normal text-muted-foreground mt-0.5">{customerData.company}</div>}
                             </td>
-                          <td className="px-6 py-4">
-                            <div className="flex flex-col gap-1">
-                              <span className="font-medium">{cLeads.length} Total</span>
-                              {activeLeads > 0 && <span className="text-[10px] font-bold text-amber-600 bg-amber-50 dark:bg-amber-950/30 px-2 py-0.5 rounded-full w-fit">{activeLeads} Active</span>}
-                            </div>
+                          <td className="px-6 py-4 text-muted-foreground">
+                            {customerData.phone || <span className="italic opacity-50">N/A</span>}
                           </td>
                           <td className="px-6 py-4">
-                            <div className="flex flex-col gap-1">
-                              <span className="font-medium">{cTasks.length} Total</span>
-                              {pendingTasks > 0 && <span className="text-[10px] font-bold text-rose-600 bg-rose-50 dark:bg-rose-950/30 px-2 py-0.5 rounded-full w-fit">{pendingTasks} Pending</span>}
-                            </div>
+                            <span className={`font-bold ${cPendingBalance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              {formatINR(cPendingBalance > 0 ? cPendingBalance : 0)}
+                            </span>
                           </td>
                           <td className="px-6 py-4">
-                            <span className="font-medium">{cBookings.length} Total</span>
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                              {formatINR(cReceivedAmount)}
+                            </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(cRevenue)}</span>
+                            <span className="font-bold text-foreground">{formatINR(cTotalRevenue)}</span>
                           </td>
                         </tr>
                         
@@ -1459,6 +1460,31 @@ function AccountsPage() {
                 }}
               />
             </div>
+            
+            {newTx.type === "Receipt" && newTx.invoiceId && (() => {
+              const selectedBooking = bookings.find(b =>
+                String(b.id).toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
+                String(b.saleInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
+                String(b.purchaseInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase()
+              );
+              if (!selectedBooking) return null;
+              return (
+                <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Total Amount</div>
+                    <div className="font-semibold text-foreground">{formatINR(selectedBooking.amount || 0)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Amount Paid</div>
+                    <div className="font-semibold text-emerald-600">{formatINR(selectedBooking.paid || 0)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Remaining Balance</div>
+                    <div className="font-semibold text-rose-600">{formatINR((selectedBooking.amount || 0) - (selectedBooking.paid || 0))}</div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="space-y-2">
               <Label>Select {newTx.entityType}</Label>
@@ -1473,8 +1499,8 @@ function AccountsPage() {
                       const matched = customers.find(c => c.id === v);
                       if (matched) {
                         const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
-                        pending = customerBookings.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
-                        const unpaid = customerBookings.find(b => ((b.amount || 0) - (b.paid || 0)) > 0);
+                        pending = customerBookings.reduce((sum, b) => sum + (((Number(b.sellingPrice) || Number(b.amount) || 0)) - (b.paid || 0)), 0);
+                        const unpaid = customerBookings.find(b => (((Number(b.sellingPrice) || Number(b.amount) || 0)) - (b.paid || 0)) > 0);
                         if (unpaid) invoiceId = unpaid.id;
                       }
                     } else if (newTx.entityType === "Vendor") {
@@ -1494,6 +1520,49 @@ function AccountsPage() {
                 employees={employees}
               />
             </div>
+
+            {newTx.type === "Receipt" && newTx.entityId && (() => {
+              let totalAmount = 0;
+              let totalPaid = 0;
+              let isMatch = false;
+
+              if (newTx.entityType === "Customer") {
+                const matched = customers.find(c => c.id === newTx.entityId);
+                if (matched) {
+                  const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
+                  totalAmount = customerBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                  totalPaid = customerBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                  isMatch = customerBookings.length > 0;
+                }
+              } else if (newTx.entityType === "Vendor") {
+                const matched = vendors.find(v => v.id === newTx.entityId);
+                if (matched) {
+                  const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
+                  totalAmount = vendorBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
+                  totalPaid = vendorBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                  isMatch = vendorBookings.length > 0;
+                }
+              }
+
+              if (!isMatch) return null;
+
+              return (
+                <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Total Cost</div>
+                    <div className="font-semibold text-foreground">{formatINR(totalAmount)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Amount Paid So Far</div>
+                    <div className="font-semibold text-emerald-600">{formatINR(totalPaid)}</div>
+                  </div>
+                  <div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Pending Balance</div>
+                    <div className="font-semibold text-rose-600">{formatINR(totalAmount - totalPaid)}</div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -1558,11 +1627,58 @@ function AccountsPage() {
 
                 if (targetBooking) {
                   const currentPaid = targetBooking.paid || 0;
+                  const newPaid = currentPaid + newTx.amount;
+                  
+                  let newPaymentStatus = targetBooking.paymentStatus;
+                  let newCustomerStatus = "";
+                  
+                  if (newTx.type === "Receipt") {
+                    const totalAmount = targetBooking.amount || 0;
+                    if (newPaid === 0) {
+                      newPaymentStatus = "Pending";
+                      newCustomerStatus = "Payment Pending";
+                    } else if (newPaid < totalAmount) {
+                      newPaymentStatus = "Partially Paid";
+                      newCustomerStatus = "Partial Payment Received";
+                    } else {
+                      newPaymentStatus = "Paid / Completed";
+                      newCustomerStatus = "Payment Received";
+                    }
+                  }
+
                   const updatedBooking = {
                     ...targetBooking,
-                    paid: currentPaid + newTx.amount
+                    paid: newPaid,
+                    paymentStatus: newPaymentStatus
                   };
+                  
                   setBookings(bookings.map(b => b.id === targetBooking.id ? updatedBooking : b));
+
+                  // Async update to database for Booking and Customer
+                  (async () => {
+                    try {
+                      await supabase.from("bookings").update({
+                        paid: newPaid,
+                        paymentStatus: newPaymentStatus
+                      }).eq("id", targetBooking.id);
+
+                      if (newTx.type === "Receipt" && targetBooking.customer && newCustomerStatus) {
+                        const { data: cData } = await supabase
+                          .from("customers")
+                          .select("id")
+                          .ilike("name", `%${targetBooking.customer}%`)
+                          .limit(1);
+                        if (cData && cData.length > 0) {
+                          await supabase
+                            .from("customers")
+                            .update({ status: newCustomerStatus })
+                            .eq("id", cData[0].id);
+                        }
+                      }
+                    } catch (err) {
+                      console.error("Failed to update status in Supabase:", err);
+                    }
+                  })();
                 }
               }
 
