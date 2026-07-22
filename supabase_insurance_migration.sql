@@ -98,3 +98,7 @@ create table public.insurance_policies (
 alter publication supabase_realtime add table public.insurance_vendors;
 alter publication supabase_realtime add table public.insurance_companies;
 alter publication supabase_realtime add table public.insurance_policies;
+
+-- Added for extra payment tracking
+alter table public.insurance_policies add column if not exists paid_by text;
+alter table public.insurance_policies add column if not exists amount_paid numeric default 0;

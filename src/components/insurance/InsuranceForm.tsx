@@ -102,7 +102,9 @@ export function InsuranceForm({
     payment_mode: "Bank Transfer",
     transaction_reference: "",
     payment_status: "Pending",
-    notes: ""
+    notes: "",
+    paid_by: "",
+    amount_paid: 0
   });
 
   useEffect(() => {
@@ -189,7 +191,7 @@ export function InsuranceForm({
       "registration_date", "payment_date", "issue_date", "expiry_date",
       "seating_capacity", "idv_value", "ncb_percentage",
       "od_premium", "tp_premium", "net_premium", "gst", "total_premium", 
-      "customer_paid", "vendor_paid", "profit"
+      "customer_paid", "vendor_paid", "profit", "amount_paid"
     ];
     
     fieldsToScrub.forEach(field => {
@@ -655,6 +657,23 @@ export function InsuranceForm({
                   type="number"
                   value={form.customer_paid}
                   onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Paid By</Label>
+                <Input
+                  value={form.paid_by || ""}
+                  onChange={(e) => setForm({ ...form, paid_by: e.target.value })}
+                  placeholder="Who made the payment?"
+                />
+              </div>
+              <div className="space-y-1">
+                <Label>Amount Paid</Label>
+                <Input
+                  type="number"
+                  value={form.amount_paid || ""}
+                  onChange={(e) => setForm({ ...form, amount_paid: e.target.value })}
+                  placeholder="0"
                 />
               </div>
               <div className="space-y-1">
