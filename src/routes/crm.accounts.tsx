@@ -1036,6 +1036,15 @@ function AccountsPage() {
                       if (t.customer_id) allCustomerNames.add(t.customer_id);
                       if (t.lead) allCustomerNames.add(t.lead);
                     });
+                    transactions.forEach(tx => {
+                      if (tx.entityType === "Customer") {
+                        const c = customers.find(c => c.id === tx.entityId);
+                        if (c && c.name) allCustomerNames.add(c.name);
+                      }
+                    });
+                    followUpsList.forEach(fu => {
+                      if (fu.customerName) allCustomerNames.add(fu.customerName);
+                    });
                     
                     const uniqueCustomers = Array.from(allCustomerNames)
                       .filter(Boolean)
@@ -1045,10 +1054,11 @@ function AccountsPage() {
                         const cLeads = leads.filter(l => l.name === name || l.customer === name);
                         const cTasks = tasks.filter(t => t.customer_id === name || t.lead === name);
                         const cBookings = bookings.filter(b => b.customer === name);
+                        const cFollowUps = followUpsList.filter(f => f.customerName === name || f.customerId === customerData.id);
                         const cRevenue = transactions
                           .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === name) && tx.type === "Receipt")
                           .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-                        return cLeads.length > 0 || cTasks.length > 0 || cBookings.length > 0 || cRevenue > 0;
+                        return cLeads.length > 0 || cTasks.length > 0 || cBookings.length > 0 || cRevenue > 0 || cFollowUps.length > 0;
                       })
                       .sort();
                     
@@ -1081,8 +1091,25 @@ function AccountsPage() {
                         if (b.supplier) vendorSet.add(b.supplier);
                       });
                       const cVendors = Array.from(vendorSet);
-                      const cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
-                      const cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                      const cFollowUps = followUpsList.filter(f => f.customerName === customerName || f.customerId === customerData.id);
+                      const cTransactions = transactions.filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName));
+                      
+                      let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                      
+                      cFollowUps.forEach(f => {
+                         if (!f.invoiceId || f.invoiceId.includes("INV-NEW") || !cBookings.some(b => b.id === f.invoiceId || b.saleInvoiceNo === f.invoiceId)) {
+                           cTotalRevenue += (Number(f.totalAmount) || 0);
+                         }
+                      });
+                      
+                      let cReceivedAmount = cRevenue; // Use manual receipts
+                      cBookings.forEach(b => {
+                        const hasReceipt = cTransactions.some(tx => tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo);
+                        if (!hasReceipt) {
+                          cReceivedAmount += (Number(b.paid) || 0);
+                        }
+                      });
+                      
                       const cPendingBalance = cTotalRevenue - cReceivedAmount;
                       
                       return (
