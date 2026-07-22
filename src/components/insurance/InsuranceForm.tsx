@@ -7,6 +7,7 @@ import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Ba
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const DEFAULT_COMPANIES = [
   { id: "tata-aig", name: "Tata AIG" },
@@ -57,12 +58,17 @@ export function InsuranceForm({
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
 
-  const [newVendor, setNewVendor] = useState({ name: "", contact_person: "", mobile: "", email: "", office_city: "", website: "" });
+  const [newVendor, setNewVendor] = useState({ 
+    name: "", contact_person: "", mobile: "", alternate_mobile: "", 
+    email: "", office_city: "", website: "", address: "", 
+    gst_number: "", pan_number: "", category: "" 
+  });
   const [isAddingVendor, setIsAddingVendor] = useState(false);
   const [localAddedVendors, setLocalAddedVendors] = useState<any[]>([]);
+  const [isVendorModalOpen, setIsVendorModalOpen] = useState(false);
 
   const handleAddVendor = async () => {
-    if (!newVendor.name.trim()) return;
+    if (!newVendor.name.trim() || !newVendor.mobile.trim()) return;
     setIsAddingVendor(true);
     const newId = crypto.randomUUID();
     const vendorPayload = { id: newId, ...newVendor, created_at: new Date().toISOString() };
@@ -74,7 +80,12 @@ export function InsuranceForm({
       toast.success("Vendor added successfully");
       setLocalAddedVendors([...localAddedVendors, vendorPayload]);
       setForm({ ...form, vendor_id: newId });
-      setNewVendor({ name: "", contact_person: "", mobile: "", email: "", office_city: "", website: "" });
+      setNewVendor({ 
+        name: "", contact_person: "", mobile: "", alternate_mobile: "", 
+        email: "", office_city: "", website: "", address: "", 
+        gst_number: "", pan_number: "", category: "" 
+      });
+      setIsVendorModalOpen(false);
     }
   };
 
@@ -484,7 +495,82 @@ export function InsuranceForm({
                 )}
               </div>
               <div className="space-y-1">
-                <Label>Vendor</Label>
+                <div className="flex justify-between items-center">
+                  <Label>Vendor</Label>
+                  <Dialog open={isVendorModalOpen} onOpenChange={setIsVendorModalOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50">
+                        + Add New
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[600px]">
+                      <DialogHeader>
+                        <DialogTitle>Add New Vendor</DialogTitle>
+                      </DialogHeader>
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
+                        <div className="space-y-1">
+                          <Label>Vendor Name *</Label>
+                          <Input value={newVendor.name} onChange={e => setNewVendor({...newVendor, name: e.target.value})} placeholder="e.g. PolicyBazaar" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Contact Person</Label>
+                          <Input value={newVendor.contact_person} onChange={e => setNewVendor({...newVendor, contact_person: e.target.value})} placeholder="e.g. John Doe" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Mobile *</Label>
+                          <Input value={newVendor.mobile} onChange={e => setNewVendor({...newVendor, mobile: e.target.value})} placeholder="e.g. +91 9876543210" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Alternate Mobile</Label>
+                          <Input value={newVendor.alternate_mobile} onChange={e => setNewVendor({...newVendor, alternate_mobile: e.target.value})} placeholder="e.g. +91 9876543211" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Email</Label>
+                          <Input type="email" value={newVendor.email} onChange={e => setNewVendor({...newVendor, email: e.target.value})} placeholder="e.g. contact@vendor.com" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Website</Label>
+                          <Input value={newVendor.website} onChange={e => setNewVendor({...newVendor, website: e.target.value})} placeholder="e.g. www.vendor.com" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Office City</Label>
+                          <Input value={newVendor.office_city} onChange={e => setNewVendor({...newVendor, office_city: e.target.value})} placeholder="e.g. Mumbai" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>Category</Label>
+                          <Select value={newVendor.category} onValueChange={(val) => setNewVendor({...newVendor, category: val})}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select Category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {["Insurance", "Hotel", "Transport", "Visa", "Flights", "Travel Insurance", "Forex", "Activities", "Other"].map(cat => (
+                                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-1">
+                          <Label>GST Number</Label>
+                          <Input value={newVendor.gst_number} onChange={e => setNewVendor({...newVendor, gst_number: e.target.value})} placeholder="e.g. 22AAAAA0000A1Z5" />
+                        </div>
+                        <div className="space-y-1">
+                          <Label>PAN Number</Label>
+                          <Input value={newVendor.pan_number} onChange={e => setNewVendor({...newVendor, pan_number: e.target.value})} placeholder="e.g. ABCDE1234F" />
+                        </div>
+                      </div>
+                      <div className="flex justify-end gap-3 mt-4">
+                        <Button 
+                          type="button" 
+                          onClick={handleAddVendor} 
+                          disabled={!newVendor.name.trim() || !newVendor.mobile.trim() || isAddingVendor}
+                          className="bg-rose-400 hover:bg-rose-500 text-white rounded-full px-6"
+                        >
+                          {isAddingVendor ? "Adding..." : "Add Vendor"}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                 <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
                   value={form.vendor_id}
@@ -497,43 +583,12 @@ export function InsuranceForm({
                   <option value="other">Other</option>
                 </select>
                 {form.vendor_id === "other" && (
-                  <div className="mt-4 p-4 border border-border rounded-xl bg-muted/30 space-y-4 col-span-1 md:col-span-2">
-                    <h4 className="text-sm font-semibold text-primary">Add New Vendor</h4>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                      <div className="space-y-1">
-                        <Label>Vendor Name *</Label>
-                        <Input value={newVendor.name} onChange={e => setNewVendor({...newVendor, name: e.target.value})} placeholder="e.g. PolicyBazaar" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Contact Person</Label>
-                        <Input value={newVendor.contact_person} onChange={e => setNewVendor({...newVendor, contact_person: e.target.value})} placeholder="e.g. John Doe" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Mobile</Label>
-                        <Input value={newVendor.mobile} onChange={e => setNewVendor({...newVendor, mobile: e.target.value})} placeholder="e.g. +91 9876543210" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Email</Label>
-                        <Input type="email" value={newVendor.email} onChange={e => setNewVendor({...newVendor, email: e.target.value})} placeholder="e.g. contact@vendor.com" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Office City</Label>
-                        <Input value={newVendor.office_city} onChange={e => setNewVendor({...newVendor, office_city: e.target.value})} placeholder="e.g. Mumbai" />
-                      </div>
-                      <div className="space-y-1">
-                        <Label>Website</Label>
-                        <Input value={newVendor.website} onChange={e => setNewVendor({...newVendor, website: e.target.value})} placeholder="e.g. www.vendor.com" />
-                      </div>
-                    </div>
-                    <Button 
-                      type="button" 
-                      onClick={handleAddVendor} 
-                      disabled={!newVendor.name.trim() || isAddingVendor}
-                      size="sm"
-                    >
-                      {isAddingVendor ? "Adding..." : "Add Vendor"}
-                    </Button>
-                  </div>
+                  <Input
+                    className="mt-2"
+                    placeholder="Enter Custom Vendor Name"
+                    value={form.custom_vendor || ""}
+                    onChange={(e) => setForm({ ...form, custom_vendor: e.target.value })}
+                  />
                 )}
               </div>
             </div>
