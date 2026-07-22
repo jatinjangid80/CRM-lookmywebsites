@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users, Plus, Trash2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 
 const DEFAULT_COMPANIES = [
@@ -55,6 +56,27 @@ export function InsuranceForm({
   policies?: any[];
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
+
+  const [newVendor, setNewVendor] = useState({ name: "", contact_person: "", mobile: "", email: "", office_city: "", website: "" });
+  const [isAddingVendor, setIsAddingVendor] = useState(false);
+  const [localAddedVendors, setLocalAddedVendors] = useState<any[]>([]);
+
+  const handleAddVendor = async () => {
+    if (!newVendor.name.trim()) return;
+    setIsAddingVendor(true);
+    const newId = crypto.randomUUID();
+    const vendorPayload = { id: newId, ...newVendor, created_at: new Date().toISOString() };
+    const { error } = await supabase.from("insurance_vendors").insert([vendorPayload]);
+    setIsAddingVendor(false);
+    if (error) {
+      toast.error("Failed to add vendor: " + error.message);
+    } else {
+      toast.success("Vendor added successfully");
+      setLocalAddedVendors([...localAddedVendors, vendorPayload]);
+      setForm({ ...form, vendor_id: newId });
+      setNewVendor({ name: "", contact_person: "", mobile: "", email: "", office_city: "", website: "" });
+    }
+  };
 
   const [form, setForm] = useState<any>({
     school_name: "",
@@ -469,18 +491,49 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, vendor_id: e.target.value })}
                 >
                   <option value="">Select Vendor</option>
-                  {(vendors && vendors.length > 0 ? vendors : DEFAULT_VENDORS).map(v => (
+                  {(vendors && vendors.length > 0 ? vendors : DEFAULT_VENDORS).concat(localAddedVendors).map(v => (
                     <option key={v.id} value={v.id}>{v.name}</option>
                   ))}
                   <option value="other">Other</option>
                 </select>
                 {form.vendor_id === "other" && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter Custom Vendor Name"
-                    value={form.custom_vendor || ""}
-                    onChange={(e) => setForm({ ...form, custom_vendor: e.target.value })}
-                  />
+                  <div className="mt-4 p-4 border border-border rounded-xl bg-muted/30 space-y-4 col-span-1 md:col-span-2">
+                    <h4 className="text-sm font-semibold text-primary">Add New Vendor</h4>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                      <div className="space-y-1">
+                        <Label>Vendor Name *</Label>
+                        <Input value={newVendor.name} onChange={e => setNewVendor({...newVendor, name: e.target.value})} placeholder="e.g. PolicyBazaar" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Contact Person</Label>
+                        <Input value={newVendor.contact_person} onChange={e => setNewVendor({...newVendor, contact_person: e.target.value})} placeholder="e.g. John Doe" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Mobile</Label>
+                        <Input value={newVendor.mobile} onChange={e => setNewVendor({...newVendor, mobile: e.target.value})} placeholder="e.g. +91 9876543210" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Email</Label>
+                        <Input type="email" value={newVendor.email} onChange={e => setNewVendor({...newVendor, email: e.target.value})} placeholder="e.g. contact@vendor.com" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Office City</Label>
+                        <Input value={newVendor.office_city} onChange={e => setNewVendor({...newVendor, office_city: e.target.value})} placeholder="e.g. Mumbai" />
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Website</Label>
+                        <Input value={newVendor.website} onChange={e => setNewVendor({...newVendor, website: e.target.value})} placeholder="e.g. www.vendor.com" />
+                      </div>
+                    </div>
+                    <Button 
+                      type="button" 
+                      onClick={handleAddVendor} 
+                      disabled={!newVendor.name.trim() || isAddingVendor}
+                      size="sm"
+                    >
+                      {isAddingVendor ? "Adding..." : "Add Vendor"}
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
