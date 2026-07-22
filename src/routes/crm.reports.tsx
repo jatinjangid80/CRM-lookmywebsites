@@ -69,7 +69,7 @@ function ReportsPage() {
 
   const totalRevenue = bookingsList.reduce((s, b) => s + (b.paid || 0), 0);
   const pendingAmount = bookingsList.reduce((s, b) => s + ((b.amount || 0) - (b.paid || 0)), 0);
-  const wonLeads = leadsList.filter((l) => l.status === "on conform" || l.status === "in process" || l.status === "Confirmed").length;
+  const wonLeads = leadsList.filter((l) => l.status === "on conform" || l.status === "in process" || l.status === "Confirmed" || l.status === "Payment Pending").length;
   
   const exportCSV = () => {
     const rows = [

@@ -5,6 +5,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users, Plus, Trash2 } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
+import { toast } from "sonner";
 
 const DEFAULT_COMPANIES = [
   { id: "tata-aig", name: "Tata AIG" },
@@ -43,13 +44,15 @@ export function InsuranceForm({
   onSave,
   initialData = null,
   companies = [],
-  vendors = []
+  vendors = [],
+  policies = []
 }: {
   onClose: () => void;
   onSave: (data: any) => void;
   initialData?: any;
   companies?: any[];
   vendors?: any[];
+  policies?: any[];
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
 

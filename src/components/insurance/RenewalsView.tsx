@@ -1,7 +1,9 @@
 import React, { useMemo } from "react";
 import { InsuranceTable } from "./InsuranceTable";
-import { AlertCircle, CalendarClock, History } from "lucide-react";
+import { AlertCircle, CalendarClock, History, List, Calendar as CalendarIcon } from "lucide-react";
 import { Calendar } from "@/components/ui/calendar";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 
 interface RenewalsViewProps {
   policies: any[];
@@ -13,6 +15,8 @@ interface RenewalsViewProps {
 }
 
 export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, onDelete }: RenewalsViewProps) {
+  const [currentView, setCurrentView] = React.useState<"list" | "calendar">("list");
+  const [calendarDate, setCalendarDate] = React.useState<Date>(new Date());
   
   const today = new Date();
   today.setHours(0,0,0,0);
@@ -76,6 +80,15 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
     });
   }, [policies, date]);
 
+  const year = calendarDate.getFullYear();
+  const month = calendarDate.getMonth();
+  const firstDayOfMonth = new Date(year, month, 1);
+  const startDay = firstDayOfMonth.getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+  const monthName = firstDayOfMonth.toLocaleString('default', { month: 'long', year: 'numeric' });
+  const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+  const daysArray = Array.from({ length: daysInMonth }, (_, i) => new Date(year, month, i + 1));
+
   return (
     <div className="animate-in fade-in duration-300">
       <div className="mb-6 flex items-center justify-between">
@@ -85,71 +98,60 @@ export function RenewalsView({ policies, companies, vendors, onRenew, onEdit, on
         </div>
       </div>
 
-      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        <div className="xl:col-span-2 space-y-6">
-          {categorizedPolicies.todayList.length === 0 && 
-           categorizedPolicies.next7Days.length === 0 && 
-           categorizedPolicies.next15Days.length === 0 && 
-           categorizedPolicies.next30Days.length === 0 && 
-           categorizedPolicies.later.length === 0 && 
-           categorizedPolicies.expired.length === 0 && (
-             <div className="py-20 text-center flex flex-col items-center justify-center text-muted-foreground bg-card border border-border rounded-2xl">
-                <CalendarClock className="w-16 h-16 opacity-20 mb-4" />
-                <p className="text-lg font-semibold">No upcoming renewals found.</p>
-                <p className="text-sm mt-1">You are all caught up!</p>
-             </div>
-          )}
-
-          {renderSection("Expiring Today", categorizedPolicies.todayList, <AlertCircle className="w-5 h-5" />, "bg-rose-500/10", "text-rose-500")}
-          {renderSection("Next 7 Days", categorizedPolicies.next7Days, <CalendarClock className="w-5 h-5" />, "bg-amber-500/10", "text-amber-500")}
-          {renderSection("Next 15 Days", categorizedPolicies.next15Days, <CalendarClock className="w-5 h-5" />, "bg-yellow-500/10", "text-yellow-500")}
-          {renderSection("Next 30 Days", categorizedPolicies.next30Days, <CalendarClock className="w-5 h-5" />, "bg-blue-500/10", "text-blue-500")}
-          {renderSection("Future Renewals (> 30 Days)", categorizedPolicies.later, <CalendarClock className="w-5 h-5" />, "bg-emerald-500/10", "text-emerald-500")}
-          {renderSection("Already Expired", categorizedPolicies.expired, <History className="w-5 h-5" />, "bg-muted", "text-foreground")}
+      <div className="bg-card rounded-xl border shadow-sm p-6 overflow-hidden mt-6">
+        <div className="flex items-center justify-between mb-6">
+          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+            <CalendarIcon className="h-5 w-5 text-brand" />
+            {monthName}
+          </h2>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date(year, month - 1, 1))}>Prev</Button>
+            <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date())}>Today</Button>
+            <Button variant="outline" size="sm" onClick={() => setCalendarDate(new Date(year, month + 1, 1))}>Next</Button>
+          </div>
         </div>
 
-        <div className="xl:col-span-1">
-          <div className="bg-card rounded-2xl border border-border p-4 shadow-sm sticky top-6">
-            <h3 className="font-bold mb-4">Renewal Calendar</h3>
-            <div className="flex justify-center border-b border-border pb-4 mb-4">
-              <Calendar
-                mode="single"
-                selected={date}
-                onSelect={setDate}
-                className="rounded-md"
-                modifiers={{
-                  hasRenewal: (d) => {
-                    const dStr = new Date(d.getTime() - d.getTimezoneOffset() * 60000).toISOString().split('T')[0];
-                    return policies.some(p => p.expiry_date && p.expiry_date.startsWith(dStr));
-                  }
-                }}
-                modifiersStyles={{
-                  hasRenewal: { fontWeight: 'bold', backgroundColor: '#ecfdf5', color: '#065f46' }
-                }}
-              />
+        <div className="grid grid-cols-7 gap-px bg-muted/80 border bg-muted/80 rounded-lg overflow-hidden">
+          {weekDays.map(day => (
+            <div key={day} className="bg-muted p-3 text-center text-sm font-semibold text-muted-foreground">
+              {day}
             </div>
-            
-            <div>
-              <h4 className="font-semibold text-sm mb-3">
-                {date ? date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' }) : 'Selected Date'}
-              </h4>
-              {selectedDatePolicies.length > 0 ? (
-                <div className="space-y-3">
-                  {selectedDatePolicies.map(p => {
-                    const customerName = p.customer_name ? p.customer_name : "Unknown";
-                    return (
-                      <div key={p.id} className="p-3 bg-secondary/30 rounded-xl border border-border text-sm">
-                        <div className="font-semibold">{p.policy_number || "No Policy #"}</div>
-                        <div className="text-muted-foreground">{customerName}</div>
-                      </div>
-                    );
-                  })}
+          ))}
+
+          {Array.from({ length: startDay }).map((_, i) => (
+            <div key={`empty-${i}`} className="bg-card p-2 min-h-[120px]" />
+          ))}
+
+          {daysArray.map(dateObj => {
+            const isToday = new Date().toDateString() === dateObj.toDateString();
+            const dateStr = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+            const dayPolicies = policies.filter(p => p.expiry_date && p.expiry_date.startsWith(dateStr));
+
+            return (
+              <div key={dateObj.toISOString()} className={`bg-card p-2 min-h-[120px] transition-colors hover:bg-muted/30 ${isToday ? 'bg-blue-50/30' : ''}`}>
+                <div className="flex justify-between items-start mb-2">
+                  <span className={`text-sm font-medium w-7 h-7 flex items-center justify-center rounded-full ${isToday ? 'bg-primary text-primary-foreground shadow-sm' : 'text-foreground'}`}>
+                    {dateObj.getDate()}
+                  </span>
+                  {dayPolicies.length > 0 && (
+                    <Badge variant="secondary" className="text-[10px] px-1.5 h-5 bg-muted">{dayPolicies.length}</Badge>
+                  )}
                 </div>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">No renewals on this date.</p>
-              )}
-            </div>
-          </div>
+                <div className="space-y-1.5 overflow-y-auto max-h-[80px] pr-1 scrollbar-thin">
+                  {dayPolicies.map(p => (
+                    <div
+                      key={p.id}
+                      onClick={() => onEdit(p)}
+                      className="text-[10px] px-1.5 py-1 rounded truncate cursor-pointer hover:opacity-80 border bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                      title={`${p.customer_name || "Unknown"} (${p.policy_number || "Draft"})`}
+                    >
+                      {p.customer_name ? `${p.customer_name} - ${p.policy_number || "Draft"}` : (p.policy_number || "Renewal")}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

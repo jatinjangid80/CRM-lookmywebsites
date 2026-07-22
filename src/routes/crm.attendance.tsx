@@ -628,58 +628,60 @@ function AttendancePage() {
             </div>
           </div>
 
-          <div className="space-y-4 pt-4">
-            <div className="flex items-center justify-between">
-              <h3 className="font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" /> Team Leave Applications</h3>
-              <span className="text-xs text-muted-foreground font-medium">{leaves.length} total team applications</span>
-            </div>
-            <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm text-left">
-                  <thead className="bg-secondary/40 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
-                    <tr>
-                      <th className="px-6 py-4 text-center">Employee</th>
-                      <th className="px-6 py-4 text-center">Leave Type</th>
-                      <th className="px-6 py-4 text-center">Start Date</th>
-                      <th className="px-6 py-4 text-center">End Date</th>
-                      <th className="px-6 py-4 text-center">Reason</th>
-                      <th className="px-6 py-4 text-center">Status</th>
-                      <th className="px-6 py-4 text-right">Actions</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y divide-border/80 text-center">
-                    {leaves.length === 0 ? (
+          {auth?.role === "admin" && (
+            <div className="space-y-4 pt-4">
+              <div className="flex items-center justify-between">
+                <h3 className="font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" /> Team Leave Applications</h3>
+                <span className="text-xs text-muted-foreground font-medium">{leaves.length} total team applications</span>
+              </div>
+              <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left">
+                    <thead className="bg-secondary/40 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
                       <tr>
-                        <td colSpan={7} className="px-6 py-12 text-muted-foreground italic">
-                          No team leave applications found.
-                        </td>
+                        <th className="px-6 py-4 text-center">Employee</th>
+                        <th className="px-6 py-4 text-center">Leave Type</th>
+                        <th className="px-6 py-4 text-center">Start Date</th>
+                        <th className="px-6 py-4 text-center">End Date</th>
+                        <th className="px-6 py-4 text-center">Reason</th>
+                        <th className="px-6 py-4 text-center">Status</th>
+                        <th className="px-6 py-4 text-right">Actions</th>
                       </tr>
-                    ) : leaves.map((leave: any) => {
-                      const emp = getEmpDetails(leave.employeeid);
-                      return (
-                        <tr key={leave.id} className="hover:bg-secondary/20 transition-colors">
-                          <td className="px-6 py-4 font-semibold">{emp.name}</td>
-                          <td className="px-6 py-4 text-muted-foreground">{leave.type}</td>
-                          <td className="px-6 py-4 text-muted-foreground">{leave.startdate}</td>
-                          <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
-                          <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
-                          <td className="px-6 py-4">
-                            <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-bold">{leave.status}</span>
-                          </td>
-                          <td className="px-6 py-4 text-right">
-                            <button onClick={() => {
-                              setLeaves(leaves.filter(l => l.id !== leave.id));
-                              toast.success("Leave request removed");
-                            }} className="text-rose-500 hover:underline text-xs font-medium">Remove</button>
+                    </thead>
+                    <tbody className="divide-y divide-border/80 text-center">
+                      {leaves.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="px-6 py-12 text-muted-foreground italic">
+                            No team leave applications found.
                           </td>
                         </tr>
-                      )
-                    })}
-                  </tbody>
-                </table>
+                      ) : leaves.map((leave: any) => {
+                        const emp = getEmpDetails(leave.employeeid);
+                        return (
+                          <tr key={leave.id} className="hover:bg-secondary/20 transition-colors">
+                            <td className="px-6 py-4 font-semibold">{emp.name}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.type}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.startdate}</td>
+                            <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
+                            <td className="px-6 py-4">
+                              <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-bold">{leave.status}</span>
+                            </td>
+                            <td className="px-6 py-4 text-right">
+                              <button onClick={() => {
+                                setLeaves(leaves.filter(l => l.id !== leave.id));
+                                toast.success("Leave request removed");
+                              }} className="text-rose-500 hover:underline text-xs font-medium">Remove</button>
+                            </td>
+                          </tr>
+                        )
+                      })}
+                    </tbody>
+                  </table>
+                </div>
               </div>
             </div>
-          </div>
+          )}
 
           <div className="space-y-4 pt-4">
             <div className="flex items-center justify-between">

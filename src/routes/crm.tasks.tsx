@@ -95,9 +95,11 @@ function TasksPage() {
   const [taskType, setTaskType] = useState<"Individual" | "Group">("Individual");
   const [subTasks, setSubTasks] = useState<{ title: string, assigned_to: string }[]>([]);
   const [calendarDate, setCalendarDate] = useState(new Date());
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [priorityFilter, setPriorityFilter] = useState<string>("All");
 
-  const visibleTasks = useMemo(() => {
-    const filtered = isAdmin
+  const baseTasks = useMemo(() => {
+    return isAdmin
       ? [...tasks]
       : tasks.filter(task => {
           if (task.parent_id) {
@@ -108,23 +110,43 @@ function TasksPage() {
           }
           return task.assigned_to === currentUser;
         });
+  }, [tasks, isAdmin, currentUser]);
+
+  const totalTasks = baseTasks.length;
+  const pendingTasks = baseTasks.filter(t => t.status === "Pending").length;
+  const inProgressTasks = baseTasks.filter(t => t.status === "In Progress").length;
+  const completedTasks = baseTasks.filter(t => t.status === "Completed").length;
+  const overdueTasks = baseTasks.filter(t => {
+    const d = t.due_date || (t as any).dueDate;
+    return t.status !== "Completed" && d && new Date(d) < new Date();
+  }).length;
+
+  const visibleTasks = useMemo(() => {
+    let currentTasks = baseTasks;
+
+    if (statusFilter !== "All") {
+      if (statusFilter === "Overdue") {
+        currentTasks = currentTasks.filter(t => {
+          const d = t.due_date || (t as any).dueDate;
+          return t.status !== "Completed" && d && new Date(d) < new Date();
+        });
+      } else {
+        currentTasks = currentTasks.filter(t => t.status === statusFilter);
+      }
+    }
+
+    if (priorityFilter !== "All") {
+      currentTasks = currentTasks.filter(t => t.priority === priorityFilter);
+    }
+
     // Sort newest first: highest task_number first, then by created_at descending
-    return filtered.sort((a, b) => {
+    return currentTasks.sort((a, b) => {
       const numA = a.task_number ?? 0;
       const numB = b.task_number ?? 0;
       if (numB !== numA) return numB - numA;
       return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
     });
-  }, [tasks, isAdmin, currentUser]);
-
-  const totalTasks = visibleTasks.length;
-  const pendingTasks = visibleTasks.filter(t => t.status === "Pending").length;
-  const inProgressTasks = visibleTasks.filter(t => t.status === "In Progress").length;
-  const completedTasks = visibleTasks.filter(t => t.status === "Completed").length;
-  const overdueTasks = visibleTasks.filter(t => {
-    const d = t.due_date || (t as any).dueDate;
-    return t.status !== "Completed" && d && new Date(d) < new Date();
-  }).length;
+  }, [baseTasks, statusFilter, priorityFilter]);
 
   const handleEditTask = (task: Task) => {
     setIsEditing(task.id);
@@ -381,23 +403,38 @@ function TasksPage() {
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 mb-6">
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div 
+          onClick={() => setStatusFilter("All")}
+          className={`rounded-xl border bg-card p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 ${statusFilter === "All" ? "ring-2 ring-primary" : ""}`}
+        >
           <p className="text-sm font-medium text-muted-foreground">Total Tasks</p>
           <p className="mt-2 text-3xl font-bold text-foreground">{totalTasks}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div 
+          onClick={() => setStatusFilter("Pending")}
+          className={`rounded-xl border bg-card p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 ${statusFilter === "Pending" ? "ring-2 ring-primary" : ""}`}
+        >
           <p className="text-sm font-medium text-muted-foreground">Pending</p>
           <p className="mt-2 text-3xl font-bold text-foreground">{pendingTasks}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div 
+          onClick={() => setStatusFilter("In Progress")}
+          className={`rounded-xl border bg-card p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 ${statusFilter === "In Progress" ? "ring-2 ring-primary" : ""}`}
+        >
           <p className="text-sm font-medium text-muted-foreground">In Progress</p>
           <p className="mt-2 text-3xl font-bold text-blue-600">{inProgressTasks}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div 
+          onClick={() => setStatusFilter("Completed")}
+          className={`rounded-xl border bg-card p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 ${statusFilter === "Completed" ? "ring-2 ring-primary" : ""}`}
+        >
           <p className="text-sm font-medium text-muted-foreground">Completed</p>
           <p className="mt-2 text-3xl font-bold text-emerald-600">{completedTasks}</p>
         </div>
-        <div className="rounded-xl border bg-card p-4 shadow-sm">
+        <div 
+          onClick={() => setStatusFilter("Overdue")}
+          className={`rounded-xl border bg-card p-4 shadow-sm cursor-pointer transition-all hover:bg-muted/50 ${statusFilter === "Overdue" ? "ring-2 ring-primary" : ""}`}
+        >
           <p className="text-sm font-medium text-muted-foreground">Overdue</p>
           <p className="mt-2 text-3xl font-bold text-red-600">{overdueTasks}</p>
         </div>
@@ -429,8 +466,36 @@ function TasksPage() {
                   <TableHead>Task Name</TableHead>
                   <TableHead>Assigned To</TableHead>
                   <TableHead>Customer</TableHead>
-                  <TableHead>Priority</TableHead>
-                  <TableHead>Status</TableHead>
+                  <TableHead>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1 hover:text-primary-foreground/80 focus:outline-none font-medium">
+                          Priority
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setPriorityFilter("All")}>All</DropdownMenuItem>
+                        {PRIORITIES.map(p => (
+                          <DropdownMenuItem key={p} onClick={() => setPriorityFilter(p)}>{p}</DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
+                  <TableHead>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="flex items-center gap-1 hover:text-primary-foreground/80 focus:outline-none font-medium">
+                          Status
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="start">
+                        <DropdownMenuItem onClick={() => setStatusFilter("All")}>All</DropdownMenuItem>
+                        {STATUSES.map(s => (
+                          <DropdownMenuItem key={s} onClick={() => setStatusFilter(s)}>{s}</DropdownMenuItem>
+                        ))}
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableHead>
                   <TableHead>Due Date</TableHead>
                   <TableHead>Progress</TableHead>
                   <TableHead className="text-right">Actions</TableHead>
@@ -700,9 +765,20 @@ function TasksPage() {
                     return (
                       <div key={assigneeName} className="rounded-xl border bg-muted p-4">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="h-10 w-10 rounded-full bg-brand/10 flex items-center justify-center font-bold text-brand uppercase">
-                            {assigneeName.charAt(0)}
-                          </div>
+                          {(() => {
+                            const emp = employees.find(e => e.name === assigneeName);
+                            return emp?.avatar ? (
+                              <img
+                                src={emp.avatar}
+                                alt={assigneeName}
+                                className="h-10 w-10 rounded-full object-cover shrink-0"
+                              />
+                            ) : (
+                              <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center font-bold text-primary uppercase shrink-0">
+                                {assigneeName.charAt(0)}
+                              </div>
+                            );
+                          })()}
                           <div>
                             <h3 className="font-bold text-foreground">{assigneeName}</h3>
                             <p className="text-xs text-muted-foreground">{empTasks.length} Assigned Tasks</p>

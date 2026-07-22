@@ -55,6 +55,12 @@ import {
   DialogDescription,
   DialogFooter,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { ImportLeadsModal } from "@/components/ui/import-leads-modal";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
 import { formatINR, type Lead } from "@/lib/mock-data";
@@ -189,9 +195,9 @@ const STATUSES: LeadStatus[] = [
   "Contacted",
   "Quotation Sent",
   "Negotiation",
-  "Payment Pending",
   "in process",
   "Confirmed",
+  "Payment Pending",
   "Postponed",
   "Lost",
 ];
@@ -1642,7 +1648,9 @@ function LeadDetail({
 
           {/* Booking & Payment Details */}
           {(lead.status === "on conform" ||
+            lead.status === "Confirmed" ||
             lead.status === "in process" ||
+            lead.status === "Payment Pending" ||
             lead.bookingReference ||
             isEditingBooking) && (
               <div className="space-y-2">
@@ -2213,6 +2221,8 @@ function LeadsPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [q, setQ] = useState("");
   const [filterStatus, setFilterStatus] = useState<LeadStatus | "All">("All");
+  const [filterPriority, setFilterPriority] = useState<string>("All");
+  const [filterAssignedTo, setFilterAssignedTo] = useState<string>("All");
   const [sortField, setSortField] = useState<"createdAt" | "name" | "budget">("createdAt");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [view, setView] = useState<"table" | "kanban">("table");
@@ -2391,6 +2401,8 @@ function LeadsPage() {
   const filtered = visibleLeads.filter(
     (l) =>
       (filterStatus === "All" || l.status === filterStatus) &&
+      (filterPriority === "All" || l.priority === filterPriority) &&
+      (filterAssignedTo === "All" || l.assignedTo === filterAssignedTo) &&
       (q === "" ||
         l.name?.toLowerCase().includes(q.toLowerCase()) ||
         l.destination?.toLowerCase().includes(q.toLowerCase()) ||
@@ -2420,7 +2432,7 @@ function LeadsPage() {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     setSelected((sel) => (sel ? { ...sel, status } : sel));
 
-    if (["on conform", "Confirmed", "in process"].includes(status)) {
+    if (["on conform", "Confirmed", "in process", "Payment Pending"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
       if (lead) {
         // Auto push to respective module based on lead service
@@ -2700,13 +2712,55 @@ function LeadsPage() {
               <table className="w-full text-sm">
                 <thead className="bg-primary text-left text-xs uppercase tracking-wider text-white">
                   <tr>
-                    <th className="px-4 py-4 font-medium">Status</th>
+                    <th className="px-4 py-4 font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="cursor-pointer hover:text-white/80 transition-colors flex items-center gap-1">
+                            Status {filterStatus !== "All" && <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{filterStatus}</span>}
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem onClick={() => setFilterStatus("All")}>All</DropdownMenuItem>
+                          {STATUSES.map(s => (
+                            <DropdownMenuItem key={s} onClick={() => setFilterStatus(s)}>{s}</DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </th>
                     <th className="px-4 py-4 font-medium">Name</th>
                     <th className="px-4 py-4 font-medium whitespace-nowrap">Create Date & Time</th>
                     <th className="px-4 py-4 font-medium">Des. / Service</th>
                     <th className="px-4 py-4 font-medium whitespace-nowrap">Travel Date / Budget</th>
-                    <th className="px-4 py-4 font-medium">Priority</th>
-                    <th className="px-4 py-4 font-medium">Assigned To</th>
+                    <th className="px-4 py-4 font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="cursor-pointer hover:text-white/80 transition-colors flex items-center gap-1">
+                            Priority {filterPriority !== "All" && <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px]">{filterPriority}</span>}
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem onClick={() => setFilterPriority("All")}>All</DropdownMenuItem>
+                          {["High", "Medium", "Low"].map(p => (
+                            <DropdownMenuItem key={p} onClick={() => setFilterPriority(p)}>{p}</DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </th>
+                    <th className="px-4 py-4 font-medium">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <div className="cursor-pointer hover:text-white/80 transition-colors flex items-center gap-1">
+                            Assigned To {filterAssignedTo !== "All" && <span className="bg-white/20 px-1.5 py-0.5 rounded text-[10px] truncate max-w-[80px]">{filterAssignedTo}</span>}
+                          </div>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="start">
+                          <DropdownMenuItem onClick={() => setFilterAssignedTo("All")}>All</DropdownMenuItem>
+                          {assignees.map(a => (
+                            <DropdownMenuItem key={a} onClick={() => setFilterAssignedTo(a)}>{a}</DropdownMenuItem>
+                          ))}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>

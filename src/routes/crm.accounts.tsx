@@ -1040,6 +1040,16 @@ function AccountsPage() {
                     const uniqueCustomers = Array.from(allCustomerNames)
                       .filter(Boolean)
                       .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+                      .filter(name => {
+                        const customerData = customers.find(c => c.name === name) || { id: `synth-${name}`, name };
+                        const cLeads = leads.filter(l => l.name === name || l.customer === name);
+                        const cTasks = tasks.filter(t => t.customer_id === name || t.lead === name);
+                        const cBookings = bookings.filter(b => b.customer === name);
+                        const cRevenue = transactions
+                          .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === name) && tx.type === "Receipt")
+                          .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                        return cLeads.length > 0 || cTasks.length > 0 || cBookings.length > 0 || cRevenue > 0;
+                      })
                       .sort();
                     
                     return uniqueCustomers.length === 0 ? (
@@ -1243,6 +1253,14 @@ function AccountsPage() {
                     const uniqueVendors = Array.from(allVendorNames)
                       .filter(Boolean)
                       .filter(name => name.toLowerCase().includes(vendorSearchQuery.toLowerCase()))
+                      .filter(name => {
+                        const vendorData = vendors.find(v => v.name === name) || { id: `synth-v-${name}`, name };
+                        const vBookings = bookings.filter(b => b.supplier === name);
+                        const vSpend = transactions
+                          .filter(tx => tx.entityType === "Vendor" && (tx.entityId === vendorData.id || tx.entityId === name) && tx.type === "Payment")
+                          .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                        return vBookings.length > 0 || vSpend > 0;
+                      })
                       .sort();
                     
                     return uniqueVendors.length === 0 ? (
