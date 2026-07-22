@@ -1051,10 +1051,11 @@ function AccountsPage() {
                       .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
                       .filter(name => {
                         const customerData = customers.find(c => c.name === name) || { id: `synth-${name}`, name };
-                        const cLeads = leads.filter(l => l.name === name || l.customer === name);
-                        const cTasks = tasks.filter(t => t.customer_id === name || t.lead === name);
-                        const cBookings = bookings.filter(b => b.customer === name);
-                        const cFollowUps = followUpsList.filter(f => f.customerName === name || f.customerId === customerData.id);
+                        const normalizedName = (name || "").trim().toLowerCase();
+                        const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedName || (l.customer || "").trim().toLowerCase() === normalizedName);
+                        const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedName || (t.lead || "").trim().toLowerCase() === normalizedName);
+                        const cBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedName);
+                        const cFollowUps = followUpsList.filter(f => (f.customerName || "").trim().toLowerCase() === normalizedName || f.customerId === customerData.id);
                         const cRevenue = transactions
                           .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === name) && tx.type === "Receipt")
                           .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
@@ -1076,9 +1077,10 @@ function AccountsPage() {
                       const customerData = customers.find(c => c.name === customerName) || { id: `synth-${index}`, name: customerName };
                       
                       const isExpanded = expandedCustomer === customerData.id;
-                      const cLeads = leads.filter(l => l.name === customerName || l.customer === customerName);
-                      const cTasks = tasks.filter(t => t.customer_id === customerName || t.lead === customerName);
-                      const cBookings = bookings.filter(b => b.customer === customerName);
+                      const normalizedCustomerName = (customerName || "").trim().toLowerCase();
+                      const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedCustomerName || (l.customer || "").trim().toLowerCase() === normalizedCustomerName);
+                      const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedCustomerName || (t.lead || "").trim().toLowerCase() === normalizedCustomerName);
+                      const cBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedCustomerName);
                       const cRevenue = transactions
                         .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName) && tx.type === "Receipt")
                         .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
@@ -1196,11 +1198,27 @@ function AccountsPage() {
                                   <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
                                     {cBookings.length > 0 ? cBookings.map((bk: any, i: number) => (
                                       <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
-                                        <div className="flex justify-between items-start mb-1">
-                                          <span className="font-medium">{bk.bookingType}</span>
-                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
+                                        <div className="flex justify-between items-start mb-2">
+                                          <span className="font-medium">{bk.bookingType || "Booking"}</span>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status || "Pending"}</span>
                                         </div>
-                                        <div className="text-muted-foreground mt-1">{bk.bookingDate}</div>
+                                        <div className="flex justify-between items-center bg-background/50 p-1.5 rounded border border-border/30">
+                                          <div className="flex flex-col">
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Price</span>
+                                            <span className="font-medium text-primary">{formatINR(bk.sellingPrice || bk.amount || 0)}</span>
+                                          </div>
+                                          <div className="flex flex-col text-center">
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Paid</span>
+                                            <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatINR(bk.paid || 0)}</span>
+                                          </div>
+                                          <div className="flex flex-col text-right">
+                                            <span className="text-[9px] text-muted-foreground uppercase tracking-wider">Pending</span>
+                                            <span className="font-medium text-rose-600 dark:text-rose-400">{formatINR((bk.sellingPrice || bk.amount || 0) - (bk.paid || 0))}</span>
+                                          </div>
+                                        </div>
+                                        <div className="text-muted-foreground mt-2 text-[10px] flex justify-between">
+                                          <span>{bk.bookingDate || "-"}</span>
+                                        </div>
                                       </div>
                                     )) : <div className="text-xs text-muted-foreground italic">No bookings found.</div>}
                                   </div>
