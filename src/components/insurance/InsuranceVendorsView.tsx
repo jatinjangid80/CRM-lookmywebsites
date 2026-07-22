@@ -23,7 +23,6 @@ export function InsuranceVendorsView() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState("All");
   
   const [form, setForm] = useState({ 
     name: "", contact_person: "", mobile: "", alternate_mobile: "", 
@@ -81,10 +80,9 @@ export function InsuranceVendorsView() {
       const matchesSearch = v.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                             (v.email && v.email.toLowerCase().includes(searchQuery.toLowerCase())) ||
                             (v.contact_person && v.contact_person.toLowerCase().includes(searchQuery.toLowerCase()));
-      const matchesCategory = categoryFilter === "All" || v.category === categoryFilter;
-      return matchesSearch && matchesCategory;
+      return matchesSearch;
     });
-  }, [vendors, searchQuery, categoryFilter]);
+  }, [vendors, searchQuery]);
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -108,22 +106,6 @@ export function InsuranceVendorsView() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
           />
-        </div>
-        <div className="w-full sm:w-48">
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger>
-              <div className="flex items-center gap-2">
-                <Filter className="w-4 h-4 text-muted-foreground" />
-                <SelectValue placeholder="Category" />
-              </div>
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="All">All Categories</SelectItem>
-              {VENDOR_CATEGORIES.map(cat => (
-                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
         </div>
       </div>
 

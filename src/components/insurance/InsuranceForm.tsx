@@ -9,37 +9,8 @@ import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
-const DEFAULT_COMPANIES = [
-  { id: "tata-aig", name: "Tata AIG" },
-  { id: "go-digit", name: "Go Digit" },
-  { id: "icici-lombard", name: "ICICI Lombard" },
-  { id: "united-india", name: "United India Insurance" },
-  { id: "bajaj-allianz", name: "Bajaj Allianz" },
-  { id: "liberty-general", name: "Liberty General Insurance" },
-  { id: "future-generali", name: "Future Generali" },
-  { id: "reliance-general", name: "Reliance General Insurance" },
-  { id: "universal-sompo", name: "Universal Sompo" },
-  { id: "iffco-tokio", name: "IFFCO Tokio" },
-  { id: "sbi-general", name: "SBI General Insurance" },
-  { id: "care-health", name: "Care Health Insurance" },
-  { id: "lic", name: "LIC" },
-  { id: "new-india", name: "New India Assurance" },
-  { id: "raheja-qbe", name: "Raheja QBE General Insurance" },
-  { id: "shriram-general", name: "Shriram General Insurance" },
-];
 
-const DEFAULT_VENDORS = [
-  { id: "pravindra", name: "Pravindra" },
-  { id: "ginar", name: "Ginar" },
-  { id: "sunshine", name: "Sunshine" },
-  { id: "starline", name: "Starline" },
-  { id: "rightsure", name: "Rightsure" },
-  { id: "silver-square", name: "Silver Square" },
-  { id: "manvendra", name: "Manvendra" },
-  { id: "care-code", name: "Care Code" },
-  { id: "techwheel", name: "Techwheel Dealer" },
-  { id: "maruti-sanga", name: "Maruti Sanga" },
-];
+
 
 export function InsuranceForm({
   onClose,
@@ -480,19 +451,10 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, company_id: e.target.value })}
                 >
                   <option value="">Select Company</option>
-                  {(companies && companies.length > 0 ? companies : DEFAULT_COMPANIES).map(c => (
+                  {(companies || []).map(c => (
                     <option key={c.id} value={c.id}>{c.name}</option>
                   ))}
-                  <option value="other">Other</option>
                 </select>
-                {form.company_id === "other" && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter Custom Company Name"
-                    value={form.custom_company || ""}
-                    onChange={(e) => setForm({ ...form, custom_company: e.target.value })}
-                  />
-                )}
               </div>
               <div className="space-y-1">
                 <div className="flex justify-between items-center">
@@ -577,19 +539,10 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, vendor_id: e.target.value })}
                 >
                   <option value="">Select Vendor</option>
-                  {(vendors && vendors.length > 0 ? vendors : DEFAULT_VENDORS).concat(localAddedVendors).map(v => (
+                  {(vendors || []).concat(localAddedVendors).map(v => (
                     <option key={v.id} value={v.id}>{v.name}</option>
                   ))}
-                  <option value="other">Other</option>
                 </select>
-                {form.vendor_id === "other" && (
-                  <Input
-                    className="mt-2"
-                    placeholder="Enter Custom Vendor Name"
-                    value={form.custom_vendor || ""}
-                    onChange={(e) => setForm({ ...form, custom_vendor: e.target.value })}
-                  />
-                )}
               </div>
             </div>
           </section>
