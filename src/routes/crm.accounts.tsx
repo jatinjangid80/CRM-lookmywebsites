@@ -131,7 +131,7 @@ export function BookingCombobox({
     const isVendor = !!b.supplier;
     const entityName = b.customer || b.supplier || "Unknown Entity";
     const invoiceNo = b.saleInvoiceNo || b.purchaseInvoiceNo || b.id || "N/A";
-    const label = `${invoiceNo} - ${entityName.split('---META---')[0]}`;
+    const label = `${invoiceNo} - ${String(entityName).split('---META---')[0]}`;
 
     return {
       value: String(b.id),
@@ -289,7 +289,7 @@ function AccountsPage() {
       .map(
         (l: any) =>
           ({
-            id: "LD-" + l.id.replace("L-", ""),
+            id: "LD-" + String(l.id || "").replace("L-", ""),
             bookingType: l.service || "Holiday Package",
             supplier: l.vendorName || "Not Assigned",
             bookingDate: l.createdAt,

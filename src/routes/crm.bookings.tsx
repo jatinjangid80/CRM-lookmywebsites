@@ -238,7 +238,7 @@ function BookingsPage() {
       .map(
         (l: any) =>
           ({
-            id: "LD-" + l.id.replace("L-", ""),
+            id: "LD-" + String(l.id || "").replace("L-", ""),
             bookingType: (l.service || "Holiday Package") as BookingType,
             supplier: l.vendorName || "Not Assigned",
             bookingDate: l.createdAt,
@@ -517,7 +517,7 @@ function BookingsPage() {
   const updateBookingStatus = (bookingId: string, status: Booking["status"]) => {
     if (bookingId.startsWith("LD-")) {
       setLeads((prev) => prev.map((l) => {
-        if ("LD-" + l.id.replace("L-", "") === bookingId) {
+        if ("LD-" + String(l.id || "").replace("L-", "") === bookingId) {
           return { ...l, paymentStatus: status };
         }
         return l;
@@ -537,7 +537,7 @@ function BookingsPage() {
 
     if (managingBooking.id.startsWith("LD-")) {
       setLeads((prev) => prev.map(l => {
-        if ("LD-" + l.id.replace("L-", "") === managingBooking.id) {
+        if ("LD-" + String(l.id || "").replace("L-", "") === managingBooking.id) {
           return {
             ...l,
             name: editForm.customer,
@@ -711,7 +711,7 @@ function BookingsPage() {
       if (!isEdit) {
         const isDuplicate = bookingList.some(
           (b) =>
-            b.customer.toLowerCase() === booking.customer.toLowerCase() &&
+            (b.customer || "").toLowerCase() === (booking.customer || "").toLowerCase() &&
             b.bookingType === booking.bookingType &&
             b.bookingDate === booking.bookingDate
         );
