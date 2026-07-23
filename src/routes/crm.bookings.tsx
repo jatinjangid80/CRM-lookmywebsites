@@ -1553,7 +1553,7 @@ function BookingsPage() {
                 className="rounded-xl h-8 mr-2"
                 onClick={() => {
                   setAddBookingCustomer(managingBooking?.customer);
-                  setEditingAddBooking(managingBooking);
+                  setEditingAddBooking(undefined);
                   setIsAddOpen(true);
                 }}
               >
