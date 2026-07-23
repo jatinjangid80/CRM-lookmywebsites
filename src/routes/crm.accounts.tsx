@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { getAuth } from "@/lib/auth";
-import React, { useState } from "react";
+import { supabase } from "@/lib/supabase";
+import React, { useState, useMemo } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
