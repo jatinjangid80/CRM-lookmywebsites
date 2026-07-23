@@ -398,8 +398,9 @@ function BookingsPage() {
   const [uploadCategory, setUploadCategory] = useState("Invoice");
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
 
-  // Tab state for filtering
+  // Filter States
   const [activeTab, setActiveTab] = useState<string>("All");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Success popup state
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
@@ -785,22 +786,36 @@ function BookingsPage() {
   };
 
   const filteredBookings = allBookings.filter((b) => {
-    if (activeTab === "All") return true;
-    if (b.bookingType === activeTab) return true;
+    let matchesCategory = false;
+    if (activeTab === "All") matchesCategory = true;
+    else if (b.bookingType === activeTab) matchesCategory = true;
+    else if (activeTab === "Hotel Booking" && b.bookingType === "Hotel") matchesCategory = true;
+    else {
+      const isHolidayPackageTab = [
+        "International Package",
+        "Domestic Package",
+        "Honeymoon Package",
+        "Weekend Getaways"
+      ].includes(activeTab);
 
-    // Legacy mappings for AddBookingModal & Mock Data
-    if (activeTab === "Hotel Booking" && b.bookingType === "Hotel") return true;
+      if (isHolidayPackageTab && (b.bookingType === "Holiday Package" || !b.bookingType)) matchesCategory = true;
+    }
 
-    const isHolidayPackageTab = [
-      "International Package",
-      "Domestic Package",
-      "Honeymoon Package",
-      "Weekend Getaways"
-    ].includes(activeTab);
+    if (!matchesCategory) return false;
 
-    if (isHolidayPackageTab && (b.bookingType === "Holiday Package" || !b.bookingType)) return true;
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      const matchesSearch = 
+        (b.customer?.toLowerCase() || "").includes(query) ||
+        (b.id?.toLowerCase() || "").includes(query) ||
+        (b.mobileNumber || "").includes(query) ||
+        (b.package?.toLowerCase() || "").includes(query) ||
+        (b.supplier?.toLowerCase() || "").includes(query) ||
+        (b.bookedBy?.toLowerCase() || "").includes(query);
+      if (!matchesSearch) return false;
+    }
 
-    return false;
+    return true;
   });
 
   const renderManageDetails = (booking: ExtBooking) => {
@@ -1416,25 +1431,37 @@ function BookingsPage() {
         </div>
       </div>
 
-      {/* Category Dropdown Navigation */}
-      <div className="flex justify-end items-center gap-2 py-4 text-sm">
-        <span className="text-muted-foreground font-medium">Category:</span>
-        <select
-          value={activeTab}
-          onChange={(e) => setActiveTab(e.target.value)}
-          className="h-9 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-        >
-          <option value="All">All Categories</option>
-          {SERVICES.map((g) => (
-            <optgroup key={g.group} label={g.group}>
-              {g.items.map((i) => (
-                <option key={i.label} value={i.label}>
-                  {i.icon} {i.label}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+      {/* Filter and Search Navigation */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-4 py-4 text-sm">
+        <div className="relative w-full sm:w-80">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search bookings by customer, ID, package..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+          />
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="text-muted-foreground font-medium whitespace-nowrap">Category:</span>
+          <select
+            value={activeTab}
+            onChange={(e) => setActiveTab(e.target.value)}
+            className="h-10 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+          >
+            <option value="All">All Categories</option>
+            {SERVICES.map((g) => (
+              <optgroup key={g.group} label={g.group}>
+                {g.items.map((i) => (
+                  <option key={i.label} value={i.label}>
+                    {i.icon} {i.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
+        </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
