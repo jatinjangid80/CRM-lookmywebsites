@@ -250,11 +250,11 @@ function BookingsPage() {
             saleInvoiceNo: "",
             purchaseInvoiceNo: "",
             remarks: l.notes || "",
-            sellingPrice: l.totalAmount || Number(l.budget) || 0,
+            sellingPrice: l.totalAmount || 0,
             purchasePrice: 0,
             profit: 0,
             margin: 0,
-            amount: l.totalAmount || Number(l.budget) || 0,
+            amount: l.totalAmount || 0,
             paid: l.amountPaid || 0,
             paymentMode: "Card",
             transactionId: "",
@@ -270,6 +270,7 @@ function BookingsPage() {
   const dashboardData = useMemo(() => {
     let totalRevenue = 0;
     let totalProfit = 0;
+    let totalPaid = 0;
 
     let confirmedCount = 0;
     let pendingCount = 0;
@@ -310,6 +311,7 @@ function BookingsPage() {
       if (b.status !== "Cancelled" && b.status !== "Refunded") {
         totalRevenue += b.amount || 0;
         totalProfit += b.profit || 0;
+        totalPaid += b.paid || 0;
 
         // Monthly
         const monthMatch = (b.bookingDate || b.travelDate || "").match(/^\d{4}-(\d{2})-\d{2}$/);
@@ -365,6 +367,7 @@ function BookingsPage() {
       totalBookings: allBookings.length,
       serviceCounts,
       totalRevenue,
+      totalPaid,
       totalProfit,
       margin,
       avgValue,
@@ -1244,13 +1247,13 @@ function BookingsPage() {
         </div>
 
         {/* Row 2: Revenue Analytics */}
-        <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <TrendingUp className="h-16 w-16 text-primary" />
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Total Revenue
+              Total Selling Amount
             </p>
             <p className="text-3xl font-display font-bold text-foreground">
               {formatINR(dashboardData.totalRevenue)}
@@ -1258,7 +1261,29 @@ function BookingsPage() {
           </div>
           <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
-              <CheckCircle2 className="h-16 w-16 text-blue-600" />
+              <CheckCircle2 className="h-16 w-16 text-emerald-600" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Total Paid Amount
+            </p>
+            <p className="text-3xl font-display font-bold text-emerald-600">
+              {formatINR(dashboardData.totalPaid)}
+            </p>
+          </div>
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <Clock className="h-16 w-16 text-rose-600" />
+            </div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+              Total Pending
+            </p>
+            <p className="text-3xl font-display font-bold text-rose-600">
+              {formatINR(dashboardData.totalRevenue - dashboardData.totalPaid)}
+            </p>
+          </div>
+          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-4 opacity-10">
+              <TrendingUp className="h-16 w-16 text-blue-600" />
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Avg Booking Value
@@ -1526,6 +1551,7 @@ function BookingsPage() {
                 className="rounded-xl h-8 mr-2"
                 onClick={() => {
                   setAddBookingCustomer(managingBooking?.customer);
+                  setEditingAddBooking(managingBooking);
                   setIsAddOpen(true);
                 }}
               >

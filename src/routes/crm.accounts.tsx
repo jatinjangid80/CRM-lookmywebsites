@@ -283,6 +283,40 @@ function AccountsPage() {
     invoiceId: "",
   });
 
+  const allBookings = useMemo(() => {
+    const derived = leads
+      .filter((l: any) => l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status))
+      .map(
+        (l: any) =>
+          ({
+            id: "LD-" + l.id.replace("L-", ""),
+            bookingType: l.service || "Holiday Package",
+            supplier: l.vendorName || "Not Assigned",
+            bookingDate: l.createdAt,
+            customer: l.name,
+            mobileNumber: l.phone,
+            bookedBy: l.assignedTo || "Admin",
+            company: l.clientCompany || "",
+            reference: l.bookingReference || "",
+            saleInvoiceNo: "",
+            purchaseInvoiceNo: "",
+            remarks: l.notes || "",
+            sellingPrice: l.totalAmount || 0,
+            purchasePrice: 0,
+            profit: 0,
+            margin: 0,
+            amount: l.totalAmount || 0,
+            paid: l.amountPaid || 0,
+            paymentMode: "Card",
+            transactionId: "",
+            status: l.paymentStatus || "Pending",
+            package: l.destination || "Unknown",
+            travelDate: l.travelDate || "TBD",
+          }) as any,
+      );
+    return [...bookings, ...derived];
+  }, [leads, bookings]);
+
   // Advanced Payment Approvals UI State
   const [activePaymentTab, setActivePaymentTab] = useState("unpaid");
 
@@ -1029,7 +1063,7 @@ function AccountsPage() {
                       if (l.name) allCustomerNames.add(l.name);
                       if (l.customer) allCustomerNames.add(l.customer);
                     });
-                    bookings.forEach(b => {
+                    allBookings.forEach(b => {
                       if (b.customer) allCustomerNames.add(b.customer);
                     });
                     tasks.forEach(t => {
@@ -1054,7 +1088,7 @@ function AccountsPage() {
                         const normalizedName = (name || "").trim().toLowerCase();
                         const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedName || (l.customer || "").trim().toLowerCase() === normalizedName);
                         const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedName || (t.lead || "").trim().toLowerCase() === normalizedName);
-                        const cBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedName);
+                        const cBookings = allBookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedName);
                         const cFollowUps = followUpsList.filter(f => (f.customerName || "").trim().toLowerCase() === normalizedName || f.customerId === customerData.id);
                         const cRevenue = transactions
                           .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === name) && tx.type === "Receipt")
@@ -1080,7 +1114,7 @@ function AccountsPage() {
                       const normalizedCustomerName = (customerName || "").trim().toLowerCase();
                       const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedCustomerName || (l.customer || "").trim().toLowerCase() === normalizedCustomerName);
                       const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedCustomerName || (t.lead || "").trim().toLowerCase() === normalizedCustomerName);
-                      const cBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedCustomerName);
+                      const cBookings = allBookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedCustomerName);
                       const cRevenue = transactions
                         .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName) && tx.type === "Receipt")
                         .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
@@ -1290,7 +1324,7 @@ function AccountsPage() {
                   {(() => {
                     const allVendorNames = new Set<string>();
                     vendors.forEach(v => v.name && allVendorNames.add(v.name));
-                    bookings.forEach(b => {
+                    allBookings.forEach(b => {
                       if (b.supplier) allVendorNames.add(b.supplier);
                     });
                     transactions.forEach(tx => {
@@ -1306,7 +1340,7 @@ function AccountsPage() {
                       .filter(name => name.toLowerCase().includes(vendorSearchQuery.toLowerCase()))
                       .filter(name => {
                         const vendorData = vendors.find(v => v.name === name) || { id: `synth-v-${name}`, name };
-                        const vBookings = bookings.filter(b => b.supplier === name);
+                        const vBookings = allBookings.filter(b => b.supplier === name);
                         const vSpend = transactions
                           .filter(tx => tx.entityType === "Vendor" && (tx.entityId === vendorData.id || tx.entityId === name) && tx.type === "Payment")
                           .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
@@ -1327,7 +1361,7 @@ function AccountsPage() {
                       const vendorData = vendors.find(v => v.name === vendorName) || { id: `synth-v-${index}`, name: vendorName };
                       
                       const isExpanded = expandedVendor === vendorData.id;
-                      const vBookings = bookings.filter(b => b.supplier === vendorName);
+                      const vBookings = allBookings.filter(b => b.supplier === vendorName);
                       
                       const vSpend = transactions
                         .filter(tx => tx.entityType === "Vendor" && (tx.entityId === vendorData.id || tx.entityId === vendorName) && tx.type === "Payment")
@@ -1464,7 +1498,7 @@ function AccountsPage() {
                 {invoiceMatchStatusTx === "not_found" && <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-2 py-0.5 rounded-full">Not Found</span>}
               </div>
               <BookingCombobox
-                bookings={bookings}
+                bookings={allBookings}
                 value={newTx.invoiceId || ""}
                 onChange={(val, matchingBooking) => {
                   let updates: any = { invoiceId: val };
@@ -1968,7 +2002,7 @@ function AccountsPage() {
                 {invoiceMatchStatus === "not_found" && <span className="text-[10px] text-rose-500 font-bold bg-rose-500/10 px-2 py-0.5 rounded-full">Not Found</span>}
               </div>
               <BookingCombobox
-                bookings={bookings}
+                bookings={allBookings}
                 value={newFollowUp.invoiceId || ""}
                 onChange={(val, matchingBooking) => {
                   let updates: any = { invoiceId: val };
@@ -2093,8 +2127,8 @@ function AccountsPage() {
             <div className="space-y-2">
               <Label>Booking ID / Invoice No (Optional)</Label>
               <BookingCombobox
-                bookings={bookings}
-                value={newPaymentRequest.invoiceId}
+                bookings={allBookings}
+                value={newPaymentRequest.invoiceId || ""}
                 onChange={(val, matchingBooking) => {
                   let updates: any = { invoiceId: val };
 
