@@ -232,6 +232,8 @@ function BookingsPage() {
   const [bookingList, setBookingList] = useSupabaseTable<ExtBooking[]>("bookings", []);
   const [leads, setLeads] = useSupabaseTable<any[]>("leads", []);
 
+  const [transactions] = useSupabaseTable<any[]>("transactions", []);
+
   const allBookings = useMemo(() => {
     const derived = leads
       .filter((l: any) => l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status))
@@ -263,8 +265,17 @@ function BookingsPage() {
             travelDate: l.travelDate || "TBD",
           }) as ExtBooking,
       );
-    return [...bookingList, ...derived];
-  }, [leads, bookingList]);
+    
+    const combined = [...bookingList, ...derived];
+    return combined.map(b => {
+      const bTransactions = transactions.filter(tx => tx.type === "Receipt" && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
+      const txPaid = bTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+      return {
+        ...b,
+        paid: bTransactions.length > 0 ? txPaid : (b.paid || 0)
+      };
+    });
+  }, [leads, bookingList, transactions]);
 
   // --- Dashboard Data Aggregation ---
   const dashboardData = useMemo(() => {
