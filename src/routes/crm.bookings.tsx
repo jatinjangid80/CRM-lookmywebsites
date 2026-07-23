@@ -709,16 +709,7 @@ function BookingsPage() {
       const isEdit = bookingList.some((b) => b.id === booking.id);
       
       if (!isEdit) {
-        const isDuplicate = bookingList.some(
-          (b) =>
-            (b.customer || "").toLowerCase() === (booking.customer || "").toLowerCase() &&
-            b.bookingType === booking.bookingType &&
-            b.bookingDate === booking.bookingDate
-        );
-        if (isDuplicate) {
-          alert("A booking for this customer on this date with this type already exists.");
-          return;
-        }
+        // Allow multiple tickets/bookings for the same user on the same date by removing the strict isDuplicate check.
       }
 
       let finalBooking = { ...booking };
