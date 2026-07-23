@@ -1103,6 +1103,11 @@ function AccountsPage() {
                            cTotalRevenue += (Number(f.totalAmount) || 0);
                          }
                       });
+
+                      // Include manual receipts that aren't linked to bookings in total revenue
+                      cTransactions.filter(tx => tx.type === "Receipt" && !tx.invoiceId && tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName)).forEach(tx => {
+                          cTotalRevenue += (Number(tx.amount) || 0);
+                      });
                       
                       let cReceivedAmount = cRevenue; // Use manual receipts
                       cBookings.forEach(b => {

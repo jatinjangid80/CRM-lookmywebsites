@@ -727,7 +727,10 @@ function BookingsPage() {
         }, 0);
         const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
         finalBooking.id = nextId;
-        finalBooking.paymentStatus = "Pending";
+        finalBooking.status = "Pending";
+        
+        // Remove paymentStatus as it does not exist in the database schema
+        delete (finalBooking as any).paymentStatus;
 
         // Insert into Supabase directly
         const { error } = await supabase.from("bookings").insert([finalBooking]);
