@@ -4,13 +4,15 @@ import { Plus, Search, FileText, ArrowUpRight, ArrowDownRight, Edit2, Trash2 } f
 import { Input } from "@/components/ui/input";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR } from "@/lib/mock-data";
+import { InsuranceGenTransactionModal } from "./InsuranceGenTransactionModal";
 
 export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
   const [searchQuery, setSearchQuery] = useState("");
+  const [isAddTxOpen, setIsAddTxOpen] = useState(false);
 
   const policyIds = new Set(policies.map(p => String(p.id).toLowerCase()));
-  const policyNos = new Set(policies.map(p => String(p.policy_no).toLowerCase()));
+  const policyNos = new Set(policies.map(p => String(p.policy_number).toLowerCase())); // Note: policy_number instead of policy_no
 
   // Filter transactions for insurance policies
   const insuranceTransactions = transactions.filter(t => {
@@ -43,6 +45,10 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
             className="pl-9 bg-background border-border"
           />
         </div>
+        <Button onClick={() => setIsAddTxOpen(true)} className="shadow-sm">
+          <Plus className="h-4 w-4 mr-2" />
+          Add Transaction
+        </Button>
       </div>
 
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
@@ -106,6 +112,11 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
           </table>
         </div>
       </div>
+      
+      <InsuranceGenTransactionModal 
+        isOpen={isAddTxOpen} 
+        onClose={() => setIsAddTxOpen(false)} 
+      />
     </div>
   );
 }
