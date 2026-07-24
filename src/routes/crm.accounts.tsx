@@ -1401,6 +1401,12 @@ function AccountsPage() {
                       const vTotalBilled = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
                       const vPending = Math.max(0, vTotalBilled - vSpend);
                       
+                      const customerSet = new Set<string>();
+                      vBookings.forEach(b => {
+                        if (b.customer) customerSet.add(b.customer);
+                      });
+                      const vCustomers = Array.from(customerSet);
+                      
                       return (
                         <React.Fragment key={vendorData.id}>
                           <tr 
