@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin, CheckSquare, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, MessageCircle, History, Copy, Phone, Mail, MapPin, CheckSquare, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -37,6 +37,7 @@ import { getAuth } from "@/lib/auth";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
+import { generateWhatsAppLink } from "@/lib/whatsapp";
 
 export const Route = createFileRoute("/crm/customers")({
   component: CustomersPage,
@@ -400,6 +401,18 @@ function CustomersPage() {
                       <div className="flex items-center gap-2 text-sm text-foreground/80">
                         <Phone className="h-3.5 w-3.5 text-muted-foreground" />
                         {c.phone}
+                        {c.phone && (
+                          <a
+                            href={generateWhatsAppLink(c.phone, "Hello!")}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="ml-1 text-emerald-500 hover:text-emerald-600 transition-colors"
+                            title="Message on WhatsApp"
+                            onClick={(e) => e.stopPropagation()}
+                          >
+                            <MessageCircle className="h-3.5 w-3.5" />
+                          </a>
+                        )}
                       </div>
                       {c.email && (
                         <div className="flex items-center gap-2 text-sm text-foreground/80">
@@ -601,7 +614,20 @@ function CustomersPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-y-8 gap-x-8">
                         <div>
                           <p className="text-muted-foreground text-sm mb-1 font-medium">Phone</p>
-                          <p className="font-medium text-lg text-foreground">{selectedCustomer.phone}</p>
+                          <div className="flex items-center gap-2">
+                            <p className="font-medium text-lg text-foreground">{selectedCustomer.phone}</p>
+                            {selectedCustomer.phone && (
+                              <a
+                                href={generateWhatsAppLink(selectedCustomer.phone, "Hello!")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-500 hover:text-emerald-600 transition-colors bg-emerald-50 hover:bg-emerald-100 p-1.5 rounded-full"
+                                title="Message on WhatsApp"
+                              >
+                                <MessageCircle className="h-4 w-4" />
+                              </a>
+                            )}
+                          </div>
                         </div>
                         <div>
                           <p className="text-muted-foreground text-sm mb-1 font-medium">Email</p>

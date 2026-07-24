@@ -21,6 +21,7 @@ import {
   Copy,
   ChevronLeft,
   ChevronRight,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,6 +52,7 @@ import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { ImportVendorsModal } from "@/components/ui/import-vendors-modal";
+import { generateWhatsAppLink } from "@/lib/whatsapp";
 import * as XLSX from "xlsx";
 
 export const Route = createFileRoute("/crm/vendors")({ component: VendorsPage });
@@ -602,11 +604,18 @@ function VendorsPage() {
 
                       <DropdownMenuSeparator />
                       {v.mobile && (
-                        <DropdownMenuItem asChild>
-                          <a href={`tel:${v.mobile}`}>
-                            <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
-                          </a>
-                        </DropdownMenuItem>
+                        <>
+                          <DropdownMenuItem asChild>
+                            <a href={`tel:${v.mobile}`}>
+                              <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
+                            </a>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem asChild>
+                            <a href={generateWhatsAppLink(v.mobile, "Hello!")} target="_blank" rel="noopener noreferrer">
+                              <MessageCircle className="mr-2 h-4 w-4 text-emerald-500" /> WhatsApp Message
+                            </a>
+                          </DropdownMenuItem>
+                        </>
                       )}
                       {v.email && (
                         <DropdownMenuItem asChild>
@@ -858,9 +867,20 @@ function VendorsPage() {
                         </div>
                         <div className="flex flex-wrap gap-x-6 gap-y-1.5">
                           {c.mobile && (
-                            <a href={`tel:${c.mobile}`} className="text-primary hover:underline flex items-center gap-1.5 text-xs font-medium">
-                              <Phone className="h-3 w-3" /> {c.mobile}
-                            </a>
+                            <div className="flex items-center gap-2">
+                              <a href={`tel:${c.mobile}`} className="text-primary hover:underline flex items-center gap-1.5 text-xs font-medium">
+                                <Phone className="h-3 w-3" /> {c.mobile}
+                              </a>
+                              <a
+                                href={generateWhatsAppLink(c.mobile, "Hello!")}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-emerald-500 hover:text-emerald-600 transition-colors bg-emerald-50 hover:bg-emerald-100 p-1 rounded-full ml-1"
+                                title="Message on WhatsApp"
+                              >
+                                <MessageCircle className="h-3 w-3" />
+                              </a>
+                            </div>
                           )}
                           {c.email && (
                             <a href={`mailto:${c.email}`} className="text-primary hover:underline flex items-center gap-1.5 text-xs font-medium">
