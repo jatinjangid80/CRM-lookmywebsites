@@ -47,13 +47,13 @@ export interface ExtCustomer extends BaseCustomer {
   company?: string;
   city?: string;
   source?: string;
-  status: "Active" | "Inactive" | "VIP" | "Payment Pending" | "Partial Payment Received" | "Payment Received";
+  status: "Active" | "Inactive" | "VIP";
   createdAt: string;
   lastBookingDate?: string;
   assignedTo?: string;
 }
 
-const CUSTOMER_STATUSES = ["Active", "Inactive", "VIP", "Payment Pending", "Partial Payment Received", "Payment Received"];
+const CUSTOMER_STATUSES = ["Active", "Inactive", "VIP"];
 const SOURCES = ["Website", "Referral", "Facebook", "Instagram", "Ads", "Walk-in", "Other"];
 
 function CustomersPage() {
