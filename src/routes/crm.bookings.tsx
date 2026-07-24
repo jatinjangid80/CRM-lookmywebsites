@@ -216,6 +216,10 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
                     <span className="text-muted-foreground">Paid:</span>
                     <span className="font-medium text-emerald-600">₹{b.paid?.toLocaleString() || "0"}</span>
                   </div>
+                  <div className="flex justify-between text-xs">
+                    <span className="text-muted-foreground">Pending:</span>
+                    <span className="font-medium text-rose-600 dark:text-rose-400">₹{((b.amount || 0) - (b.paid || 0)).toLocaleString()}</span>
+                  </div>
                 </div>
               </div>
             ))}
