@@ -413,6 +413,7 @@ function DropZone({
 }) {
   const [dragging, setDragging] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const folderInputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback(
     (e: React.DragEvent) => {
@@ -453,6 +454,20 @@ function DropZone({
           }
         }}
       />
+      <input
+        ref={folderInputRef}
+        type="file"
+        // @ts-expect-error - webkitdirectory is a non-standard attribute but supported
+        webkitdirectory="true"
+        directory="true"
+        className="hidden"
+        onChange={(e) => {
+          if (e.target.files) {
+            onFiles(Array.from(e.target.files));
+            e.target.value = "";
+          }
+        }}
+      />
       <div
         className={`grid h-14 w-14 place-items-center rounded-2xl transition-colors ${uploading ? "bg-primary/20" : "bg-primary/10"}`}
       >
@@ -468,10 +483,24 @@ function DropZone({
         ) : (
           <>
             <p className="font-semibold text-sm">Drag & drop files here</p>
-            <p className="mt-1 text-xs text-muted-foreground">
+            <p className="mt-1 text-xs text-muted-foreground mb-3">
               or click to browse — PDF, Images, Docs, Excel, ZIP…
             </p>
-            <p className="mt-1 text-xs text-muted-foreground flex items-center justify-center gap-1">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mt-2 relative z-10"
+              onClick={(e) => {
+                e.stopPropagation();
+                if (!uploading) {
+                  folderInputRef.current?.click();
+                }
+              }}
+            >
+              <FolderPlus className="h-4 w-4 mr-2" /> Upload Folder
+            </Button>
+            <p className="mt-4 text-xs text-muted-foreground flex items-center justify-center gap-1">
               {isZoho ? (
                 <>
                   <Cloud className="h-3 w-3 text-[#0F9D58]" /> Files will be saved directly to
