@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { formatINR } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { InsurancePaymentModal } from "./InsurancePaymentModal";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
-export function InsuranceVendorStatusView({ policies, vendors }: { policies: any[], vendors: any[] }) {
+export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { policies: any[], vendors: any[], setPolicies: any }) {
+  const { auth } = useAuth();
+  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
   const vendorStats = policies.reduce((acc, p) => {
@@ -11,6 +20,56 @@ export function InsuranceVendorStatusView({ policies, vendors }: { policies: any
       totalProfit: acc.totalProfit + profit
     };
   }, { totalPaid: 0, totalProfit: 0 });
+
+  const handleSavePayment = async (amount: number, date: string, mode: string, reference: string) => {
+    if (!selectedPolicy) return;
+    
+    const vendorName = getVendorName(selectedPolicy);
+    
+    // Create transaction record
+    const { error: txError } = await supabase.from("transactions").insert([{
+      date,
+      type: "Payment",
+      entityType: "Vendor",
+      entityName: vendorName || "Unknown",
+      amount,
+      paymentMode: mode,
+      reference,
+      status: "Completed",
+      invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
+      module: "Insurance",
+      notes: JSON.stringify({
+        _isMeta: true,
+        text: `Vendor payment for policy ${selectedPolicy.policy_number}`,
+        createdBy: auth?.name || "Unknown"
+      })
+    }]);
+
+    if (txError) throw txError;
+
+    // Update policy record
+    const newVendPaid = (Number(selectedPolicy.vendor_paid) || 0) + amount;
+    const custPaid = Number(selectedPolicy.customer_paid) || 0;
+    const newProfit = custPaid - newVendPaid;
+
+    const { error: policyError } = await supabase.from("insurance_policies")
+      .update({ 
+        vendor_paid: newVendPaid,
+        profit: newProfit
+      })
+      .eq("id", selectedPolicy.id);
+
+    if (policyError) throw policyError;
+
+    // Update local state
+    if (setPolicies) {
+      setPolicies((prev: any[]) => prev.map(p => 
+        p.id === selectedPolicy.id 
+          ? { ...p, vendor_paid: newVendPaid, profit: newProfit } 
+          : p
+      ));
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -41,12 +100,13 @@ export function InsuranceVendorStatusView({ policies, vendors }: { policies: any
                 <th className="px-6 py-4">Customer Name</th>
                 <th className="px-6 py-4 text-right">Amount Paid to Vendor</th>
                 <th className="px-6 py-4 text-right">Profit Generated</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {policies.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                     No vendor records found.
                   </td>
                 </tr>
@@ -72,6 +132,12 @@ export function InsuranceVendorStatusView({ policies, vendors }: { policies: any
                       <td className="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-500">
                         {formatINR(profit)}
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(p)} className="h-8">
+                          <Plus className="h-4 w-4 mr-1" />
+                          Pay Vendor
+                        </Button>
+                      </td>
                     </tr>
                   )
                 })
@@ -80,6 +146,16 @@ export function InsuranceVendorStatusView({ policies, vendors }: { policies: any
           </table>
         </div>
       </div>
+      
+      {selectedPolicy && (
+        <InsurancePaymentModal
+          isOpen={!!selectedPolicy}
+          onClose={() => setSelectedPolicy(null)}
+          title={`Pay Vendor: ${getVendorName(selectedPolicy) || 'Unknown'}`}
+          maxAmount={0} // No max amount for vendors as we don't have expected total
+          onSubmit={handleSavePayment}
+        />
+      )}
     </div>
   );
 }

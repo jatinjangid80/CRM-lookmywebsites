@@ -1,6 +1,15 @@
+import { useState } from "react";
 import { formatINR } from "@/lib/mock-data";
+import { Button } from "@/components/ui/button";
+import { Plus } from "lucide-react";
+import { InsurancePaymentModal } from "./InsurancePaymentModal";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/hooks/useAuth";
 
-export function InsuranceCustomerStatusView({ policies }: { policies: any[] }) {
+export function InsuranceCustomerStatusView({ policies, setPolicies }: { policies: any[], setPolicies: any }) {
+  const { auth } = useAuth();
+  const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+
   const customerStats = policies.reduce((acc, p) => {
     const total = Number(p.total_premium) || 0;
     const paid = Number(p.customer_paid) || Number(p.amount_paid) || 0;
@@ -11,6 +20,59 @@ export function InsuranceCustomerStatusView({ policies }: { policies: any[] }) {
       pending: acc.pending + (pending > 0 ? pending : 0)
     };
   }, { total: 0, paid: 0, pending: 0 });
+
+  const handleSavePayment = async (amount: number, date: string, mode: string, reference: string) => {
+    if (!selectedPolicy) return;
+    
+    // Create transaction record
+    const { error: txError } = await supabase.from("transactions").insert([{
+      date,
+      type: "Payment",
+      entityType: "Customer",
+      entityName: selectedPolicy.customer_name || "Unknown",
+      amount,
+      paymentMode: mode,
+      reference,
+      status: "Completed",
+      invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
+      module: "Insurance",
+      notes: JSON.stringify({
+        _isMeta: true,
+        text: `Customer payment for policy ${selectedPolicy.policy_number}`,
+        createdBy: auth?.name || "Unknown"
+      })
+    }]);
+
+    if (txError) throw txError;
+
+    // Update policy record
+    const newPaid = (Number(selectedPolicy.customer_paid) || Number(selectedPolicy.amount_paid) || 0) + amount;
+    const total = Number(selectedPolicy.total_premium) || 0;
+    
+    let newStatus = "Pending";
+    if (newPaid > 0) {
+      newStatus = newPaid >= total ? "Full Paid" : "Partial";
+    }
+
+    const { error: policyError } = await supabase.from("insurance_policies")
+      .update({ 
+        customer_paid: newPaid, 
+        amount_paid: newPaid,
+        payment_status: newStatus 
+      })
+      .eq("id", selectedPolicy.id);
+
+    if (policyError) throw policyError;
+
+    // Update local state
+    if (setPolicies) {
+      setPolicies((prev: any[]) => prev.map(p => 
+        p.id === selectedPolicy.id 
+          ? { ...p, customer_paid: newPaid, amount_paid: newPaid, payment_status: newStatus } 
+          : p
+      ));
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
@@ -42,12 +104,13 @@ export function InsuranceCustomerStatusView({ policies }: { policies: any[] }) {
                 <th className="px-6 py-4 text-right">Paid Amount</th>
                 <th className="px-6 py-4 text-right">Pending Amount</th>
                 <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {policies.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                     No policies found.
                   </td>
                 </tr>
@@ -80,6 +143,14 @@ export function InsuranceCustomerStatusView({ policies }: { policies: any[] }) {
                           {p.payment_status || "Pending"}
                         </span>
                       </td>
+                      <td className="px-6 py-4 text-right">
+                        {pending > 0 && (
+                          <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(p)} className="h-8">
+                            <Plus className="h-4 w-4 mr-1" />
+                            Pay
+                          </Button>
+                        )}
+                      </td>
                     </tr>
                   )
                 })
@@ -88,6 +159,16 @@ export function InsuranceCustomerStatusView({ policies }: { policies: any[] }) {
           </table>
         </div>
       </div>
+      
+      {selectedPolicy && (
+        <InsurancePaymentModal
+          isOpen={!!selectedPolicy}
+          onClose={() => setSelectedPolicy(null)}
+          title={`Add Customer Payment: ${selectedPolicy.customer_name || 'Unknown'}`}
+          maxAmount={(Number(selectedPolicy.total_premium) || 0) - (Number(selectedPolicy.customer_paid) || Number(selectedPolicy.amount_paid) || 0)}
+          onSubmit={handleSavePayment}
+        />
+      )}
     </div>
   );
 }
