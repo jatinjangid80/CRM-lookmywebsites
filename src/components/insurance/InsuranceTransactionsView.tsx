@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, Search, FileText, ArrowUpRight, ArrowDownRight, Edit2, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { formatINR } from "@/lib/utils";
+import { formatINR } from "@/lib/mock-data";
 
 export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
