@@ -36,6 +36,7 @@ function AttendancePage() {
   const [time, setTime] = useState(new Date());
   const [shiftNote, setShiftNote] = useState("");
   const [selectedHistoryEmpId, setSelectedHistoryEmpId] = useState<string>("");
+  const [myViewMode, setMyViewMode] = useState<"table" | "calendar">("table");
 
   const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
@@ -276,10 +277,28 @@ function AttendancePage() {
             <div className="lg:col-span-2 space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-semibold text-lg">My Attendance History</h3>
-                <span className="text-xs text-muted-foreground font-medium">
-                  {attendance.filter((record) => record.employeeid === myEmpId).length} total shifts logged
-                </span>
+                <div className="flex items-center gap-3">
+                  <span className="text-xs text-muted-foreground font-medium">
+                    {attendance.filter((record) => record.employeeid === myEmpId).length} total shifts logged
+                  </span>
+                  <div className="flex items-center bg-secondary p-1 rounded-lg">
+                    <button
+                      onClick={() => setMyViewMode("table")}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Table
+                    </button>
+                    <button
+                      onClick={() => setMyViewMode("calendar")}
+                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "calendar" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                    >
+                      Calendar
+                    </button>
+                  </div>
+                </div>
               </div>
+              
+              {myViewMode === "table" ? (
               <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
                   <table className="w-full text-sm text-left">
@@ -350,6 +369,31 @@ function AttendancePage() {
                   </table>
                 </div>
               </div>
+              ) : (
+                <div className="bg-card rounded-3xl border border-border shadow-sm p-6 flex items-center justify-center">
+                  <div className="w-full max-w-md">
+                    <Calendar
+                      mode="multiple"
+                      selected={attendance.filter((record) => record.employeeid === myEmpId).map((record) => new Date(record.date))}
+                      className="rounded-md mx-auto pointer-events-none"
+                      classNames={{
+                        day_selected: "bg-emerald-100 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-900 focus:bg-emerald-100 focus:text-emerald-900 font-bold border-2 border-emerald-500",
+                        day: "h-12 w-12 p-0 font-normal aria-selected:opacity-100 text-center flex items-center justify-center rounded-lg",
+                      }}
+                    />
+                    <div className="flex items-center justify-center gap-6 mt-6 border-t border-border pt-6">
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded bg-emerald-100 border-2 border-emerald-500"></div>
+                        <span className="text-sm font-medium text-muted-foreground">Present</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 rounded border-2 border-border/60 hover:bg-accent"></div>
+                        <span className="text-sm font-medium text-muted-foreground">Absent / No record</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </TabsContent>
