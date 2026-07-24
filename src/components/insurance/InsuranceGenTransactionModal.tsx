@@ -27,7 +27,10 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
 
   const handlePolicyChange = (val: string) => {
     setNewTx(prev => {
-      const match = policies.find(p => p.policy_number?.toLowerCase() === val.toLowerCase());
+      const match = policies.find(p => 
+        (p.policy_number && p.policy_number.toLowerCase() === val.toLowerCase()) || 
+        (p.vehicle_number && p.vehicle_number.toLowerCase() === val.toLowerCase())
+      );
       if (match) {
         const total = Number(match.total_premium) || 0;
         const paid = Number(match.customer_paid) || Number(match.amount_paid) || 0;
@@ -36,7 +39,7 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         
         return {
           ...prev,
-          invoiceId: val,
+          invoiceId: match.policy_number || val, // store policy_number if available, otherwise what they typed
           entityName: match.customer_name || "",
           entityType: "Customer",
           amount: pending > 0 ? String(pending) : prev.amount
@@ -157,17 +160,18 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         
         <div className="grid grid-cols-2 gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
           <div className="space-y-2 col-span-2">
-            <Label>Policy No. / Ref (Optional)</Label>
+            <Label>Policy No. / Vehicle No. (Optional)</Label>
             <Input 
               list="policy-numbers"
               value={newTx.invoiceId} 
               onChange={e => handlePolicyChange(e.target.value)} 
-              placeholder="Type Policy No to auto-fill..." 
+              placeholder="Type Policy No or Vehicle No to auto-fill..." 
             />
             <datalist id="policy-numbers">
-              {policies.map(p => p.policy_number && (
-                <option key={p.id} value={p.policy_number}>{p.customer_name}</option>
-              ))}
+              {policies.flatMap(p => [
+                p.policy_number ? <option key={`${p.id}-pol`} value={p.policy_number}>{p.customer_name} (Policy)</option> : null,
+                p.vehicle_number ? <option key={`${p.id}-veh`} value={p.vehicle_number}>{p.customer_name} (Vehicle)</option> : null
+              ])}
             </datalist>
           </div>
           
