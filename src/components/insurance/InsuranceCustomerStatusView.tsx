@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/hooks/useAuth";
+import { getAuth } from "@/lib/auth";
 
 export function InsuranceCustomerStatusView({ policies, setPolicies }: { policies: any[], setPolicies: any }) {
-  const { auth } = useAuth();
+  const auth = getAuth();
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
 
   const customerStats = policies.reduce((acc, p) => {

@@ -4,10 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
-import { useAuth } from "@/hooks/useAuth";
+import { getAuth } from "@/lib/auth";
 
 export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { policies: any[], vendors: any[], setPolicies: any }) {
-  const { auth } = useAuth();
+  const auth = getAuth();
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
 
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
