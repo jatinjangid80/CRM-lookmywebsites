@@ -756,14 +756,6 @@ function BookingsPage() {
         // Remove paymentStatus as it does not exist in the database schema
         delete (finalBooking as any).paymentStatus;
 
-        // Insert into Supabase directly
-        const { error } = await supabase.from("bookings").insert([finalBooking]);
-        if (error) {
-          console.error("Error inserting booking:", error);
-          alert("Failed to save booking to database.");
-          return;
-        }
-
         // Update customer status to Payment Pending
         if (finalBooking.customer) {
           try {
@@ -783,14 +775,6 @@ function BookingsPage() {
           } catch (err) {
             console.error("Failed to update customer status:", err);
           }
-        }
-      } else {
-        // Update Supabase directly
-        const { error } = await supabase.from("bookings").update(finalBooking).eq("id", finalBooking.id);
-        if (error) {
-          console.error("Error updating booking:", error);
-          alert("Failed to update booking in database.");
-          return;
         }
       }
 
