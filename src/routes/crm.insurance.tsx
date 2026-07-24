@@ -11,6 +11,7 @@ import { InsuranceForm } from "@/components/insurance/InsuranceForm";
 import { RenewalsView } from "@/components/insurance/RenewalsView";
 import { InsuranceVendorsView } from "@/components/insurance/InsuranceVendorsView";
 import { InsuranceCompaniesView } from "@/components/insurance/InsuranceCompaniesView";
+import { InsuranceTransactionsView } from "@/components/insurance/InsuranceTransactionsView";
 
 export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
@@ -258,10 +259,7 @@ function GeneralInsurancePage() {
         )}
 
         {activeTab === "GenTransactions" && (
-          <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">General Transactions</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">Manage general transactions related to insurance here.</p>
-          </div>
+          <InsuranceTransactionsView policies={policies} />
         )}
       </div>
 
