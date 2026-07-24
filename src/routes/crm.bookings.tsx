@@ -30,6 +30,10 @@ import {
   MoreVertical,
   Pencil,
   Search,
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Filter
 } from "lucide-react";
 import {
   BarChart,
@@ -402,6 +406,18 @@ function BookingsPage() {
   // Filter States
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status">("date");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
+
+  const handleSort = (field: "date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status") => {
+    if (sortField === field) {
+      setSortOrder(sortOrder === "asc" ? "desc" : "asc");
+    } else {
+      setSortField(field);
+      setSortOrder("asc");
+    }
+  };
 
   // Success popup state
   const [successBooking, setSuccessBooking] = useState<Booking | null>(null);
@@ -805,6 +821,8 @@ function BookingsPage() {
 
     if (!matchesCategory) return false;
 
+    if (statusFilter !== "All" && b.status !== statusFilter) return false;
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
@@ -818,6 +836,17 @@ function BookingsPage() {
     }
 
     return true;
+  }).sort((a, b) => {
+    let cmp = 0;
+    if (sortField === "date") cmp = new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime();
+    else if (sortField === "travelDate") cmp = new Date(a.travelDate || 0).getTime() - new Date(b.travelDate || 0).getTime();
+    else if (sortField === "customer") cmp = (a.customer || "").localeCompare(b.customer || "");
+    else if (sortField === "amount") cmp = (a.amount || 0) - (b.amount || 0);
+    else if (sortField === "paid") cmp = (a.paid || 0) - (b.paid || 0);
+    else if (sortField === "pending") cmp = ((a.amount || 0) - (a.paid || 0)) - ((b.amount || 0) - (b.paid || 0));
+    else if (sortField === "status") cmp = (a.status || "").localeCompare(b.status || "");
+    
+    return sortOrder === "asc" ? cmp : -cmp;
   });
 
   const renderManageDetails = (booking: ExtBooking) => {
@@ -1445,43 +1474,74 @@ function BookingsPage() {
             className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
           />
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-muted-foreground font-medium whitespace-nowrap">Category:</span>
-          <select
-            value={activeTab}
-            onChange={(e) => setActiveTab(e.target.value)}
-            className="h-10 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
-          >
-            <option value="All">All Categories</option>
-            {SERVICES.map((g) => (
-              <optgroup key={g.group} label={g.group}>
-                {g.items.map((i) => (
-                  <option key={i.label} value={i.label}>
-                    {i.icon} {i.label}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+        <div className="flex items-center gap-4 flex-wrap justify-end">
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground font-medium whitespace-nowrap"><Filter className="inline w-4 h-4 mr-1"/>Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value)}
+              className="h-10 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+            >
+              <option value="All">All Statuses</option>
+              <option value="Confirmed">Confirmed</option>
+              <option value="Pending">Pending</option>
+              <option value="Cancelled">Cancelled</option>
+              <option value="Completed">Completed</option>
+              <option value="Refunded">Refunded</option>
+            </select>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground font-medium whitespace-nowrap">Category:</span>
+            <select
+              value={activeTab}
+              onChange={(e) => setActiveTab(e.target.value)}
+              className="h-10 cursor-pointer appearance-none rounded-full border border-border bg-card text-card-foreground pl-4 pr-9 py-1.5 font-semibold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%2224%22%20height%3D%2224%22%20viewBox%3D%220%200%24%2024%22%20fill%3D%22none%22%20stroke%3D%22%23111827%22%20stroke-width%3D%222%22%20stroke-linecap%3D%22round%22%20stroke-linejoin%3D%22round%22%3E%3Cpolyline%20points%3D%226%209%2012%2015%2018%209%22%3E%3C%2Fpolyline%3E%3C%2Fsvg%3E')] bg-[length:1em_1em] bg-[right_1rem_center] bg-no-repeat"
+            >
+              <option value="All">All Categories</option>
+              {SERVICES.map((g) => (
+                <optgroup key={g.group} label={g.group}>
+                  {g.items.map((i) => (
+                    <option key={i.label} value={i.label}>
+                      {i.icon} {i.label}
+                    </option>
+                  ))}
+                </optgroup>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
-            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+            <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
               <tr>
-                <th className="px-4 py-3 whitespace-nowrap">Booking Date</th>
-                <th className="px-4 py-3 whitespace-nowrap">Travel Date</th>
-                <th className="px-4 py-3 whitespace-nowrap">Passenger Name</th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("date")}>
+                  <div className="flex items-center gap-1">Booking Date {sortField === "date" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("travelDate")}>
+                  <div className="flex items-center gap-1">Travel Date {sortField === "travelDate" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("customer")}>
+                  <div className="flex items-center gap-1">Passenger Name {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap">Mobile No</th>
-                <th className="px-4 py-3 whitespace-nowrap">Selling Price (₹)</th>
-                <th className="px-4 py-3 whitespace-nowrap">Paid (₹)</th>
-                <th className="px-4 py-3 whitespace-nowrap">Pending (₹)</th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("amount")}>
+                  <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("paid")}>
+                  <div className="flex items-center gap-1">Paid (₹) {sortField === "paid" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("pending")}>
+                  <div className="flex items-center gap-1">Pending (₹) {sortField === "pending" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap">Purchase Price (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Profit (₹)</th>
                 <th className="px-4 py-3 whitespace-nowrap">Booked By</th>
-                <th className="px-4 py-3 whitespace-nowrap">Payment Status</th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("status")}>
+                  <div className="flex items-center gap-1">Status {sortField === "status" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3"></th>
               </tr>
             </thead>
