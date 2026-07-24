@@ -1638,27 +1638,27 @@ function AccountsPage() {
                 value={newTx.entityId}
                 onChange={v => {
                   let pending = 0;
-                  let invoiceId = "";
                   if (v) {
                     if (newTx.entityType === "Customer") {
                       const matched = customers.find(c => c.id === v);
                       if (matched) {
                         const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
                         pending = customerBookings.reduce((sum, b) => sum + (((Number(b.sellingPrice) || Number(b.amount) || 0)) - (b.paid || 0)), 0);
-                        const unpaid = customerBookings.find(b => (((Number(b.sellingPrice) || Number(b.amount) || 0)) - (b.paid || 0)) > 0);
-                        if (unpaid) invoiceId = unpaid.id;
                       }
                     } else if (newTx.entityType === "Vendor") {
                       const matched = vendors.find(v2 => v2.id === v);
                       if (matched) {
-                        const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
-                        pending = vendorBookings.reduce((sum, b) => sum + ((b.purchasePrice || 0) - (b.paid || 0)), 0);
-                        const unpaid = vendorBookings.find(b => ((b.purchasePrice || 0) - (b.paid || 0)) > 0);
-                        if (unpaid) invoiceId = unpaid.id;
+                        const vendorName = matched.name?.split('---META---')[0];
+                        const vendorBookings = bookings.filter(b => b.supplier === vendorName);
+                        const totalAmount = vendorBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
+                        const vendorTxs = transactions.filter(t => t.type === "Payment" && t.entityType === "Vendor" && (t.entityId === matched.id || t.entityId === vendorName));
+                        const totalPaid = vendorTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                        pending = Math.max(0, totalAmount - totalPaid);
                       }
                     }
                   }
-                  setNewTx({ ...newTx, entityId: v, amount: pending > 0 ? pending : (newTx.amount || 0), invoiceId: invoiceId || newTx.invoiceId });
+                  // Clear invoiceId so we don't force a specific booking on direct payments
+                  setNewTx({ ...newTx, entityId: v, amount: pending > 0 ? pending : (newTx.amount || 0), invoiceId: "" });
                 }}
                 customers={customers}
                 vendors={vendors}
