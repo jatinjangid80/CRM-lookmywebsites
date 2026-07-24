@@ -27,6 +27,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
     const vendorName = getVendorName(selectedPolicy);
     // Create transaction record
     const { error: txError } = await supabase.from("transactions").insert([{
+      id: `TXN-${Math.floor(Math.random() * 1000000)}`,
       date,
       type: "Payment",
       entityType: "Vendor",

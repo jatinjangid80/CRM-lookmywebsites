@@ -70,6 +70,7 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
     setIsSubmitting(true);
     try {
       const { error } = await supabase.from("transactions").insert([{
+        id: `TXN-${Math.floor(Math.random() * 1000000)}`,
         date: newTx.date,
         type: newTx.type,
         entityType: newTx.entityType,
@@ -183,8 +184,8 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
             <Select value={newTx.type} onValueChange={v => setNewTx({ ...newTx, type: v })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
-                <SelectItem value="Receipt">Receipt (Money In)</SelectItem>
-                <SelectItem value="Payment">Payment (Money Out)</SelectItem>
+                <SelectItem value="Receipt">Receipt (In)</SelectItem>
+                <SelectItem value="Payment">Payment (Out)</SelectItem>
               </SelectContent>
             </Select>
           </div>

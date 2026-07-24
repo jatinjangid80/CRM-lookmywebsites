@@ -115,7 +115,8 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
       
       <InsuranceGenTransactionModal 
         isOpen={isAddTxOpen} 
-        onClose={() => setIsAddTxOpen(false)} 
+        onClose={() => setIsAddTxOpen(false)}
+        policies={policies}
       />
     </div>
   );
