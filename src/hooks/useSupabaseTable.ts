@@ -700,6 +700,10 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             if (parsedNotes.task_number !== undefined) newRow.task_number = parsedNotes.task_number;
             if (parsedNotes.created_by !== undefined) newRow.created_by = parsedNotes.created_by;
             if (parsedNotes.description !== undefined && !newRow.description) newRow.description = parsedNotes.description;
+            if (parsedNotes.module !== undefined) newRow.module = parsedNotes.module;
+            if (parsedNotes.invoiceId !== undefined) newRow.invoiceId = parsedNotes.invoiceId;
+            if (parsedNotes.reference !== undefined) newRow.reference = parsedNotes.reference;
+            if (parsedNotes.status !== undefined && !newRow.status) newRow.status = parsedNotes.status;
             newRow.notes = []; // reset notes to empty array
           } else if (Array.isArray(parsedNotes)) {
             newRow.notes = parsedNotes;
