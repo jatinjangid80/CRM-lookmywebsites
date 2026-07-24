@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin, CheckSquare } from "lucide-react";
+import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, History, Copy, Phone, Mail, MapPin, CheckSquare, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -83,10 +83,12 @@ function CustomersPage() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterCity, setFilterCity] = useState("All");
   const [filterAssignee, setFilterAssignee] = useState("All");
+  const [sortField, setSortField] = useState<string>("id");
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 20;
 
-  const cities = Array.from(new Set(customerList.map((c) => c.city).filter(Boolean)));
+  const cities = Array.from(new Set(customerList.map((c) => c.city).filter(Boolean))) as string[];
 
   const handleSaveCustomer = (e: React.FormEvent) => {
     e.preventDefault();
@@ -240,11 +242,26 @@ function CustomersPage() {
           c.company?.toLowerCase().includes(q.toLowerCase()) ||
           c.city?.toLowerCase().includes(q.toLowerCase()))
     ).sort((a, b) => {
-      const numA = parseInt(a.id.replace(/\D/g, "")) || 0;
-      const numB = parseInt(b.id.replace(/\D/g, "")) || 0;
-      return numA - numB;
+      const valA = a[sortField as keyof ExtCustomer];
+      const valB = b[sortField as keyof ExtCustomer];
+      
+      if (!valA && valB) return sortOrder === "asc" ? -1 : 1;
+      if (valA && !valB) return sortOrder === "asc" ? 1 : -1;
+      if (!valA && !valB) return 0;
+
+      if (sortField === "id") {
+        const numA = parseInt(a.id.replace(/\D/g, "")) || 0;
+        const numB = parseInt(b.id.replace(/\D/g, "")) || 0;
+        return sortOrder === "asc" ? numA - numB : numB - numA;
+      }
+      
+      const strA = String(valA).toLowerCase();
+      const strB = String(valB).toLowerCase();
+      if (strA < strB) return sortOrder === "asc" ? -1 : 1;
+      if (strA > strB) return sortOrder === "asc" ? 1 : -1;
+      return 0;
     });
-  }, [customerList, filterStatus, filterCity, filterAssignee, q]);
+  }, [customerList, filterStatus, filterCity, filterAssignee, q, sortField, sortOrder]);
 
   // Pagination removed - showing all data with scroll
 
@@ -293,7 +310,7 @@ function CustomersPage() {
         
         <div className="flex items-center gap-4">
           <Select value={filterStatus} onValueChange={(v) => { setFilterStatus(v); setCurrentPage(1); }}>
-            <SelectTrigger className="w-[160px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
+            <SelectTrigger className="w-[140px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
               <SelectValue placeholder="All Statuses" />
             </SelectTrigger>
             <SelectContent>
@@ -303,6 +320,31 @@ function CustomersPage() {
               ))}
             </SelectContent>
           </Select>
+
+          <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[140px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
+              <SelectValue placeholder="All Cities" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Cities</SelectItem>
+              {cities.map((city) => (
+                <SelectItem key={city} value={city}>{city}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          <Select value={filterAssignee} onValueChange={(v) => { setFilterAssignee(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[150px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
+              <SelectValue placeholder="All Assignees" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All">All Assignees</SelectItem>
+              {assignees.map((a) => (
+                <SelectItem key={a} value={a}>{a}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <div className="text-sm text-muted-foreground whitespace-nowrap font-medium px-2">
             {filtered.length} customers
           </div>
@@ -313,11 +355,19 @@ function CustomersPage() {
       <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
         <Table>
           <TableHeader>
-            <TableRow className="bg-muted/50">
-              <TableHead>Customer Info</TableHead>
-              <TableHead>Contact Details</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
+            <TableRow className="bg-muted/50 select-none">
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("name"); }}>
+                <div className="flex items-center gap-1">Customer Info {sortField === "name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "phone" && sortOrder === "asc" ? "desc" : "asc"); setSortField("phone"); }}>
+                <div className="flex items-center gap-1">Contact Details {sortField === "phone" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "city" && sortOrder === "asc" ? "desc" : "asc"); setSortField("city"); }}>
+                <div className="flex items-center gap-1">Location {sortField === "city" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "status" && sortOrder === "asc" ? "desc" : "asc"); setSortField("status"); }}>
+                <div className="flex items-center gap-1">Status {sortField === "status" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
