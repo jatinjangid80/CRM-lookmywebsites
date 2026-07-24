@@ -400,6 +400,53 @@ function AccountsPage() {
     } else if (deleteTarget.type === "Follow-up") {
       setFollowUpsList(prev => prev.filter(f => f.id !== deleteTarget.id));
     } else if (deleteTarget.type === "Transaction") {
+      const txToDelete = transactions.find(t => t.id === deleteTarget.id);
+      
+      if (txToDelete && txToDelete.invoiceId && txToDelete.amount > 0) {
+        const targetBooking = bookings.find(b =>
+          String(b.id).toLowerCase() === String(txToDelete.invoiceId).toLowerCase() ||
+          String(b.saleInvoiceNo || "").toLowerCase() === String(txToDelete.invoiceId).toLowerCase() ||
+          String(b.purchaseInvoiceNo || "").toLowerCase() === String(txToDelete.invoiceId).toLowerCase()
+        );
+        
+        if (targetBooking) {
+          const currentPaid = targetBooking.paid || 0;
+          const newPaid = Math.max(0, currentPaid - txToDelete.amount);
+          
+          let newPaymentStatus = targetBooking.paymentStatus;
+          if (txToDelete.type === "Receipt") {
+            const totalAmount = targetBooking.amount || 0;
+            if (newPaid === 0) {
+              newPaymentStatus = "Pending";
+            } else if (newPaid < totalAmount) {
+              newPaymentStatus = "Partially Paid";
+            } else {
+              newPaymentStatus = "Paid / Completed";
+            }
+          }
+          
+          const updatedBooking = {
+            ...targetBooking,
+            paid: newPaid,
+            paymentStatus: newPaymentStatus
+          };
+          
+          setBookings(bookings.map(b => b.id === targetBooking.id ? updatedBooking : b));
+          
+          // Async update to DB
+          (async () => {
+            try {
+              await supabase.from("bookings").update({
+                paid: newPaid,
+                paymentStatus: newPaymentStatus
+              }).eq("id", targetBooking.id);
+            } catch (err) {
+              console.error("Failed to update status on delete:", err);
+            }
+          })();
+        }
+      }
+      
       setTransactions(prev => prev.filter(t => t.id !== deleteTarget.id));
     } else if (deleteTarget.type === "PaymentRequest") {
       setPaymentRequests(prev => prev.filter(r => r.id !== deleteTarget.id));
@@ -1694,7 +1741,10 @@ function AccountsPage() {
 
                 if (targetBooking) {
                   const currentPaid = targetBooking.paid || 0;
-                  const newPaid = currentPaid + newTx.amount;
+                  const oldTx = editingTxId ? transactions.find(t => t.id === editingTxId) : null;
+                  const oldAmount = oldTx ? (Number(oldTx.amount) || 0) : 0;
+                  
+                  const newPaid = currentPaid - oldAmount + newTx.amount;
                   
                   let newPaymentStatus = targetBooking.paymentStatus;
                   let newCustomerStatus = "";
