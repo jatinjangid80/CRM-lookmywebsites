@@ -627,11 +627,28 @@ function BookingsPage() {
     setManagingBooking(updatedBooking);
   };
 
-  const handleDeleteBooking = () => {
+  const handleDeleteBooking = async () => {
     if (!deleteTarget) return;
-    setBookingList((prev) => prev.filter((b) => b.id !== deleteTarget.id));
+    const targetId = deleteTarget.id;
+    
+    // Optimistic UI update
+    setBookingList((prev) => prev.filter((b) => b.id !== targetId));
     setDeleteTarget(null);
-    toast.success("Booking deleted successfully!");
+    
+    // Delete from Supabase
+    try {
+      const { error } = await supabase.from("bookings").delete().eq("id", targetId);
+      if (error) {
+        console.error("Error deleting booking:", error);
+        toast.error("Failed to delete booking from database.");
+        // We could revert the state here if needed
+      } else {
+        toast.success("Booking deleted successfully!");
+      }
+    } catch (err) {
+      console.error("Exception deleting booking:", err);
+      toast.error("Failed to delete booking.");
+    }
   };
 
 
