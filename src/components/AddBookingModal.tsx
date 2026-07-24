@@ -264,7 +264,17 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
         setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
       }
     }
-  }, [open, defaultCustomer, editingBooking]);
+  }, [open, editingBooking, defaultCustomer]);
+
+  // Auto-fill mobile number if customer is set but mobile is empty (e.g. from defaultCustomer)
+  useEffect(() => {
+    if (customer && !mobileNumber && customers && customers.length > 0) {
+      const found = customers.find(c => c.name === customer);
+      if (found && found.phone) {
+        setMobileNumber(found.phone);
+      }
+    }
+  }, [customer, customers, mobileNumber]);
 
   // Handle Detail Change
   const updateDetail = (key: string, value: any) => {
