@@ -20,7 +20,10 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
     date: new Date().toISOString().split('T')[0],
     paymentMode: "Bank Transfer",
     reference: "",
+    nextFollowUp: "",
   });
+
+  const [expectedPending, setExpectedPending] = useState(0);
 
   const handlePolicyChange = (val: string) => {
     setNewTx(prev => {
@@ -29,6 +32,7 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         const total = Number(match.total_premium) || 0;
         const paid = Number(match.customer_paid) || Number(match.amount_paid) || 0;
         const pending = total > paid ? total - paid : 0;
+        setExpectedPending(pending);
         
         return {
           ...prev,
@@ -38,9 +42,12 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
           amount: pending > 0 ? String(pending) : prev.amount
         };
       }
+      setExpectedPending(0);
       return { ...prev, invoiceId: val };
     });
   };
+
+  const isPartial = expectedPending > 0 && Number(newTx.amount) < expectedPending && newTx.entityType === "Customer" && newTx.type === "Receipt";
 
   const handleSubmit = async () => {
     const numAmount = Number(newTx.amount);
@@ -90,6 +97,24 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
             await supabase.from("insurance_policies")
               .update({ customer_paid: newCustPaid, amount_paid: newCustPaid, payment_status: newStatus })
               .eq("id", match.id);
+
+            if (newStatus === "Partial" && newTx.nextFollowUp) {
+              const pendingAmount = total - newCustPaid;
+              await supabase.from("payment_followups").insert([{
+                invoiceId: match.policy_number || match.id,
+                customerId: "",
+                customerName: match.customer_name || "Unknown",
+                customerPhone: match.mobile_number || "",
+                invoiceDate: match.issue_date || new Date().toISOString().split('T')[0],
+                totalAmount: total,
+                pendingAmount: pendingAmount,
+                nextFollowUpDate: newTx.nextFollowUp,
+                nextFollowUpTime: "10:00",
+                status: "Pending",
+                notes: `Follow-up for General Insurance policy ${match.policy_number || ""}`,
+                createdBy: auth?.name || "Unknown"
+              }]);
+            }
           } else if (newTx.entityType === "Vendor" && newTx.type === "Payment") {
             const newVendPaid = (Number(match.vendor_paid) || 0) + numAmount;
             const profit = (Number(match.customer_paid) || 0) - newVendPaid;
@@ -112,7 +137,9 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         date: new Date().toISOString().split('T')[0],
         paymentMode: "Bank Transfer",
         reference: "",
+        nextFollowUp: "",
       });
+      setExpectedPending(0);
       onClose();
     } catch (e: any) {
       toast.error(e.message || "Failed to record transaction");
@@ -128,7 +155,7 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
           <DialogTitle>Add Insurance Transaction</DialogTitle>
         </DialogHeader>
         
-        <div className="grid grid-cols-2 gap-4 py-4">
+        <div className="grid grid-cols-2 gap-4 py-4 max-h-[70vh] overflow-y-auto pr-1">
           <div className="space-y-2 col-span-2">
             <Label>Policy No. / Ref (Optional)</Label>
             <Input 
@@ -219,6 +246,23 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
               placeholder="UTR, Cheque No. or any notes" 
             />
           </div>
+
+          {isPartial && (
+            <div className="space-y-2 col-span-2 pt-2 border-t border-border">
+              <Label className="text-amber-600 dark:text-amber-500 font-semibold flex items-center gap-2">
+                Partial Payment Detected
+              </Label>
+              <p className="text-xs text-muted-foreground mb-2">Set a follow-up date for the remaining balance.</p>
+              <div className="space-y-2">
+                <Label>Next Follow-up Date (Optional)</Label>
+                <Input 
+                  type="date" 
+                  value={newTx.nextFollowUp} 
+                  onChange={e => setNewTx({ ...newTx, nextFollowUp: e.target.value })} 
+                />
+              </div>
+            </div>
+          )}
         </div>
         
         <DialogFooter>

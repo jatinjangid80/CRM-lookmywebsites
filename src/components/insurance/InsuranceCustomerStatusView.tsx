@@ -21,7 +21,7 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
     };
   }, { total: 0, paid: 0, pending: 0 });
 
-  const handleSavePayment = async (amount: number, date: string, mode: string, reference: string) => {
+  const handleSavePayment = async (amount: number, date: string, mode: string, reference: string, nextFollowUp?: string) => {
     if (!selectedPolicy) return;
     
     // Create transaction record
@@ -61,6 +61,26 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
         payment_status: newStatus 
       })
       .eq("id", selectedPolicy.id);
+
+    if (policyError) throw policyError;
+
+    if (newStatus === "Partial" && nextFollowUp) {
+      const pendingAmount = total - newPaid;
+      await supabase.from("payment_followups").insert([{
+        invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
+        customerId: "",
+        customerName: selectedPolicy.customer_name || "Unknown",
+        customerPhone: selectedPolicy.mobile_number || "",
+        invoiceDate: selectedPolicy.issue_date || new Date().toISOString().split('T')[0],
+        totalAmount: total,
+        pendingAmount: pendingAmount,
+        nextFollowUpDate: nextFollowUp,
+        nextFollowUpTime: "10:00",
+        status: "Pending",
+        notes: `Follow-up for General Insurance policy ${selectedPolicy.policy_number || ""}`,
+        createdBy: auth?.name || "Unknown"
+      }]);
+    }
 
     if (policyError) throw policyError;
 
