@@ -1346,8 +1346,9 @@ function AccountsPage() {
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
                     <th className="px-6 py-4">Vendor Name</th>
                     <th className="px-6 py-4">Bookings</th>
-                    <th className="px-6 py-4">Customers Linked</th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Paid</th>
+                    <th className="px-6 py-4">Payments Pending</th>
+                    <th className="px-6 py-4">Payments (Out)</th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Billed</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -1380,7 +1381,7 @@ function AccountsPage() {
                     
                     return uniqueVendors.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                           <div className="flex flex-col items-center gap-2">
                             <Search className="h-8 w-8 opacity-20" />
                             <p>No vendors found.</p>
@@ -1397,11 +1398,8 @@ function AccountsPage() {
                         .filter(tx => tx.entityType === "Vendor" && (tx.entityId === vendorData.id || tx.entityId === vendorName) && tx.type === "Payment")
                         .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
                       
-                      const customerSet = new Set<string>();
-                      vBookings.forEach(b => {
-                        if (b.customer) customerSet.add(b.customer);
-                      });
-                      const vCustomers = Array.from(customerSet);
+                      const vTotalBilled = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
+                      const vPending = Math.max(0, vTotalBilled - vSpend);
                       
                       return (
                         <React.Fragment key={vendorData.id}>
@@ -1420,16 +1418,19 @@ function AccountsPage() {
                               <span className="font-medium">{vBookings.length} Total</span>
                             </td>
                             <td className="px-6 py-4">
-                              <span className="font-medium">{vCustomers.length} Total</span>
+                              <span className="font-bold text-rose-600 dark:text-rose-400">{formatINR(vPending)}</span>
+                            </td>
+                            <td className="px-6 py-4">
+                              <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(vSpend)}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <span className="font-bold text-rose-600 dark:text-rose-400">{formatINR(vSpend)}</span>
+                              <span className="font-bold text-blue-600 dark:text-blue-400">{formatINR(vTotalBilled)}</span>
                             </td>
                           </tr>
                           
                           {isExpanded && (
                             <tr className="bg-secondary/5 border-b border-border">
-                              <td colSpan={5} className="p-0">
+                              <td colSpan={6} className="p-0">
                                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
                                   {/* Bookings List */}
                                   <div className="bg-background rounded-xl border border-border p-4 space-y-3">
