@@ -25,7 +25,6 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
     if (!selectedPolicy) return;
     
     const vendorName = getVendorName(selectedPolicy);
-    
     // Create transaction record
     const { error: txError } = await supabase.from("transactions").insert([{
       date,
@@ -34,14 +33,14 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
       entityName: vendorName || "Unknown",
       amount,
       paymentMode: mode,
-      reference,
-      status: "Completed",
-      invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
       module: "Insurance",
       notes: JSON.stringify({
         _isMeta: true,
         text: `Vendor payment for policy ${selectedPolicy.policy_number}`,
-        createdBy: auth?.name || "Unknown"
+        createdBy: auth?.name || "Unknown",
+        reference,
+        status: "Completed",
+        invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
       })
     }]);
 

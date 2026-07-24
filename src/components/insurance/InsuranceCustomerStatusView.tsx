@@ -32,14 +32,14 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
       entityName: selectedPolicy.customer_name || "Unknown",
       amount,
       paymentMode: mode,
-      reference,
-      status: "Completed",
-      invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
       module: "Insurance",
       notes: JSON.stringify({
         _isMeta: true,
         text: `Customer payment for policy ${selectedPolicy.policy_number}`,
-        createdBy: auth?.name || "Unknown"
+        createdBy: auth?.name || "Unknown",
+        reference,
+        status: "Completed",
+        invoiceId: selectedPolicy.policy_number || selectedPolicy.id,
       })
     }]);
 

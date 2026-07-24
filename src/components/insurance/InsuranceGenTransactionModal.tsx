@@ -73,14 +73,14 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         entityName: newTx.entityName,
         amount: numAmount,
         paymentMode: newTx.paymentMode,
-        reference: newTx.reference,
-        status: "Completed",
-        invoiceId: newTx.invoiceId, // Can be policy number
         module: "Insurance",
         notes: JSON.stringify({
           _isMeta: true,
           text: `General Insurance Transaction`,
-          createdBy: auth?.name || "Unknown"
+          createdBy: auth?.name || "Unknown",
+          reference: newTx.reference,
+          status: "Completed",
+          invoiceId: newTx.invoiceId, // Can be policy number
         })
       }]);
 
