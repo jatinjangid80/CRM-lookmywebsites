@@ -377,7 +377,7 @@ function AttendancePage() {
                       selected={attendance.filter((record) => record.employeeid === myEmpId).map((record) => new Date(record.date))}
                       className="rounded-md mx-auto pointer-events-none"
                       classNames={{
-                        day_selected: "bg-emerald-100 text-emerald-900 hover:bg-emerald-100 hover:text-emerald-900 focus:bg-emerald-100 focus:text-emerald-900 font-bold border-2 border-emerald-500",
+                        day_selected: "!bg-emerald-100 !text-emerald-900 !font-bold !border-2 !border-emerald-500",
                         day: "h-12 w-12 p-0 font-normal aria-selected:opacity-100 text-center flex items-center justify-center rounded-lg",
                       }}
                     />
