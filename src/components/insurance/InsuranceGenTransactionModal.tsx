@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
 import { getAuth } from "@/lib/auth";
 
-export function InsuranceGenTransactionModal({ isOpen, onClose }: { isOpen: boolean, onClose: () => void }) {
+export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }: { isOpen: boolean, onClose: () => void, policies?: any[] }) {
   const auth = getAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTx, setNewTx] = useState({
@@ -21,6 +21,26 @@ export function InsuranceGenTransactionModal({ isOpen, onClose }: { isOpen: bool
     paymentMode: "Bank Transfer",
     reference: "",
   });
+
+  const handlePolicyChange = (val: string) => {
+    setNewTx(prev => {
+      const match = policies.find(p => p.policy_number?.toLowerCase() === val.toLowerCase());
+      if (match) {
+        const total = Number(match.total_premium) || 0;
+        const paid = Number(match.customer_paid) || Number(match.amount_paid) || 0;
+        const pending = total > paid ? total - paid : 0;
+        
+        return {
+          ...prev,
+          invoiceId: val,
+          entityName: match.customer_name || "",
+          entityType: "Customer",
+          amount: pending > 0 ? String(pending) : prev.amount
+        };
+      }
+      return { ...prev, invoiceId: val };
+    });
+  };
 
   const handleSubmit = async () => {
     const numAmount = Number(newTx.amount);
@@ -56,6 +76,30 @@ export function InsuranceGenTransactionModal({ isOpen, onClose }: { isOpen: bool
 
       if (error) throw error;
       
+      // Attempt to auto-update the policy if it's a known policy
+      if (newTx.invoiceId) {
+        const match = policies.find(p => p.policy_number?.toLowerCase() === newTx.invoiceId.toLowerCase());
+        if (match) {
+          if (newTx.entityType === "Customer" && newTx.type === "Receipt") {
+            const newCustPaid = (Number(match.customer_paid) || Number(match.amount_paid) || 0) + numAmount;
+            const total = Number(match.total_premium) || 0;
+            let newStatus = "Pending";
+            if (newCustPaid > 0) {
+              newStatus = newCustPaid >= total ? "Full Paid" : "Partial";
+            }
+            await supabase.from("insurance_policies")
+              .update({ customer_paid: newCustPaid, amount_paid: newCustPaid, payment_status: newStatus })
+              .eq("id", match.id);
+          } else if (newTx.entityType === "Vendor" && newTx.type === "Payment") {
+            const newVendPaid = (Number(match.vendor_paid) || 0) + numAmount;
+            const profit = (Number(match.customer_paid) || 0) - newVendPaid;
+            await supabase.from("insurance_policies")
+              .update({ vendor_paid: newVendPaid, profit })
+              .eq("id", match.id);
+          }
+        }
+      }
+
       toast.success("Transaction recorded successfully");
       
       // Reset
@@ -85,6 +129,21 @@ export function InsuranceGenTransactionModal({ isOpen, onClose }: { isOpen: bool
         </DialogHeader>
         
         <div className="grid grid-cols-2 gap-4 py-4">
+          <div className="space-y-2 col-span-2">
+            <Label>Policy No. / Ref (Optional)</Label>
+            <Input 
+              list="policy-numbers"
+              value={newTx.invoiceId} 
+              onChange={e => handlePolicyChange(e.target.value)} 
+              placeholder="Type Policy No to auto-fill..." 
+            />
+            <datalist id="policy-numbers">
+              {policies.map(p => p.policy_number && (
+                <option key={p.id} value={p.policy_number}>{p.customer_name}</option>
+              ))}
+            </datalist>
+          </div>
+          
           <div className="space-y-2">
             <Label>Transaction Type</Label>
             <Select value={newTx.type} onValueChange={v => setNewTx({ ...newTx, type: v })}>
@@ -115,15 +174,6 @@ export function InsuranceGenTransactionModal({ isOpen, onClose }: { isOpen: bool
               value={newTx.entityName} 
               onChange={e => setNewTx({ ...newTx, entityName: e.target.value })} 
               placeholder="e.g. John Doe or LIC" 
-            />
-          </div>
-          
-          <div className="space-y-2">
-            <Label>Policy No. / Ref (Optional)</Label>
-            <Input 
-              value={newTx.invoiceId} 
-              onChange={e => setNewTx({ ...newTx, invoiceId: e.target.value })} 
-              placeholder="Policy ID to link" 
             />
           </div>
           
