@@ -21,6 +21,7 @@ import {
   FileImage,
   Copy,
   MoreVertical,
+  Share2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -281,6 +282,23 @@ function PackagesPage() {
   const [isFilesOpen, setIsFilesOpen] = useState(false);
   const [uploadFile, setUploadFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
+
+  const handleSharePackage = (pkg: Package) => {
+    const text = `Check out this travel package from Look My Holidays!\n\n*${pkg.title}*\n🏖️ ${pkg.nights} in ${pkg.destination}\n💰 ${pkg.price}\n\nIncludes: ${pkg.incl.join(", ")}\n\n${pkg.description}\n\nLet me know if you're interested!`;
+    if (navigator.share) {
+      navigator.share({
+        title: pkg.title,
+        text: text,
+      }).catch((err) => {
+        console.error(err);
+        navigator.clipboard.writeText(text);
+        toast.success("Package details copied to clipboard!");
+      });
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success("Package details copied to clipboard!");
+    }
+  };
 
   const form = localForm;
   const setForm = setLocalForm;
@@ -699,6 +717,15 @@ function PackagesPage() {
                         </button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                        <DropdownMenuItem
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            handleSharePackage(pkg);
+                          }}
+                          className="cursor-pointer gap-2 py-2"
+                        >
+                          <Share2 className="h-4 w-4" /> Share
+                        </DropdownMenuItem>
                         <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
