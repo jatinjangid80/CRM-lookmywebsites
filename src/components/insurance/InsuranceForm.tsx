@@ -340,10 +340,16 @@ export function InsuranceForm({
               <div className="space-y-1 col-span-2">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Customer Name</Label>
                 <Input
+                  list="insurance-customers-list"
                   value={form.customer_name}
                   onChange={(e) => setForm({ ...form, customer_name: e.target.value })}
                   placeholder="Full Name"
                 />
+                <datalist id="insurance-customers-list">
+                  {customers?.map((c) => (
+                    <option key={c.id} value={c.name} />
+                  ))}
+                </datalist>
               </div>
               <div className="space-y-1">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Mobile Number</Label>

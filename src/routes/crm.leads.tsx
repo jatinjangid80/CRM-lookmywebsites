@@ -792,7 +792,12 @@ function DynamicFormStep({
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full Name *</label>
-              <Input id="lead-name" placeholder="e.g. Priya Sharma" value={form.name} onChange={set("name")} className="rounded-xl" />
+              <Input list="lead-customers" id="lead-name" placeholder="e.g. Priya Sharma" value={form.name} onChange={set("name")} className="rounded-xl" />
+              <datalist id="lead-customers">
+                {customers?.map((c) => (
+                  <option key={c.id} value={c.name} />
+                ))}
+              </datalist>
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
