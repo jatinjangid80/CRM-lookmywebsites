@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -10,6 +11,8 @@ import { getAuth } from "@/lib/auth";
 
 export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }: { isOpen: boolean, onClose: () => void, policies?: any[] }) {
   const auth = getAuth();
+  const [customers] = useSupabaseTable<any[]>("customers", []);
+  const [vendors] = useSupabaseTable<any[]>("vendors", []);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [newTx, setNewTx] = useState({
     type: "Receipt",
@@ -202,10 +205,19 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
           <div className="space-y-2 col-span-2">
             <Label>Entity Name</Label>
             <Input 
+              list="entity-names"
               value={newTx.entityName} 
               onChange={e => setNewTx({ ...newTx, entityName: e.target.value })} 
               placeholder="e.g. John Doe or LIC" 
             />
+            <datalist id="entity-names">
+              {newTx.entityType === "Customer" && customers.map(c => (
+                <option key={c.id} value={c.name} />
+              ))}
+              {newTx.entityType === "Vendor" && vendors.map(v => (
+                <option key={v.id} value={v.name} />
+              ))}
+            </datalist>
           </div>
           
           <div className="space-y-2">
