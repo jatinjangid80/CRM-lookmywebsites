@@ -16,7 +16,7 @@ export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
 });
 
-export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus";
+export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus" | "GenTransactions";
 
 function GeneralInsurancePage() {
   const [activeTab, setActiveTab] = useState<TabType>("Policies");
@@ -205,6 +205,14 @@ function GeneralInsurancePage() {
         >
           Vendor Status
         </Button>
+        <Button
+          variant={activeTab === "GenTransactions" ? "default" : "ghost"}
+          size="sm"
+          className={activeTab === "GenTransactions" ? "bg-card text-foreground shadow-sm rounded-lg" : "text-muted-foreground hover:text-foreground"}
+          onClick={() => setActiveTab("GenTransactions")}
+        >
+          Gen Transactions
+        </Button>
       </div>
 
       <div className="mt-4">
@@ -246,6 +254,13 @@ function GeneralInsurancePage() {
           <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
             <h3 className="text-lg font-semibold mb-2 text-foreground">Vendor Payment Status</h3>
             <p className="text-muted-foreground max-w-md mx-auto">Track and manage vendor payments, follow-ups, and statuses here.</p>
+          </div>
+        )}
+
+        {activeTab === "GenTransactions" && (
+          <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
+            <h3 className="text-lg font-semibold mb-2 text-foreground">General Transactions</h3>
+            <p className="text-muted-foreground max-w-md mx-auto">Manage general transactions related to insurance here.</p>
           </div>
         )}
       </div>
