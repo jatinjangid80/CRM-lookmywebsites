@@ -32,9 +32,9 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
       entityName: selectedPolicy.customer_name || "Unknown",
       amount,
       paymentMode: mode,
-      module: "Insurance",
       notes: JSON.stringify({
         _isMeta: true,
+        module: "Insurance",
         text: `Customer payment for policy ${selectedPolicy.policy_number}`,
         createdBy: auth?.name || "Unknown",
         reference,

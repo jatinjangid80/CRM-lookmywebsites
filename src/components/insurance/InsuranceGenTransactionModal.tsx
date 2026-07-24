@@ -73,9 +73,9 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
         entityName: newTx.entityName,
         amount: numAmount,
         paymentMode: newTx.paymentMode,
-        module: "Insurance",
         notes: JSON.stringify({
           _isMeta: true,
+          module: "Insurance",
           text: `General Insurance Transaction`,
           createdBy: auth?.name || "Unknown",
           reference: newTx.reference,

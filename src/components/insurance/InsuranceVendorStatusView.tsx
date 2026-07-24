@@ -33,9 +33,9 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
       entityName: vendorName || "Unknown",
       amount,
       paymentMode: mode,
-      module: "Insurance",
       notes: JSON.stringify({
         _isMeta: true,
+        module: "Insurance",
         text: `Vendor payment for policy ${selectedPolicy.policy_number}`,
         createdBy: auth?.name || "Unknown",
         reference,
