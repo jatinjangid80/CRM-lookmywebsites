@@ -23,6 +23,7 @@ import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
+import { Route as CrmInsuranceLeadsRouteImport } from './routes/crm.insurance-leads'
 import { Route as CrmInsuranceRouteImport } from './routes/crm.insurance'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
 import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
@@ -109,6 +110,11 @@ const CrmNotificationsRoute = CrmNotificationsRouteImport.update({
 const CrmLeadsRoute = CrmLeadsRouteImport.update({
   id: '/leads',
   path: '/leads',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmInsuranceLeadsRoute = CrmInsuranceLeadsRouteImport.update({
+  id: '/insurance-leads',
+  path: '/insurance-leads',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmInsuranceRoute = CrmInsuranceRouteImport.update({
@@ -211,6 +217,7 @@ export interface FileRoutesByFullPath {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
@@ -243,6 +250,7 @@ export interface FileRoutesByTo {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
@@ -277,6 +285,7 @@ export interface FileRoutesById {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
@@ -312,6 +321,7 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
     | '/crm/packages'
@@ -503,6 +515,13 @@ declare module '@tanstack/react-router' {
       path: '/leads'
       fullPath: '/crm/leads'
       preLoaderRoute: typeof CrmLeadsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/insurance-leads': {
+      id: '/crm/insurance-leads'
+      path: '/insurance-leads'
+      fullPath: '/crm/insurance-leads'
+      preLoaderRoute: typeof CrmInsuranceLeadsRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/insurance': {
@@ -636,6 +655,7 @@ interface CrmRouteChildren {
   CrmDocumentsRoute: typeof CrmDocumentsRoute
   CrmEmployeesRoute: typeof CrmEmployeesRoute
   CrmInsuranceRoute: typeof CrmInsuranceRoute
+  CrmInsuranceLeadsRoute: typeof CrmInsuranceLeadsRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
@@ -667,6 +687,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmDocumentsRoute: CrmDocumentsRoute,
   CrmEmployeesRoute: CrmEmployeesRoute,
   CrmInsuranceRoute: CrmInsuranceRoute,
+  CrmInsuranceLeadsRoute: CrmInsuranceLeadsRoute,
   CrmLeadsRoute: CrmLeadsRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,

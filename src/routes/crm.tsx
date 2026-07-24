@@ -36,6 +36,8 @@ import {
   Phone,
   GraduationCap,
   Receipt,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -50,6 +52,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import logoImg from "../assets/Logo.svg";
 
 export const Route = createFileRoute("/crm")({
@@ -57,7 +60,13 @@ export const Route = createFileRoute("/crm")({
   component: CrmLayout,
 });
 
-type NavItem = { to: string; label: string; icon: React.ElementType; exact?: boolean };
+type NavItem = { 
+  to: string; 
+  label: string; 
+  icon: React.ElementType; 
+  exact?: boolean;
+  subItems?: { label: string; to: string; icon?: React.ElementType }[];
+};
 
 const FULL_NAV: NavItem[] = [
   { to: "/crm", label: "Dashboard", icon: LayoutDashboard, exact: true },
@@ -67,7 +76,15 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/visa", label: "Visa", icon: Plane },
   { to: "/crm/customers", label: "Customers", icon: UserCheck },
   { to: "/crm/bookings", label: "Bookings", icon: CalendarCheck },
-  { to: "/crm/insurance", label: "General Insurance", icon: ShieldCheck },
+  { 
+    to: "/crm/insurance", 
+    label: "General Insurance", 
+    icon: ShieldCheck,
+    subItems: [
+      { label: "Leads", to: "/crm/insurance-leads", icon: ClipboardList },
+      { label: "Policies", to: "/crm/insurance?tab=Policies", icon: Shield }
+    ]
+  },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
   { to: "/crm/packages", label: "Packages", icon: Pkg },
   { to: "/crm/employees", label: "Employees", icon: Briefcase },
@@ -257,8 +274,55 @@ function CrmLayout() {
 
         <nav className="flex-1 space-y-0.5 overflow-y-auto">
           {nav.map((n) => {
-            const active = n.exact ? pathname === n.to : pathname.startsWith(n.to);
+            const active = n.exact ? pathname === n.to : pathname.startsWith(n.to.split('?')[0]);
             const Icon = n.icon;
+
+            if (n.subItems && n.subItems.length > 0 && !isCompact) {
+              const isSubActive = n.subItems.some((sub) => pathname.startsWith(sub.to.split('?')[0]));
+              return (
+                <Collapsible key={n.to} defaultOpen={active || isSubActive}>
+                  <CollapsibleTrigger asChild>
+                    <button
+                      title={isCompact ? n.label : undefined}
+                      className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active || isSubActive
+                          ? "bg-primary text-primary-foreground shadow-card"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        <Icon className="h-5 w-5" />
+                        {n.label}
+                      </div>
+                      <ChevronDown className="h-4 w-4 opacity-50" />
+                    </button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent className="pl-9 pr-3 py-1 space-y-1">
+                    {n.subItems.map((sub) => {
+                      const SubIcon = sub.icon;
+                      // Don't treat exact the same if they just differ by search params
+                      const subActive = pathname === sub.to.split('?')[0] && 
+                        (sub.to.includes('?') ? window.location.search === '?' + sub.to.split('?')[1] : true);
+                        
+                      return (
+                        <Link
+                          key={sub.to}
+                          to={sub.to.split('?')[0]}
+                          search={sub.to.includes('?') ? Object.fromEntries(new URLSearchParams(sub.to.split('?')[1])) : undefined}
+                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${subActive
+                              ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
+                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                            }`}
+                        >
+                          {SubIcon && <SubIcon className="h-4 w-4" />}
+                          {sub.label}
+                        </Link>
+                      );
+                    })}
+                  </CollapsibleContent>
+                </Collapsible>
+              );
+            }
+
             return (
               <Link
                 key={n.to}
