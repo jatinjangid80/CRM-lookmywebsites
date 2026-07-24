@@ -375,9 +375,8 @@ function AttendancePage() {
                     <Calendar
                       mode="multiple"
                       selected={attendance.filter((record) => record.employeeid === myEmpId).map((record) => new Date(record.date))}
-                      className="rounded-md mx-auto pointer-events-none"
+                      className="rounded-md mx-auto pointer-events-none [&_[data-selected-single=true]]:!bg-emerald-100 [&_[data-selected-single=true]]:!text-emerald-900 [&_[data-selected-single=true]]:!font-bold [&_[data-selected-single=true]]:!border-2 [&_[data-selected-single=true]]:!border-emerald-500"
                       classNames={{
-                        day_selected: "!bg-emerald-100 !text-emerald-900 !font-bold !border-2 !border-emerald-500",
                         day: "h-12 w-12 p-0 font-normal aria-selected:opacity-100 text-center flex items-center justify-center rounded-lg",
                       }}
                     />
