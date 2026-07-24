@@ -787,6 +787,7 @@ function FoldersPage() {
   const [newDesc, setNewDesc] = useState("");
   const [openFolderId, setOpenFolderId] = useState<string | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<FolderItem | null>(null);
+  const globalFolderInputRef = useRef<HTMLInputElement>(null);
 
   // Google Drive State
   const [googleAccessToken, setGoogleAccessToken] = useLocalStorage("crm_gdrive_token", "");
@@ -930,6 +931,32 @@ function FoldersPage() {
 
   const totalFiles = folders.reduce((s, f) => s + f.files.length, 0);
 
+  async function handleUploadFolder(e: React.ChangeEvent<HTMLInputElement>) {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const rawFiles = Array.from(e.target.files);
+    e.target.value = ""; // reset
+
+    const firstPath = rawFiles[0].webkitRelativePath || "";
+    const folderName = firstPath.split('/')[0] || "New Uploaded Folder";
+
+    const idx = folders.length;
+    const color = pickColor(idx);
+    const newFolderId = genFolderId();
+    const newFolder: FolderItem = {
+      id: newFolderId,
+      name: folderName,
+      color: color.bg,
+      iconColor: color.icon,
+      files: [],
+      createdAt: new Date().toISOString().slice(0, 10),
+      description: "Uploaded folder",
+      manager: "Pushplata Kriplani",
+    };
+
+    setFolders((p) => [newFolder, ...p]);
+    await handleUpload(newFolderId, rawFiles);
+  }
+
   /* ── Folder detail ── */
   if (openFolder) {
     return (
@@ -963,6 +990,22 @@ function FoldersPage() {
           >
             <FolderPlus className="h-4 w-4" /> New Folder
           </Button>
+          <Button
+            onClick={() => globalFolderInputRef.current?.click()}
+            variant="outline"
+            className="gap-2 rounded-xl text-xs font-semibold h-9 border-border hover:bg-secondary/50 transition-colors"
+          >
+            <Upload className="h-4 w-4" /> Upload Folder
+          </Button>
+          <input
+            ref={globalFolderInputRef}
+            type="file"
+            // @ts-expect-error webkitdirectory is a non-standard attribute but supported
+            webkitdirectory="true"
+            directory="true"
+            className="hidden"
+            onChange={handleUploadFolder}
+          />
         </div>
       </div>
 
