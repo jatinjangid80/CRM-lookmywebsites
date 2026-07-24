@@ -1132,25 +1132,7 @@ function AccountsPage() {
                       const cTransactions = transactions.filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName));
                       
                       let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
-                      
-                      cFollowUps.forEach(f => {
-                         if (!f.invoiceId || f.invoiceId.includes("INV-NEW") || !cBookings.some(b => b.id === f.invoiceId || b.saleInvoiceNo === f.invoiceId)) {
-                           cTotalRevenue += (Number(f.totalAmount) || 0);
-                         }
-                      });
-
-                      // Include manual receipts that aren't linked to bookings in total revenue
-                      cTransactions.filter(tx => tx.type === "Receipt" && !tx.invoiceId && tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName)).forEach(tx => {
-                          cTotalRevenue += (Number(tx.amount) || 0);
-                      });
-                      
-                      let cReceivedAmount = cRevenue; // Use manual receipts
-                      cBookings.forEach(b => {
-                        const hasReceipt = cTransactions.some(tx => tx.invoiceId && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
-                        if (!hasReceipt) {
-                          cReceivedAmount += (Number(b.paid) || 0);
-                        }
-                      });
+                      let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
                       
                       const cPendingBalance = cTotalRevenue - cReceivedAmount;
                       

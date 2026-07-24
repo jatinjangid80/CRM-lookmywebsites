@@ -268,14 +268,10 @@ function BookingsPage() {
       );
     
     const combined = [...bookingList, ...derived];
-    return combined.map(b => {
-      const bTransactions = transactions.filter(tx => tx.type === "Receipt" && tx.invoiceId && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
-      const txPaid = bTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-      return {
-        ...b,
-        paid: bTransactions.length > 0 ? txPaid : (b.paid || 0)
-      };
-    });
+    return combined.map(b => ({
+      ...b,
+      paid: b.paid || 0
+    }));
   }, [leads, bookingList, transactions]);
 
   // --- Dashboard Data Aggregation ---
