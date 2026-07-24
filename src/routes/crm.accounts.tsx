@@ -1594,16 +1594,29 @@ function AccountsPage() {
               );
               if (!selectedBooking) return null;
               
+              const isPayment = newTx.type === "Payment";
+              const totalAmt = isPayment 
+                ? (Number(selectedBooking.purchasePrice) || 0) 
+                : (Number(selectedBooking.sellingPrice) || Number(selectedBooking.amount) || 0);
+              
+              let currentPaid = 0;
+              if (isPayment) {
+                const vendorTxs = transactions.filter(t => t.type === "Payment" && (t.invoiceId === newTx.invoiceId || t.invoiceId === selectedBooking.id));
+                currentPaid = vendorTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+              } else {
+                currentPaid = Number(selectedBooking.paid) || 0;
+              }
+
               const oldTxAmount = editingTxId ? (transactions.find(t => t.id === editingTxId)?.amount || 0) : 0;
-              const currentPaid = (selectedBooking.paid || 0) - oldTxAmount;
-              const totalAmt = selectedBooking.amount || 0;
+              currentPaid = Math.max(0, currentPaid - oldTxAmount);
+              
               const newPaid = currentPaid + (Number(newTx.amount) || 0);
-              const remaining = totalAmt - newPaid;
+              const remaining = Math.max(0, totalAmt - newPaid);
 
               return (
                 <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
                   <div>
-                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">Total Amount</div>
+                    <div className="text-muted-foreground text-[10px] uppercase font-semibold">{isPayment ? "Vendor Cost" : "Total Amount"}</div>
                     <div className="font-semibold text-foreground">{formatINR(totalAmt)}</div>
                   </div>
                   <div>
@@ -1669,19 +1682,23 @@ function AccountsPage() {
               } else if (newTx.entityType === "Vendor") {
                 const matched = vendors.find(v => v.id === newTx.entityId);
                 if (matched) {
-                  const vendorBookings = bookings.filter(b => b.supplier === matched.name?.split('---META---')[0]);
+                  const vendorName = matched.name?.split('---META---')[0];
+                  const vendorBookings = bookings.filter(b => b.supplier === vendorName);
                   totalAmount = vendorBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
-                  totalPaid = vendorBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
-                  isMatch = vendorBookings.length > 0;
+                  
+                  const vendorTxs = transactions.filter(t => t.type === "Payment" && t.entityType === "Vendor" && (t.entityId === matched.id || t.entityId === vendorName));
+                  totalPaid = vendorTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
+                  
+                  isMatch = vendorBookings.length > 0 || vendorTxs.length > 0;
                 }
               }
 
               if (!isMatch) return null;
 
               const oldTxAmount = editingTxId ? (transactions.find(t => t.id === editingTxId)?.amount || 0) : 0;
-              const currentPaid = totalPaid - oldTxAmount;
+              const currentPaid = Math.max(0, totalPaid - oldTxAmount);
               const newTotalPaid = currentPaid + (Number(newTx.amount) || 0);
-              const remaining = totalAmount - newTotalPaid;
+              const remaining = Math.max(0, totalAmount - newTotalPaid);
 
               return (
                 <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
