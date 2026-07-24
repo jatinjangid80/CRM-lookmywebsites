@@ -269,7 +269,7 @@ function BookingsPage() {
     
     const combined = [...bookingList, ...derived];
     return combined.map(b => {
-      const bTransactions = transactions.filter(tx => tx.type === "Receipt" && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
+      const bTransactions = transactions.filter(tx => tx.type === "Receipt" && tx.invoiceId && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
       const txPaid = bTransactions.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
       return {
         ...b,

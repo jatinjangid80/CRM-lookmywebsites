@@ -1146,7 +1146,7 @@ function AccountsPage() {
                       
                       let cReceivedAmount = cRevenue; // Use manual receipts
                       cBookings.forEach(b => {
-                        const hasReceipt = cTransactions.some(tx => tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo);
+                        const hasReceipt = cTransactions.some(tx => tx.invoiceId && (tx.invoiceId === b.id || tx.invoiceId === b.saleInvoiceNo));
                         if (!hasReceipt) {
                           cReceivedAmount += (Number(b.paid) || 0);
                         }
