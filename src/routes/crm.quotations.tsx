@@ -29,6 +29,7 @@ import {
   Check,
   ChevronsUpDown,
   MoreVertical,
+  Search,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -184,6 +185,10 @@ function QuotationsPage() {
   const [form, setForm] = useState<QuoteForm>({ ...DEFAULT_FORM });
   const [previewOpen, setPreviewOpen] = useState(false);
   const [savedQuoteId, setSavedQuoteId] = useState<string | null>(null);
+  
+  // Dashboard view toggle
+  const [activeView, setActiveView] = useState<"dashboard" | "builder">("dashboard");
+  const [searchQuery, setSearchQuery] = useState("");
 
   // Combobox states
   const [customerOpen, setCustomerOpen] = useState(false);
@@ -308,6 +313,7 @@ function QuotationsPage() {
     setSavedQuoteId(id);
     setPreviewOpen(true);
     setEditingQuoteId(null);
+    setActiveView("dashboard");
   };
 
   // Generate WhatsApp Message
@@ -472,31 +478,174 @@ function QuotationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="font-display text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-8 w-8 text-primary" /> Quotation Builder
+            <FileText className="h-8 w-8 text-primary" /> Quotation {activeView === "dashboard" ? "Dashboard" : "Builder"}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Create, style, and share customized travel itineraries and payment estimates.
+            {activeView === "dashboard" 
+              ? "Manage, view, and share all generated quotations."
+              : "Create, style, and share customized travel itineraries and payment estimates."}
           </p>
         </div>
         <div className="flex gap-2">
-          <Button
-            variant="outline"
-            className="rounded-xl"
-            onClick={() => {
-              setForm({ ...DEFAULT_FORM });
-              setEditingQuoteId(null);
-            }}
-          >
-            Reset Form
-          </Button>
-          <Button onClick={handleSaveQuotation} className="btn-hero rounded-xl shadow-lg">
-            Generate Quote
-          </Button>
+          {activeView === "builder" ? (
+            <>
+              <Button
+                variant="outline"
+                className="rounded-xl"
+                onClick={() => {
+                  setForm({ ...DEFAULT_FORM });
+                  setEditingQuoteId(null);
+                  setActiveView("dashboard");
+                }}
+              >
+                Cancel
+              </Button>
+              <Button onClick={handleSaveQuotation} className="btn-hero rounded-xl shadow-lg">
+                Generate Quote
+              </Button>
+            </>
+          ) : (
+            <Button
+              onClick={() => {
+                setForm({ ...DEFAULT_FORM });
+                setEditingQuoteId(null);
+                setActiveView("builder");
+              }}
+              className="btn-hero rounded-xl shadow-lg flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Create New Quote
+            </Button>
+          )}
         </div>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-3 print:hidden">
-        {/* Left Side: Builder Form */}
+      </div>
+
+      {activeView === "dashboard" && (
+        <div className="space-y-6">
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-primary/10 p-3">
+                  <FileText className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Quotes</p>
+                  <p className="text-2xl font-bold">{quotations.length}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-4">
+            <div className="relative flex-1 sm:w-80 sm:flex-none">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <input
+                type="text"
+                placeholder="Search quotations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-10 w-full rounded-full border border-border bg-card pl-9 pr-4 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground">
+                  <tr>
+                    <th className="px-4 py-3 whitespace-nowrap">Quote ID</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Date</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Customer Name</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Package / Dest</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Amount (₹)</th>
+                    <th className="px-4 py-3 whitespace-nowrap">Generated By</th>
+                    <th className="px-4 py-3 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {quotations
+                    .filter((q) =>
+                      !searchQuery ||
+                      q.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      q.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      q.package_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                      q.destination?.toLowerCase().includes(searchQuery.toLowerCase())
+                    )
+                    .map((quote) => (
+                      <tr key={quote.id} className="hover:bg-muted/50 transition-colors">
+                        <td className="px-4 py-4 whitespace-nowrap font-medium text-primary">{quote.id}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</td>
+                        <td className="px-4 py-4 whitespace-nowrap font-medium">{quote.customer_name}</td>
+                        <td className="px-4 py-4 whitespace-nowrap">
+                          <p className="text-foreground">{quote.package_name}</p>
+                          <p className="text-xs text-muted-foreground">{quote.destination}</p>
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap font-bold text-amber-600 dark:text-amber-500">
+                          {formatINR(quote.total_amount)}
+                        </td>
+                        <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
+                        <td className="px-4 py-4 whitespace-nowrap text-right">
+                          <DropdownMenu>
+                            <DropdownMenuTrigger asChild>
+                              <Button variant="ghost" size="icon" className="h-8 w-8">
+                                <MoreVertical className="h-4 w-4" />
+                              </Button>
+                            </DropdownMenuTrigger>
+                            <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setSavedQuoteId(quote.id);
+                                  setForm(quote.details || { ...DEFAULT_FORM });
+                                  setPreviewOpen(true);
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Eye className="mr-2 h-4 w-4" /> View / Share
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  setEditingQuoteId(quote.id);
+                                  setForm(quote.details || { ...DEFAULT_FORM });
+                                  setActiveView("builder");
+                                }}
+                                className="cursor-pointer"
+                              >
+                                <Edit2 className="mr-2 h-4 w-4" /> Edit
+                              </DropdownMenuItem>
+                              <DropdownMenuItem
+                                onClick={() => {
+                                  if (confirm("Are you sure you want to delete this quote?")) {
+                                    setQuotations(quotations.filter(q => q.id !== quote.id));
+                                  }
+                                }}
+                                className="cursor-pointer text-destructive focus:text-destructive"
+                              >
+                                <Trash2 className="mr-2 h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            </DropdownMenuContent>
+                          </DropdownMenu>
+                        </td>
+                      </tr>
+                    ))}
+                  {quotations.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                        No quotations found. Click "Create New Quote" to build one!
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeView === "builder" && (
+        <div className="grid gap-6 lg:grid-cols-3 print:hidden">
+          {/* Left Side: Builder Form */}
         <div className="lg:col-span-2 space-y-6">
           {/* Customer & Package Auto-fill hooks */}
           <div className="grid gap-4 sm:grid-cols-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
