@@ -184,3 +184,10 @@
 .animate-float-up {
   animation: float-up 0.6s ease-out both;
 }
+
+/* Fix for cmdk v1.x scrolling in shadcn/ui CommandList */
+[cmdk-list-sizer] {
+  max-height: 300px;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
