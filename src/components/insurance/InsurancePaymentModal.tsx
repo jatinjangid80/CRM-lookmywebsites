@@ -11,7 +11,7 @@ export interface InsurancePaymentModalProps {
   onClose: () => void;
   title: string;
   maxAmount: number;
-  onSubmit: (amount: number, date: string, mode: string, reference: string, nextFollowUp?: string) => Promise<void>;
+  onSubmit: (amount: number, date: string, mode: string, reference: string, nextFollowUp?: string, rcFile?: File | null, insuranceDoc?: File | null, remark?: string) => Promise<void>;
 }
 
 export function InsurancePaymentModal({ isOpen, onClose, title, maxAmount, onSubmit }: InsurancePaymentModalProps) {
@@ -20,6 +20,9 @@ export function InsurancePaymentModal({ isOpen, onClose, title, maxAmount, onSub
   const [mode, setMode] = useState<string>("Bank Transfer");
   const [reference, setReference] = useState<string>("");
   const [nextFollowUp, setNextFollowUp] = useState<string>("");
+  const [rcFile, setRcFile] = useState<File | null>(null);
+  const [insuranceDoc, setInsuranceDoc] = useState<File | null>(null);
+  const [remark, setRemark] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const numAmount = Number(amount) || 0;
@@ -33,13 +36,16 @@ export function InsurancePaymentModal({ isOpen, onClose, title, maxAmount, onSub
     
     setIsSubmitting(true);
     try {
-      await onSubmit(numAmount, date, mode, reference, isPartial ? nextFollowUp : undefined);
+      await onSubmit(numAmount, date, mode, reference, isPartial ? nextFollowUp : undefined, rcFile, insuranceDoc, remark);
       toast.success("Payment recorded successfully");
       onClose();
       // Reset
       setAmount("");
       setReference("");
       setNextFollowUp("");
+      setRcFile(null);
+      setInsuranceDoc(null);
+      setRemark("");
     } catch (e: any) {
       toast.error(e.message || "Failed to record payment");
     } finally {
@@ -88,12 +94,36 @@ export function InsurancePaymentModal({ isOpen, onClose, title, maxAmount, onSub
             </Select>
           </div>
           <div className="space-y-2">
-            <Label>Reference / Notes (Optional)</Label>
+            <Label>Reference (Optional)</Label>
             <Input 
               value={reference} 
               onChange={e => setReference(e.target.value)} 
               placeholder="e.g. UTR Number" 
             />
+          </div>
+          <div className="space-y-2">
+            <Label>Remark</Label>
+            <Input 
+              value={remark} 
+              onChange={e => setRemark(e.target.value)} 
+              placeholder="Add your remarks here..." 
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Attach RC</Label>
+              <Input 
+                type="file" 
+                onChange={e => setRcFile(e.target.files?.[0] || null)} 
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Attach Insurance Doc</Label>
+              <Input 
+                type="file" 
+                onChange={e => setInsuranceDoc(e.target.files?.[0] || null)} 
+              />
+            </div>
           </div>
           
           {isPartial && (

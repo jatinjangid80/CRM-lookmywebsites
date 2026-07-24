@@ -4,6 +4,10 @@ import { Button } from "@/components/ui/button";
 import { Plus, Download, Shield } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import { InsuranceDashboard } from "@/components/insurance/InsuranceDashboard";
 import { InsuranceTable } from "@/components/insurance/InsuranceTable";
@@ -26,6 +30,11 @@ function GeneralInsurancePage() {
   const [showForm, setShowForm] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<any>(null);
   const [policyToDelete, setPolicyToDelete] = useState<any>(null);
+
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [exportCustomer, setExportCustomer] = useState("all");
 
   const [policies, setPolicies] = useSupabaseTable<any[]>("insurance_policies", []);
   const [companies] = useSupabaseTable<any[]>("insurance_companies", []);
@@ -133,6 +142,67 @@ function GeneralInsurancePage() {
     setShowForm(false);
   };
 
+  const uniqueCustomers = useMemo(() => {
+    const customers = new Set<string>();
+    policies.forEach(p => {
+      if (p.customer_name) customers.add(p.customer_name);
+    });
+    return Array.from(customers).sort();
+  }, [policies]);
+
+  const handleExport = () => {
+    let filtered = [...policies];
+    if (exportStartDate) {
+      filtered = filtered.filter(p => p.issue_date >= exportStartDate);
+    }
+    if (exportEndDate) {
+      filtered = filtered.filter(p => p.issue_date <= exportEndDate);
+    }
+    if (exportCustomer !== "all") {
+      filtered = filtered.filter(p => p.customer_name === exportCustomer);
+    }
+
+    if (filtered.length === 0) {
+      alert("No policies match the selected filters.");
+      return;
+    }
+
+    const headers = [
+      "Policy No", "Issue Date", "Expiry Date", "Customer Name", "Customer Phone",
+      "Company", "Vendor", "Vehicle No", "Total Premium", "Profit", "Payment Status"
+    ];
+    
+    const csvRows = [headers.join(",")];
+    
+    for (const p of filtered) {
+      const row = [
+        p.policy_number || "",
+        p.issue_date || "",
+        p.expiry_date || "",
+        `"${p.customer_name || ""}"`,
+        p.mobile_number || "",
+        `"${p.company_name || ""}"`,
+        `"${p.vendor_name || ""}"`,
+        p.vehicle_number || "",
+        p.total_premium || 0,
+        p.profit || 0,
+        p.payment_status || ""
+      ];
+      csvRows.push(row.join(","));
+    }
+    
+    const csvContent = "data:text/csv;charset=utf-8," + csvRows.join("\n");
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `insurance_export_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    
+    setIsExportOpen(false);
+  };
+
   return (
     <div className="flex-1 space-y-6 p-4 md:p-8 pt-6 h-full overflow-y-auto w-full max-w-full m-0 bg-muted/30">
       <div className="flex items-center justify-between">
@@ -148,7 +218,7 @@ function GeneralInsurancePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="hidden md:flex">
+          <Button variant="outline" className="hidden md:flex" onClick={() => setIsExportOpen(true)}>
             <Download className="mr-2 h-4 w-4" /> Export Data
           </Button>
           <Button onClick={handleAddNew}>
@@ -276,6 +346,57 @@ function GeneralInsurancePage() {
         title="Delete Policy"
         description="Are you sure you want to permanently delete this policy? This action cannot be undone."
       />
+
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Export Insurance Data</DialogTitle>
+            <DialogDescription>
+              Filter policies by issue date or customer before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Start Date</Label>
+                <Input 
+                  type="date" 
+                  value={exportStartDate}
+                  onChange={(e) => setExportStartDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>End Date</Label>
+                <Input 
+                  type="date" 
+                  value={exportEndDate}
+                  onChange={(e) => setExportEndDate(e.target.value)}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label>Customer</Label>
+              <Select value={exportCustomer} onValueChange={setExportCustomer}>
+                <SelectTrigger>
+                  <SelectValue placeholder="All Customers" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Customers</SelectItem>
+                  {uniqueCustomers.map(c => (
+                    <SelectItem key={c} value={c}>{c}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsExportOpen(false)}>Cancel</Button>
+            <Button onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" /> Download CSV
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

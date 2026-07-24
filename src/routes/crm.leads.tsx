@@ -2159,7 +2159,7 @@ function KanbanCol({
       {/* Budget total */}
       {total > 0 && <p className="mb-2 px-1 text-xs text-muted-foreground">{formatINR(total)}</p>}
       {/* Cards */}
-      <div className="flex flex-col gap-2 min-h-[100px]">
+      <div className="flex flex-col gap-2 min-h-[100px] max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
         {leads.map((l) => (
           <button
             key={l.id}
@@ -2424,8 +2424,20 @@ function LeadsPage() {
     }
     const aDate = new Date(a.createdAt || "");
     const bDate = new Date(b.createdAt || "");
-    if (aDate < bDate) return -1 * dir;
-    if (aDate > bDate) return 1 * dir;
+    const aTime = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
+    const bTime = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
+    
+    if (aTime !== bTime) {
+      return aTime < bTime ? -1 * dir : 1 * dir;
+    }
+    
+    // Tie-breaker for items on the exact same date: newer ID comes first
+    const aId = Number(a.id);
+    const bId = Number(b.id);
+    if (!isNaN(aId) && !isNaN(bId) && aId !== bId) {
+      return bId - aId; // Newest first
+    }
+    
     return 0;
   });
 

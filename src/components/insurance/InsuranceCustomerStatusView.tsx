@@ -120,10 +120,11 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
             <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
               <tr>
                 <th className="px-6 py-4">Customer Name</th>
-                <th className="px-6 py-4">Policy No.</th>
-                <th className="px-6 py-4 text-right">Total Premium</th>
-                <th className="px-6 py-4 text-right">Paid Amount</th>
-                <th className="px-6 py-4 text-right">Pending Amount</th>
+                <th className="px-6 py-4">Vehicle No.</th>
+                <th className="px-6 py-4">School Name</th>
+                <th className="px-6 py-4 text-right">Pending Amounts</th>
+                <th className="px-6 py-4 text-right">Paid Amounts</th>
+                <th className="px-6 py-4 text-right">Total Balance</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
@@ -131,7 +132,7 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
             <tbody className="divide-y divide-border">
               {policies.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     No policies found.
                   </td>
                 </tr>
@@ -148,16 +149,19 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                         <p className="text-xs text-muted-foreground">{p.mobile_number}</p>
                       </td>
                       <td className="px-6 py-4 font-medium text-blue-600 dark:text-blue-400">
-                        {p.policy_number || "Draft"}
+                        {p.vehicle_number || "-"}
                       </td>
-                      <td className="px-6 py-4 text-right font-medium text-foreground">
-                        {formatINR(total)}
+                      <td className="px-6 py-4 font-medium text-foreground">
+                        {p.school_name || "-"}
+                      </td>
+                      <td className="px-6 py-4 text-right font-bold text-rose-600 dark:text-rose-500">
+                        {formatINR(pending > 0 ? pending : 0)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-emerald-600 dark:text-emerald-500">
                         {formatINR(paid)}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-rose-600 dark:text-rose-500">
-                        {formatINR(pending > 0 ? pending : 0)}
+                      <td className="px-6 py-4 text-right font-medium text-foreground">
+                        {formatINR(total)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${p.payment_status === 'Full Paid' ? 'bg-emerald-500/10 text-emerald-500' : p.payment_status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>

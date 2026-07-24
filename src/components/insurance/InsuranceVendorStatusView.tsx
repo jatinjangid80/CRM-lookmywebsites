@@ -96,17 +96,19 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
             <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
               <tr>
                 <th className="px-6 py-4">Vendor Name</th>
-                <th className="px-6 py-4">Policy No.</th>
+                <th className="px-6 py-4">Vehicle No.</th>
                 <th className="px-6 py-4">Customer Name</th>
-                <th className="px-6 py-4 text-right">Amount Paid to Vendor</th>
-                <th className="px-6 py-4 text-right">Profit Generated</th>
+                <th className="px-6 py-4 text-right">Pending Amounts</th>
+                <th className="px-6 py-4 text-right">Paid Amounts</th>
+                <th className="px-6 py-4 text-right">Total Balance</th>
+                <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-right">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {policies.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                  <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     No vendor records found.
                   </td>
                 </tr>
@@ -114,6 +116,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                 policies.sort((a, b) => new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime()).map((p) => {
                   const vendPaid = Number(p.vendor_paid) || 0;
                   const profit = Number(p.profit) || 0;
+                  const total = Number(p.total_premium) || 0;
                   
                   return (
                     <tr key={p.id} className="hover:bg-muted/30 transition-colors">
@@ -121,16 +124,24 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                         <p className="font-medium text-foreground">{getVendorName(p) || "Unknown"}</p>
                       </td>
                       <td className="px-6 py-4 font-medium text-blue-600 dark:text-blue-400">
-                        {p.policy_number || "Draft"}
+                        {p.vehicle_number || "-"}
                       </td>
                       <td className="px-6 py-4">
                         <p className="font-medium text-foreground">{p.customer_name || "Unknown"}</p>
                       </td>
+                      <td className="px-6 py-4 text-right font-bold text-rose-600 dark:text-rose-500">
+                        -
+                      </td>
                       <td className="px-6 py-4 text-right font-medium text-amber-600 dark:text-amber-500">
                         {formatINR(vendPaid)}
                       </td>
-                      <td className="px-6 py-4 text-right font-bold text-emerald-600 dark:text-emerald-500">
-                        {formatINR(profit)}
+                      <td className="px-6 py-4 text-right font-medium text-emerald-600 dark:text-emerald-500">
+                        {formatINR(total)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${p.payment_status === 'Full Paid' ? 'bg-emerald-500/10 text-emerald-500' : p.payment_status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {p.payment_status || "Pending"}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(p)} className="h-8">

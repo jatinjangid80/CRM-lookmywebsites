@@ -14,7 +14,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
   // Fetch initial data
   useEffect(() => {
     async function fetchData() {
-      const { data: remoteData, error } = await supabase.from(tableName).select("*");
+      const { data: remoteData, error } = await supabase.from(tableName).select("*").order("id", { ascending: false });
       if (error) {
         console.error(`Error fetching ${tableName}:`, error);
         return;
@@ -349,6 +349,25 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     }
     if (tableName !== "employees") delete newRow.profile_details;
 
+    if (tableName === "insurance_policies") {
+      const customFields = [
+        "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile"
+      ];
+      const metaObj: any = {};
+      const existingNotes = newRow.notes || "";
+      let hasMeta = false;
+      for (const field of customFields) {
+        if (newRow[field] !== undefined) {
+          metaObj[field] = newRow[field];
+          delete newRow[field];
+          hasMeta = true;
+        }
+      }
+      if (hasMeta) {
+        newRow.notes = JSON.stringify({ _isMeta: true, text: existingNotes, ...metaObj });
+      }
+    }
+
     if (tableName === "tasks") {
       // Encode extra fields into description
       const customFields: any = {};
@@ -602,6 +621,23 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.supplier && !newRow.vendor) newRow.vendor = newRow.supplier;
       if (newRow.clientName && !newRow.customer) newRow.customer = newRow.clientName;
       if (newRow.amount !== undefined && newRow.requestedAmount === undefined) newRow.requestedAmount = newRow.amount;
+    }
+
+    if (tableName === "insurance_policies" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+      try {
+        const parsed = JSON.parse(newRow.notes);
+        if (parsed._isMeta) {
+          newRow.notes = parsed.text;
+          const customFields = [
+            "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile"
+          ];
+          for (const field of customFields) {
+            if (parsed[field] !== undefined) {
+              newRow[field] = parsed[field];
+            }
+          }
+        }
+      } catch (e) { }
     }
 
     if (tableName === "customers" && typeof newRow.name === "string" && newRow.name.includes("---META---")) {
