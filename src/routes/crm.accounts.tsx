@@ -1582,26 +1582,33 @@ function AccountsPage() {
               />
             </div>
             
-            {newTx.type === "Receipt" && newTx.invoiceId && (() => {
+            {(newTx.type === "Receipt" || newTx.type === "Payment") && newTx.invoiceId && (() => {
               const selectedBooking = bookings.find(b =>
                 String(b.id).toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
                 String(b.saleInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
                 String(b.purchaseInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase()
               );
               if (!selectedBooking) return null;
+              
+              const oldTxAmount = editingTxId ? (transactions.find(t => t.id === editingTxId)?.amount || 0) : 0;
+              const currentPaid = (selectedBooking.paid || 0) - oldTxAmount;
+              const totalAmt = selectedBooking.amount || 0;
+              const newPaid = currentPaid + (Number(newTx.amount) || 0);
+              const remaining = totalAmt - newPaid;
+
               return (
                 <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
                   <div>
                     <div className="text-muted-foreground text-[10px] uppercase font-semibold">Total Amount</div>
-                    <div className="font-semibold text-foreground">{formatINR(selectedBooking.amount || 0)}</div>
+                    <div className="font-semibold text-foreground">{formatINR(totalAmt)}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-[10px] uppercase font-semibold">Amount Paid</div>
-                    <div className="font-semibold text-emerald-600">{formatINR(selectedBooking.paid || 0)}</div>
+                    <div className="font-semibold text-emerald-600">{formatINR(newPaid)}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-[10px] uppercase font-semibold">Remaining Balance</div>
-                    <div className="font-semibold text-rose-600">{formatINR((selectedBooking.amount || 0) - (selectedBooking.paid || 0))}</div>
+                    <div className="font-semibold text-rose-600">{formatINR(remaining)}</div>
                   </div>
                 </div>
               );
@@ -1642,7 +1649,7 @@ function AccountsPage() {
               />
             </div>
 
-            {newTx.type === "Receipt" && newTx.entityId && (() => {
+            {(newTx.type === "Receipt" || newTx.type === "Payment") && newTx.entityId && (() => {
               let totalAmount = 0;
               let totalPaid = 0;
               let isMatch = false;
@@ -1667,6 +1674,11 @@ function AccountsPage() {
 
               if (!isMatch) return null;
 
+              const oldTxAmount = editingTxId ? (transactions.find(t => t.id === editingTxId)?.amount || 0) : 0;
+              const currentPaid = totalPaid - oldTxAmount;
+              const newTotalPaid = currentPaid + (Number(newTx.amount) || 0);
+              const remaining = totalAmount - newTotalPaid;
+
               return (
                 <div className="bg-muted/30 border border-border p-3 rounded-xl grid grid-cols-3 gap-2 text-sm mt-2">
                   <div>
@@ -1675,11 +1687,11 @@ function AccountsPage() {
                   </div>
                   <div>
                     <div className="text-muted-foreground text-[10px] uppercase font-semibold">Amount Paid So Far</div>
-                    <div className="font-semibold text-emerald-600">{formatINR(totalPaid)}</div>
+                    <div className="font-semibold text-emerald-600">{formatINR(newTotalPaid)}</div>
                   </div>
                   <div>
                     <div className="text-muted-foreground text-[10px] uppercase font-semibold">Pending Balance</div>
-                    <div className="font-semibold text-rose-600">{formatINR(totalAmount - totalPaid)}</div>
+                    <div className="font-semibold text-rose-600">{formatINR(remaining)}</div>
                   </div>
                 </div>
               );
