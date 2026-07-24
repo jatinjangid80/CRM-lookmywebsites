@@ -1345,6 +1345,7 @@ function AccountsPage() {
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
                     <th className="px-6 py-4">Vendor Name</th>
+                    <th className="px-6 py-4">Mobile</th>
                     <th className="px-6 py-4">Bookings</th>
                     <th className="px-6 py-4">Payments Pending</th>
                     <th className="px-6 py-4">Payments (Out)</th>
@@ -1381,7 +1382,7 @@ function AccountsPage() {
                     
                     return uniqueVendors.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
                           <div className="flex flex-col items-center gap-2">
                             <Search className="h-8 w-8 opacity-20" />
                             <p>No vendors found.</p>
@@ -1420,6 +1421,9 @@ function AccountsPage() {
                               {vendorName}
                               {vendorData.serviceType && <div className="text-xs font-normal text-muted-foreground mt-0.5">{vendorData.serviceType}</div>}
                             </td>
+                            <td className="px-6 py-4 text-muted-foreground">
+                              {vendorData.mobile || "-"}
+                            </td>
                             <td className="px-6 py-4">
                               <span className="font-medium">{vBookings.length} Total</span>
                             </td>
@@ -1436,7 +1440,7 @@ function AccountsPage() {
                           
                           {isExpanded && (
                             <tr className="bg-secondary/5 border-b border-border">
-                              <td colSpan={6} className="p-0">
+                              <td colSpan={7} className="p-0">
                                 <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
                                   {/* Bookings List */}
                                   <div className="bg-background rounded-xl border border-border p-4 space-y-3">
