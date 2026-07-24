@@ -29,6 +29,7 @@ import {
   Copy,
   MoreVertical,
   Pencil,
+  Search,
 } from "lucide-react";
 import {
   BarChart,
