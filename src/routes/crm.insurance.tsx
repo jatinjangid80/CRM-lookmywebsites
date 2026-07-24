@@ -12,6 +12,7 @@ import { RenewalsView } from "@/components/insurance/RenewalsView";
 import { InsuranceVendorsView } from "@/components/insurance/InsuranceVendorsView";
 import { InsuranceCompaniesView } from "@/components/insurance/InsuranceCompaniesView";
 import { InsuranceTransactionsView } from "@/components/insurance/InsuranceTransactionsView";
+import { InsuranceCustomerStatusView } from "@/components/insurance/InsuranceCustomerStatusView";
 
 export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
@@ -245,10 +246,7 @@ function GeneralInsurancePage() {
         {activeTab === "Companies" && <InsuranceCompaniesView />}
         
         {activeTab === "CustomerStatus" && (
-          <div className="bg-card rounded-xl border border-border p-12 text-center animate-in fade-in duration-300">
-            <h3 className="text-lg font-semibold mb-2 text-foreground">Customer Payment Status</h3>
-            <p className="text-muted-foreground max-w-md mx-auto">Track and manage customer payments, follow-ups, and statuses here.</p>
-          </div>
+          <InsuranceCustomerStatusView policies={policies} />
         )}
         
         {activeTab === "VendorStatus" && (
