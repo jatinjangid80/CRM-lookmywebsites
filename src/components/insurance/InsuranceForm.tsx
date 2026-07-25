@@ -58,8 +58,7 @@ export function InsuranceForm({
     }
   };
 
-  const [isAddingPayment, setIsAddingPayment] = useState(false);
-  const [newPaymentAmount, setNewPaymentAmount] = useState("");
+
 
   const [form, setForm] = useState<any>({
     client_company: "",
@@ -704,59 +703,15 @@ export function InsuranceForm({
               <h3 className="font-semibold text-sm">5. Payment Details & Profit</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1 col-span-2">
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
-                  <Label>Customer Paid</Label>
-                  <span className="text-xs font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
-                    Outstanding: ₹{Math.max(0, Number(form.total_premium || 0) - Number(form.customer_paid || 0))}
-                  </span>
+                  <Label>Customer Paid Amounts</Label>
                 </div>
-                {isAddingPayment ? (
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder="Payment amount"
-                      value={newPaymentAmount}
-                      onChange={(e) => setNewPaymentAmount(e.target.value)}
-                      autoFocus
-                      className="flex-1"
-                    />
-                    <Button
-                      type="button"
-                      onClick={() => {
-                        const amount = Number(newPaymentAmount);
-                        if (amount > 0) {
-                          setForm({ ...form, customer_paid: (Number(form.customer_paid || 0) + amount) });
-                        }
-                        setIsAddingPayment(false);
-                        setNewPaymentAmount("");
-                      }}
-                      className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
-                    >
-                      Save
-                    </Button>
-                    <Button type="button" variant="ghost" className="rounded-full shrink-0" onClick={() => setIsAddingPayment(false)}>
-                      Cancel
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-2">
-                    <Input
-                      type="number"
-                      value={form.customer_paid}
-                      onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
-                      className="flex-1"
-                    />
-                    <Button 
-                      type="button" 
-                      variant="outline" 
-                      className="rounded-full shrink-0 h-9 px-4 font-semibold text-primary border-primary/20 hover:bg-primary/5"
-                      onClick={() => setIsAddingPayment(true)}
-                    >
-                      <Plus className="w-4 h-4 mr-1" /> Pay
-                    </Button>
-                  </div>
-                )}
+                <Input
+                  type="number"
+                  value={form.customer_paid}
+                  onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
+                />
               </div>
 
               <div className="space-y-1">

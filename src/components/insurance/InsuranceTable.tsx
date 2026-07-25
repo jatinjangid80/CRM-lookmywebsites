@@ -13,10 +13,11 @@ interface InsuranceTableProps {
   companies: any[];
   vendors: any[];
   onEdit: (policy: any) => void;
+  onDuplicate?: (policy: any) => void;
   onDelete: (policy: any) => void;
 }
 
-export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete }: InsuranceTableProps) {
+export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplicate, onDelete }: InsuranceTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
   const [sortColumn, setSortColumn] = useState<string>("Dates");
@@ -307,6 +308,11 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete 
                         <DropdownMenuItem onClick={() => onEdit(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <Eye className="h-4 w-4 text-blue-600" /> View / Edit
                         </DropdownMenuItem>
+                        {onDuplicate && (
+                          <DropdownMenuItem onClick={() => onDuplicate(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
+                            <Copy className="h-4 w-4 text-purple-600" /> Duplicate
+                          </DropdownMenuItem>
+                        )}
 
                         <DropdownMenuItem onClick={() => handlePrint(p)} className="cursor-pointer gap-2 py-2 rounded-lg">
                           <FileText className="h-4 w-4 text-emerald-600" /> Print

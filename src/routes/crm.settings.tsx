@@ -1057,26 +1057,6 @@ function SettingsPage() {
                 ))}
               </div>
             </SectionCard>
-
-            <SectionCard title="Default Passwords">
-              <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex gap-3">
-                <Info className="h-5 w-5 text-amber-600 shrink-0 mt-0.5" />
-                <div className="text-sm text-amber-800 space-y-1">
-                  <p className="font-semibold">Default Login Credentials</p>
-                  <p>
-                    Admin password:{" "}
-                    <code className="bg-amber-100 px-1 rounded font-mono text-xs">admin123</code>
-                  </p>
-                  <p>
-                    Employee password:{" "}
-                    <code className="bg-amber-100 px-1 rounded font-mono text-xs">emp123</code>
-                  </p>
-                  <p className="text-xs text-amber-700 pt-1">
-                    ⚠️ Advise all employees to change their passwords after first login.
-                  </p>
-                </div>
-              </div>
-            </SectionCard>
           </div>
         );
 

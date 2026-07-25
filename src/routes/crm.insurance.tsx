@@ -321,11 +321,11 @@ function GeneralInsurancePage() {
         {activeTab === "Companies" && <InsuranceCompaniesView />}
         
         {activeTab === "CustomerStatus" && (
-          <InsuranceCustomerStatusView policies={policies} />
+          <InsuranceCustomerStatusView policies={policies} setPolicies={setPolicies} />
         )}
         
         {activeTab === "VendorStatus" && (
-          <InsuranceVendorStatusView policies={policies} vendors={vendors} />
+          <InsuranceVendorStatusView policies={policies} vendors={vendors} setPolicies={setPolicies} />
         )}
 
         {activeTab === "GenTransactions" && (

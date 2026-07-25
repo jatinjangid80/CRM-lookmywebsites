@@ -968,7 +968,7 @@ function AddLeadModal({
       while (s.length < size) s = "0" + s;
       return s;
     };
-    const id = `T-${pad(nextNum, 3)}`;
+    const id = crypto.randomUUID();
 
     let dest = form.destination;
     if (isAir) dest = `${form.sourceCity} → ${form.destinationCity}`;
@@ -1094,7 +1094,6 @@ function LeadDetail({
   assignees,
   onEditNote,
   onUpdateLead,
-  onClone,
 }: {
   lead: ExtLead;
   onClose: () => void;

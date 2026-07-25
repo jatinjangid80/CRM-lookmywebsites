@@ -16,12 +16,12 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
   const vendorStats = policies.reduce((acc, p) => {
-    const vendPaid = Number(p.vendor_paid) || 0;
-    const total = Number(p.total_premium) || 0;
-    const pending = total - vendPaid;
+    const vendPaid = Number(p.vendor_paid) || 0; // Vendor Pending Amount
+    const paymentsOut = Number(p.payments_out) || 0;
+    const pending = Math.max(vendPaid - paymentsOut, 0);
     return {
-      totalPaid: acc.totalPaid + vendPaid,
-      totalPending: acc.totalPending + (pending > 0 ? pending : 0)
+      totalPaid: acc.totalPaid + paymentsOut,
+      totalPending: acc.totalPending + pending
     };
   }, { totalPaid: 0, totalPending: 0 });
 
@@ -50,15 +50,16 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
 
     if (txError) throw txError;
 
-    // Update policy record
-    const newVendPaid = (Number(selectedPolicy.vendor_paid) || 0) + amount;
-    const custPaid = Number(selectedPolicy.customer_paid) || 0;
-    const newProfit = custPaid - newVendPaid;
+    // Update policy record (accumulate payments_out instead of vendor_paid)
+    const currentPaymentsOut = Number(selectedPolicy.payments_out) || 0;
+    const newPaymentsOut = currentPaymentsOut + amount;
 
     const { error: policyError } = await supabase.from("insurance_policies")
       .update({ 
-        vendor_paid: newVendPaid,
-        profit: newProfit
+        notes: JSON.stringify({
+          ...(typeof selectedPolicy.notes === 'string' && selectedPolicy.notes.includes('_isMeta') ? JSON.parse(selectedPolicy.notes) : { _isMeta: true, text: selectedPolicy.notes || "" }),
+          payments_out: newPaymentsOut
+        })
       })
       .eq("id", selectedPolicy.id);
 
@@ -68,7 +69,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
     if (setPolicies) {
       setPolicies((prev: any[]) => prev.map(p => 
         p.id === selectedPolicy.id 
-          ? { ...p, vendor_paid: newVendPaid, profit: newProfit } 
+          ? { ...p, payments_out: newPaymentsOut } 
           : p
       ));
     }
@@ -125,10 +126,11 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                 <th className="px-6 py-4 rounded-tl-xl w-10"></th>
                 <th className="px-6 py-4">Vendor Name</th>
                 <th className="px-6 py-4">Policies</th>
-                <th className="px-6 py-4">Payments Pending</th>
-                <th className="px-6 py-4">Payments (Out)</th>
-                <th className="px-6 py-4 text-right rounded-tr-xl">Total Balance</th>
-                <th className="px-6 py-4 text-right">Action</th>
+                <th className="px-6 py-4 text-right">Vendor Pending Amount</th>
+                <th className="px-6 py-4 text-right">Payments (Out)</th>
+                <th className="px-6 py-4 text-right">Total Balance</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-right rounded-tr-xl">Action</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
@@ -146,9 +148,12 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                 const isExpanded = expandedVendor === vendorId;
                 
                 const vPolicies = policies.filter(p => getVendorName(p) === vendorName);
-                const vTotalBilled = vPolicies.reduce((sum, p) => sum + (Number(p.total_premium) || 0), 0);
-                const vSpend = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
-                const vPending = vTotalBilled - vSpend;
+                
+                const vendorPendingAmount = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
+                const paymentsOut = vPolicies.reduce((sum, p) => sum + (Number(p.payments_out) || 0), 0);
+                const totalBalance = Math.max(vendorPendingAmount - paymentsOut, 0);
+                
+                const status = totalBalance === 0 ? "Paid" : paymentsOut > 0 ? "Partial" : "Pending";
                 
                 const customerSet = new Set<string>();
                 vPolicies.forEach(p => {
@@ -169,22 +174,37 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                         {vendorName}
                       </td>
                       <td className="px-6 py-4">
-                        <span className="font-medium">{vPolicies.length} Total</span>
-                      </td>
-                      <td className="px-6 py-4 font-bold text-rose-600 dark:text-rose-500">
-                        {formatINR(vTotalBilled)}
-                      </td>
-                      <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-500">
-                        {formatINR(vSpend)}
+                        <span className="font-medium">{vPolicies.length}</span>
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-foreground">
-                        {formatINR(vPending > 0 ? vPending : 0)}
+                        {formatINR(vendorPendingAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-emerald-600 dark:text-emerald-500">
+                        {formatINR(paymentsOut)}
+                      </td>
+                      <td className="px-6 py-4 text-right font-medium text-rose-600 dark:text-rose-500">
+                        {formatINR(totalBalance)}
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {status}
+                        </span>
                       </td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(vPolicies[0])} className="h-8">
-                          <Plus className="h-4 w-4 mr-1" />
-                          Pay Vendor
-                        </Button>
+                        {totalBalance > 0 && (
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            onClick={() => {
+                              const policyToPay = vPolicies.find(p => (Number(p.vendor_paid) || 0) - (Number(p.payments_out) || 0) > 0) || vPolicies[0];
+                              setSelectedPolicy(policyToPay);
+                            }} 
+                            className="h-8"
+                          >
+                            <Plus className="h-4 w-4 mr-1" />
+                            Pay Vendor
+                          </Button>
+                        )}
                       </td>
                     </tr>
                     
@@ -203,9 +223,17 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                                   <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
                                     <div className="flex justify-between items-start mb-1">
                                       <span className="font-medium text-blue-600 dark:text-blue-400">{p.vehicle_number || "No Vehicle No."}</span>
-                                      <span className={`text-[9px] px-1.5 py-0.5 rounded-sm ${p.payment_status === 'Full Paid' ? 'bg-emerald-500/10 text-emerald-500' : p.payment_status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                                        {p.payment_status || "Pending"}
-                                      </span>
+                                      {(() => {
+                                        const polVendorPending = Number(p.vendor_paid) || 0;
+                                        const polPaymentsOut = Number(p.payments_out) || 0;
+                                        const polTotalBal = Math.max(polVendorPending - polPaymentsOut, 0);
+                                        const polStatus = polTotalBal === 0 ? "Paid" : polPaymentsOut > 0 ? "Partial" : "Pending";
+                                        return (
+                                          <span className={`text-[9px] px-1.5 py-0.5 rounded-sm ${polStatus === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : polStatus === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                                            {polStatus}
+                                          </span>
+                                        );
+                                      })()}
                                     </div>
                                     <div className="flex justify-between mt-1">
                                       <span className="text-muted-foreground">{p.customer_name || "Unknown"}</span>
@@ -245,15 +273,21 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
         </div>
       </div>
       
-      {selectedPolicy && (
-        <InsurancePaymentModal
-          isOpen={!!selectedPolicy}
-          onClose={() => setSelectedPolicy(null)}
-          title={`Pay Vendor: ${getVendorName(selectedPolicy) || 'Unknown'}`}
-          maxAmount={0} // No max amount for vendors as we don't have expected total
-          onSubmit={handleSavePayment}
-        />
-      )}
+      {selectedPolicy && (() => {
+        const vendorPending = Number(selectedPolicy.vendor_paid) || 0;
+        const paymentsOut = Number(selectedPolicy.payments_out) || 0;
+        const maxAmount = Math.max(vendorPending - paymentsOut, 0);
+        
+        return (
+          <InsurancePaymentModal
+            isOpen={!!selectedPolicy}
+            onClose={() => setSelectedPolicy(null)}
+            title={`Pay Vendor: ${getVendorName(selectedPolicy) || 'Unknown'}`}
+            maxAmount={maxAmount}
+            onSubmit={handleSavePayment}
+          />
+        );
+      })()}
     </div>
   );
 }

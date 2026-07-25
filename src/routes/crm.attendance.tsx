@@ -52,12 +52,12 @@ function AttendancePage() {
   const myEmpId = user?.empId || "EMP001";
   // Get date in local timezone YYYY-MM-DD
   const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-  const myTodayRecords = attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr);
+  const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const myCurrentSession = myTodayRecords.find(a => !a.checkout);
 
   const [teamSelectedDate, setTeamSelectedDate] = useState<Date>(new Date());
   const teamSelectedDateStr = new Date(teamSelectedDate.getTime() - teamSelectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-  const teamTodayRecords = attendance.filter(a => a.date === teamSelectedDateStr);
+  const teamTodayRecords = [...attendance.filter(a => a.date === teamSelectedDateStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const getEmpDetails = (empId: string) => {
     const emp = employeesList.find((e: any) => e.id === empId || e.empId === empId);
     if (emp) return { name: emp.name, role: emp.role || "Employee", initials: emp.name?.charAt(0) || "U", id: emp.id };

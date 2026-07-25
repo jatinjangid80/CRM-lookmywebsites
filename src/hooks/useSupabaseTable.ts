@@ -145,6 +145,31 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.empId;
     }
 
+    if (tableName === "leads" || tableName === "insurance_leads") {
+      delete newRow.avatar;
+      delete newRow.createdAt;
+      delete newRow.createdTime;
+      delete newRow.travelDate;
+      delete newRow.pax;
+      delete newRow.packageType;
+      
+      if (tableName === "leads") {
+        // leads table has assignedto column
+        if (newRow.assignedTo !== undefined) {
+          newRow.assignedto = newRow.assignedTo;
+        }
+      }
+      delete newRow.assignedTo;
+    }
+
+    if (tableName === "insurance_leads") {
+      // Ensure id is a valid UUID for Supabase, since insurance_leads.id is a UUID column
+      const isUuid = typeof newRow.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(newRow.id);
+      if (!isUuid) {
+        newRow.id = crypto.randomUUID();
+      }
+    }
+
     if (tableName === "visa" || tableName === "visa_apps") {
       // Pack extra app-only fields (not in Supabase schema) into docs JSONB as metadata
       const visaMeta: any = {};
@@ -319,13 +344,20 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     if (tableName === "leads" || tableName === "insurance_leads") {
       const NEW_SVC_COLS = [
-        "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+        "adults","children",
         "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
         "checkIn","checkOut","nights","nationality","starRating","mealPreference",
         "visaType","passportExpiry","country",
         "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
         "companyName","eventType",
       ];
+      if (tableName === "leads") {
+        NEW_SVC_COLS.push("whatsapp", "leadSection", "assignOpsTo", "assignToOps", "reference");
+      }
+      if (tableName === "insurance_leads") {
+        // insurance_leads schema has no assignedto column — pack it into meta
+        NEW_SVC_COLS.push("assignedto", "assignOpsTo");
+      }
       const leadMeta: Record<string, any> = {};
       const existingNotes = newRow.notes || "";
       let hasMeta = false;
@@ -351,7 +383,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     if (tableName === "insurance_policies") {
       const customFields = [
-        "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile"
+        "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile", "payments_out"
       ];
       const metaObj: any = {};
       const existingNotes = newRow.notes || "";
@@ -432,6 +464,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
   function unSanitizeRow(row: any) {
     const newRow = { ...row };
     if (tableName === "leads" || tableName === "insurance_leads") {
+      if (newRow.assignedto && !newRow.assignedTo) newRow.assignedTo = newRow.assignedto;
       if (newRow.noteDate) newRow.nextFollowUp = newRow.noteDate;
       // Fallback: if whatsapp wasn't stored in meta, it might be in reference from older records
       // Follow-up date stored in noteDate column
@@ -488,7 +521,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     // Backward-compat: old records stored extra fields as meta JSON in notes
     // New records use real columns — notes is plain text
-    if (tableName === "leads" && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
+    if ((tableName === "leads" || tableName === "insurance_leads") && typeof newRow.notes === "string" && newRow.notes.includes("_isMeta")) {
       try {
         const parsed = JSON.parse(newRow.notes);
         if (parsed._isMeta) {
@@ -502,11 +535,15 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             "checkIn","checkOut","nights","nationality","starRating","mealPreference",
             "visaType","passportExpiry","country",
             "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
-            "companyName","eventType","assignToOps","assignOpsTo","adults","children"
+            "companyName","eventType","assignToOps","assignOpsTo","adults","children",
+            "policyType","queryType","insuranceDate","expiryDate","clientCompany",
+            "assignedto"
           ] as const;
           for (const f of legacyFields) {
             if (newRow[f] == null && parsed[f] !== undefined) newRow[f] = parsed[f];
           }
+          // Restore assignedTo from meta assignedto for insurance_leads
+          if (!newRow.assignedTo && parsed.assignedto) newRow.assignedTo = parsed.assignedto;
         }
       } catch (e) { }
     }
@@ -629,8 +666,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         if (parsed._isMeta) {
           newRow.notes = parsed.text;
           const customFields = [
-            "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile"
-          ];
+            "school_name", "reference_name", "client_company", "additional_passengers", "alternate_mobile", "payments_out"
+          ] as const;
           for (const field of customFields) {
             if (parsed[field] !== undefined) {
               newRow[field] = parsed[field];
@@ -775,13 +812,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       console.log(`[${tableName}] Inserting rows:`, JSON.stringify(toInsert, null, 2));
       const { error, data } = await supabase.from(tableName).insert(toInsert).select();
       if (error) {
-        alert(`Supabase Error (${tableName}): ` + error.message);
         console.error(`[${tableName}] INSERT error:`, error.message, error.details, error.hint);
 
         // If error is about unknown columns (new migration not run yet), retry with base columns only
-        if (tableName === "leads" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
-          console.warn("[leads] Retrying INSERT with base columns only (run the SQL migration to enable all fields)");
-          const NEW_SVC_COLS = [
+        if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          console.warn(`[${tableName}] Retrying INSERT with base columns only (run the SQL migration to enable all fields)`);
+          let columnsToDrop = [
             "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
             "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
             "checkIn","checkOut","nights","nationality","starRating","mealPreference",
@@ -790,16 +826,21 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             "companyName","eventType",
             "policyType","queryType","insuranceDate","expiryDate","clientCompany",
           ];
+          
+          if (tableName === "insurance_leads") {
+            columnsToDrop = [...columnsToDrop, "reference", "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+          }
+          
           const fallbackRows = toInsert.map((row: any) => {
             const safe = { ...row };
-            for (const col of NEW_SVC_COLS) delete safe[col];
+            for (const col of columnsToDrop) delete safe[col];
             return safe;
           });
           const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
           if (err2) {
-            console.error(`[leads] Fallback INSERT also failed:`, err2.message, err2.details);
+            console.error(`[${tableName}] Fallback INSERT also failed:`, err2.message, err2.details);
           } else {
-            console.log(`[leads] Fallback INSERT success (base columns):`, data2);
+            console.log(`[${tableName}] Fallback INSERT success (base columns):`, data2);
           }
         }
         
@@ -816,13 +857,31 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           });
           const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
           if (err2) {
-            console.error(`[customers] Fallback INSERT also failed:`, err2.message, err2.details);
-          } else {
-            console.log(`[customers] Fallback INSERT success (base columns):`, data2);
+            console.error(`[${tableName}] Fallback INSERT also failed:`, err2.message, err2.details);
+          } else if (data2 && data2.length > 0) {
+            console.log(`[${tableName}] Fallback INSERT success (base columns):`, data2);
+            const unsanitized = data2.map(unSanitizeRow);
+            setData((prev: any) => {
+              const updated = prev.map((item: any) => {
+                const saved = unsanitized.find((u: any) => u.name === item.name || u.id === item.id);
+                return saved ? { ...item, ...saved } : item;
+              });
+              lastSyncedData.current = updated;
+              return updated;
+            });
           }
         }
-      } else {
+      } else if (data && data.length > 0) {
         console.log(`[${tableName}] INSERT success:`, data);
+        const unsanitized = data.map(unSanitizeRow);
+        setData((prev: any) => {
+          const updated = prev.map((item: any) => {
+            const saved = unsanitized.find((u: any) => u.name === item.name || u.id === item.id);
+            return saved ? { ...item, ...saved } : item;
+          });
+          lastSyncedData.current = updated;
+          return updated;
+        });
       }
     }
 
@@ -842,20 +901,30 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (error) {
         console.error(`[${tableName}] UPDATE error:`, error.message, error.details, error.hint);
         
-        // Fallback for leads UPDATE
-        if (tableName === "leads" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
-          const NEW_SVC_COLS = [
+        // Fallback for leads/insurance_leads UPDATE
+        if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          let columnsToDrop = [
             "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
             "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
             "checkIn","checkOut","nights","nationality","starRating","mealPreference",
             "visaType","passportExpiry","country",
             "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
             "companyName","eventType",
+            "policyType","queryType","insuranceDate","expiryDate","clientCompany",
           ];
+          
+          if (tableName === "insurance_leads") {
+            columnsToDrop = [...columnsToDrop, "reference", "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+          }
+          
           const safe = { ...item };
-          for (const col of NEW_SVC_COLS) delete safe[col];
-          const { error: err2 } = await supabase.from(tableName).update(safe).eq("id", item.id);
-          if (err2) console.error("[leads] Fallback UPDATE failed:", err2.message);
+          for (const col of columnsToDrop) delete safe[col];
+          const { error: err2, data: data2 } = await supabase.from(tableName).update(safe).eq("id", item.id).select();
+          if (err2) {
+            console.error(`[${tableName}] Fallback UPDATE failed:`, err2.message);
+          } else {
+            console.log(`[${tableName}] Fallback UPDATE success:`, data2);
+          }
         }
 
         // Fallback for customers UPDATE
