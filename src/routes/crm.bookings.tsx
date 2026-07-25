@@ -1367,7 +1367,7 @@ function BookingsPage() {
                 <BarChart
                   data={dashboardData.serviceData}
                   layout="vertical"
-                  margin={{ top: 0, right: 20, left: -20, bottom: 0 }}
+                  margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
                   <XAxis type="number" hide />
@@ -1377,7 +1377,7 @@ function BookingsPage() {
                     axisLine={false}
                     tickLine={false}
                     tick={{ fontSize: 12, fill: "#6b7280" }}
-                    width={80}
+                    width={90}
                   />
                   <Tooltip
                     cursor={{ fill: "rgba(0,0,0,0.05)" }}

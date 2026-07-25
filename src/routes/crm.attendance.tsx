@@ -664,7 +664,7 @@ function AttendancePage() {
 
               <button
                 onClick={() => setIsApplyLeaveOpen(true)}
-                className="inline-flex items-center justify-center text-sm font-semibold h-10 px-5 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white transition-colors"
+                className="inline-flex items-center justify-center text-sm font-semibold h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
               >
                 + Apply Leave
               </button>

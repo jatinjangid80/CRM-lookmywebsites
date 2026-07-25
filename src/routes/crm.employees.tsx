@@ -308,7 +308,7 @@ function EmployeeTaskCard({
               </Button>
               <Button
                 size="sm"
-                className="h-7 text-xs rounded-full px-4 text-white hover:opacity-90 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 border-0"
+                className="h-7 text-xs rounded-full px-4 text-primary-foreground bg-primary hover:bg-primary/90 border-0"
                 onClick={() => {
                   if (editNoteText.trim()) {
                     onEditNote(task.id, editNoteText.trim());
@@ -1215,7 +1215,7 @@ function EmployeesPage() {
                             setTaskAssignee(emp.name);
                             setIsTaskModalOpen(true);
                           }}
-                          className="gap-1.5 rounded-full bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white border-0 shadow-md px-3 py-1.5 text-[10px] font-semibold flex items-center transition-all hover:shadow-lg hover:-translate-y-0.5"
+                          className="gap-1.5 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 border-0 shadow-md px-3 py-1.5 text-[10px] font-semibold flex items-center transition-all hover:shadow-lg hover:-translate-y-0.5"
                         >
                           <Plus className="h-3 w-3" /> Add Task
                         </button>

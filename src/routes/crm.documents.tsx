@@ -23,6 +23,7 @@ import {
   Cloud,
   Link2,
   Unlink,
+  Share2,
 } from "lucide-react";
 import { getAuth } from "@/lib/auth";
 import { useLocalStorage } from "@/lib/use-local-storage";
@@ -343,6 +344,16 @@ function FolderCard({
               className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-secondary transition-colors"
             >
               <Pencil className="h-3.5 w-3.5" /> Rename
+            </button>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setMenuOpen(false);
+                // Share functionality could go here
+              }}
+              className="flex w-full items-center gap-2 px-4 py-2 text-sm hover:bg-secondary transition-colors"
+            >
+              <Share2 className="h-3.5 w-3.5" /> Share
             </button>
             {isAdmin && (
               <div className="py-1">
