@@ -172,13 +172,13 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                         <span className="font-medium">{vPolicies.length} Total</span>
                       </td>
                       <td className="px-6 py-4 font-bold text-rose-600 dark:text-rose-500">
-                        {formatINR(vPending > 0 ? vPending : 0)}
+                        {formatINR(vTotalBilled)}
                       </td>
                       <td className="px-6 py-4 font-medium text-emerald-600 dark:text-emerald-500">
                         {formatINR(vSpend)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-foreground">
-                        {formatINR(vTotalBilled)}
+                        {formatINR(vPending > 0 ? vPending : 0)}
                       </td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
                         <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(vPolicies[0])} className="h-8">

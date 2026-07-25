@@ -52,6 +52,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Collapsible, CollapsibleTrigger, CollapsibleContent } from "@/components/ui/collapsible";
 import logoImg from "../assets/Logo.svg";
 
@@ -161,7 +162,8 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
 function CrmLayout() {
   const navigate = useNavigate();
-  const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const location = useRouterState({ select: (s) => s.location });
+  const pathname = location.pathname;
   const [auth, setAuth] = useState<AuthUser | null>(null);
   const [selectedEmployee, setSelectedEmployee] = useState<any | null>(null);
   const [profileSection, setProfileSection] = useState<string | null>(null);
@@ -277,40 +279,40 @@ function CrmLayout() {
             const active = n.exact ? pathname === n.to : pathname.startsWith(n.to.split('?')[0]);
             const Icon = n.icon;
 
-            if (n.subItems && n.subItems.length > 0 && !isCompact) {
+            if (n.subItems && n.subItems.length > 0) {
               const isSubActive = n.subItems.some((sub) => pathname.startsWith(sub.to.split('?')[0]));
               return (
-                <Collapsible key={n.to} defaultOpen={active || isSubActive}>
-                  <CollapsibleTrigger asChild>
+                <HoverCard key={n.to} openDelay={100} closeDelay={200}>
+                  <HoverCardTrigger asChild>
                     <button
                       title={isCompact ? n.label : undefined}
-                      className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${active || isSubActive
-                          ? "bg-primary text-primary-foreground shadow-card"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                      className={`group w-full flex items-center justify-between ${isCompact ? "justify-center p-3" : "gap-3 px-4 py-2.5"} rounded-full text-sm font-medium transition-all ${active || isSubActive
+                          ? "bg-primary text-primary-foreground shadow-card border-2 border-blue-600 ring-2 ring-transparent"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent border-2 border-transparent"
                         }`}
                     >
                       <div className="flex items-center gap-3">
-                        <Icon className="h-5 w-5" />
-                        {n.label}
+                        <Icon className={isCompact ? "h-6 w-6" : "h-5 w-5"} />
+                        {!isCompact && n.label}
                       </div>
-                      <ChevronDown className="h-4 w-4 opacity-50" />
+                      {!isCompact && <ChevronDown className="h-4 w-4 opacity-60 transition-transform duration-200 group-data-[state=open]:rotate-180 group-data-[state=open]:opacity-100" />}
                     </button>
-                  </CollapsibleTrigger>
-                  <CollapsibleContent className="pl-9 pr-3 py-1 space-y-1">
+                  </HoverCardTrigger>
+                  <HoverCardContent side="right" align="start" sideOffset={12} className="w-48 p-2 rounded-2xl shadow-xl border-border bg-popover/95 backdrop-blur flex flex-col gap-1">
                     {n.subItems.map((sub) => {
                       const SubIcon = sub.icon;
-                      // Don't treat exact the same if they just differ by search params
-                      const subActive = pathname === sub.to.split('?')[0] && 
-                        (sub.to.includes('?') ? window.location.search === '?' + sub.to.split('?')[1] : true);
+                      const subActive = sub.to.includes('?') 
+                        ? location.href.includes(sub.to)
+                        : pathname === sub.to;
                         
                       return (
                         <Link
                           key={sub.to}
                           to={sub.to.split('?')[0]}
                           search={sub.to.includes('?') ? Object.fromEntries(new URLSearchParams(sub.to.split('?')[1])) : undefined}
-                          className={`flex items-center gap-3 px-3 py-2 rounded-lg text-sm font-medium transition-colors ${subActive
-                              ? "bg-sidebar-accent text-sidebar-foreground font-semibold"
-                              : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                          className={`flex items-center w-full gap-3 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${subActive
+                              ? "bg-orange-100 text-orange-900 shadow-sm"
+                              : "bg-transparent text-foreground hover:bg-orange-50 hover:text-orange-900"
                             }`}
                         >
                           {SubIcon && <SubIcon className="h-4 w-4" />}
@@ -318,8 +320,8 @@ function CrmLayout() {
                         </Link>
                       );
                     })}
-                  </CollapsibleContent>
-                </Collapsible>
+                  </HoverCardContent>
+                </HoverCard>
               );
             }
 
@@ -328,9 +330,9 @@ function CrmLayout() {
                 key={n.to}
                 to={n.to}
                 title={isCompact ? n.label : undefined}
-                className={`flex items-center ${isCompact ? "justify-center p-3" : "gap-3 px-3 py-2.5"} rounded-lg text-sm font-medium transition-colors ${active
-                  ? "bg-primary text-primary-foreground shadow-card"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent"
+                className={`flex items-center ${isCompact ? "justify-center p-3" : "gap-3 px-4 py-2.5"} rounded-full text-sm font-medium transition-all ${active
+                  ? "bg-primary text-primary-foreground shadow-card border-2 border-blue-600 ring-2 ring-transparent"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent border-2 border-transparent"
                   }`}
               >
                 <Icon className={isCompact ? "h-6 w-6" : "h-5 w-5"} />

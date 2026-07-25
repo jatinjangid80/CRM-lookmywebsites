@@ -316,7 +316,7 @@ function AttendancePage() {
                     <tbody className="divide-y divide-border/80">
                       {attendance
                         .filter((record) => record.employeeid === myEmpId)
-                        .reverse()
+                        .sort((a, b) => b.date.localeCompare(a.date))
                         .map((record, i) => (
                           <tr key={record.id || i} className="hover:bg-secondary/20 transition-colors">
                             <td className="px-5 py-4 font-semibold text-foreground">{record.date}</td>

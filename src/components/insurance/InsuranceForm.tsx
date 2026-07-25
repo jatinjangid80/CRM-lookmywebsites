@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users, Plus, Trash2 } from "lucide-react";
+import { X, Calendar as CalendarIcon, Upload, Search, Building2, Car, Shield, Banknote, HelpCircle, Users, Plus, Trash2, Paperclip } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { supabase } from "@/lib/supabase";
 import { toast } from "sonner";
@@ -58,9 +58,10 @@ export function InsuranceForm({
     }
   };
 
+  const [isAddingPayment, setIsAddingPayment] = useState(false);
+  const [newPaymentAmount, setNewPaymentAmount] = useState("");
+
   const [form, setForm] = useState<any>({
-    school_name: "",
-    reference_name: "",
     client_company: "",
     customer_name: "",
     additional_passengers: [],
@@ -106,7 +107,11 @@ export function InsuranceForm({
     payment_status: "Pending",
     notes: "",
     paid_by: "",
-    amount_paid: 0
+    amount_paid: 0,
+    remark: "",
+    policy_copy: null,
+    RC_copy: null,
+    PAN_card_copy: null
   });
 
   useEffect(() => {
@@ -311,23 +316,6 @@ export function InsuranceForm({
                   )}
                 </div>
               </div>
-              <div className="space-y-1">
-                <Label>School Name</Label>
-                <Input
-                  value={form.school_name}
-                  onChange={(e) => setForm({ ...form, school_name: e.target.value })}
-                  placeholder="E.g. DPS"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Reference Name</Label>
-                <Input
-                  value={form.reference_name}
-                  onChange={(e) => setForm({ ...form, reference_name: e.target.value })}
-                  placeholder="Referred by..."
-                />
-              </div>
-
               <div className="space-y-1 col-span-2">
                 <Label>Client / Company</Label>
                 <Input
@@ -465,7 +453,7 @@ export function InsuranceForm({
                   <Label>Vendor</Label>
                   <Dialog open={isVendorModalOpen} onOpenChange={setIsVendorModalOpen}>
                     <DialogTrigger asChild>
-                      <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs font-semibold text-rose-500 hover:text-rose-600 hover:bg-rose-50">
+                      <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs font-semibold text-primary hover:text-primary/90 hover:bg-primary/10">
                         + Add New
                       </Button>
                     </DialogTrigger>
@@ -529,7 +517,7 @@ export function InsuranceForm({
                           type="button" 
                           onClick={handleAddVendor} 
                           disabled={!newVendor.name.trim() || !newVendor.mobile.trim() || isAddingVendor}
-                          className="bg-rose-400 hover:bg-rose-500 text-white rounded-full px-6"
+                          className="rounded-full px-6"
                         >
                           {isAddingVendor ? "Adding..." : "Add Vendor"}
                         </Button>
@@ -716,13 +704,59 @@ export function InsuranceForm({
               <h3 className="font-semibold text-sm">5. Payment Details & Profit</h3>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-              <div className="space-y-1">
-                <Label>Customer Paid</Label>
-                <Input
-                  type="number"
-                  value={form.customer_paid}
-                  onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
-                />
+              <div className="space-y-1 col-span-2">
+                <div className="flex items-center justify-between">
+                  <Label>Customer Paid</Label>
+                  <span className="text-xs font-semibold text-rose-500 bg-rose-50 px-2 py-0.5 rounded-full">
+                    Outstanding: ₹{Math.max(0, Number(form.total_premium || 0) - Number(form.customer_paid || 0))}
+                  </span>
+                </div>
+                {isAddingPayment ? (
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      placeholder="Payment amount"
+                      value={newPaymentAmount}
+                      onChange={(e) => setNewPaymentAmount(e.target.value)}
+                      autoFocus
+                      className="flex-1"
+                    />
+                    <Button
+                      type="button"
+                      onClick={() => {
+                        const amount = Number(newPaymentAmount);
+                        if (amount > 0) {
+                          setForm({ ...form, customer_paid: (Number(form.customer_paid || 0) + amount) });
+                        }
+                        setIsAddingPayment(false);
+                        setNewPaymentAmount("");
+                      }}
+                      className="rounded-full bg-emerald-500 hover:bg-emerald-600 text-white shrink-0"
+                    >
+                      Save
+                    </Button>
+                    <Button type="button" variant="ghost" className="rounded-full shrink-0" onClick={() => setIsAddingPayment(false)}>
+                      Cancel
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <Input
+                      type="number"
+                      value={form.customer_paid}
+                      onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
+                      className="flex-1"
+                    />
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      className="rounded-full shrink-0 h-9 px-4 font-semibold text-primary border-primary/20 hover:bg-primary/5"
+                      onClick={() => setIsAddingPayment(true)}
+                    >
+                      <Plus className="w-4 h-4 mr-1" /> Pay
+                    </Button>
+                  </div>
+                )}
               </div>
 
               <div className="space-y-1">
@@ -741,7 +775,7 @@ export function InsuranceForm({
                 </p>
               </div>
 
-              <div className="space-y-1 col-span-2">
+              <div className="space-y-1">
                 <Label>Transaction Ref.</Label>
                 <Input
                   value={form.transaction_reference}
@@ -749,6 +783,83 @@ export function InsuranceForm({
                 />
               </div>
 
+            </div>
+          </section>
+
+          {/* Section 6: Attachments & Remarks */}
+          <section className="bg-muted/30 p-5 rounded-2xl border border-border shadow-sm mb-12">
+            <div className="flex items-center gap-2 mb-4">
+              <Paperclip className="h-4 w-4 text-indigo-500" />
+              <h3 className="font-semibold text-sm">6. Attachments & Remarks</h3>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div className="space-y-4">
+                <Label>Attachments</Label>
+                <div className="flex flex-col gap-3">
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                    <span className="text-sm font-medium">1. Policy Copy</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('upload-policy-copy')?.click()}
+                    >
+                      <Paperclip className="h-3 w-3 mr-2" />
+                      {form.policy_copy ? "Change File" : "Upload File"}
+                    </Button>
+                    <input 
+                      type="file" 
+                      id="upload-policy-copy" 
+                      className="hidden" 
+                      onChange={(e) => setForm({...form, policy_copy: e.target.files?.[0] || null})}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                    <span className="text-sm font-medium">2. RC Copy</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('upload-rc-copy')?.click()}
+                    >
+                      <Paperclip className="h-3 w-3 mr-2" />
+                      {form.RC_copy ? "Change File" : "Upload File"}
+                    </Button>
+                    <input 
+                      type="file" 
+                      id="upload-rc-copy" 
+                      className="hidden" 
+                      onChange={(e) => setForm({...form, RC_copy: e.target.files?.[0] || null})}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
+                    <span className="text-sm font-medium">3. PAN Card Copy</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => document.getElementById('upload-pan-copy')?.click()}
+                    >
+                      <Paperclip className="h-3 w-3 mr-2" />
+                      {form.PAN_card_copy ? "Change File" : "Upload File"}
+                    </Button>
+                    <input 
+                      type="file" 
+                      id="upload-pan-copy" 
+                      className="hidden" 
+                      onChange={(e) => setForm({...form, PAN_card_copy: e.target.files?.[0] || null})}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-4">
+                <Label>Remark</Label>
+                <textarea
+                  className="w-full min-h-[160px] p-3 text-sm bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-primary/20 resize-none"
+                  placeholder="Add any remarks or notes..."
+                  value={form.remark || ""}
+                  onChange={(e) => setForm({ ...form, remark: e.target.value })}
+                />
+              </div>
             </div>
           </section>
 

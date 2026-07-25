@@ -172,13 +172,13 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                         {p.school_name || "-"}
                       </td>
                       <td className="px-6 py-4 text-right font-bold text-rose-600 dark:text-rose-500">
-                        {formatINR(pending > 0 ? pending : 0)}
+                        {formatINR(total)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-emerald-600 dark:text-emerald-500">
                         {formatINR(paid)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-foreground">
-                        {formatINR(total)}
+                        {formatINR(pending > 0 ? pending : 0)}
                       </td>
                       <td className="px-6 py-4">
                         <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${p.payment_status === 'Full Paid' ? 'bg-emerald-500/10 text-emerald-500' : p.payment_status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>

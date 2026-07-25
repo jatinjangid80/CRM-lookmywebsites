@@ -91,7 +91,7 @@ export function InsuranceVendorsView() {
           <h2 className="text-2xl font-bold tracking-tight">Vendors</h2>
           <p className="text-muted-foreground">{vendors.length} Total Vendors</p>
         </div>
-        <Button onClick={() => setIsModalOpen(true)} className="bg-rose-500 hover:bg-rose-600 text-white shadow-sm rounded-full px-6">
+        <Button onClick={() => setIsModalOpen(true)} className="shadow-sm rounded-full px-6">
           <Plus className="w-4 h-4 mr-2" />
           Add Vendor
         </Button>

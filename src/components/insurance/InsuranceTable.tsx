@@ -1,6 +1,6 @@
-import React from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit2, Copy, FileText, Download, Trash2, ShieldAlert } from "lucide-react";
+import { Eye, Edit2, Copy, FileText, Download, Trash2, ShieldAlert, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +17,20 @@ interface InsuranceTableProps {
 }
 
 export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete }: InsuranceTableProps) {
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [sortColumn, setSortColumn] = useState<string>("Dates");
+  const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+
+  const toggleSort = (column: string) => {
+    if (sortColumn === column) {
+      setSortDirection(prev => prev === "asc" ? "desc" : "asc");
+    } else {
+      setSortColumn(column);
+      setSortDirection("desc"); // Default to desc when clicking a new column
+    }
+  };
+
   const getCompanyName = (p: any) => p.company_id === "other" ? (p.custom_company || "Other") : (companies.find(c => c.id === p.company_id)?.name || p.company_id);
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
@@ -123,32 +137,136 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete 
     printWindow.document.close();
   };
 
+  const filteredPolicies = policies.filter(p => {
+    let matchesStatus = true;
+    if (statusFilter !== "All") {
+      const today = new Date();
+      const expiry = new Date(p.expiry_date);
+      const diffDays = Math.ceil((expiry.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
+      
+      const isExpired = diffDays < 0 || p.status === 'Expired';
+      const isExpiring = diffDays <= 30 && !isExpired;
+      const isActive = !isExpired && !isExpiring;
+
+      if (statusFilter === "Active") matchesStatus = isActive;
+      if (statusFilter === "Expiring") matchesStatus = isExpiring;
+      if (statusFilter === "Expired") matchesStatus = isExpired;
+    }
+
+    let matchesSearch = true;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      matchesSearch = (
+        (p.policy_number || "").toLowerCase().includes(q) ||
+        (p.customer_name || "").toLowerCase().includes(q) ||
+        (p.mobile_number || "").toLowerCase().includes(q) ||
+        (getCompanyName(p) || "").toLowerCase().includes(q) ||
+        (p.vehicle_number || "").toLowerCase().includes(q)
+      );
+    }
+    return matchesStatus && matchesSearch;
+  }).sort((a, b) => {
+    let aValue: any = "";
+    let bValue: any = "";
+
+    switch (sortColumn) {
+      case "Policy No.":
+        aValue = a.policy_number || "";
+        bValue = b.policy_number || "";
+        break;
+      case "Customer":
+        aValue = a.customer_name || "";
+        bValue = b.customer_name || "";
+        break;
+      case "Insurer / Vendor":
+        aValue = getCompanyName(a) || "";
+        bValue = getCompanyName(b) || "";
+        break;
+      case "Vehicle":
+        aValue = a.vehicle_number || "";
+        bValue = b.vehicle_number || "";
+        break;
+      case "Dates":
+        // Sort by issue_date
+        aValue = new Date(a.issue_date || 0).getTime();
+        bValue = new Date(b.issue_date || 0).getTime();
+        break;
+      case "Financials":
+        aValue = a.total_premium || 0;
+        bValue = b.total_premium || 0;
+        break;
+      case "Status":
+        aValue = a.status || "";
+        bValue = b.status || "";
+        break;
+      default:
+        aValue = a.issue_date || "";
+        bValue = b.issue_date || "";
+        break;
+    }
+
+    if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
+    if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
+    return 0;
+  });
+
+  const renderSortIcon = (column: string) => {
+    if (sortColumn !== column) return <ArrowUpDown className="w-3 h-3 ml-1 inline-block opacity-40 group-hover:opacity-100" />;
+    return sortDirection === "asc" ? <ArrowUp className="w-3 h-3 ml-1 inline-block text-primary" /> : <ArrowDown className="w-3 h-3 ml-1 inline-block text-primary" />;
+  };
+
   return (
-    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
-      <div className="overflow-x-auto">
-        <table className="w-full text-left text-sm">
-          <thead className="bg-muted/30 border-b border-border">
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row gap-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <input
+            type="text"
+            placeholder="Search by policy, customer, mobile..."
+            className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="flex gap-2">
+          {["All", "Active", "Expiring", "Expired"].map(status => (
+            <Button
+              key={status}
+              variant={statusFilter === status ? "default" : "outline"}
+              size="sm"
+              onClick={() => setStatusFilter(status)}
+              className="rounded-xl"
+            >
+              {status}
+            </Button>
+          ))}
+        </div>
+      </div>
+      <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-left text-sm">
+            <thead className="bg-muted/30 border-b border-border">
             <tr>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Policy No.</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Customer</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Insurer / Vendor</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Vehicle</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Dates</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Financials</th>
-              <th className="px-4 py-3 font-semibold text-muted-foreground">Status</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Policy No.")}>Policy No. {renderSortIcon("Policy No.")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Customer")}>Customer {renderSortIcon("Customer")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Insurer / Vendor")}>Insurer / Vendor {renderSortIcon("Insurer / Vendor")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Vehicle")}>Vehicle {renderSortIcon("Vehicle")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Dates")}>Dates {renderSortIcon("Dates")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Financials")}>Financials {renderSortIcon("Financials")}</th>
+              <th className="px-4 py-3 font-semibold text-muted-foreground cursor-pointer group" onClick={() => toggleSort("Status")}>Status {renderSortIcon("Status")}</th>
               <th className="px-4 py-3 font-semibold text-muted-foreground text-right">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-border">
-            {policies.length === 0 ? (
-              <tr>
-                <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
-                  No policies found.
-                </td>
-              </tr>
-            ) : (
-              policies.map((p, i) => (
-                <tr key={p.id || i} className="hover:bg-muted/30 transition-colors">
+            <tbody className="divide-y divide-border">
+              {filteredPolicies.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-muted-foreground">
+                    No policies found.
+                  </td>
+                </tr>
+              ) : (
+                filteredPolicies.map((p, i) => (
+                  <tr key={p.id || i} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3 font-medium text-blue-600">{p.policy_number || "Draft"}</td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-foreground">{p.customer_name}</div>
@@ -201,9 +319,10 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDelete 
                   </td>
                 </tr>
               ))
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

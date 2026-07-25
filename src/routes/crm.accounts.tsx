@@ -286,38 +286,11 @@ function AccountsPage() {
   });
 
   const allBookings = useMemo(() => {
-    const derived = leads
-      .filter((l: any) => (l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status)) && l.service !== "General Insurance")
-      .map(
-        (l: any) =>
-          ({
-            id: "LD-" + String(l.id || "").replace("L-", ""),
-            bookingType: l.service || "Holiday Package",
-            supplier: l.vendorName || "Not Assigned",
-            bookingDate: l.createdAt,
-            customer: l.name,
-            mobileNumber: l.phone,
-            bookedBy: l.assignedTo || "Admin",
-            company: l.clientCompany || "",
-            reference: l.bookingReference || "",
-            saleInvoiceNo: "",
-            purchaseInvoiceNo: "",
-            remarks: l.notes || "",
-            sellingPrice: l.totalAmount || 0,
-            purchasePrice: 0,
-            profit: 0,
-            margin: 0,
-            amount: l.totalAmount || 0,
-            paid: l.amountPaid || 0,
-            paymentMode: "Card",
-            transactionId: "",
-            status: l.paymentStatus || "Pending",
-            package: l.destination || "Unknown",
-            travelDate: l.travelDate || "TBD",
-          }) as any,
-      );
-    return [...bookings, ...derived];
-  }, [leads, bookings]);
+    return bookings.map(b => ({
+      ...b,
+      paid: b.paid || 0
+    }));
+  }, [bookings, transactions]);
 
   // Advanced Payment Approvals UI State
   const [activePaymentTab, setActivePaymentTab] = useState("unpaid");

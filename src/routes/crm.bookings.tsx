@@ -244,43 +244,11 @@ function BookingsPage() {
   const [transactions] = useSupabaseTable<any[]>("transactions", []);
 
   const allBookings = useMemo(() => {
-    const derived = leads
-      .filter((l: any) => (l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status)) && l.service !== "General Insurance")
-      .map(
-        (l: any) =>
-          ({
-            id: "LD-" + String(l.id || "").replace("L-", ""),
-            bookingType: (l.service || "Holiday Package") as BookingType,
-            supplier: l.vendorName || "Not Assigned",
-            bookingDate: l.createdAt,
-            customer: l.name,
-            mobileNumber: l.phone,
-            bookedBy: l.assignedTo || "Admin",
-            company: l.clientCompany || "",
-            reference: l.bookingReference || "",
-            saleInvoiceNo: "",
-            purchaseInvoiceNo: "",
-            remarks: l.notes || "",
-            sellingPrice: l.totalAmount || 0,
-            purchasePrice: 0,
-            profit: 0,
-            margin: 0,
-            amount: l.totalAmount || 0,
-            paid: l.amountPaid || 0,
-            paymentMode: "Card",
-            transactionId: "",
-            status: l.paymentStatus || "Pending",
-            package: l.destination || "Unknown",
-            travelDate: l.travelDate || "TBD",
-          }) as ExtBooking,
-      );
-    
-    const combined = [...bookingList, ...derived];
-    return combined.map(b => ({
+    return bookingList.map(b => ({
       ...b,
       paid: b.paid || 0
     }));
-  }, [leads, bookingList, transactions]);
+  }, [bookingList, transactions]);
 
   // --- Dashboard Data Aggregation ---
   const dashboardData = useMemo(() => {
@@ -407,10 +375,10 @@ function BookingsPage() {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status">("date");
+  const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const handleSort = (field: "date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status") => {
+  const handleSort = (field: "date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy") => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -845,6 +813,11 @@ function BookingsPage() {
     else if (sortField === "paid") cmp = (a.paid || 0) - (b.paid || 0);
     else if (sortField === "pending") cmp = ((a.amount || 0) - (a.paid || 0)) - ((b.amount || 0) - (b.paid || 0));
     else if (sortField === "status") cmp = (a.status || "").localeCompare(b.status || "");
+    else if (sortField === "mobileNumber") cmp = (a.mobileNumber || "").localeCompare(b.mobileNumber || "");
+    else if (sortField === "pnr") cmp = (a.details?.pnr || "").localeCompare(b.details?.pnr || "");
+    else if (sortField === "purchasePrice") cmp = (a.purchasePrice || 0) - (b.purchasePrice || 0);
+    else if (sortField === "profit") cmp = (a.profit || 0) - (b.profit || 0);
+    else if (sortField === "bookedBy") cmp = (a.bookedBy || "").localeCompare(b.bookedBy || "");
     
     return sortOrder === "asc" ? cmp : -cmp;
   });
@@ -1526,19 +1499,24 @@ function BookingsPage() {
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("customer")}>
                   <div className="flex items-center gap-1">Passenger Name {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap">Mobile No</th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("mobileNumber")}>
+                  <div className="flex items-center gap-1">Mobile No {sortField === "mobileNumber" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("pnr")}>
+                  <div className="flex items-center gap-1">PNR {sortField === "pnr" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("amount")}>
                   <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("paid")}>
-                  <div className="flex items-center gap-1">Paid (₹) {sortField === "paid" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("purchasePrice")}>
+                  <div className="flex items-center gap-1">Purchase Price (₹) {sortField === "purchasePrice" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("pending")}>
-                  <div className="flex items-center gap-1">Pending (₹) {sortField === "pending" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("profit")}>
+                  <div className="flex items-center gap-1">Profit (₹) {sortField === "profit" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
-                <th className="px-4 py-3 whitespace-nowrap">Purchase Price (₹)</th>
-                <th className="px-4 py-3 whitespace-nowrap">Profit (₹)</th>
-                <th className="px-4 py-3 whitespace-nowrap">Booked By</th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("bookedBy")}>
+                  <div className="flex items-center gap-1">Booked By {sortField === "bookedBy" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("status")}>
                   <div className="flex items-center gap-1">Status {sortField === "status" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
@@ -1559,9 +1537,8 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.travelDate || "-"}</td>
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
+                    <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{b.details?.pnr || "-"}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-primary">{formatINR(b.sellingPrice || b.amount || 0)}</td>
-                    <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600 dark:text-emerald-400">{formatINR(b.paid || 0)}</td>
-                    <td className="px-4 py-3 font-medium whitespace-nowrap text-rose-600 dark:text-rose-400">{formatINR((b.sellingPrice || b.amount || 0) - (b.paid || 0))}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookedBy || "-"}</td>
