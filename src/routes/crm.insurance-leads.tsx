@@ -2186,7 +2186,7 @@ function KanbanCol({
 
 /* ─── Main Page ─── */
 function LeadsPage() {
-  const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", _LEADS_INIT);
+  const [leads, setLeads] = useSupabaseTable<ExtLead[]>("insurance_leads", _LEADS_INIT);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const [, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);

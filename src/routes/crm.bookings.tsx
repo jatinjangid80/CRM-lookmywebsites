@@ -245,7 +245,7 @@ function BookingsPage() {
 
   const allBookings = useMemo(() => {
     const derived = leads
-      .filter((l: any) => l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status))
+      .filter((l: any) => (l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status)) && l.service !== "General Insurance")
       .map(
         (l: any) =>
           ({

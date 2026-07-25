@@ -11,6 +11,7 @@ interface InsuranceDashboardProps {
     fullPaid: number;
     totalPremium: number;
     totalProfit: number;
+    totalPendingAmount: number;
     companiesCount: number;
     vendorsCount: number;
   };
@@ -80,61 +81,26 @@ export function InsuranceDashboard({ stats }: InsuranceDashboardProps) {
           <Banknote className="h-12 w-12 text-blue-600" />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Total Premium
+          Total Gen Insurance
         </p>
         <p className="text-2xl font-display font-bold text-blue-600">
           {formatINR(stats.totalPremium)}
         </p>
       </div>
 
+
+
       <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
         <div className="absolute top-0 right-0 p-3 opacity-10">
-          <IndianRupee className="h-12 w-12 text-emerald-600" />
+          <Banknote className="h-12 w-12 text-purple-600" />
         </div>
         <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
           Total Profit
         </p>
-        <p className="text-2xl font-display font-bold text-emerald-600">
+        <p className="text-2xl font-display font-bold text-purple-600">
           {formatINR(stats.totalProfit)}
         </p>
       </div>
-
-      <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-3 opacity-10">
-          <PieChart className="h-12 w-12 text-orange-500" />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Pending Payments
-        </p>
-        <p className="text-2xl font-display font-bold text-orange-500">
-          {stats.pendingPayments}
-        </p>
-      </div>
-      
-      <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-3 opacity-10">
-          <Landmark className="h-12 w-12 text-indigo-500" />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Insurance Companies
-        </p>
-        <p className="text-2xl font-display font-bold text-indigo-500">
-          {stats.companiesCount}
-        </p>
-      </div>
-      
-      <div className="bg-card border border-border p-4 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-        <div className="absolute top-0 right-0 p-3 opacity-10">
-          <Users className="h-12 w-12 text-teal-500" />
-        </div>
-        <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
-          Vendors
-        </p>
-        <p className="text-2xl font-display font-bold text-teal-500">
-          {stats.vendorsCount}
-        </p>
-      </div>
-
     </div>
   );
 }

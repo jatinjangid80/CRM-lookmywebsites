@@ -2399,9 +2399,10 @@ function LeadsPage() {
     setLeads((prev) => [...importedLeads, ...prev]);
   };
 
-  const visibleLeads = isAdmin
+  const visibleLeads = (isAdmin
     ? leads
-    : leads.filter((l) => l.assignedTo?.toLowerCase() === auth?.name?.toLowerCase());
+    : leads.filter((l) => l.assignedTo?.toLowerCase() === auth?.name?.toLowerCase()))
+    .filter(l => l.service !== "General Insurance");
 
   const filtered = visibleLeads.filter(
     (l) =>

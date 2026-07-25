@@ -724,23 +724,7 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label>Paid By</Label>
-                <Input
-                  value={form.paid_by || ""}
-                  onChange={(e) => setForm({ ...form, paid_by: e.target.value })}
-                  placeholder="Who made the payment?"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Amount Paid</Label>
-                <Input
-                  type="number"
-                  value={form.amount_paid || ""}
-                  onChange={(e) => setForm({ ...form, amount_paid: e.target.value })}
-                  placeholder="0"
-                />
-              </div>
+
               <div className="space-y-1">
                 <Label>Vendor Paid</Label>
                 <Input
@@ -749,20 +733,7 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, vendor_paid: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label>Payment Mode</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={form.payment_mode}
-                  onChange={(e) => setForm({ ...form, payment_mode: e.target.value })}
-                >
-                  <option>Bank Transfer</option>
-                  <option>UPI</option>
-                  <option>Cash</option>
-                  <option>Cheque</option>
-                  <option>Online Link</option>
-                </select>
-              </div>
+
               <div className={`space-y-1 p-2 rounded-lg border flex flex-col justify-center ${form.profit >= 0 ? 'bg-emerald-500/100/10 border-emerald-500/20' : 'bg-rose-500/100/10 border-rose-500/20'}`}>
                 <Label className={form.profit >= 0 ? 'text-emerald-700' : 'text-rose-500'}>Calculated Profit</Label>
                 <p className={`text-lg font-bold pt-1 ${form.profit >= 0 ? 'text-emerald-700' : 'text-rose-500'}`}>
@@ -777,18 +748,7 @@ export function InsuranceForm({
                   onChange={(e) => setForm({ ...form, transaction_reference: e.target.value })}
                 />
               </div>
-              <div className="space-y-1">
-                <Label>Payment Date</Label>
-                <Input
-                  type="date"
-                  value={form.payment_date}
-                  onChange={(e) => setForm({ ...form, payment_date: e.target.value })}
-                />
-              </div>
-              <div className="space-y-1">
-                <Label>Status</Label>
-                <p className="font-semibold text-sm mt-2 uppercase tracking-wider">{form.payment_status}</p>
-              </div>
+
             </div>
           </section>
 

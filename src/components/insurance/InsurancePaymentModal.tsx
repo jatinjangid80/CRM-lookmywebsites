@@ -109,22 +109,7 @@ export function InsurancePaymentModal({ isOpen, onClose, title, maxAmount, onSub
               placeholder="Add your remarks here..." 
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Attach RC</Label>
-              <Input 
-                type="file" 
-                onChange={e => setRcFile(e.target.files?.[0] || null)} 
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Attach Insurance Doc</Label>
-              <Input 
-                type="file" 
-                onChange={e => setInsuranceDoc(e.target.files?.[0] || null)} 
-              />
-            </div>
-          </div>
+
           
           {isPartial && (
             <div className="space-y-2 pt-2 border-t border-border">

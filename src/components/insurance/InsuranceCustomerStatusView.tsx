@@ -1,7 +1,8 @@
 import { useState } from "react";
 import { formatINR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { Plus, Search } from "lucide-react";
+import { Input } from "@/components/ui/input";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
 import { getAuth } from "@/lib/auth";
@@ -9,6 +10,7 @@ import { getAuth } from "@/lib/auth";
 export function InsuranceCustomerStatusView({ policies, setPolicies }: { policies: any[], setPolicies: any }) {
   const auth = getAuth();
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [customerSearchQuery, setCustomerSearchQuery] = useState("");
 
   const customerStats = policies.reduce((acc, p) => {
     const total = Number(p.total_premium) || 0;
@@ -99,7 +101,7 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
     <div className="space-y-6 animate-in fade-in duration-300">
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Total Gen Insurance</p>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Total Balance</p>
           <h3 className="text-3xl font-bold text-foreground">{formatINR(customerStats.total)}</h3>
         </div>
         
@@ -109,8 +111,20 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
         </div>
         
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Total Payments Pending</p>
+          <p className="text-sm font-medium text-muted-foreground mb-2">Total Pending Amounts</p>
           <h3 className="text-3xl font-bold text-rose-600 dark:text-rose-500">{formatINR(customerStats.pending)}</h3>
+        </div>
+      </div>
+
+      <div className="flex justify-end mb-4">
+        <div className="relative w-full sm:w-64">
+          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search customers..."
+            className="pl-9 bg-background/50"
+            value={customerSearchQuery}
+            onChange={(e) => setCustomerSearchQuery(e.target.value)}
+          />
         </div>
       </div>
 
@@ -137,8 +151,11 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                   </td>
                 </tr>
               ) : (
-                policies.sort((a, b) => new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime()).map((p) => {
-                  const total = Number(p.total_premium) || 0;
+                policies
+                  .filter(p => p.customer_name?.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+                  .sort((a, b) => new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime())
+                  .map((p) => {
+                    const total = Number(p.total_premium) || 0;
                   const paid = Number(p.customer_paid) || Number(p.amount_paid) || 0;
                   const pending = total - paid;
                   

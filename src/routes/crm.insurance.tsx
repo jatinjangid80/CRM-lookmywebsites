@@ -46,7 +46,7 @@ function GeneralInsurancePage() {
 
     let active = 0, expired = 0, todaysRenewals = 0;
     let pending = 0, fullPaid = 0;
-    let totalPremium = 0, totalProfit = 0;
+    let totalPremium = 0, totalProfit = 0, totalPendingAmount = 0;
 
     policies.forEach(p => {
       const expiry = new Date(p.expiry_date);
@@ -62,6 +62,9 @@ function GeneralInsurancePage() {
 
       totalPremium += (Number(p.total_premium) || 0);
       totalProfit += (Number(p.profit) || 0);
+      const paid = Number(p.customer_paid) || Number(p.amount_paid) || 0;
+      const amountPending = (Number(p.total_premium) || 0) - paid;
+      if (amountPending > 0) totalPendingAmount += amountPending;
     });
 
     return {
@@ -73,6 +76,7 @@ function GeneralInsurancePage() {
       fullPaid,
       totalPremium,
       totalProfit,
+      totalPendingAmount,
       companiesCount: companies.length,
       vendorsCount: vendors.length
     };

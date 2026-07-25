@@ -317,7 +317,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       // allNotes is a real JSONB column in Supabase
     }
 
-    if (tableName === "leads") {
+    if (tableName === "leads" || tableName === "insurance_leads") {
       const NEW_SVC_COLS = [
         "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
         "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
@@ -342,7 +342,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     }
 
     // For leads: allNotes, dob, relationship are real Supabase columns — keep them in the row
-    if (tableName !== "leads") {
+    if (tableName !== "leads" && tableName !== "insurance_leads") {
       delete newRow.allNotes;
       delete newRow.dob;
       delete newRow.relationship;
@@ -431,7 +431,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
   function unSanitizeRow(row: any) {
     const newRow = { ...row };
-    if (tableName === "leads") {
+    if (tableName === "leads" || tableName === "insurance_leads") {
       if (newRow.noteDate) newRow.nextFollowUp = newRow.noteDate;
       // Fallback: if whatsapp wasn't stored in meta, it might be in reference from older records
       // Follow-up date stored in noteDate column

@@ -212,6 +212,7 @@ function AccountsPage() {
   const [bookings, setBookings] = useSupabaseTable<any[]>("bookings", []);
   const [leads] = useSupabaseTable<any[]>("leads", []);
   const [tasks] = useSupabaseTable<any[]>("tasks", []);
+  const [insurancePolicies] = useSupabaseTable<any[]>("insurance_policies", []);
   const [expandedCustomer, setExpandedCustomer] = useState<string | null>(null);
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
@@ -286,7 +287,7 @@ function AccountsPage() {
 
   const allBookings = useMemo(() => {
     const derived = leads
-      .filter((l: any) => l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status))
+      .filter((l: any) => (l.bookingReference || ["Booked", "Completed", "Confirmed", "Payment Pending", "Travel Completed", "Review Collected"].includes(l.status)) && l.service !== "General Insurance")
       .map(
         (l: any) =>
           ({
@@ -1178,8 +1179,17 @@ function AccountsPage() {
                       const cFollowUps = followUpsList.filter(f => f.customerName === customerName || f.customerId === customerData.id);
                       const cTransactions = transactions.filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName));
                       
+                      const cPolicies = insurancePolicies.filter(p => (p.customerName || "").trim().toLowerCase() === normalizedCustomerName);
+                      
                       let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
                       let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                      
+                      // Include General Insurance Revenue
+                      cTotalRevenue += cPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
+                      // Include General Insurance Received Amounts (From Transactions)
+                      const policyIds = cPolicies.map(p => p.id);
+                      const cPolicyTxs = transactions.filter(tx => tx.type === "Receipt" && tx.entityType === "Customer" && policyIds.includes(tx.invoiceId));
+                      cReceivedAmount += cPolicyTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
                       
                       const cPendingBalance = cTotalRevenue - cReceivedAmount;
                       
@@ -1306,6 +1316,28 @@ function AccountsPage() {
                                         {vendor}
                                       </div>
                                     )) : <div className="text-xs text-muted-foreground italic">No vendors linked.</div>}
+                                  </div>
+                                </div>
+
+                                {/* General Insurance */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Gen. Insurance</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cPolicies.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {cPolicies.length > 0 ? cPolicies.map((policy: any) => (
+                                      <div key={policy.id} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium">
+                                        <div className="flex justify-between items-center mb-1">
+                                          <span className="truncate">{policy.policyNo || 'Pending'}</span>
+                                          <span className="text-emerald-500 font-semibold">{formatINR(policy.premiumAmount || 0)}</span>
+                                        </div>
+                                        <div className="text-muted-foreground flex justify-between text-[10px]">
+                                          <span>{policy.insuranceCompany}</span>
+                                          <span>{policy.status}</span>
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No policies found.</div>}
                                   </div>
                                 </div>
                                 
