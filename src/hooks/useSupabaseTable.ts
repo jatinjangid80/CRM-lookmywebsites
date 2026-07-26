@@ -153,8 +153,8 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.pax;
       delete newRow.packageType;
       
-      if (tableName === "leads") {
-        // leads table has assignedto column
+      if (tableName === "leads" || tableName === "insurance_leads") {
+        // leads and insurance_leads tables have assignedto column
         if (newRow.assignedTo !== undefined) {
           newRow.assignedto = newRow.assignedTo;
         }
@@ -355,8 +355,12 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         NEW_SVC_COLS.push("whatsapp", "leadSection", "assignOpsTo", "assignToOps", "reference");
       }
       if (tableName === "insurance_leads") {
-        // insurance_leads schema has no assignedto column — pack it into meta
-        NEW_SVC_COLS.push("assignedto", "assignOpsTo");
+        if (newRow.assignOpsTo) {
+          newRow.assignToOps = newRow.assignOpsTo;
+        } else if (typeof newRow.assignToOps === "boolean") {
+          newRow.assignToOps = null;
+        }
+        delete newRow.assignOpsTo;
       }
       const leadMeta: Record<string, any> = {};
       const existingNotes = newRow.notes || "";
@@ -788,6 +792,15 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         }
       } else if (!Array.isArray(newRow.notes)) {
         newRow.notes = [];
+      }
+    }
+
+    if (tableName === "insurance_leads") {
+      if (!newRow.leadSection) {
+        newRow.leadSection = "General Insurance";
+      }
+      if (newRow.assignToOps && typeof newRow.assignToOps === 'string') {
+        newRow.assignOpsTo = newRow.assignToOps;
       }
     }
 
