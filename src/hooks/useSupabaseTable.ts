@@ -184,9 +184,9 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     // without requiring manual SQL schema migrations.
     const customFields: any = {};
     // For leads: allNotes, dob, relationship are REAL columns — keep them in the row, skip customFields
-    if (newRow.allNotes !== undefined && tableName !== "employees" && tableName !== "leads") customFields.allNotes = newRow.allNotes;
-    if (newRow.dob !== undefined && tableName !== "employees" && tableName !== "leads") customFields.dob = newRow.dob;
-    if (newRow.relationship !== undefined && tableName !== "employees" && tableName !== "leads") customFields.relationship = newRow.relationship;
+    if (newRow.allNotes !== undefined && tableName !== "employees" && tableName !== "leads" && tableName !== "insurance_leads") customFields.allNotes = newRow.allNotes;
+    if (newRow.dob !== undefined && tableName !== "employees" && tableName !== "leads" && tableName !== "insurance_leads") customFields.dob = newRow.dob;
+    if (newRow.relationship !== undefined && tableName !== "employees" && tableName !== "leads" && tableName !== "insurance_leads") customFields.relationship = newRow.relationship;
     if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
     if (tableName !== "employees" && newRow.profile_details !== undefined) customFields.profile_details = newRow.profile_details;
 
@@ -377,7 +377,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       }
     }
 
-    // For leads: allNotes, dob, relationship are real Supabase columns — keep them in the row
+    // For leads and insurance_leads: allNotes, dob, relationship are real Supabase columns — keep them in the row
     if (tableName !== "leads" && tableName !== "insurance_leads") {
       delete newRow.allNotes;
       delete newRow.dob;
@@ -831,17 +831,22 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
           console.warn(`[${tableName}] Retrying INSERT with base columns only (run the SQL migration to enable all fields)`);
           let columnsToDrop = [
-            "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+            "assignOpsTo","adults","children",
             "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
             "checkIn","checkOut","nights","nationality","starRating","mealPreference",
             "visaType","passportExpiry","country",
             "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
             "companyName","eventType",
-            "policyType","queryType","insuranceDate","expiryDate","clientCompany",
           ];
           
+          if (tableName === "leads") {
+            // leads table packs these into notes — drop from payload
+            columnsToDrop = [...columnsToDrop, "whatsapp", "leadSection", "assignOpsTo", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", "clientCompany", "reference"];
+          }
+          
           if (tableName === "insurance_leads") {
-            columnsToDrop = [...columnsToDrop, "reference", "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+            // insurance_leads has REAL columns for these — do NOT drop them
+            columnsToDrop = [...columnsToDrop, "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
           }
           
           const fallbackRows = toInsert.map((row: any) => {
@@ -917,17 +922,21 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         // Fallback for leads/insurance_leads UPDATE
         if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
           let columnsToDrop = [
-            "whatsapp","leadSection","assignOpsTo","assignToOps","adults","children",
+            "assignOpsTo","adults","children",
             "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
             "checkIn","checkOut","nights","nationality","starRating","mealPreference",
             "visaType","passportExpiry","country",
             "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
             "companyName","eventType",
-            "policyType","queryType","insuranceDate","expiryDate","clientCompany",
           ];
           
+          if (tableName === "leads") {
+            columnsToDrop = [...columnsToDrop, "whatsapp", "leadSection", "assignOpsTo", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", "clientCompany", "reference"];
+          }
+          
           if (tableName === "insurance_leads") {
-            columnsToDrop = [...columnsToDrop, "reference", "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+            // insurance_leads has REAL columns — only drop fields not in the schema
+            columnsToDrop = [...columnsToDrop, "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
           }
           
           const safe = { ...item };
