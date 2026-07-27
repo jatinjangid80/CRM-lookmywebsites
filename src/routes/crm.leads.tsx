@@ -2446,9 +2446,16 @@ function LeadsPage() {
     setLeads((prev) => [l, ...prev]);
   };
 
-  const updateStatus = (id: string, status: LeadStatus) => {
+  const updateStatus = async (id: string, status: LeadStatus) => {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     setSelected((sel) => (sel ? { ...sel, status } : sel));
+
+    // Explicitly update Supabase to ensure persistence
+    try {
+      await supabase.from("leads").update({ status }).eq("id", id);
+    } catch (err) {
+      console.error("Failed to update status in Supabase:", err);
+    }
 
     if (["on conform", "Confirmed", "in process", "Payment Pending"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
@@ -2540,9 +2547,14 @@ function LeadsPage() {
     }
   };
 
-  const deleteLead = (id: string) => {
+  const deleteLead = async (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
     setSelected(null);
+    try {
+      await supabase.from("leads").delete().eq("id", id);
+    } catch (err) {
+      console.error("Failed to delete lead in Supabase:", err);
+    }
   };
 
 
@@ -2799,7 +2811,7 @@ function LeadsPage() {
                           <Select
                             value={l.status}
                             onValueChange={(val: LeadStatus) => {
-                              setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
+                              updateStatus(l.id, val);
                             }}
                           >
                             <SelectTrigger className={`inline-flex items-center rounded-sm px-2 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
@@ -2838,6 +2850,10 @@ function LeadsPage() {
                             value={l.priority || "Medium"}
                             onValueChange={(val: "High" | "Medium" | "Low") => {
                               setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
+                              // Explicitly update Supabase
+                              supabase.from("leads").update({ priority: val }).eq("id", l.id).then(({ error }) => {
+                                if (error) console.error("Failed to update priority in Supabase:", error);
+                              });
                             }}
                           >
                             <SelectTrigger className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${PRIORITY_PILL[l.priority || "Medium"] || "bg-secondary text-foreground"}`}>

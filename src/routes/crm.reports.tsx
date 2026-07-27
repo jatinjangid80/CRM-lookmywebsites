@@ -146,25 +146,41 @@ function ReportsPage() {
 
   // Compute leaderboard
   const consultantMap = new Map();
+  
+  // Helper to normalize names against actual employee records
+  const getNormalizedName = (rawName: string) => {
+    if (!rawName) return "Unknown";
+    const matched = employeesList.find(
+      (e) => e.name && e.name.toLowerCase().trim() === rawName.toLowerCase().trim()
+    );
+    return matched ? matched.name : rawName.trim();
+  };
+
   // Initialize map with all employees
   employeesList.forEach((e) => {
-    consultantMap.set(e.name, { deals: 0, revenue: 0, leads: 0 });
+    if (e.name) {
+      consultantMap.set(e.name, { deals: 0, revenue: 0, leads: 0 });
+    }
   });
 
   bookingsList.forEach((b) => {
-    const c = b.bookedBy || "Unknown";
+    const c = getNormalizedName(b.bookedBy || "Unknown");
     if (!consultantMap.has(c)) consultantMap.set(c, { deals: 0, revenue: 0, leads: 0 });
     consultantMap.get(c).deals += 1;
     consultantMap.get(c).revenue += b.amount || 0;
   });
+  
   leadsList.forEach((l) => {
-    const c = l.assignedTo;
+    const c = l.assignedTo ? getNormalizedName(l.assignedTo) : null;
     if (c) {
       if (!consultantMap.has(c)) consultantMap.set(c, { deals: 0, revenue: 0, leads: 0 });
       consultantMap.get(c).leads += 1;
     }
   });
+  
   const leaderboard = Array.from(consultantMap.entries())
+    // Optionally filter out 'Unknown' if we only want actual employees
+    .filter(([name]) => name !== "Unknown" || consultantMap.get(name).revenue > 0)
     .map(([name, data]) => {
       const conversion = data.leads ? Math.round((data.deals / data.leads) * 100) : 0;
       const emp = employeesList.find((e) => e.name === name);
@@ -176,8 +192,7 @@ function ReportsPage() {
         conversion,
       };
     })
-    .sort((a, b) => b.revenue - a.revenue)
-    .slice(0, 5); // top 5
+    .sort((a, b) => b.revenue - a.revenue); // Show all instead of top 5
 
   return (
     <div className="space-y-8">

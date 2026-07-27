@@ -2399,11 +2399,46 @@ function LeadsPage() {
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);
+    
+    // Explicitly insert into Supabase to guarantee it's saved
+    supabase.from("insurance_leads").insert([{
+      id: l.id,
+      name: l.name,
+      phone: l.phone,
+      email: l.email,
+      whatsapp: l.whatsapp,
+      destination: l.destination,
+      budget: l.budget,
+      status: l.status,
+      source: l.source,
+      priority: l.priority,
+      service: l.service,
+      assignedTo: l.assignedTo,
+      notes: l.notes,
+      insuranceDate: l.insuranceDate,
+      expiryDate: l.expiryDate,
+      policyType: l.policyType,
+      queryType: l.queryType,
+      clientCompany: l.clientCompany,
+      reference: l.reference,
+      leadSection: l.leadSection
+    }]).then(({ error }) => {
+      if (error) console.error("Explicit insurance lead insert failed:", error);
+    });
   };
 
   const updateStatus = (id: string, status: LeadStatus) => {
     setLeads((prev) => prev.map((l) => (l.id === id ? { ...l, status } : l)));
     setSelected((sel) => (sel ? { ...sel, status } : sel));
+
+    // Explicitly update Supabase to ensure it is saved
+    supabase
+      .from("insurance_leads")
+      .update({ status })
+      .eq("id", id)
+      .then(({ error }) => {
+        if (error) console.error("Explicit insurance lead update failed:", error);
+      });
 
     if (["on conform", "Confirmed", "in process", "Payment Pending"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
@@ -2495,9 +2530,14 @@ function LeadsPage() {
     }
   };
 
-  const deleteLead = (id: string) => {
+  const deleteLead = async (id: string) => {
     setLeads((prev) => prev.filter((l) => l.id !== id));
     setSelected(null);
+    try {
+      await supabase.from("insurance_leads").delete().eq("id", id);
+    } catch (err) {
+      console.error("Failed to explicitly delete insurance lead:", err);
+    }
   };
 
 
@@ -2754,7 +2794,7 @@ function LeadsPage() {
                           <Select
                             value={l.status}
                             onValueChange={(val: LeadStatus) => {
-                              setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, status: val } : lead)));
+                              updateStatus(l.id, val);
                             }}
                           >
                             <SelectTrigger className={`inline-flex items-center rounded-sm px-2 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${STATUS_PILL[l.status]}`}>
@@ -2792,6 +2832,10 @@ function LeadsPage() {
                             value={l.priority || "Medium"}
                             onValueChange={(val: "High" | "Medium" | "Low") => {
                               setLeads((prev) => prev.map((lead) => (lead.id === l.id ? { ...lead, priority: val } : lead)));
+                              // Explicitly update Supabase
+                              supabase.from("insurance_leads").update({ priority: val }).eq("id", l.id).then(({ error }) => {
+                                if (error) console.error("Failed to update priority in Supabase:", error);
+                              });
                             }}
                           >
                             <SelectTrigger className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold whitespace-nowrap border-none h-auto w-auto focus:ring-0 focus:ring-offset-0 shadow-none [&>svg]:hidden ${PRIORITY_PILL[l.priority || "Medium"] || "bg-secondary text-foreground"}`}>
