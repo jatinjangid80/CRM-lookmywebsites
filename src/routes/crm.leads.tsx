@@ -1119,6 +1119,7 @@ function AddLeadModal({
 /* ─── Lead Detail Slide-over ─── */
 function LeadDetail({
   lead,
+  allLeads = [],
   onClose,
   onStatusChange,
   onDelete,
@@ -1126,9 +1127,9 @@ function LeadDetail({
   assignees,
   onEditNote,
   onUpdateLead,
-  onClone,
 }: {
   lead: ExtLead;
+  allLeads?: ExtLead[];
   onClose: () => void;
   onStatusChange: (id: string, s: LeadStatus) => void;
   onDelete: (id: string) => void;
@@ -1137,6 +1138,11 @@ function LeadDetail({
   onEditNote?: (id: string, newNote: string) => void;
   onUpdateLead?: (id: string, updates: Partial<ExtLead>) => void;
 }) {
+  const sortedLeads = React.useMemo(() => {
+    return [...allLeads].sort((a, b) => new Date(a.createdAt || a.created_at || 0).getTime() - new Date(b.createdAt || b.created_at || 0).getTime());
+  }, [allLeads]);
+  const leadIndex = sortedLeads.findIndex(l => l.id === lead.id);
+  const displayId = leadIndex !== -1 ? `LD-${String(leadIndex + 1).padStart(2, '0')}` : `LD-${lead.id.substring(0, 6).toUpperCase()}`;
   const [isEditingNote, setIsEditingNote] = useState(false);
   const [editNoteText, setEditNoteText] = useState(lead.notes || "");
   const [newNoteText, setNewNoteText] = useState("");
@@ -1215,8 +1221,8 @@ function LeadDetail({
             )}
             <div>
               <p className="font-display text-xl font-bold">{lead.name}</p>
-              <p className="text-sm text-muted-foreground">
-                {lead.id} · Created {lead.createdAt}
+              <p className="text-sm text-muted-foreground" title={lead.id}>
+                {displayId} · Created {lead.createdAt}
               </p>
               <div className="mt-2">
                 <Select
@@ -2561,7 +2567,7 @@ function LeadsPage() {
 
   /* Stats */
   const totalBudget = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
-  const completedLeads = leads.filter((l) => l.status === "in process").length;
+  const completedLeads = leads.filter((l) => l.status === "in process" || l.status === "Confirmed" || l.status === "Payment Pending").length;
   const newToday = leads.filter(
     (l) => l.createdAt === new Date().toISOString().slice(0, 10),
   ).length;
@@ -3029,6 +3035,7 @@ function LeadsPage() {
       {selected && (
         <LeadDetail
           lead={selected}
+          allLeads={leads}
           onClose={() => setSelected(null)}
           onStatusChange={updateStatus}
           onDelete={deleteLead}

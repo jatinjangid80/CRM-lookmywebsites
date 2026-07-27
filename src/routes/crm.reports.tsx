@@ -69,7 +69,7 @@ function ReportsPage() {
 
   const totalRevenue = bookingsList.reduce((s, b) => s + (b.paid || 0), 0);
   const pendingAmount = bookingsList.reduce((s, b) => s + ((b.amount || 0) - (b.paid || 0)), 0);
-  const wonLeads = leadsList.filter((l) => l.status === "on conform" || l.status === "in process" || l.status === "Confirmed" || l.status === "Payment Pending").length;
+  const wonLeads = leadsList.filter((l) => l.status === "in process" || l.status === "Confirmed" || l.status === "Payment Pending").length;
   
   const exportCSV = () => {
     const rows = [
@@ -179,8 +179,8 @@ function ReportsPage() {
   });
   
   const leaderboard = Array.from(consultantMap.entries())
-    // Optionally filter out 'Unknown' if we only want actual employees
-    .filter(([name]) => name !== "Unknown" || consultantMap.get(name).revenue > 0)
+    // Only include actual employees who exist in the employees list
+    .filter(([name]) => employeesList.some((e) => e.name === name))
     .map(([name, data]) => {
       const conversion = data.leads ? Math.round((data.deals / data.leads) * 100) : 0;
       const emp = employeesList.find((e) => e.name === name);
@@ -424,8 +424,10 @@ function ReportsPage() {
                   "Contacted",
                   "Quotation Sent",
                   "Negotiation",
-                  "Booked",
-                  "Completed",
+                  "in process",
+                  "Confirmed",
+                  "Payment Pending",
+                  "Postponed",
                   "Lost",
                 ] as const
               ).map((stage) => {
