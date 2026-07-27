@@ -806,7 +806,7 @@ function BookingsPage() {
     return true;
   }).sort((a, b) => {
     let cmp = 0;
-    if (sortField === "date") cmp = new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime();
+    if (sortField === "date") cmp = new Date(a.bookingDate || 0).getTime() - new Date(b.bookingDate || 0).getTime();
     else if (sortField === "travelDate") cmp = new Date(a.travelDate || 0).getTime() - new Date(b.travelDate || 0).getTime();
     else if (sortField === "customer") cmp = (a.customer || "").localeCompare(b.customer || "");
     else if (sortField === "amount") cmp = (a.amount || 0) - (b.amount || 0);

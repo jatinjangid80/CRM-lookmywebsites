@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
+import { supabase } from "@/lib/supabase";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { getAuth, setAuth } from "@/lib/auth";
 import {
@@ -137,7 +138,7 @@ function SettingsPage() {
   const [avatarPreview, setAvatarPreview] = useState<string | null>(auth?.avatar || null);
   const avatarInputRef = useRef<HTMLInputElement>(null);
 
-  const [localLiveEmps] = useSupabaseTable("employees", []);
+  const [localLiveEmps] = useSupabaseTable<any>("employees", []);
   const liveEmps = localLiveEmps?.length ? localLiveEmps : [];
 
   const showToast = (msg: string) => {
@@ -1045,7 +1046,7 @@ function SettingsPage() {
           <div className="space-y-5">
             <SectionCard title="Employee Directory">
               <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
-                {liveEmps.map((u) => (
+                {liveEmps.map((u: any) => (
                   <div key={u.id} className="relative group">
                     <EmployeeProfileCard employeeName={u.name} />
                     <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity">

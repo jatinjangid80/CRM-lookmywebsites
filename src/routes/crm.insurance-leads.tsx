@@ -1107,7 +1107,7 @@ function LeadDetail({
   onUpdateLead?: (id: string, updates: Partial<ExtLead>) => void;
 }) {
   const sortedLeads = React.useMemo(() => {
-    return [...allLeads].sort((a, b) => new Date(a.createdAt || a.created_at || 0).getTime() - new Date(b.createdAt || b.created_at || 0).getTime());
+    return [...(allLeads || [])].sort((a, b) => new Date(a.createdAt || 0).getTime() - new Date(b.createdAt || 0).getTime());
   }, [allLeads]);
   const leadIndex = sortedLeads.findIndex(l => l.id === lead.id);
   const displayId = leadIndex !== -1 ? `LD-${String(leadIndex + 1).padStart(2, '0')}` : `LD-${lead.id.substring(0, 6).toUpperCase()}`;
@@ -1438,12 +1438,12 @@ function LeadDetail({
                       <label className="text-[10px] font-semibold uppercase text-muted-foreground">Priority</label>
                       <select
                         value={tripDetails.priority}
-                        onChange={(e) => setTripDetails({ ...tripDetails, priority: e.target.value as " 🔴 High" | " 🟡 Medium" | " 🟢 Low" })}
+                        onChange={(e) => setTripDetails({ ...tripDetails, priority: e.target.value as "High" | "Medium" | "Low" })}
                         className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
                       >
-                        <option value=" 🔴 High"> 🔴 High</option>
-                        <option value=" 🟡 Medium"> 🟡 Medium</option>
-                        <option value=" 🟢 Low"> 🟢 Low</option>
+                        <option value="High"> 🔴 High</option>
+                        <option value="Medium"> 🟡 Medium</option>
+                        <option value="Low"> 🟢 Low</option>
                       </select>
                     </div>
                     <div>

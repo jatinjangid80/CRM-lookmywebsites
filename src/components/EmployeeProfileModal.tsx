@@ -584,7 +584,7 @@ function EmployeeProfileModalInner({
 
   return (
     <>
-        <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto p-0 gap-0 bg-[#F9FAFB] text-[#111827]">
+        <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto p-0 gap-0 bg-background text-foreground">
           <DialogTitle className="sr-only">Company CRM Employee Profile</DialogTitle>
           <DialogDescription className="sr-only">
             Redesigned modern Company CRM Employee Profile for {employee.name}.
@@ -593,7 +593,7 @@ function EmployeeProfileModalInner({
           {/* Main Content Area */}
           <div className="p-6 md:p-8 space-y-6">
             {/* Top Info Banner / Profile Overview */}
-            <div className="bg-white rounded-2xl border border-gray-200 p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
+            <div className="bg-card rounded-2xl border border-border p-6 shadow-sm flex flex-col md:flex-row items-center justify-between gap-6">
               <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
                 {/* Profile photo — clickable upload when editing */}
                 <div className="relative shrink-0 group">
@@ -601,7 +601,7 @@ function EmployeeProfileModalInner({
                     <img
                       src={editAvatar}
                       alt={employee.name || "Employee"}
-                      className="h-20 w-20 rounded-2xl object-cover border border-gray-200 ring-4 ring-primary/10"
+                      className="h-20 w-20 rounded-2xl object-cover border border-border ring-4 ring-primary/10"
                     />
                   ) : (
                     <div className="h-20 w-20 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0 ring-4 ring-primary/10">
@@ -615,8 +615,8 @@ function EmployeeProfileModalInner({
                       htmlFor={`avatar-upload-${employee.id}`}
                       className="absolute inset-0 flex flex-col items-center justify-center rounded-2xl bg-black/50 opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity"
                     >
-                      <Camera className="h-6 w-6 text-white" />
-                      <span className="text-[10px] text-white font-bold mt-1">Change</span>
+                      <Camera className="h-6 w-6 text-primary-foreground" />
+                      <span className="text-[10px] text-primary-foreground font-bold mt-1">Change</span>
                       <input
                         id={`avatar-upload-${employee.id}`}
                         type="file"
@@ -646,7 +646,7 @@ function EmployeeProfileModalInner({
                         <Input
                           value={editCore.name}
                           onChange={(e) => setEditCore({ ...editCore, name: e.target.value })}
-                          className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                          className="h-8 text-xs focus-visible:ring-primary"
                         />
                       </div>
                       <div className="space-y-1">
@@ -656,7 +656,7 @@ function EmployeeProfileModalInner({
                         <Input
                           value={editCore.role}
                           onChange={(e) => setEditCore({ ...editCore, role: e.target.value })}
-                          className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                          className="h-8 text-xs focus-visible:ring-primary"
                         />
                       </div>
                     </div>
@@ -668,7 +668,7 @@ function EmployeeProfileModalInner({
                         <Input
                           value={editCore.email}
                           onChange={(e) => setEditCore({ ...editCore, email: e.target.value })}
-                          className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+                          className="h-8 text-xs focus-visible:ring-primary"
                         />
                       </div>
                       <div className="space-y-1">
@@ -690,7 +690,7 @@ function EmployeeProfileModalInner({
                 ) : (
                   <div className="text-center md:text-left space-y-1">
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-2.5">
-                      <h2 className="text-2xl font-bold font-display text-gray-900">
+                      <h2 className="text-2xl font-bold font-display text-foreground">
                         {employee.name}
                       </h2>
                       <span
@@ -699,7 +699,7 @@ function EmployeeProfileModalInner({
                         {employee.status}
                       </span>
                     </div>
-                    <p className="text-[#FF6B00] font-semibold text-sm">
+                    <p className="text-primary font-semibold text-sm">
                       {employee.role} • {empDetails.department}
                     </p>
                     <div className="flex flex-wrap items-center justify-center md:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">
@@ -715,12 +715,12 @@ function EmployeeProfileModalInner({
               </div>
 
               {/* Quick Stats inside Banner */}
-              <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-xl p-3.5 px-5">
-                <div className="text-center pr-4 border-r border-gray-200">
+              <div className="flex items-center gap-4 bg-secondary/30 border border-border/50 rounded-xl p-3.5 px-5">
+                <div className="text-center pr-4 border-r border-border">
                   <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
                     Employee ID
                   </p>
-                  <p className="text-sm font-bold text-gray-800 mt-0.5">{employee.id}</p>
+                  <p className="text-sm font-bold text-foreground mt-0.5">{employee.id}</p>
                 </div>
                 <div className="text-center pl-1">
                   <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
@@ -731,10 +731,10 @@ function EmployeeProfileModalInner({
                       type="date"
                       value={editCore.joinDate}
                       onChange={(e) => setEditCore({ ...editCore, joinDate: e.target.value })}
-                      className="text-xs bg-white border border-gray-200 rounded px-1.5 py-0.5 mt-0.5 focus:outline-none focus:ring-1 focus:ring-[#FF6B00]"
+                      className="text-xs bg-card border border-border rounded px-1.5 py-0.5 mt-0.5 focus:outline-none focus:ring-1 focus:ring-primary"
                     />
                   ) : (
-                    <p className="text-sm font-bold text-gray-800 mt-0.5">
+                    <p className="text-sm font-bold text-foreground mt-0.5">
                       {safeFormatDate(employee.joinDate, "en-IN", {
                         day: "numeric",
                         month: "short",
@@ -756,7 +756,7 @@ function EmployeeProfileModalInner({
                     <div className="space-y-2.5 pt-1">
                       <Button
                         onClick={handleSave}
-                        className="w-full justify-center gap-2 text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition-colors"
+                        className="w-full justify-center gap-2 text-xs h-9 bg-emerald-600 hover:bg-emerald-700 text-primary-foreground font-bold transition-colors"
                       >
                         <Check className="h-4 w-4" /> Save Details
                       </Button>
@@ -773,7 +773,7 @@ function EmployeeProfileModalInner({
                       <Button
                         variant="outline"
                         onClick={handleStartEdit}
-                        className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
+                        className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                       >
                         <Edit className="h-4 w-4" /> Edit Profile Details
                       </Button>
@@ -789,10 +789,10 @@ function EmployeeProfileModalInner({
                                 <title>Employee Profile - ${employee.name}</title>
                                 <style>
                                   body { font-family: sans-serif; padding: 40px; color: #333; }
-                                  h1 { color: #FF6B00; margin-bottom: 5px; }
+                                  h1 { color: hsl(var(--primary)); margin-bottom: 5px; }
                                   .subtitle { color: #666; margin-bottom: 30px; font-weight: bold; }
                                   .section { margin-bottom: 25px; border-bottom: 1px solid #eee; padding-bottom: 15px; }
-                                  .section-title { font-size: 18px; color: #FF6B00; margin-bottom: 10px; }
+                                  .section-title { font-size: 18px; color: hsl(var(--primary)); margin-bottom: 10px; }
                                   .grid { display: grid; grid-template-cols: 1fr 1fr; gap: 15px; }
                                   .field { margin-bottom: 8px; }
                                   .label { font-size: 11px; text-transform: uppercase; color: #888; font-weight: bold; }
@@ -835,7 +835,7 @@ function EmployeeProfileModalInner({
                             printWindow.document.close();
                           }
                         }}
-                        className="w-full justify-start gap-2 text-xs h-9 hover:text-[#FF6B00] hover:bg-orange-50/50 hover:border-[#FF6B00]/40 transition-colors"
+                        className="w-full justify-start gap-2 text-xs h-9 hover:text-primary hover:bg-primary/5 hover:border-primary/40 transition-colors"
                       >
                         <Download className="h-4 w-4" /> Download Profile
                       </Button>
@@ -849,16 +849,16 @@ function EmployeeProfileModalInner({
                   <div className="space-y-3 pt-1">
                     {/* Current credentials display */}
                     {credUsername ? (
-                      <div className="rounded-xl bg-purple-50 border border-purple-100 px-3 py-2.5 flex items-center justify-between">
+                      <div className="rounded-xl bg-primary/10 border border-primary/20 px-3 py-2.5 flex items-center justify-between">
                         <div>
-                          <p className="text-[10px] font-bold text-purple-500 uppercase tracking-wider">
+                          <p className="text-[10px] font-bold text-primary uppercase tracking-wider">
                             Current Login
                           </p>
-                          <p className="text-xs font-mono font-semibold text-gray-800 mt-0.5">
-                            {credUsername} / {"•".repeat(Math.min(credPassword.length, 8))}
+                          <p className="text-xs font-mono font-semibold text-foreground mt-0.5">
+                            {credUsername} / {"•".repeat(credPassword.length)}
                           </p>
                         </div>
-                        <CheckCircle className="h-4 w-4 text-purple-400 shrink-0" />
+                        <CheckCircle className="h-4 w-4 text-primary shrink-0" />
                       </div>
                     ) : (
                       <div className="rounded-xl bg-amber-50 border border-amber-100 px-3 py-2.5">
@@ -877,7 +877,7 @@ function EmployeeProfileModalInner({
                         value={credUsername}
                         onChange={(e) => setCredUsername(e.target.value)}
                         placeholder="e.g. jatin"
-                        className="h-8 text-xs focus-visible:ring-purple-500"
+                        className="h-8 text-xs focus-visible:ring-primary"
                       />
                     </div>
 
@@ -892,12 +892,12 @@ function EmployeeProfileModalInner({
                           value={credPassword}
                           onChange={(e) => setCredPassword(e.target.value)}
                           placeholder="Min. 4 characters"
-                          className="h-8 text-xs pr-8 focus-visible:ring-purple-500"
+                          className="h-8 text-xs pr-8 focus-visible:ring-primary"
                         />
                         <button
                           type="button"
                           onClick={() => setShowCredPass(!showCredPass)}
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-card-foreground"
                         >
                           {showCredPass ? (
                             <EyeOff className="h-3.5 w-3.5" />
@@ -913,13 +913,26 @@ function EmployeeProfileModalInner({
                       <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                         <Key className="h-3 w-3" /> Confirm Password
                       </label>
-                      <Input
-                        type={showCredPass ? "text" : "password"}
-                        value={credConfirm}
-                        onChange={(e) => setCredConfirm(e.target.value)}
-                        placeholder="Re-enter password"
-                        className="h-8 text-xs focus-visible:ring-purple-500"
-                      />
+                      <div className="relative">
+                        <Input
+                          type={showCredPass ? "text" : "password"}
+                          value={credConfirm}
+                          onChange={(e) => setCredConfirm(e.target.value)}
+                          placeholder="Re-enter password"
+                          className="h-8 text-xs pr-8 focus-visible:ring-primary"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowCredPass(!showCredPass)}
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-card-foreground"
+                        >
+                          {showCredPass ? (
+                            <EyeOff className="h-3.5 w-3.5" />
+                          ) : (
+                            <Eye className="h-3.5 w-3.5" />
+                          )}
+                        </button>
+                      </div>
                     </div>
 
                     {/* Error */}
@@ -931,7 +944,7 @@ function EmployeeProfileModalInner({
 
                     {/* Success */}
                     {credSaved && (
-                      <p className="text-[11px] text-emerald-700 bg-emerald-50 border border-emerald-100 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
+                      <p className="text-[11px] text-emerald-700 bg-primary/10 border border-primary/20 rounded-lg px-2.5 py-1.5 flex items-center gap-1.5">
                         <Check className="h-3.5 w-3.5" /> Saved! Employee can now log in.
                       </p>
                     )}
@@ -939,7 +952,7 @@ function EmployeeProfileModalInner({
                     {/* Save button */}
                     <Button
                       onClick={handleSaveCredentials}
-                      className="w-full justify-center gap-2 text-xs h-8 bg-purple-600 hover:bg-purple-700 text-white font-bold"
+                      className="w-full justify-center gap-2 text-xs h-8 bg-primary hover:bg-primary/90 text-primary-foreground font-bold"
                     >
                       <Check className="h-3.5 w-3.5" /> Save Credentials
                     </Button>
@@ -980,11 +993,11 @@ function EmployeeProfileModalInner({
                         <p className="text-xs text-muted-foreground font-medium">
                           Reporting Manager
                         </p>
-                        <p className="font-semibold text-gray-800">{empDetails.reportingManager}</p>
+                        <p className="font-semibold text-foreground">{empDetails.reportingManager}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground font-medium">Team Lead</p>
-                        <p className="font-semibold text-gray-800">{empDetails.teamLead}</p>
+                        <p className="font-semibold text-foreground">{empDetails.teamLead}</p>
                       </div>
                       <div className="space-y-1">
                         <p className="text-xs text-muted-foreground font-medium">Direct Reports</p>
@@ -992,7 +1005,7 @@ function EmployeeProfileModalInner({
                           {empDetails.directReports.map((r, i) => (
                             <span
                               key={i}
-                              className="text-xs bg-gray-100 font-semibold px-2 py-0.5 rounded-md text-gray-700"
+                              className="text-xs bg-secondary/40 font-semibold px-2 py-0.5 rounded-md text-card-foreground"
                             >
                               {r}
                             </span>
@@ -1031,33 +1044,33 @@ function EmployeeProfileModalInner({
                     </div>
                   ) : (
                     <div className="space-y-3 text-sm">
-                      <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                      <div className="flex justify-between items-center py-1.5 border-b border-border/50">
                         <span className="text-muted-foreground text-xs font-medium">
                           Employee Code
                         </span>
-                        <span className="font-semibold text-gray-800">{employee.id}</span>
+                        <span className="font-semibold text-foreground">{employee.id}</span>
                       </div>
-                      <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                      <div className="flex justify-between items-center py-1.5 border-b border-border/50">
                         <span className="text-muted-foreground text-xs font-medium">
                           PAN Number
                         </span>
-                        <span className="font-semibold text-gray-800 tracking-wider">
+                        <span className="font-semibold text-foreground tracking-wider">
                           {empDetails.panNumber}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                      <div className="flex justify-between items-center py-1.5 border-b border-border/50">
                         <span className="text-muted-foreground text-xs font-medium">
                           Aadhaar Number
                         </span>
-                        <span className="font-semibold text-gray-800">
+                        <span className="font-semibold text-foreground">
                           {empDetails.aadhaarNumber}
                         </span>
                       </div>
-                      <div className="flex justify-between items-center py-1.5 border-b border-gray-100">
+                      <div className="flex justify-between items-center py-1.5 border-b border-border/50">
                         <span className="text-muted-foreground text-xs font-medium">
                           Passport Number
                         </span>
-                        <span className="font-semibold text-gray-800">
+                        <span className="font-semibold text-foreground">
                           {empDetails.passportNumber}
                         </span>
                       </div>
@@ -1068,7 +1081,7 @@ function EmployeeProfileModalInner({
                         <span
                           className={`inline-flex items-center gap-1 text-xs font-bold px-2 py-0.5 rounded-full border ${
                             empDetails.verificationStatus === "Verified"
-                              ? "text-emerald-600 bg-emerald-50 border-emerald-200"
+                              ? "text-primary bg-primary/10 border-emerald-200"
                               : "text-amber-600 bg-amber-50 border-amber-200"
                           }`}
                         >
@@ -1085,12 +1098,12 @@ function EmployeeProfileModalInner({
                     {mockPerf.documents.map((doc, i) => (
                       <div
                         key={i}
-                        className="flex items-center justify-between p-2 border border-gray-100 bg-gray-50/50 hover:bg-orange-50/20 rounded-xl transition-colors text-xs"
+                        className="flex items-center justify-between p-2 border border-border/50 bg-secondary/20 hover:bg-primary/10/20 rounded-xl transition-colors text-xs"
                       >
                         <div className="flex items-center gap-2 truncate">
                           <FileText className="h-4 w-4 text-orange-500 shrink-0" />
                           <div className="truncate">
-                            <p className="font-semibold text-gray-800 truncate" title={doc.name}>
+                            <p className="font-semibold text-foreground truncate" title={doc.name}>
                               {doc.name}
                             </p>
                             <p className="text-[10px] text-muted-foreground">
@@ -1100,7 +1113,7 @@ function EmployeeProfileModalInner({
                         </div>
                         <button
                           onClick={() => alert(`Downloading ${doc.name}...`)}
-                          className="p-1.5 rounded-lg border border-gray-200 text-muted-foreground hover:text-[#FF6B00] hover:bg-white hover:border-[#FF6B00]/40 transition-colors cursor-pointer"
+                          className="p-1.5 rounded-lg border border-border text-muted-foreground hover:text-primary hover:bg-card hover:border-primary/40 transition-colors cursor-pointer"
                         >
                           <Download className="h-3.5 w-3.5" />
                         </button>
@@ -1120,32 +1133,32 @@ function EmployeeProfileModalInner({
                         label: "KPI Score",
                         value: `${mockPerf.kpiScore}%`,
                         icon: <Award className="h-4 w-4" />,
-                        color: "bg-orange-50 text-[#FF6B00] border-orange-100",
+                        color: "bg-primary/10 text-primary border-primary/20",
                       },
                       {
                         label: "Attendance %",
                         value: `${mockPerf.attendancePct}%`,
                         icon: <Clock className="h-4 w-4" />,
-                        color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+                        color: "bg-primary/10 text-primary border-primary/20",
                       },
                       {
                         label: "Projects Completed",
                         value: mockPerf.projectsCompleted,
                         icon: <CheckCircle className="h-4 w-4" />,
-                        color: "bg-blue-50 text-blue-600 border-blue-100",
+                        color: "bg-primary/10 text-primary border-primary/20",
                       },
                       {
                         label: "Monthly Rating",
                         value: `${mockPerf.monthlyRating} / 5`,
                         icon: <TrendingUp className="h-4 w-4" />,
-                        color: "bg-purple-50 text-purple-600 border-purple-100",
+                        color: "bg-primary/10 text-primary border-primary/20",
                       },
                     ].map((stat) => (
                       <div
                         key={stat.label}
                         className={`rounded-xl border p-4 text-center ${stat.color} flex flex-col items-center justify-center`}
                       >
-                        <span className="p-1.5 bg-white/80 rounded-lg shadow-sm border border-inherit mb-2 shrink-0">
+                        <span className="p-1.5 bg-card/80 rounded-lg shadow-sm border border-inherit mb-2 shrink-0">
                           {stat.icon}
                         </span>
                         <p className="text-xl font-bold">{stat.value}</p>
@@ -1236,35 +1249,35 @@ function EmployeeProfileModalInner({
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 text-sm">
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Department
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.department}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Designation
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.designation}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Employment Type
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.employmentType}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Work Location
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.workLocation}
                           </span>
                         </div>
@@ -1272,45 +1285,45 @@ function EmployeeProfileModalInner({
                           <span className="text-muted-foreground text-xs font-medium">
                             Reporting Manager
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.manager}
                           </span>
                         </div>
                       </div>
 
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Assigned Team
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.team}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Total Experience
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.experience}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Employee Level
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.level}
                           </span>
                         </div>
 
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">Skills</span>
                           <div className="col-span-2 flex flex-wrap gap-1">
                             {(empDetails.skills || []).map((s, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] font-bold bg-orange-50 text-[#FF6B00] border border-orange-100 px-1.5 py-0.5 rounded"
+                                className="text-[10px] font-bold bg-primary/10 text-primary border border-primary/20 px-1.5 py-0.5 rounded"
                               >
                                 {s}
                               </span>
@@ -1326,7 +1339,7 @@ function EmployeeProfileModalInner({
                             {(empDetails.certifications || []).map((c, i) => (
                               <span
                                 key={i}
-                                className="text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100 px-1.5 py-0.5 rounded"
+                                className="text-[10px] font-bold bg-primary/10 text-emerald-700 border border-primary/20 px-1.5 py-0.5 rounded"
                               >
                                 {c}
                               </span>
@@ -1397,11 +1410,11 @@ function EmployeeProfileModalInner({
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 text-sm">
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Date of Birth
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {safeFormatDate(empDetails.dob, "en-IN", {
                               day: "numeric",
                               month: "short",
@@ -1409,9 +1422,9 @@ function EmployeeProfileModalInner({
                             })}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">Gender</span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.gender}
                           </span>
                         </div>
@@ -1419,25 +1432,25 @@ function EmployeeProfileModalInner({
                           <span className="text-muted-foreground text-xs font-medium">
                             Nationality
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.nationality}
                           </span>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Marital Status
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.maritalStatus}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Languages
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {(empDetails.languages || []).join(", ")}
                           </span>
                         </div>
@@ -1445,7 +1458,7 @@ function EmployeeProfileModalInner({
                           <span className="text-muted-foreground text-xs font-medium">
                             About / Bio
                           </span>
-                          <span className="col-span-2 text-gray-700 leading-relaxed font-medium">
+                          <span className="col-span-2 text-card-foreground leading-relaxed font-medium">
                             {employee.description || "Active system user."}
                           </span>
                         </div>
@@ -1519,27 +1532,27 @@ function EmployeeProfileModalInner({
                   ) : (
                     <div className="grid gap-4 sm:grid-cols-2 text-sm">
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Work Phone
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {employee.phone}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Personal Phone
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.personalPhone}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Work Email
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {employee.email}
                           </span>
                         </div>
@@ -1547,25 +1560,25 @@ function EmployeeProfileModalInner({
                           <span className="text-muted-foreground text-xs font-medium">
                             Personal Email
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800">
+                          <span className="col-span-2 font-semibold text-foreground">
                             {empDetails.personalEmail}
                           </span>
                         </div>
                       </div>
                       <div className="space-y-2">
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Current Address
                           </span>
-                          <span className="col-span-2 text-xs font-medium text-gray-800 leading-relaxed">
+                          <span className="col-span-2 text-xs font-medium text-foreground leading-relaxed">
                             {empDetails.currentAddress}
                           </span>
                         </div>
-                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-gray-100">
+                        <div className="grid grid-cols-3 gap-2 py-1.5 border-b border-border/50">
                           <span className="text-muted-foreground text-xs font-medium">
                             Permanent Address
                           </span>
-                          <span className="col-span-2 text-xs font-medium text-gray-800 leading-relaxed">
+                          <span className="col-span-2 text-xs font-medium text-foreground leading-relaxed">
                             {empDetails.permanentAddress}
                           </span>
                         </div>
@@ -1573,7 +1586,7 @@ function EmployeeProfileModalInner({
                           <span className="text-muted-foreground text-xs font-medium">
                             Emergency Contact
                           </span>
-                          <span className="col-span-2 font-semibold text-gray-800 text-xs">
+                          <span className="col-span-2 font-semibold text-foreground text-xs">
                             {empDetails.emergencyContact}
                           </span>
                         </div>
@@ -1588,9 +1601,9 @@ function EmployeeProfileModalInner({
             <div className="space-y-6">
               {/* Career History */}
               <Card title="Career History">
-                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                    <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                       <tr>
                         <th className="px-4 py-3">Company</th>
                         <th className="px-4 py-3">Position</th>
@@ -1601,10 +1614,10 @@ function EmployeeProfileModalInner({
                         {isEditing && <th className="px-4 py-3 text-right">Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                    <tbody className="divide-y divide-border/50 text-card-foreground bg-card">
                       {isEditing && editDetails ? (
                         editDetails.careerHistory.map((h, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                             <td className="px-2 py-1.5">
                               <Input
                                 className="h-7 text-xs"
@@ -1674,8 +1687,8 @@ function EmployeeProfileModalInner({
                         </tr>
                       ) : (
                         empDetails.careerHistory.map((h, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
-                            <td className="px-4 py-3.5 font-semibold text-gray-800">{h.company}</td>
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
+                            <td className="px-4 py-3.5 font-semibold text-foreground">{h.company}</td>
                             <td className="px-4 py-3.5 text-xs">{h.position}</td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {h.startDate
@@ -1713,7 +1726,7 @@ function EmployeeProfileModalInner({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                      className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                       onClick={addCareer}
                     >
                       <Plus className="h-3 w-3 mr-1" /> Add Experience Row
@@ -1724,9 +1737,9 @@ function EmployeeProfileModalInner({
 
               {/* Academic Background */}
               <Card title="Academic Background">
-                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                    <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                       <tr>
                         <th className="px-4 py-3">Institution</th>
                         <th className="px-4 py-3">Qualification</th>
@@ -1736,10 +1749,10 @@ function EmployeeProfileModalInner({
                         {isEditing && <th className="px-4 py-3 text-right">Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                    <tbody className="divide-y divide-border/50 text-card-foreground bg-card">
                       {isEditing && editDetails ? (
                         editDetails.academicBackground.map((a, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                             <td className="px-2 py-1.5">
                               <Input
                                 className="h-7 text-xs"
@@ -1800,8 +1813,8 @@ function EmployeeProfileModalInner({
                         </tr>
                       ) : (
                         empDetails.academicBackground.map((a, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
-                            <td className="px-4 py-3.5 font-semibold text-gray-800">
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
+                            <td className="px-4 py-3.5 font-semibold text-foreground">
                               {a.institution}
                             </td>
                             <td className="px-4 py-3.5 text-xs">{a.qualification}</td>
@@ -1809,7 +1822,7 @@ function EmployeeProfileModalInner({
                               {a.specialization}
                             </td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">{a.year}</td>
-                            <td className="px-4 py-3.5 text-xs font-semibold text-gray-800">
+                            <td className="px-4 py-3.5 text-xs font-semibold text-foreground">
                               {a.grade}
                             </td>
                           </tr>
@@ -1823,7 +1836,7 @@ function EmployeeProfileModalInner({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                      className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                       onClick={addAcademic}
                     >
                       <Plus className="h-3 w-3 mr-1" /> Add Qualification Row
@@ -1834,9 +1847,9 @@ function EmployeeProfileModalInner({
 
               {/* Family Information */}
               <Card title="Family Information">
-                <div className="border border-gray-200 rounded-xl overflow-hidden shadow-sm">
+                <div className="border border-border rounded-xl overflow-hidden shadow-sm">
                   <table className="w-full text-sm text-left">
-                    <thead className="bg-orange-50/50 text-[#FF6B00] text-xs font-bold border-b border-gray-200">
+                    <thead className="bg-primary/5 text-primary text-xs font-bold border-b border-border">
                       <tr>
                         <th className="px-4 py-3">Name</th>
                         <th className="px-4 py-3">Relationship</th>
@@ -1845,10 +1858,10 @@ function EmployeeProfileModalInner({
                         {isEditing && <th className="px-4 py-3 text-right">Actions</th>}
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-100 text-gray-700 bg-white">
+                    <tbody className="divide-y divide-border/50 text-card-foreground bg-card">
                       {isEditing && editDetails ? (
                         editDetails.familyInformation.map((f, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
                             <td className="px-2 py-1.5">
                               <Input
                                 className="h-7 text-xs"
@@ -1901,8 +1914,8 @@ function EmployeeProfileModalInner({
                         </tr>
                       ) : (
                         empDetails.familyInformation.map((f, i) => (
-                          <tr key={i} className="hover:bg-orange-50/10 transition-colors">
-                            <td className="px-4 py-3.5 font-semibold text-gray-800">{f.name}</td>
+                          <tr key={i} className="hover:bg-primary/10/10 transition-colors">
+                            <td className="px-4 py-3.5 font-semibold text-foreground">{f.name}</td>
                             <td className="px-4 py-3.5 text-xs text-muted-foreground">
                               {f.relationship}
                             </td>
@@ -1915,7 +1928,7 @@ function EmployeeProfileModalInner({
                                   })
                                 : "N/A"}
                             </td>
-                            <td className="px-4 py-3.5 text-xs text-gray-800 font-medium">
+                            <td className="px-4 py-3.5 text-xs text-foreground font-medium">
                               {f.contactNumber}
                             </td>
                           </tr>
@@ -1929,7 +1942,7 @@ function EmployeeProfileModalInner({
                     <Button
                       variant="outline"
                       size="sm"
-                      className="text-[#FF6B00] border-[#FF6B00]/30 hover:bg-orange-50 text-xs"
+                      className="text-primary border-primary/30 hover:bg-primary/10 text-xs"
                       onClick={addFamily}
                     >
                       <Plus className="h-3 w-3 mr-1" /> Add Dependent Row
@@ -1940,7 +1953,7 @@ function EmployeeProfileModalInner({
 
               {/* Employee Records (Accordion-style) */}
               <Card title="Employee Records">
-                <div className="divide-y divide-gray-200 rounded-xl border border-gray-200 overflow-hidden bg-white">
+                <div className="divide-y divide-border rounded-xl border border-border overflow-hidden bg-card">
                   {[
                     "Leave Requests",
                     "Attendance History",
@@ -1952,17 +1965,17 @@ function EmployeeProfileModalInner({
                   ].map((rec) => {
                     const isExpanded = expandedSection === rec;
                     return (
-                      <div key={rec} className="border-b last:border-b-0 border-gray-100">
+                      <div key={rec} className="border-b last:border-b-0 border-border/50">
                         <div
                           onClick={() => setExpandedSection(isExpanded ? null : rec)}
-                          className="flex items-center justify-between px-4 py-3.5 hover:bg-orange-50/20 cursor-pointer group transition-colors"
+                          className="flex items-center justify-between px-4 py-3.5 hover:bg-primary/10/20 cursor-pointer group transition-colors"
                         >
-                          <span className="font-semibold text-sm text-gray-700 group-hover:text-[#FF6B00] transition-colors">
+                          <span className="font-semibold text-sm text-card-foreground group-hover:text-primary transition-colors">
                             {rec}
                           </span>
                           <div className="flex items-center gap-2 text-muted-foreground">
                             {isExpanded ? (
-                              <ChevronUp className="h-4 w-4 text-[#FF6B00]" />
+                              <ChevronUp className="h-4 w-4 text-primary" />
                             ) : (
                               <ChevronDown className="h-4 w-4" />
                             )}
@@ -1970,16 +1983,16 @@ function EmployeeProfileModalInner({
                         </div>
 
                         {isExpanded && (
-                          <div className="bg-gray-50/50 p-4 border-t border-gray-100 space-y-4 animate-in slide-in-from-top-1 duration-150">
+                          <div className="bg-secondary/20 p-4 border-t border-border/50 space-y-4 animate-in slide-in-from-top-1 duration-150">
                             {/* LEAVE REQUESTS */}
                             {rec === "Leave Requests" &&
                               (() => {
                                 const empLeaves = leaves.filter((l) => l.empId === employee.id);
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Type</th>
                                             <th className="p-2.5">Dates</th>
@@ -1988,9 +2001,9 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empLeaves.map((l) => (
-                                            <tr key={l.id} className="hover:bg-gray-50">
+                                            <tr key={l.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium">{l.type}</td>
                                               <td className="p-2.5 text-muted-foreground">
                                                 {l.fromDate} to {l.toDate}
@@ -2005,7 +2018,7 @@ function EmployeeProfileModalInner({
                                                 <span
                                                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                                     l.status === "Approved"
-                                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                      ? "bg-primary/10 text-emerald-700 border border-primary/20"
                                                       : l.status === "Rejected"
                                                         ? "bg-red-50 text-red-700 border border-red-100"
                                                         : "bg-amber-50 text-amber-700 border border-amber-100"
@@ -2045,15 +2058,15 @@ function EmployeeProfileModalInner({
                                     </div>
 
                                     {/* Add Form */}
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Apply / Log Leave
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                                         <select
                                           value={addLeaveType}
                                           onChange={(e) => setAddLeaveType(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs focus:ring-1 focus:ring-[#FF6B00] outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs focus:ring-1 focus:ring-primary outline-none"
                                         >
                                           <option>Sick Leave</option>
                                           <option>Casual Leave</option>
@@ -2063,20 +2076,20 @@ function EmployeeProfileModalInner({
                                           type="date"
                                           value={addLeaveFrom}
                                           onChange={(e) => setAddLeaveFrom(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="date"
                                           value={addLeaveTo}
                                           onChange={(e) => setAddLeaveTo(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="text"
                                           placeholder="Reason"
                                           value={addLeaveReason}
                                           onChange={(e) => setAddLeaveReason(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none col-span-1 md:col-span-1"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none col-span-1 md:col-span-1"
                                         />
                                       </div>
                                       <div className="text-right">
@@ -2099,7 +2112,7 @@ function EmployeeProfileModalInner({
                                             setAddLeaveTo("");
                                             setAddLeaveReason("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Apply Leave
                                         </Button>
@@ -2115,9 +2128,9 @@ function EmployeeProfileModalInner({
                                 const empAtt = attendance.filter((a) => a.empId === employee.id);
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Date</th>
                                             <th className="p-2.5">Clock In</th>
@@ -2127,11 +2140,11 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empAtt.map((a) => (
-                                            <tr key={a.id} className="hover:bg-gray-50">
+                                            <tr key={a.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium">{a.date}</td>
-                                              <td className="p-2.5 text-emerald-600 font-semibold">
+                                              <td className="p-2.5 text-primary font-semibold">
                                                 {a.clockIn || "--"}
                                               </td>
                                               <td className="p-2.5 text-amber-600 font-semibold">
@@ -2144,7 +2157,7 @@ function EmployeeProfileModalInner({
                                                 <span
                                                   className={`px-2 py-0.5 rounded-full text-[10px] font-bold ${
                                                     a.status === "Present"
-                                                      ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                                      ? "bg-primary/10 text-emerald-700 border border-primary/20"
                                                       : "bg-red-50 text-red-700 border border-red-100"
                                                   }`}
                                                 >
@@ -2181,8 +2194,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Add Attendance Entry
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -2190,26 +2203,26 @@ function EmployeeProfileModalInner({
                                           type="date"
                                           value={addAttDate}
                                           onChange={(e) => setAddAttDate(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="text"
                                           placeholder="Clock In Time"
                                           value={addAttIn}
                                           onChange={(e) => setAddAttIn(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="text"
                                           placeholder="Clock Out Time"
                                           value={addAttOut}
                                           onChange={(e) => setAddAttOut(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <select
                                           value={addAttLoc}
                                           onChange={(e) => setAddAttLoc(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         >
                                           <option>JTM Mall Office</option>
                                           <option>Work from Home</option>
@@ -2237,7 +2250,7 @@ function EmployeeProfileModalInner({
                                             setAttendance([newA, ...attendance]);
                                             setAddAttDate("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Add Record
                                         </Button>
@@ -2253,9 +2266,9 @@ function EmployeeProfileModalInner({
                                 const empRev = reviews.filter((r) => r.empId === employee.id);
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Period</th>
                                             <th className="p-2.5">Rating</th>
@@ -2265,9 +2278,9 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empRev.map((r) => (
-                                            <tr key={r.id} className="hover:bg-gray-50">
+                                            <tr key={r.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium">{r.period}</td>
                                               <td className="p-2.5 text-orange-500 font-semibold">
                                                 {r.rating} / 5.0
@@ -2312,8 +2325,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Add Performance Review
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
@@ -2322,12 +2335,12 @@ function EmployeeProfileModalInner({
                                           placeholder="Period (e.g. Q2 2026)"
                                           value={addReviewPeriod}
                                           onChange={(e) => setAddReviewPeriod(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <select
                                           value={addReviewRating}
                                           onChange={(e) => setAddReviewRating(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         >
                                           <option>5.0</option>
                                           <option>4.5</option>
@@ -2340,7 +2353,7 @@ function EmployeeProfileModalInner({
                                           placeholder="Feedback Comments"
                                           value={addReviewFeedback}
                                           onChange={(e) => setAddReviewFeedback(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none col-span-2"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none col-span-2"
                                         />
                                       </div>
                                       <div className="text-right">
@@ -2363,7 +2376,7 @@ function EmployeeProfileModalInner({
                                             setAddReviewPeriod("");
                                             setAddReviewFeedback("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Save Review
                                         </Button>
@@ -2381,9 +2394,9 @@ function EmployeeProfileModalInner({
                                 ); // General handbook or user files
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Doc Name</th>
                                             <th className="p-2.5">Type</th>
@@ -2392,9 +2405,9 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empDocs.map((d) => (
-                                            <tr key={d.id} className="hover:bg-gray-50">
+                                            <tr key={d.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium flex items-center gap-1.5">
                                                 <FileText className="h-3.5 w-3.5 text-orange-500 shrink-0" />
                                                 <span className="truncate max-w-[150px]">
@@ -2430,8 +2443,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Upload / Add Document Record
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -2440,12 +2453,12 @@ function EmployeeProfileModalInner({
                                           placeholder="File Name (e.g. Passport.pdf)"
                                           value={addDocName}
                                           onChange={(e) => setAddDocName(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <select
                                           value={addDocType}
                                           onChange={(e) => setAddDocType(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         >
                                           <option>Resume</option>
                                           <option>Offer Letter</option>
@@ -2457,7 +2470,7 @@ function EmployeeProfileModalInner({
                                           placeholder="File Size (e.g. 500 KB)"
                                           value={addDocSize}
                                           onChange={(e) => setAddDocSize(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                       </div>
                                       <div className="text-right">
@@ -2476,7 +2489,7 @@ function EmployeeProfileModalInner({
                                             setHrFiles([...hrFiles, newD]);
                                             setAddDocName("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Log Document
                                         </Button>
@@ -2492,9 +2505,9 @@ function EmployeeProfileModalInner({
                                 const empPay = payroll.filter((p) => p.empId === employee.id);
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Month</th>
                                             <th className="p-2.5">Net Salary</th>
@@ -2504,11 +2517,11 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empPay.map((p) => (
-                                            <tr key={p.id} className="hover:bg-gray-50">
+                                            <tr key={p.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium">{p.month}</td>
-                                              <td className="p-2.5 text-gray-800 font-bold">
+                                              <td className="p-2.5 text-foreground font-bold">
                                                 ₹{p.salary.toLocaleString("en-IN")}
                                               </td>
                                               <td className="p-2.5 text-muted-foreground">
@@ -2518,7 +2531,7 @@ function EmployeeProfileModalInner({
                                                 {p.date}
                                               </td>
                                               <td className="p-2.5">
-                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-100">
+                                                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-emerald-700 border border-primary/20">
                                                   {p.status}
                                                 </span>
                                               </td>
@@ -2552,8 +2565,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Record Salary Disbursal
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -2562,19 +2575,19 @@ function EmployeeProfileModalInner({
                                           placeholder="Month (e.g. June 2026)"
                                           value={addPayMonth}
                                           onChange={(e) => setAddPayMonth(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="number"
                                           placeholder="Amount (INR)"
                                           value={addPaySalary}
                                           onChange={(e) => setAddPaySalary(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <select
                                           value={addPayStatus}
                                           onChange={(e) => setAddPayStatus(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         >
                                           <option>Paid</option>
                                           <option>Processing</option>
@@ -2598,7 +2611,7 @@ function EmployeeProfileModalInner({
                                             setAddPayMonth("");
                                             setAddPaySalary("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Disburse Salary
                                         </Button>
@@ -2614,9 +2627,9 @@ function EmployeeProfileModalInner({
                                 const empAssets = assets.filter((a) => a.empId === employee.id);
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Asset Name</th>
                                             <th className="p-2.5">Type</th>
@@ -2625,9 +2638,9 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empAssets.map((a) => (
-                                            <tr key={a.id} className="hover:bg-gray-50">
+                                            <tr key={a.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium">{a.name}</td>
                                               <td className="p-2.5 text-muted-foreground">
                                                 {a.type}
@@ -2668,8 +2681,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Assign Company Asset
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -2678,19 +2691,19 @@ function EmployeeProfileModalInner({
                                           placeholder="Asset Name (e.g. iPhone 13)"
                                           value={addAssetName}
                                           onChange={(e) => setAddAssetName(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="text"
                                           placeholder="Serial / Tag Number"
                                           value={addAssetSerial}
                                           onChange={(e) => setAddAssetSerial(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <select
                                           value={addAssetType}
                                           onChange={(e) => setAddAssetType(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         >
                                           <option>Laptop</option>
                                           <option>Mobile Phone</option>
@@ -2718,7 +2731,7 @@ function EmployeeProfileModalInner({
                                             setAddAssetName("");
                                             setAddAssetSerial("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Assign Asset
                                         </Button>
@@ -2736,9 +2749,9 @@ function EmployeeProfileModalInner({
                                 );
                                 return (
                                   <div className="space-y-3">
-                                    <div className="overflow-x-auto border border-gray-200 rounded-lg bg-white">
+                                    <div className="overflow-x-auto border border-border rounded-lg bg-card">
                                       <table className="w-full text-left text-xs">
-                                        <thead className="bg-gray-50 text-gray-700 font-bold border-b border-gray-200">
+                                        <thead className="bg-secondary/30 text-card-foreground font-bold border-b border-border">
                                           <tr>
                                             <th className="p-2.5">Certificate Name</th>
                                             <th className="p-2.5">Issuer</th>
@@ -2746,11 +2759,11 @@ function EmployeeProfileModalInner({
                                             <th className="p-2.5 text-right">Action</th>
                                           </tr>
                                         </thead>
-                                        <tbody className="divide-y divide-gray-100">
+                                        <tbody className="divide-y divide-border/50">
                                           {empCerts.map((c) => (
-                                            <tr key={c.id} className="hover:bg-gray-50">
+                                            <tr key={c.id} className="hover:bg-secondary/50">
                                               <td className="p-2.5 font-medium flex items-center gap-1.5">
-                                                <Award className="h-3.5 w-3.5 text-[#FF6B00]" />
+                                                <Award className="h-3.5 w-3.5 text-primary" />
                                                 <span>{c.name}</span>
                                               </td>
                                               <td className="p-2.5 text-muted-foreground">
@@ -2791,8 +2804,8 @@ function EmployeeProfileModalInner({
                                       </table>
                                     </div>
 
-                                    <div className="bg-white p-3.5 rounded-lg border border-gray-200 space-y-2.5">
-                                      <p className="text-xs font-bold text-gray-800">
+                                    <div className="bg-card p-3.5 rounded-lg border border-border space-y-2.5">
+                                      <p className="text-xs font-bold text-foreground">
                                         Add Training Certificate
                                       </p>
                                       <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
@@ -2801,14 +2814,14 @@ function EmployeeProfileModalInner({
                                           placeholder="Certificate Name"
                                           value={addCertName}
                                           onChange={(e) => setAddCertName(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                         <input
                                           type="text"
                                           placeholder="Issuing Authority (e.g. Udemy)"
                                           value={addCertIssuer}
                                           onChange={(e) => setAddCertIssuer(e.target.value)}
-                                          className="h-8 rounded border border-gray-200 bg-white px-2 text-xs outline-none"
+                                          className="h-8 rounded border border-border bg-card px-2 text-xs outline-none"
                                         />
                                       </div>
                                       <div className="text-right">
@@ -2830,7 +2843,7 @@ function EmployeeProfileModalInner({
                                             setAddCertName("");
                                             setAddCertIssuer("");
                                           }}
-                                          className="h-7 text-[11px] px-3 bg-[#FF6B00] text-white hover:bg-[#E05E00]"
+                                          className="h-7 text-[11px] px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                                         >
                                           Log Certificate
                                         </Button>
@@ -2857,12 +2870,12 @@ function EmployeeProfileModalInner({
         <Dialog open={showCredModal} onOpenChange={setShowCredModal}>
           <DialogContent className="max-w-sm" aria-describedby="cred-modal-desc">
             <DialogTitle className="flex items-center gap-2 text-base font-bold">
-              <Key className="h-4 w-4 text-purple-600" />
+              <Key className="h-4 w-4 text-primary" />
               Set Login Credentials
             </DialogTitle>
             <DialogDescription id="cred-modal-desc" className="text-xs text-muted-foreground">
               Assign a username and password so{" "}
-              <span className="font-semibold text-gray-800">{employee.name}</span> can log in to the
+              <span className="font-semibold text-foreground">{employee.name}</span> can log in to the
               CRM portal.
             </DialogDescription>
             <div className="mt-2 space-y-4">
@@ -2875,7 +2888,7 @@ function EmployeeProfileModalInner({
                   value={credUsername}
                   onChange={(e) => setCredUsername(e.target.value)}
                   placeholder="e.g. nikita"
-                  className="h-9 text-sm focus-visible:ring-purple-500"
+                  className="h-9 text-sm focus-visible:ring-primary"
                 />
               </div>
 
@@ -2890,12 +2903,12 @@ function EmployeeProfileModalInner({
                     value={credPassword}
                     onChange={(e) => setCredPassword(e.target.value)}
                     placeholder="Min. 4 characters"
-                    className="h-9 text-sm pr-10 focus-visible:ring-purple-500"
+                    className="h-9 text-sm pr-10 focus-visible:ring-primary"
                   />
                   <button
                     type="button"
                     onClick={() => setShowCredPass(!showCredPass)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-gray-700"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-card-foreground"
                   >
                     {showCredPass ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
@@ -2912,7 +2925,7 @@ function EmployeeProfileModalInner({
                   value={credConfirm}
                   onChange={(e) => setCredConfirm(e.target.value)}
                   placeholder="Re-enter password"
-                  className="h-9 text-sm focus-visible:ring-purple-500"
+                  className="h-9 text-sm focus-visible:ring-primary"
                 />
               </div>
 
@@ -2925,7 +2938,7 @@ function EmployeeProfileModalInner({
 
               {/* Success */}
               {credSaved && (
-                <p className="text-xs font-medium text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2 flex items-center gap-2">
+                <p className="text-xs font-medium text-emerald-700 bg-primary/10 border border-emerald-200 rounded-lg px-3 py-2 flex items-center gap-2">
                   <Check className="h-4 w-4" /> Credentials saved! Employee can now log in.
                 </p>
               )}
@@ -2934,7 +2947,7 @@ function EmployeeProfileModalInner({
               <div className="flex gap-2 pt-1">
                 <Button
                   onClick={handleSaveCredentials}
-                  className="flex-1 gap-2 bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold h-9"
+                  className="flex-1 gap-2 bg-primary hover:bg-primary/90 text-primary-foreground text-xs font-bold h-9"
                 >
                   <Check className="h-4 w-4" /> Save Credentials
                 </Button>
@@ -2947,7 +2960,7 @@ function EmployeeProfileModalInner({
                 </Button>
               </div>
 
-              <p className="text-[10px] text-muted-foreground text-center pt-1 border-t border-gray-100">
+              <p className="text-[10px] text-muted-foreground text-center pt-1 border-t border-border/50">
                 Employee ID: <span className="font-mono font-semibold">{employee.id}</span> · Role:{" "}
                 <span className="font-semibold">{employee.role}</span>
               </p>
@@ -2961,8 +2974,8 @@ function EmployeeProfileModalInner({
 
 function Card({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div id={title} className="bg-white rounded-2xl border border-gray-200 p-5 shadow-sm space-y-4">
-      <h3 className="font-bold text-base text-gray-900 border-b border-gray-100 pb-2">{title}</h3>
+    <div id={title} className="bg-card rounded-2xl border border-border p-5 shadow-sm space-y-4">
+      <h3 className="font-bold text-base text-foreground border-b border-border/50 pb-2">{title}</h3>
       <div>{children}</div>
     </div>
   );
@@ -2988,7 +3001,7 @@ function EditField({
         type={type}
         value={value || ""}
         onChange={(e) => onChange(e.target.value)}
-        className="h-8 text-xs focus-visible:ring-[#FF6B00]"
+        className="h-8 text-xs focus-visible:ring-primary"
       />
     </div>
   );

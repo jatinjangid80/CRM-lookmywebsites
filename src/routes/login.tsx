@@ -20,7 +20,7 @@ function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [dynamicHints, setDynamicHints] = useState<
-    { label: string; username: string; password: string }[]
+    { label: string; username: string; password: string; accessRole?: string }[]
   >([]);
 
   const loadDynamicHints = async () => {

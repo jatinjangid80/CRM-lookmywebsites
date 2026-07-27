@@ -44,14 +44,14 @@ export function EmployeeProfileCard({ employeeName, compact = false }: { employe
 
   if (!employee) {
     return (
-      <div className="bg-white rounded-2xl border border-gray-200 p-4 shadow-sm flex items-center gap-4">
+      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex items-center gap-4">
         <div className="h-12 w-12 rounded-2xl bg-primary/10 border border-primary/20 flex items-center justify-center shrink-0">
           <span className="text-xl font-bold text-primary">
             {employeeName ? employeeName.charAt(0).toUpperCase() : "?"}
           </span>
         </div>
         <div>
-          <p className="font-bold text-gray-900">{employeeName}</p>
+          <p className="font-bold text-foreground">{employeeName}</p>
           <p className="text-xs text-muted-foreground">Assignee details not found</p>
         </div>
       </div>
@@ -69,9 +69,9 @@ export function EmployeeProfileCard({ employeeName, compact = false }: { employe
     );
 
   return (
-    <div className={`bg-white rounded-2xl border border-gray-200 ${compact ? 'p-3 gap-3' : 'p-4 gap-4'} shadow-sm flex flex-col sm:flex-row items-center sm:justify-start`}>
+    <div className={`bg-card rounded-2xl border border-border ${compact ? 'p-3 gap-3' : 'p-4 gap-4'} shadow-sm flex flex-col sm:flex-row items-center sm:justify-start`}>
       {imgError || !employee.avatar ? (
-        <div className={`${compact ? 'h-10 w-10 text-lg rounded-xl ring-2' : 'h-16 w-16 text-2xl rounded-2xl ring-4'} bg-primary/10 border border-primary/20 ring-[#FF6B00]/10 flex items-center justify-center shrink-0`}>
+        <div className={`${compact ? 'h-10 w-10 text-lg rounded-xl ring-2' : 'h-16 w-16 text-2xl rounded-2xl ring-4'} bg-primary/10 border border-primary/20 ring-primary/10 flex items-center justify-center shrink-0`}>
           <span className="font-bold text-primary">
             {employee.name ? employee.name.charAt(0).toUpperCase() : "?"}
           </span>
@@ -81,12 +81,12 @@ export function EmployeeProfileCard({ employeeName, compact = false }: { employe
           src={employee.avatar}
           alt={employee.name}
           onError={() => setImgError(true)}
-          className={`${compact ? 'h-10 w-10 rounded-xl ring-2' : 'h-16 w-16 rounded-2xl ring-4'} object-cover border border-gray-200 ring-[#FF6B00]/10 shrink-0`}
+          className={`${compact ? 'h-10 w-10 rounded-xl ring-2' : 'h-16 w-16 rounded-2xl ring-4'} object-cover border border-border ring-primary/10 shrink-0`}
         />
       )}
       <div className={`text-center sm:text-left ${compact ? '' : 'space-y-1'}`}>
         <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
-          <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-bold font-display text-gray-900`}>{employee.name}</h3>
+          <h3 className={`${compact ? 'text-sm' : 'text-lg'} font-bold font-display text-foreground`}>{employee.name}</h3>
           <span
             className={`rounded-full border px-2 py-0.5 text-[10px] font-semibold ${STATUS_COLOR[employee.status as keyof typeof STATUS_COLOR] || "bg-slate-100"}`}
           >
@@ -95,7 +95,7 @@ export function EmployeeProfileCard({ employeeName, compact = false }: { employe
         </div>
         {!compact && (
           <>
-            <p className="text-[#FF6B00] font-semibold text-xs">
+            <p className="text-primary font-semibold text-xs">
               {employee.role} • {empDetails.department}
             </p>
             <div className="flex flex-wrap items-center justify-center sm:justify-start gap-x-4 gap-y-1 text-xs text-muted-foreground pt-1">

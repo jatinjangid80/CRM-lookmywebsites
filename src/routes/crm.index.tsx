@@ -367,7 +367,7 @@ function Dashboard() {
   const myPendingTasks = tasksList
     .filter(
       (t) =>
-        (user?.user?.role === "admin" || t.assignee === user?.user?.name) && t.status !== "Done",
+        (user?.role === "admin" || t.assignee === user?.name) && t.status !== "Done",
     )
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 5);
@@ -697,7 +697,7 @@ function Dashboard() {
                         ) : (
                           <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
                             <span className="text-sm font-bold text-primary">
-                              {staff.name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
+                              {staff.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
                             </span>
                           </div>
                         )}

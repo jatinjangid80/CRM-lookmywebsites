@@ -19,34 +19,6 @@ export interface MockCredential {
   user: AuthUser;
 }
 
-export const MOCK_USERS: MockCredential[] = [
-  {
-    username: "admin",
-    password: "admin123",
-    user: {
-      role: "admin",
-      name: "Manvendra Singhal",
-      empId: "LMH-01",
-      avatar: "",
-      email: "bookings@lookmyholidays.in",
-      phone: "9413095483",
-    },
-  },
-  {
-    username: "suman",
-    password: "emp123",
-    user: {
-      role: "manager",
-      name: "Suman Yadav",
-      empId: "LMH-02",
-      avatar: "",
-      email: "insurancesolutions58@gmail.com",
-      phone: "9887155570",
-    },
-  },
-
-];
-
 /* ─── Storage key ─── */
 const AUTH_KEY = "crm_auth_v1";
 
@@ -70,21 +42,11 @@ export function clearAuth(): void {
 }
 
 export async function login(username: string, password: string): Promise<AuthUser | null> {
-  const match = MOCK_USERS.find(
-    (u) => u.username.toLowerCase() === username.trim().toLowerCase() && u.password === password,
-  );
-  if (match) {
-    setAuth(match.user);
-    return match.user;
-  }
-
-  // Check dynamic employees from Supabase
+  // Check dynamic employees from Supabase FIRST
   try {
     const { data } = await supabase.from("employees").select("*");
     if (data) {
       const parsedData = data.map((emp: any) => {
-        // profile_details is now stored directly as JSONB
-        // But also support old format where it was packed into description
         let profile_details = emp.profile_details || null;
         if (!profile_details && typeof emp.description === "string" && emp.description.includes("_isMeta")) {
           try {
@@ -106,7 +68,12 @@ export async function login(username: string, password: string): Promise<AuthUse
       if (dynamicMatch) {
         const accessRole = dynamicMatch.accessRole
           ? dynamicMatch.accessRole.toLowerCase()
-          : dynamicMatch.role === "HR & Admin Manager" || dynamicMatch.role === "admin"
+          : (dynamicMatch.role === "HR & Admin Manager" || 
+             dynamicMatch.role?.toLowerCase() === "admin" ||
+             dynamicMatch.role?.toLowerCase().includes("ceo") ||
+             dynamicMatch.role?.toLowerCase().includes("founder") ||
+             dynamicMatch.profile_details?.username === "admin" ||
+             dynamicMatch.name === "Manvendra Singhal")
             ? "admin"
             : "employee";
         const user: AuthUser = {

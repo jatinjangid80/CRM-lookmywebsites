@@ -141,7 +141,7 @@ function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
 
   const normalizeVendor = (vendor: any) => {
-    let extra = {};
+    let extra: any = {};
     if (typeof vendor.notes === 'string' && vendor.notes.startsWith('{')) {
       try {
         extra = JSON.parse(vendor.notes);

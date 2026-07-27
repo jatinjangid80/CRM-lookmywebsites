@@ -16,7 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2 } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -487,7 +487,7 @@ function AccountsPage() {
     const newReq: PaymentRequest = {
       id: `PRQ-${String(paymentRequests.length + 1).padStart(3, '0')}`,
       date: newPaymentRequest.date || new Date().toISOString().split('T')[0],
-      employeeId: auth?.id || "EMP-001",
+      employeeId: auth?.empId || "EMP-001",
       employeeName: auth?.name || "Current User",
       invoiceId: newPaymentRequest.invoiceId || "",
       entityType: newPaymentRequest.entityType as any,
@@ -530,7 +530,7 @@ function AccountsPage() {
     setPaymentRequests(prev => prev.map(req => {
       if (req.id !== actionPopupReqId) return req;
 
-      let actionDesc = actionPopupType;
+      let actionDesc: string = actionPopupType;
       if (actionPopupType === "Accounts Verified") actionDesc = "Verified by Accounts";
 
       const newAuditLog = [...req.auditLog, {
@@ -642,13 +642,13 @@ function AccountsPage() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="px-6 py-4 font-semibold">Date</th>
-                  <th className="px-6 py-4 font-semibold">Category</th>
-                  <th className="px-6 py-4 font-semibold">Description</th>
-                  <th className="px-6 py-4 font-semibold">Payment Mode</th>
-                  <th className="px-6 py-4 font-semibold">Amount</th>
-                  <th className="px-6 py-4 font-semibold">Added By</th>
-                  <th className="px-6 py-4 font-semibold text-center">Status</th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Category <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Description <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Payment Mode <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold text-center"><div className="flex items-center justify-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -866,12 +866,12 @@ function AccountsPage() {
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/30 text-muted-foreground text-xs uppercase font-semibold">
                   <tr>
-                    <th className="px-6 py-4">Date</th>
-                    <th className="px-6 py-4">Type</th>
-                    <th className="px-6 py-4">Entity</th>
-                    <th className="px-6 py-4">Mode</th>
-                    <th className="px-6 py-4 text-right">Amount</th>
-                    <th className="px-6 py-4 text-right">Added By</th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mode <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -967,11 +967,11 @@ function AccountsPage() {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
                           <tr>
-                            <th className="px-6 py-4">Request ID</th>
-                            <th className="px-6 py-4">Employee</th>
-                            <th className="px-6 py-4">Entity</th>
-                            <th className="px-6 py-4">Amount</th>
-                            <th className="px-6 py-4">Status</th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Request ID <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Employee <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
                             <th className="px-6 py-4 text-right">Actions</th>
                           </tr>
                         </thead>
@@ -1048,13 +1048,8 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="customer-status" className="space-y-6 mt-6">
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
-            <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Customer 360° Overview</h3>
-                <p className="text-sm text-muted-foreground">Track all leads, tasks, bookings, and revenue by customer. Click on a row to view details.</p>
-              </div>
-              <div className="relative w-full sm:w-64">
+          <div className="flex justify-end animate-in fade-in duration-300">
+            <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search customers..."
@@ -1063,17 +1058,19 @@ function AccountsPage() {
                   onChange={(e) => setCustomerSearchQuery(e.target.value)}
                 />
               </div>
-            </div>
+          </div>
+          
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/50 text-muted-foreground font-semibold">
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
-                    <th className="px-6 py-4">Customer Name</th>
-                    <th className="px-6 py-4">Phone No.</th>
-                    <th className="px-6 py-4">Payments Pending</th>
-                    <th className="px-6 py-4">Received Amounts</th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Revenue</th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Customer Name <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Phone No. <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Received Amounts <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Revenue <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -1102,69 +1099,64 @@ function AccountsPage() {
                       if (fu.customerName) allCustomerNames.add(fu.customerName);
                     });
                     
-                    const uniqueCustomers = Array.from(allCustomerNames)
+                    const customerDataList = Array.from(allCustomerNames)
                       .filter(Boolean)
                       .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
-                      .filter(name => {
-                        const customerData = customers.find(c => c.name === name) || { id: `synth-${name}`, name };
-                        const normalizedName = (name || "").trim().toLowerCase();
-                        const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedName || (l.customer || "").trim().toLowerCase() === normalizedName);
-                        const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedName || (t.lead || "").trim().toLowerCase() === normalizedName);
-                        const cBookings = allBookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedName);
-                        const cFollowUps = followUpsList.filter(f => (f.customerName || "").trim().toLowerCase() === normalizedName || f.customerId === customerData.id);
-                        const cRevenue = transactions
-                          .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === name) && tx.type === "Receipt")
-                          .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-                        return cLeads.length > 0 || cTasks.length > 0 || cBookings.length > 0 || cRevenue > 0 || cFollowUps.length > 0;
+                      .map((customerName, index) => {
+                        const customerData = customers.find(c => c.name === customerName) || { id: `synth-${index}`, name: customerName };
+                        const normalizedCustomerName = (customerName || "").trim().toLowerCase();
+                        
+                        const cBookings = allBookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedCustomerName);
+                        const cPolicies = insurancePolicies.filter(p => (p.customerName || "").trim().toLowerCase() === normalizedCustomerName);
+                        
+                        let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                        let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                        
+                        cTotalRevenue += cPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
+                        const policyIds = cPolicies.map(p => p.id);
+                        const cPolicyTxs = transactions.filter(tx => tx.type === "Receipt" && tx.entityType === "Customer" && policyIds.includes(tx.invoiceId));
+                        cReceivedAmount += cPolicyTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                        
+                        const cPendingBalance = cTotalRevenue - cReceivedAmount;
+                        
+                        return {
+                          customerName,
+                          customerData,
+                          cBookings,
+                          cPolicies,
+                          cTotalRevenue,
+                          cReceivedAmount,
+                          cPendingBalance
+                        };
                       })
-                      .sort();
+                      .filter(data => data.cPendingBalance > 0)
+                      .sort((a, b) => a.customerName.localeCompare(b.customerName));
                     
-                    return uniqueCustomers.length === 0 ? (
+                    return customerDataList.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                           <div className="flex flex-col items-center gap-2">
                             <Search className="h-8 w-8 opacity-20" />
-                            <p>No customers found.</p>
+                            <p>No customers with pending payments found.</p>
                           </div>
                         </td>
                       </tr>
-                    ) : uniqueCustomers.map((customerName, index) => {
-                      // Attempt to find full customer object if it exists in the 'customers' table
-                      const customerData = customers.find(c => c.name === customerName) || { id: `synth-${index}`, name: customerName };
-                      
+                    ) : customerDataList.map(({
+                          customerName,
+                          customerData,
+                          cBookings,
+                          cPolicies,
+                          cTotalRevenue,
+                          cReceivedAmount,
+                          cPendingBalance
+                        }) => {
                       const isExpanded = expandedCustomer === customerData.id;
-                      const normalizedCustomerName = (customerName || "").trim().toLowerCase();
-                      const cLeads = leads.filter(l => (l.name || "").trim().toLowerCase() === normalizedCustomerName || (l.customer || "").trim().toLowerCase() === normalizedCustomerName);
-                      const cTasks = tasks.filter(t => (t.customer_id || "").trim().toLowerCase() === normalizedCustomerName || (t.lead || "").trim().toLowerCase() === normalizedCustomerName);
-                      const cBookings = allBookings.filter(b => (b.customer || "").trim().toLowerCase() === normalizedCustomerName);
-                      const cRevenue = transactions
-                        .filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName) && tx.type === "Receipt")
-                        .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-                      
-                      const activeLeads = cLeads.filter(l => !['Lost', 'Confirmed', 'Completed'].includes(l.status)).length;
-                      const pendingTasks = cTasks.filter(t => t.status !== 'Completed').length;
                       
                       const vendorSet = new Set<string>();
                       cBookings.forEach(b => {
                         if (b.supplier) vendorSet.add(b.supplier);
                       });
                       const cVendors = Array.from(vendorSet);
-                      const cFollowUps = followUpsList.filter(f => f.customerName === customerName || f.customerId === customerData.id);
-                      const cTransactions = transactions.filter(tx => tx.entityType === "Customer" && (tx.entityId === customerData.id || tx.entityId === customerName));
-                      
-                      const cPolicies = insurancePolicies.filter(p => (p.customerName || "").trim().toLowerCase() === normalizedCustomerName);
-                      
-                      let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
-                      let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
-                      
-                      // Include General Insurance Revenue
-                      cTotalRevenue += cPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
-                      // Include General Insurance Received Amounts (From Transactions)
-                      const policyIds = cPolicies.map(p => p.id);
-                      const cPolicyTxs = transactions.filter(tx => tx.type === "Receipt" && tx.entityType === "Customer" && policyIds.includes(tx.invoiceId));
-                      cReceivedAmount += cPolicyTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-                      
-                      const cPendingBalance = cTotalRevenue - cReceivedAmount;
                       
                       return (
                         <React.Fragment key={customerData.id}>
@@ -1200,46 +1192,7 @@ function AccountsPage() {
                         {isExpanded && (
                           <tr className="bg-secondary/5 border-b border-border">
                             <td colSpan={6} className="p-0">
-                              <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 animate-in slide-in-from-top-2 duration-200">
-                                {/* Leads List */}
-                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                  <h4 className="font-semibold flex justify-between items-center text-sm">
-                                    <span>Leads</span>
-                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cLeads.length}</span>
-                                  </h4>
-                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {cLeads.length > 0 ? cLeads.map((lead: any, i: number) => (
-                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
-                                        <div className="flex justify-between items-start mb-1">
-                                          <span className="font-medium">{lead.destination || 'General Inquiry'}</span>
-                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{lead.status}</span>
-                                        </div>
-                                        {lead.budget && <div className="text-muted-foreground mt-1">Budget: {formatINR(lead.budget)}</div>}
-                                      </div>
-                                    )) : <div className="text-xs text-muted-foreground italic">No leads found.</div>}
-                                  </div>
-                                </div>
-                                
-                                {/* Tasks List */}
-                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                  <h4 className="font-semibold flex justify-between items-center text-sm">
-                                    <span>Tasks</span>
-                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cTasks.length}</span>
-                                  </h4>
-                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {cTasks.length > 0 ? cTasks.map((task: any, i: number) => (
-                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
-                                        <div className="flex justify-between items-start mb-1">
-                                          <span className="font-medium line-clamp-1" title={task.title}>{task.title}</span>
-                                        </div>
-                                        <div className="flex justify-between items-center mt-1">
-                                          <span className="text-muted-foreground">{task.assigned_to}</span>
-                                          <span className={`text-[9px] px-1.5 py-0.5 rounded-sm ${task.status === 'Completed' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>{task.status}</span>
-                                        </div>
-                                      </div>
-                                    )) : <div className="text-xs text-muted-foreground italic">No tasks found.</div>}
-                                  </div>
-                                </div>
+                              <div className="p-6 grid grid-cols-1 gap-6 animate-in slide-in-from-top-2 duration-200">
                                 
                                 {/* Bookings List */}
                                 <div className="bg-background rounded-xl border border-border p-4 space-y-3">
@@ -1276,44 +1229,6 @@ function AccountsPage() {
                                   </div>
                                 </div>
                                 
-                                {/* Vendors & Suppliers */}
-                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                  <h4 className="font-semibold flex justify-between items-center text-sm">
-                                    <span>Associated Vendors</span>
-                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cVendors.length}</span>
-                                  </h4>
-                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {cVendors.length > 0 ? cVendors.map((vendor, i) => (
-                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium flex items-center gap-2">
-                                        <Building2 className="h-3 w-3 text-muted-foreground" />
-                                        {vendor}
-                                      </div>
-                                    )) : <div className="text-xs text-muted-foreground italic">No vendors linked.</div>}
-                                  </div>
-                                </div>
-
-                                {/* General Insurance */}
-                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                  <h4 className="font-semibold flex justify-between items-center text-sm">
-                                    <span>Gen. Insurance</span>
-                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{cPolicies.length}</span>
-                                  </h4>
-                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                    {cPolicies.length > 0 ? cPolicies.map((policy: any) => (
-                                      <div key={policy.id} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium">
-                                        <div className="flex justify-between items-center mb-1">
-                                          <span className="truncate">{policy.policyNo || 'Pending'}</span>
-                                          <span className="text-emerald-500 font-semibold">{formatINR(policy.premiumAmount || 0)}</span>
-                                        </div>
-                                        <div className="text-muted-foreground flex justify-between text-[10px]">
-                                          <span>{policy.insuranceCompany}</span>
-                                          <span>{policy.status}</span>
-                                        </div>
-                                      </div>
-                                    )) : <div className="text-xs text-muted-foreground italic">No policies found.</div>}
-                                  </div>
-                                </div>
-                                
                               </div>
                             </td>
                           </tr>
@@ -1328,13 +1243,8 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="vendor-status" className="space-y-6 mt-6">
-          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
-            <div className="p-6 border-b border-border flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-              <div>
-                <h3 className="text-lg font-semibold text-foreground">Vendor 360° Overview</h3>
-                <p className="text-sm text-muted-foreground">Track all bookings, customers, and payments by vendor. Click on a row to view details.</p>
-              </div>
-              <div className="relative w-full sm:w-64">
+          <div className="flex justify-end animate-in fade-in duration-300">
+            <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search vendors..."
@@ -1343,18 +1253,20 @@ function AccountsPage() {
                   onChange={(e) => setVendorSearchQuery(e.target.value)}
                 />
               </div>
-            </div>
+          </div>
+
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/50 text-muted-foreground font-semibold">
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
-                    <th className="px-6 py-4">Vendor Name</th>
-                    <th className="px-6 py-4">Mobile</th>
-                    <th className="px-6 py-4">Bookings</th>
-                    <th className="px-6 py-4">Payments Pending</th>
-                    <th className="px-6 py-4">Payments (Out)</th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl">Total Billed</th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Vendor Name <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mobile <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Bookings <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments (Out) <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Billed <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -2157,7 +2069,7 @@ function AccountsPage() {
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Entity Type</Label>
-                <Select value={newPaymentRequest.entityType} onValueChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityType: v, entityId: "" })}>
+                <Select value={newPaymentRequest.entityType} onValueChange={v => setNewPaymentRequest({ ...newPaymentRequest, entityType: v as any, entityId: "" })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Customer">Customer</SelectItem>
@@ -2169,8 +2081,8 @@ function AccountsPage() {
               <div className="space-y-2">
                 <Label>Select {newPaymentRequest.entityType}</Label>
                 <EntityCombobox
-                  entityType={newPaymentRequest.entityType}
-                  value={newPaymentRequest.entityId}
+                  entityType={newPaymentRequest.entityType || ""}
+                  value={newPaymentRequest.entityId || ""}
                   onChange={v => {
                     let pending = 0;
                     let invoiceId = "";

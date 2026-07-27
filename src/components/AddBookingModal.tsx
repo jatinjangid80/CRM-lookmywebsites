@@ -303,7 +303,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
 
     const newBooking: Booking = {
       id: editingBooking?.id || `BK-${Math.floor(1000 + Math.random() * 9000)}`,
-      bookingType,
+      bookingType: bookingType as BookingType,
       supplier,
       bookingDate,
       customer,

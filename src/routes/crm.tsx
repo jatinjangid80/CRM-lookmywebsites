@@ -287,8 +287,8 @@ function CrmLayout() {
                     <button
                       title={isCompact ? n.label : undefined}
                       className={`group w-full flex items-center justify-between ${isCompact ? "justify-center p-3" : "gap-3 px-4 py-2.5"} rounded-full text-sm font-medium transition-all ${active || isSubActive
-                          ? "bg-primary text-primary-foreground shadow-card border-2 border-blue-600 ring-2 ring-transparent"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent border-2 border-transparent"
+                          ? "bg-primary/10 text-primary"
+                          : "text-sidebar-foreground hover:bg-sidebar-accent"
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -311,8 +311,8 @@ function CrmLayout() {
                           to={sub.to.split('?')[0]}
                           search={sub.to.includes('?') ? Object.fromEntries(new URLSearchParams(sub.to.split('?')[1])) : undefined}
                           className={`flex items-center w-full gap-3 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${subActive
-                              ? "bg-orange-100 text-orange-900 shadow-sm"
-                              : "bg-transparent text-foreground hover:bg-orange-50 hover:text-orange-900"
+                              ? "bg-primary/10 text-primary shadow-sm"
+                              : "bg-transparent text-foreground hover:bg-primary/5 hover:text-primary"
                             }`}
                         >
                           {SubIcon && <SubIcon className="h-4 w-4" />}
@@ -331,8 +331,8 @@ function CrmLayout() {
                 to={n.to}
                 title={isCompact ? n.label : undefined}
                 className={`flex items-center ${isCompact ? "justify-center p-3" : "gap-3 px-4 py-2.5"} rounded-full text-sm font-medium transition-all ${active
-                  ? "bg-primary text-primary-foreground shadow-card border-2 border-blue-600 ring-2 ring-transparent"
-                  : "text-sidebar-foreground hover:bg-sidebar-accent border-2 border-transparent"
+                  ? "bg-primary/10 text-primary"
+                  : "text-sidebar-foreground hover:bg-sidebar-accent"
                   }`}
               >
                 <Icon className={isCompact ? "h-6 w-6" : "h-5 w-5"} />
@@ -400,23 +400,23 @@ function CrmLayout() {
                   <div className="px-2 py-1.5 col-span-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-1">
                     Profile & Info
                   </div>
-                  <DropdownMenuItem onClick={() => openProfile("Personal Profile")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Personal Profile")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <User className="h-4 w-4 text-blue-500" />
                     <span>Personal Profile</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Employment Details")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Employment Details")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <UserSquare className="h-4 w-4 text-indigo-500" />
                     <span>Employee Details</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Academic Background")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Academic Background")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <GraduationCap className="h-4 w-4 text-purple-500" />
                     <span>Academic Details</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Family Information")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Family Information")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <Users className="h-4 w-4 text-pink-500" />
                     <span>Family Info</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Contact Information")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Contact Information")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <Phone className="h-4 w-4 text-emerald-500" />
                     <span>Contact</span>
                   </DropdownMenuItem>
@@ -424,19 +424,19 @@ function CrmLayout() {
                   <div className="px-2 py-1.5 col-span-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-2">
                     Work & Docs
                   </div>
-                  <DropdownMenuItem onClick={() => openProfile("Reporting Structure")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Reporting Structure")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <Network className="h-4 w-4 text-amber-500" />
                     <span>Reporting Structure</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Career History")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Career History")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <Briefcase className="h-4 w-4 text-rose-500" />
                     <span>Career</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Documents Center")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Documents Center")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <FolderOpen className="h-4 w-4 text-cyan-500" />
                     <span>Documents Center</span>
                   </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => openProfile("Verification Details")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Verification Details")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <ShieldCheck className="h-4 w-4 text-teal-500" />
                     <span>Verification Details</span>
                   </DropdownMenuItem>
@@ -444,13 +444,13 @@ function CrmLayout() {
                   <div className="px-2 py-1.5 col-span-2 text-[10px] font-bold uppercase tracking-wider text-muted-foreground/60 mt-2">
                     System
                   </div>
-                  <DropdownMenuItem onClick={() => openProfile("Quick Actions")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50">
+                  <DropdownMenuItem onClick={() => openProfile("Quick Actions")} className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg">
                     <Zap className="h-4 w-4 text-yellow-500" />
                     <span>Quick Actions</span>
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => navigate({ to: "/crm/settings" })}
-                    className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg hover:bg-slate-50"
+                    className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg"
                   >
                     <Settings className="h-4 w-4 text-slate-500" />
                     <span>Settings</span>
