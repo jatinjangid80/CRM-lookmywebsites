@@ -8,7 +8,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-
+import { supabase } from "@/lib/supabase";
 import { InsuranceDashboard } from "@/components/insurance/InsuranceDashboard";
 import { InsuranceTable } from "@/components/insurance/InsuranceTable";
 import { InsuranceForm } from "@/components/insurance/InsuranceForm";
@@ -123,18 +123,28 @@ function GeneralInsurancePage() {
     setPolicyToDelete(policy);
   };
 
-  const confirmDeletePolicy = () => {
+  const confirmDeletePolicy = async () => {
     if (policyToDelete) {
       const filtered = policies.filter(p => p.id !== policyToDelete.id);
       setPolicies(filtered);
+      const idToDelete = policyToDelete.id;
       setPolicyToDelete(null);
+      await supabase.from("insurance_policies").delete().eq("id", idToDelete);
     }
   };
 
-  const handleSavePolicy = (updatedData: any) => {
+  const handleSavePolicy = async (updatedData: any) => {
     if (updatedData.id) {
       const newPolicies = policies.map(p => p.id === updatedData.id ? updatedData : p);
       setPolicies(newPolicies);
+      
+      const { id, ...rest } = updatedData;
+      // Extract meta fields that shouldn't be updated directly as columns if they don't exist
+      // Since we are inserting the whole object, let's let useSupabaseTable handle it via reload or 
+      // just pass the object as it is because Supabase will ignore extra columns (or throw error if strict).
+      // Wait, if it throws error for extra columns like school_name if they don't exist.
+      // But they DO exist! The user just showed the schema where school_name is a column.
+      await supabase.from("insurance_policies").update(rest).eq("id", id);
     } else {
       const newPolicy = {
         ...updatedData,
@@ -142,6 +152,7 @@ function GeneralInsurancePage() {
         created_at: new Date().toISOString()
       };
       setPolicies([newPolicy, ...policies]);
+      await supabase.from("insurance_policies").insert([newPolicy]);
     }
     setShowForm(false);
   };

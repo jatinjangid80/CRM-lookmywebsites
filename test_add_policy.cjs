@@ -5,9 +5,14 @@ const VITE_SUPABASE_ANON_KEY = env.match(/VITE_SUPABASE_ANON_KEY=(.*)/)[1];
 const { createClient } = require('@supabase/supabase-js');
 const supabase = createClient(VITE_SUPABASE_URL, VITE_SUPABASE_ANON_KEY);
 async function run() {
-  const { data, error } = await supabase.from('leads').select('*').limit(1);
-  console.log('Columns:', data && data[0] ? Object.keys(data[0]) : 'no data');
-  const { data: idata } = await supabase.from('insurance_leads').select('*').limit(1);
-  console.log('Insurance Columns:', idata && idata[0] ? Object.keys(idata[0]) : 'no data');
+  const newPolicy = {
+    customer_name: "Test Customer",
+    mobile_number: "1234567890",
+    policy_number: "POL123",
+    status: "Active"
+  };
+  const { data, error } = await supabase.from('insurance_policies').insert([newPolicy]).select();
+  console.log('Insert Error:', error);
+  console.log('Inserted Data:', data);
 }
 run();
