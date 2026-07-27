@@ -45,6 +45,9 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         } else if (payload.eventType === "DELETE") {
           setData((prev) => prev.filter((item: any) => item.id !== payload.old.id) as T);
         } else if (payload.eventType === "UPDATE") {
+          // Skip realtime UPDATE echo if we have a pending local sync
+          // (this prevents the server bounce-back from overwriting optimistic UI updates)
+          if (isPendingSync.current) return;
           setData(
             (prev) =>
               prev.map((item: any) =>
@@ -978,12 +981,15 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
   useEffect(() => {
     if (!isLoaded) return;
     if (isPendingSync.current) {
-      isPendingSync.current = false;
       const oldData = lastSyncedData.current;
       lastSyncedData.current = data;
-      syncToSupabase(oldData, data).catch((err) => {
-        console.error(`Error syncing ${tableName} to Supabase:`, err);
-      });
+      syncToSupabase(oldData, data)
+        .catch((err) => {
+          console.error(`Error syncing ${tableName} to Supabase:`, err);
+        })
+        .finally(() => {
+          isPendingSync.current = false;
+        });
     } else {
       // Realtime update or initial load
       lastSyncedData.current = data;
