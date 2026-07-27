@@ -833,30 +833,38 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         // If error is about unknown columns (new migration not run yet), retry with base columns only
         if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
           console.warn(`[${tableName}] Retrying INSERT with base columns only (run the SQL migration to enable all fields)`);
-          let columnsToDrop = [
-            "assignOpsTo","adults","children",
-            "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
-            "checkIn","checkOut","nights","nationality","starRating","mealPreference",
-            "visaType","passportExpiry","country",
-            "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
-            "companyName","eventType",
-          ];
-          
-          if (tableName === "leads") {
-            // leads table packs these into notes — drop from payload
-            columnsToDrop = [...columnsToDrop, "whatsapp", "leadSection", "assignOpsTo", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", "clientCompany", "reference"];
-          }
-          
+          let fallbackRows = [];
           if (tableName === "insurance_leads") {
-            // insurance_leads has REAL columns for these — do NOT drop them
-            columnsToDrop = [...columnsToDrop, "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+            const INS_LEADS_COLS = new Set([
+              "id", "created_at", "name", "phone", "email", "whatsapp", "source", "destination", 
+              "priority", "status", "budget", "notes", "allNotes", "noteDate", "dob", "relationship", 
+              "service", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", 
+              "clientCompany", "reference", "leadSection", "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"
+            ]);
+            fallbackRows = toInsert.map((row: any) => {
+              const safe: any = {};
+              for (const key of Object.keys(row)) {
+                if (INS_LEADS_COLS.has(key)) safe[key] = row[key];
+              }
+              return safe;
+            });
+          } else {
+            let columnsToDrop = [
+              "assignOpsTo","adults","children",
+              "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+              "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+              "visaType","passportExpiry","country",
+              "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+              "companyName","eventType",
+              "whatsapp", "leadSection", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", "clientCompany", "reference",
+              "createdAt", "pax", "packageType", "totalAmount", "amountPaid", "bookingReference", "vendorName", "hotelDetails", "travelDate", "assignedTo"
+            ];
+            fallbackRows = toInsert.map((row: any) => {
+              const safe = { ...row };
+              for (const col of columnsToDrop) delete safe[col];
+              return safe;
+            });
           }
-          
-          const fallbackRows = toInsert.map((row: any) => {
-            const safe = { ...row };
-            for (const col of columnsToDrop) delete safe[col];
-            return safe;
-          });
           const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
           if (err2) {
             console.error(`[${tableName}] Fallback INSERT also failed:`, err2.message, err2.details);
@@ -924,26 +932,35 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         
         // Fallback for leads/insurance_leads UPDATE
         if ((tableName === "leads" || tableName === "insurance_leads") && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
-          let columnsToDrop = [
-            "assignOpsTo","adults","children",
-            "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
-            "checkIn","checkOut","nights","nationality","starRating","mealPreference",
-            "visaType","passportExpiry","country",
-            "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
-            "companyName","eventType",
-          ];
-          
-          if (tableName === "leads") {
-            columnsToDrop = [...columnsToDrop, "whatsapp", "leadSection", "assignOpsTo", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", "clientCompany", "reference"];
-          }
-          
+          let safe: any = { ...item };
           if (tableName === "insurance_leads") {
-            // insurance_leads has REAL columns — only drop fields not in the schema
-            columnsToDrop = [...columnsToDrop, "travelDate", "visaCategory", "eventDate", "avatar", "assignedTo"];
+            const INS_LEADS_COLS = new Set([
+              "id", "created_at", "name", "phone", "email", "whatsapp", "source", "destination", 
+              "priority", "status", "budget", "notes", "allNotes", "noteDate", "dob", "relationship", 
+              "service", "assignToOps", "policyType", "queryType", "insuranceDate", "expiryDate", 
+              "clientCompany", "reference", "leadSection"
+            ]);
+            const filteredSafe: any = {};
+            for (const key of Object.keys(item)) {
+              if (INS_LEADS_COLS.has(key)) filteredSafe[key] = item[key];
+            }
+            safe = filteredSafe;
+          } else {
+            let columnsToDrop = [
+              "assignOpsTo","adults","children",
+              "sourceCity","destinationCity","infants","fareType","directFlight","flightClass","preferredAirline",
+              "checkIn","checkOut","nights","nationality","starRating","mealPreference",
+              "visaType","passportExpiry","country",
+              "goingFrom","noOfDays","inclusions","theme","hotelPreference","foodPreference",
+              "companyName","eventType",
+              "whatsapp", "leadSection", "assignToOps", "policyType", "queryType", 
+              "insuranceDate", "expiryDate", "clientCompany", "reference",
+              "createdAt", "pax", "packageType", "totalAmount", "amountPaid", 
+              "bookingReference", "vendorName", "hotelDetails", "travelDate", "assignedTo"
+            ];
+            for (const col of columnsToDrop) delete safe[col];
           }
           
-          const safe = { ...item };
-          for (const col of columnsToDrop) delete safe[col];
           const { error: err2, data: data2 } = await supabase.from(tableName).update(safe).eq("id", item.id).select();
           if (err2) {
             console.error(`[${tableName}] Fallback UPDATE failed:`, err2.message);
