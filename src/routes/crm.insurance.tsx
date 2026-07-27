@@ -134,25 +134,55 @@ function GeneralInsurancePage() {
   };
 
   const handleSavePolicy = async (updatedData: any) => {
+    const validColumns = [
+      'id', 'school_name', 'reference_name', 'customer_name', 'mobile_number', 'alternate_mobile', 
+      'email', 'address', 'city', 'state', 'customer_id', 'company_id', 'vendor_id', 'policy_number', 
+      'issue_date', 'expiry_date', 'vehicle_number', 'vehicle_model', 'seating_capacity', 'chassis_number', 
+      'engine_number', 'fuel_type', 'registration_date', 'policy_type', 'idv_value', 'previous_policy_number', 
+      'previous_insurer', 'ncb_percentage', 'od_premium', 'tp_premium', 'net_premium', 'gst', 'total_premium', 
+      'customer_paid', 'vendor_paid', 'profit', 'payment_date', 'payment_mode', 'transaction_reference', 
+      'payment_status', 'notes', 'status', 'created_at', 'paid_by', 'amount_paid'
+    ];
+
+    const dbPayload: any = {};
+    const metaObj: any = {};
+    let hasMeta = false;
+
+    // Separate valid columns and extra fields
+    Object.keys(updatedData).forEach(key => {
+      if (validColumns.includes(key)) {
+        dbPayload[key] = updatedData[key];
+      } else {
+        metaObj[key] = updatedData[key];
+        hasMeta = true;
+      }
+    });
+
+    if (hasMeta) {
+      const currentNotes = dbPayload.notes || "";
+      dbPayload.notes = JSON.stringify({ _isMeta: true, text: currentNotes, ...metaObj });
+    }
+
     if (updatedData.id) {
       const newPolicies = policies.map(p => p.id === updatedData.id ? updatedData : p);
       setPolicies(newPolicies);
       
-      const { id, ...rest } = updatedData;
-      // Extract meta fields that shouldn't be updated directly as columns if they don't exist
-      // Since we are inserting the whole object, let's let useSupabaseTable handle it via reload or 
-      // just pass the object as it is because Supabase will ignore extra columns (or throw error if strict).
-      // Wait, if it throws error for extra columns like school_name if they don't exist.
-      // But they DO exist! The user just showed the schema where school_name is a column.
+      const { id, ...rest } = dbPayload;
       await supabase.from("insurance_policies").update(rest).eq("id", id);
     } else {
+      const newId = crypto.randomUUID();
+      const newCreatedAt = new Date().toISOString();
+      
       const newPolicy = {
         ...updatedData,
-        id: crypto.randomUUID(),
-        created_at: new Date().toISOString()
+        id: newId,
+        created_at: newCreatedAt
       };
       setPolicies([newPolicy, ...policies]);
-      await supabase.from("insurance_policies").insert([newPolicy]);
+      
+      dbPayload.id = newId;
+      dbPayload.created_at = newCreatedAt;
+      await supabase.from("insurance_policies").insert([dbPayload]);
     }
     setShowForm(false);
   };
