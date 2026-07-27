@@ -319,7 +319,7 @@ function AccountsPage() {
     if (!newExpense.amount || !newExpense.category) return;
 
     const exp: Expense = {
-      id: `EXP-${String(expenseList.length + 1).padStart(3, '0')}`,
+      id: `EXP-${Math.floor(1000 + Math.random() * 9000)}`,
       date: newExpense.date || new Date().toISOString().split("T")[0],
       category: newExpense.category,
       amount: newExpense.amount,
@@ -441,7 +441,7 @@ function AccountsPage() {
     const entityPhone = entity ? (entity.phone || entity.mobile || "N/A") : "N/A";
 
     const newFu = {
-      id: `PFU-${String(followUpsList.length + 1).padStart(3, '0')}`,
+      id: `PFU-${Math.floor(1000 + Math.random() * 9000)}`,
       invoiceId: newFollowUp.invoiceId || "INV-NEW",
       customerId: newFollowUp.entityId,
       customerName: String(entityName),
@@ -485,7 +485,7 @@ function AccountsPage() {
     }
 
     const newReq: PaymentRequest = {
-      id: `PRQ-${String(paymentRequests.length + 1).padStart(3, '0')}`,
+      id: `PRQ-${Math.floor(1000 + Math.random() * 9000)}`,
       date: newPaymentRequest.date || new Date().toISOString().split('T')[0],
       employeeId: auth?.empId || "EMP-001",
       employeeName: auth?.name || "Current User",
@@ -542,7 +542,7 @@ function AccountsPage() {
 
       if (actionPopupType === "Paid") {
         const newTx = {
-          id: `TXN-${String(transactions.length + 1).padStart(3, '0')}`,
+          id: `TXN-${Math.floor(10000 + Math.random() * 90000)}`,
           date: new Date().toISOString().split('T')[0],
           type: "Payment",
           entityType: req.entityType,
@@ -1682,7 +1682,7 @@ function AccountsPage() {
               }
 
               const txWithId = {
-                id: `TXN-${String(transactions.length + 1).padStart(3, '0')}`,
+                id: `TXN-${Math.floor(10000 + Math.random() * 90000)}`,
                 ...newTx,
                 entityName,
                 createdBy: auth?.name || "Unknown",
@@ -2279,11 +2279,11 @@ function AccountsPage() {
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto">
             {historyReqId && (
               <div className="space-y-6">
-                {paymentRequests.find(r => r.id === historyReqId)?.auditLog.map((log, idx) => (
+                {(paymentRequests.find(r => r.id === historyReqId)?.auditLog || []).map((log, idx) => (
                   <div key={idx} className="flex gap-4 relative">
                     <div className="flex flex-col items-center">
                       <div className="h-3 w-3 bg-primary rounded-full mt-1"></div>
-                      {idx !== (paymentRequests.find(r => r.id === historyReqId)?.auditLog.length || 1) - 1 && (
+                      {idx !== ((paymentRequests.find(r => r.id === historyReqId)?.auditLog || []).length || 1) - 1 && (
                         <div className="w-px h-full bg-border mt-1"></div>
                       )}
                     </div>
