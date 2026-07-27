@@ -2935,7 +2935,12 @@ function LeadsPage() {
                                               currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
                                             }
                                             currentNotes.push({ text: tableEditNoteText.trim(), date: noteDate });
-                                            return { ...x, notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
+                                            const updates = { notes: tableEditNoteText.trim(), noteDate, allNotes: currentNotes };
+                                            // Explicitly update Supabase
+                                            supabase.from("leads").update(updates).eq("id", l.id).then(({ error }) => {
+                                              if (error) console.error("Failed to update notes in Supabase:", error);
+                                            });
+                                            return { ...x, ...updates };
                                           }
                                           return x;
                                         });
@@ -3039,7 +3044,12 @@ function LeadsPage() {
                   currentNotes.push({ text: x.notes, date: x.noteDate || new Date().toISOString() });
                 }
                 currentNotes.push({ text: newNote, date: noteDate });
-                return { ...x, notes: newNote, noteDate, allNotes: currentNotes };
+                const updates = { notes: newNote, noteDate, allNotes: currentNotes };
+                // Explicitly update Supabase
+                supabase.from("leads").update(updates).eq("id", id).then(({ error }) => {
+                  if (error) console.error("Failed to update notes in Supabase:", error);
+                });
+                return { ...x, ...updates };
               }
               return x;
             });
@@ -3050,6 +3060,10 @@ function LeadsPage() {
             const newLeads = leads.map((x) => (x.id === id ? { ...x, ...updates } : x));
             setLeads(newLeads);
             setSelected(newLeads.find((x) => x.id === id) || null);
+            // Explicitly update Supabase
+            supabase.from("leads").update(updates).eq("id", id).then(({ error }) => {
+              if (error) console.error("Failed to apply updates to Supabase:", error);
+            });
           }}
         />
       )}
