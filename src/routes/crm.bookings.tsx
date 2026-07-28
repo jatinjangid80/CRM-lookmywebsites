@@ -375,10 +375,10 @@ function BookingsPage() {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
-  const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy">("date");
+  const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy" | "bookingType">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
-  const handleSort = (field: "date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy") => {
+  const handleSort = (field: "date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy" | "bookingType") => {
     if (sortField === field) {
       setSortOrder(sortOrder === "asc" ? "desc" : "asc");
     } else {
@@ -815,6 +815,7 @@ function BookingsPage() {
     else if (sortField === "status") cmp = (a.status || "").localeCompare(b.status || "");
     else if (sortField === "mobileNumber") cmp = (a.mobileNumber || "").localeCompare(b.mobileNumber || "");
     else if (sortField === "pnr") cmp = (a.details?.pnr || "").localeCompare(b.details?.pnr || "");
+    else if (sortField === "bookingType") cmp = (a.bookingType || "").localeCompare(b.bookingType || "");
     else if (sortField === "purchasePrice") cmp = (a.purchasePrice || 0) - (b.purchasePrice || 0);
     else if (sortField === "profit") cmp = (a.profit || 0) - (b.profit || 0);
     else if (sortField === "bookedBy") cmp = (a.bookedBy || "").localeCompare(b.bookedBy || "");
@@ -1505,6 +1506,9 @@ function BookingsPage() {
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("pnr")}>
                   <div className="flex items-center gap-1">PNR {sortField === "pnr" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
+                <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("bookingType")}>
+                  <div className="flex items-center gap-1">Type {sortField === "bookingType" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("amount")}>
                   <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
@@ -1538,6 +1542,7 @@ function BookingsPage() {
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
                     <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{b.details?.pnr || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.bookingType || "-"}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-primary">{formatINR(b.sellingPrice || b.amount || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
