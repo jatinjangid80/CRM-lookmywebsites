@@ -2116,7 +2116,7 @@ function KanbanCol({
   const total = leads.reduce((s, l) => s + (Number(l.budget) || 0), 0);
   return (
     <div
-      className="flex min-w-[220px] flex-1 flex-col rounded-2xl border border-border bg-secondary/30 p-3 transition-colors hover:bg-secondary/50"
+      className="flex-none w-[calc(25%-9px)] min-w-[280px] flex flex-col rounded-2xl border border-border bg-secondary/30 p-3 transition-colors hover:bg-secondary/50 snap-start"
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
@@ -2980,8 +2980,7 @@ function LeadsPage() {
 
         {/* ── KANBAN VIEW ── */}
         {view === "kanban" && (
-          <div className="overflow-x-auto pb-4">
-            <div className="flex gap-3 min-w-max">
+          <div className="flex gap-3 overflow-x-auto pb-4 snap-x w-full">
               {STATUSES.map((s) => (
                 <KanbanCol
                   key={s}
@@ -2991,7 +2990,6 @@ function LeadsPage() {
                   onDropLead={(id) => updateStatus(id, s)}
                 />
               ))}
-            </div>
           </div>
         )}
       </div>
