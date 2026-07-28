@@ -2133,7 +2133,7 @@ function KanbanCol({
       {/* Budget total */}
       {total > 0 && <p className="mb-2 px-1 text-xs text-muted-foreground">{formatINR(total)}</p>}
       {/* Cards */}
-      <div className="flex flex-col gap-2 min-h-[100px]">
+      <div className="flex flex-col gap-2 min-h-[100px] max-h-[calc(100vh-320px)] overflow-y-auto pr-1">
         {leads.map((l) => (
           <button
             key={l.id}
