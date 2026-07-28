@@ -367,7 +367,7 @@ function BookingsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [managingBooking, setManagingBooking] = useState<ExtBooking | null>(null);
   const [isManageOpen, setIsManageOpen] = useState(false);
-  const [manageTab, setManageTab] = useState<"Details" | "Payments">("Details");
+  const [manageTab, setManageTab] = useState<"Details" | "Payments" | "All Bookings">("Details");
   const [uploadCategory, setUploadCategory] = useState("Invoice");
   const [deleteTarget, setDeleteTarget] = useState<ExtBooking | null>(null);
 
@@ -1641,7 +1641,7 @@ function BookingsPage() {
           {managingBooking && (
             <div className="flex flex-col flex-1 overflow-hidden">
               <div className="flex items-center gap-6 px-6 border-b border-border bg-secondary/10">
-                {["Details", "Payments"].map((tab) => (
+                {["Details", "Payments", "All Bookings"].map((tab) => (
                   <button
                     key={tab}
                     onClick={() => setManageTab(tab as any)}
@@ -1654,7 +1654,7 @@ function BookingsPage() {
               <div className="flex-1 overflow-y-auto p-6">
                 {manageTab === "Details" && renderManageDetails(managingBooking)}
                 {manageTab === "Payments" && renderManagePayments(managingBooking)}
-
+                {manageTab === "All Bookings" && <ManageAllBookingsComponent booking={managingBooking} allBookings={allBookings} setManagingBooking={setManagingBooking} />}
               </div>
             </div>
           )}
