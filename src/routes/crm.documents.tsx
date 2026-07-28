@@ -33,6 +33,12 @@ import { useGoogleLogin } from "@react-oauth/google";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { EmployeeProfileCard } from "@/components/EmployeeProfileCard";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/crm/documents")({ component: FoldersPage });
 
@@ -565,30 +571,38 @@ function FileRow({
       <td className="py-3 px-3 text-sm text-muted-foreground">{fmtDate(file.uploadedAt)}</td>
       <td className="py-3 pl-3 pr-4">
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button
-            onClick={() => onPreview(file)}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-            title="Preview"
-          >
-            <Eye className="h-3.5 w-3.5" />
-          </button>
-          <a
-            href={file.dataUrl}
-            download={file.name}
-            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
-            title="Download"
-          >
-            <Download className="h-3.5 w-3.5" />
-          </a>
-          {isAdmin && (
-            <button
-              onClick={() => onDelete(file.id)}
-              className="rounded-lg p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600 transition-colors"
-              title="Delete"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          )}
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors outline-none">
+                <MoreVertical className="h-4 w-4" />
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36">
+              <DropdownMenuItem onClick={() => onPreview(file)} className="cursor-pointer">
+                <Eye className="mr-2 h-4 w-4" />
+                Preview
+              </DropdownMenuItem>
+              <DropdownMenuItem asChild className="cursor-pointer">
+                <a
+                  href={file.dataUrl}
+                  download={file.name}
+                  className="flex w-full items-center"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Download
+                </a>
+              </DropdownMenuItem>
+              {isAdmin && (
+                <DropdownMenuItem
+                  onClick={() => onDelete(file.id)}
+                  className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
+                >
+                  <Trash2 className="mr-2 h-4 w-4" />
+                  Delete
+                </DropdownMenuItem>
+              )}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </td>
     </tr>
