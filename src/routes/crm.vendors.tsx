@@ -151,8 +151,6 @@ type SortDir = "asc" | "desc";
 
 function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
-  const [bookingList] = useSupabaseTable<any[]>("bookings", []);
-  const [transactions] = useSupabaseTable<any[]>("transactions", []);
 
   const normalizeVendor = (vendor: any) => {
     let extra: any = {};
@@ -588,7 +586,6 @@ function VendorsPage() {
               </TableHead>
               <TableHead>Contact Details</TableHead>
               <TableHead>Location</TableHead>
-              <TableHead>Financials</TableHead>
               <TableHead>Status</TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
@@ -596,7 +593,7 @@ function VendorsPage() {
           <TableBody>
             {paginated.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
                   <div className="flex flex-col items-center justify-center">
                     <Building2 className="h-10 w-10 mb-3 opacity-50" />
                     <p>No vendors found matching your criteria.</p>
@@ -605,13 +602,6 @@ function VendorsPage() {
               </TableRow>
             ) : (
               paginated.map((v, i) => {
-                const vBookings = bookingList.filter(b => b.supplier === v.name || b.supplier === v.id);
-                const vSpend = transactions
-                  .filter(tx => tx.entityType === "Vendor" && (tx.entityId === v.id || tx.entityId === v.name) && tx.type === "Payment")
-                  .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-                const vTotalBilled = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
-                const vPending = vTotalBilled - vSpend;
-
                 return (
                   <TableRow key={v.id} className="group hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => openView(v)}>
                     <TableCell>
@@ -665,22 +655,6 @@ function VendorsPage() {
                       ) : (
                         <span className="text-muted-foreground text-sm">-</span>
                       )}
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex flex-col gap-1 text-xs">
-                        <div className="flex justify-between gap-4">
-                          <span className="text-muted-foreground">Billed:</span>
-                          <span className="font-medium text-blue-600 dark:text-blue-400">{formatINR(vTotalBilled)}</span>
-                        </div>
-                        <div className="flex justify-between gap-4">
-                          <span className="text-muted-foreground">Paid:</span>
-                          <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatINR(vSpend)}</span>
-                        </div>
-                        <div className="flex justify-between gap-4 pt-1 border-t border-border">
-                          <span className="text-muted-foreground">Pending:</span>
-                          <span className="font-semibold text-rose-600 dark:text-rose-400">{formatINR(vPending)}</span>
-                        </div>
-                      </div>
                     </TableCell>
                     <TableCell>
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${
