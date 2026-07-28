@@ -1424,7 +1424,14 @@ function BookingsPage() {
                       boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
                     }}
                   />
-                  <Bar dataKey="value" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} />
+                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
+                    {dashboardData.serviceData.map((_, index) => (
+                      <Cell 
+                        key={`cell-${index}`} 
+                        fill={`color-mix(in oklch, var(--primary) ${100 - (index * 15)}%, var(--background))`} 
+                      />
+                    ))}
+                  </Bar>
                 </BarChart>
               </ResponsiveContainer>
             </div>
