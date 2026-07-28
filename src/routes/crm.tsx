@@ -141,19 +141,16 @@ function getNavForUser(auth: AuthUser): NavItem[] {
       "Settings"
     ].includes(n.label));
   }
-  if (auth.name.toLowerCase().includes("puspa")) {
+  if (auth.name.toLowerCase().includes("puspa") || auth.name.toLowerCase().includes("pushpa")) {
     return FULL_NAV.filter((n) => [
       "Leads",
+      "Quotations",
       "Tasks",
       "Customers",
-      "Quotations",
       "Bookings",
       "Documents",
       "Packages",
-      "Vendors",
-      "Accounts",
-      "Attendance",
-      "Settings"
+      "Accounts"
     ].includes(n.label));
   }
 
