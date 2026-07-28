@@ -155,7 +155,7 @@ const SERVICES = [
 ];
 
 function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }: { booking: ExtBooking, allBookings: ExtBooking[], setManagingBooking: (b: ExtBooking) => void }) {
-  const customerBookings = allBookings.filter(b => b.customer === booking.customer && b.id !== booking.id);
+  const customerBookings = allBookings.filter(b => b.customer === booking.customer);
 
   const groupedBookings = customerBookings.reduce((acc, b) => {
     const type = b.bookingType || "Other";
@@ -171,9 +171,9 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
 
   return (
     <div className="space-y-6">
-      <h3 className="text-sm font-bold tracking-tight">Other Bookings for {booking.customer}</h3>
+      <h3 className="text-sm font-bold tracking-tight">Booking History for {booking.customer}</h3>
       {customerBookings.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No other bookings found for this customer.</p>
+        <p className="text-sm text-muted-foreground">No bookings found for this customer.</p>
       ) : (
         <div className="space-y-4">
           <div className="flex flex-wrap gap-4 border-b border-border pb-0">
@@ -200,7 +200,7 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
             {displayedBookings.map(b => (
               <div
                 key={b.id}
-                className="border border-border bg-card p-4 rounded-xl hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
+                className={`border bg-card p-4 rounded-xl hover:shadow-md transition-all cursor-pointer ${b.id === booking.id ? "border-primary shadow-sm" : "border-border hover:border-primary/50"}`}
                 onClick={() => setManagingBooking(b)}
               >
                 <div className="flex justify-between items-start mb-2">
