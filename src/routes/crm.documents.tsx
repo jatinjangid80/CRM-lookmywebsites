@@ -290,7 +290,7 @@ function DocxViewer({ dataUrl }: { dataUrl: string }) {
 
   return (
     <div 
-      className="prose prose-sm max-w-none docx-preview" 
+      className="max-w-none docx-preview space-y-4 [&_img]:max-w-full [&_img]:h-auto [&_img]:rounded-md [&_img]:mx-auto [&_p]:leading-relaxed" 
       dangerouslySetInnerHTML={{ __html: html }} 
     />
   );
@@ -818,7 +818,7 @@ function FolderDetail({
             </div>
 
             {previewFile.name.endsWith(".docx") && (
-              <div className="mb-6 w-full max-w-2xl max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-white p-6 text-black text-left">
+              <div className="w-full h-[70vh] overflow-y-auto rounded-xl border border-border bg-white p-6 md:p-10 text-black text-left">
                 <DocxViewer dataUrl={previewFile.dataUrl} />
               </div>
             )}
@@ -835,13 +835,13 @@ function FolderDetail({
               <img
                 src={previewFile.dataUrl}
                 alt={previewFile.name}
-                className="max-h-64 w-full rounded-xl object-contain bg-secondary/30"
+                className="max-h-[70vh] w-full rounded-xl object-contain bg-secondary/30"
               />
             )}
             {previewFile.type === "application/pdf" && (
               <iframe
                 src={previewFile.dataUrl}
-                className="h-64 w-full rounded-xl border border-border"
+                className="h-[70vh] w-full rounded-xl border border-border"
                 title={previewFile.name}
               />
             )}
