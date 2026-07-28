@@ -375,6 +375,8 @@ function BookingsPage() {
   const [activeTab, setActiveTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("All");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [sortField, setSortField] = useState<"date" | "travelDate" | "customer" | "amount" | "paid" | "pending" | "status" | "mobileNumber" | "pnr" | "purchasePrice" | "profit" | "bookedBy" | "bookingType">("date");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
 
@@ -791,6 +793,9 @@ function BookingsPage() {
 
     if (statusFilter !== "All" && b.status !== statusFilter) return false;
 
+    if (dateFrom && b.bookingDate && b.bookingDate < dateFrom) return false;
+    if (dateTo && b.bookingDate && b.bookingDate > dateTo) return false;
+
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       const matchesSearch = 
@@ -1162,6 +1167,37 @@ function BookingsPage() {
     );
   };
 
+  const handleExportCSV = () => {
+    const headers = ["Booking ID", "Booking Date", "Travel Date", "Customer", "Mobile No", "PNR", "Type", "Selling Price", "Purchase Price", "Profit", "Booked By", "Status"];
+    const csvContent = [
+      headers.join(","),
+      ...filteredBookings.map(b => 
+        [
+          b.id,
+          b.bookingDate || "",
+          b.travelDate || "",
+          `"${(b.customer || "").replace(/"/g, '""')}"`,
+          b.mobileNumber || "",
+          b.details?.pnr || "",
+          b.bookingType || "",
+          b.sellingPrice || b.amount || 0,
+          b.purchasePrice || 0,
+          b.profit || 0,
+          `"${(b.bookedBy || "").replace(/"/g, '""')}"`,
+          b.status || ""
+        ].join(",")
+      )
+    ].join("\n");
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `bookings_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   return (
     <div className="space-y-6">
@@ -1450,6 +1486,24 @@ function BookingsPage() {
         </div>
         <div className="flex items-center gap-4 flex-wrap justify-end">
           <div className="flex items-center gap-2">
+            <span className="text-muted-foreground font-medium whitespace-nowrap">From:</span>
+            <input
+              type="date"
+              value={dateFrom}
+              onChange={(e) => setDateFrom(e.target.value)}
+              className="h-10 rounded-full border border-border bg-card text-foreground px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-muted-foreground font-medium whitespace-nowrap">To:</span>
+            <input
+              type="date"
+              value={dateTo}
+              onChange={(e) => setDateTo(e.target.value)}
+              className="h-10 rounded-full border border-border bg-card text-foreground px-4 py-1.5 focus:outline-none focus:ring-2 focus:ring-primary/20"
+            />
+          </div>
+          <div className="flex items-center gap-2">
             <span className="text-muted-foreground font-medium whitespace-nowrap"><Filter className="inline w-4 h-4 mr-1"/>Status:</span>
             <select
               value={statusFilter}
@@ -1483,6 +1537,10 @@ function BookingsPage() {
               ))}
             </select>
           </div>
+          <Button variant="outline" className="rounded-full" onClick={handleExportCSV}>
+            <Download className="w-4 h-4 mr-2" />
+            Export
+          </Button>
         </div>
       </div>
 
