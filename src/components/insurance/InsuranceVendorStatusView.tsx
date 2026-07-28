@@ -359,6 +359,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
             onClose={() => setSelectedPolicy(null)}
             title={`Pay Vendor: ${getVendorName(selectedPolicy) || 'Unknown'}`}
             maxAmount={maxAmount}
+            policy={selectedPolicy}
             onSubmit={handleSavePayment}
           />
         );

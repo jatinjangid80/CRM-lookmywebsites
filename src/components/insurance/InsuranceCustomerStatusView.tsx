@@ -1,15 +1,163 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { formatINR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, Download } from "lucide-react";
+import { Plus, Search, Download, History, X } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
 import { getAuth } from "@/lib/auth";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 
+/* ─── Payment History Modal ─── */
+function PaymentHistoryModal({ policy, isOpen, onClose }: { policy: any; isOpen: boolean; onClose: () => void }) {
+  const [transactions, setTransactions] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!isOpen || !policy) return;
+    setLoading(true);
+
+    (async () => {
+      // Fetch transactions that reference this policy
+      const policyRef = policy.policy_number || policy.id;
+      const customerName = policy.customer_name || "";
+
+      const { data, error } = await supabase
+        .from("transactions")
+        .select("*")
+        .order("date", { ascending: false });
+
+      if (error) {
+        console.error("Failed to fetch transactions:", error);
+        setTransactions([]);
+      } else {
+        const filtered = (data || []).filter((tx: any) => {
+          const notesStr = typeof tx.notes === "string" ? tx.notes : "";
+          
+          let meta: any = {};
+          if (notesStr) {
+            try {
+              const parsed = JSON.parse(notesStr);
+              if (parsed._isMeta) meta = parsed;
+            } catch { }
+          }
+          
+          const matchesPolicyInNotes = policyRef ? notesStr.includes(policyRef) : false;
+          const matchesInvoiceId = 
+            (policyRef && meta.invoiceId === policyRef) || 
+            (policy.id && meta.invoiceId === policy.id) || 
+            (policy.policy_number && meta.invoiceId === policy.policy_number);
+          
+          return matchesPolicyInNotes || matchesInvoiceId;
+        });
+        setTransactions(filtered);
+      }
+      setLoading(false);
+    })();
+  }, [isOpen, policy]);
+
+  const parseNotes = (notes: any) => {
+    if (!notes) return {};
+    if (typeof notes === "string") {
+      try {
+        const parsed = JSON.parse(notes);
+        if (parsed._isMeta) return parsed;
+      } catch { }
+    }
+    return {};
+  };
+
+  const customerPaid = Number(policy?.customer_paid) || 0;
+  const addPayment = Number(policy?.amount_paid) || 0;
+  const outstanding = Math.max(customerPaid - addPayment, 0);
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="sm:max-w-lg max-h-[85vh] overflow-hidden flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2">
+            <History className="h-5 w-5 text-primary" />
+            Payment History
+          </DialogTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            {policy?.customer_name} — {policy?.policy_number || "Draft"}
+          </p>
+        </DialogHeader>
+
+        {/* Summary */}
+        <div className="grid grid-cols-3 gap-3 py-3 border-y border-border">
+          <div className="text-center">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Total</p>
+            <p className="text-sm font-bold text-foreground">{formatINR(customerPaid)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Paid</p>
+            <p className="text-sm font-bold text-emerald-600">{formatINR(addPayment)}</p>
+          </div>
+          <div className="text-center">
+            <p className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">Pending</p>
+            <p className={`text-sm font-bold ${outstanding > 0 ? "text-rose-600" : "text-emerald-600"}`}>{formatINR(outstanding)}</p>
+          </div>
+        </div>
+
+        {/* History list */}
+        <div className="flex-1 overflow-y-auto min-h-0 space-y-2 py-2">
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-primary" />
+            </div>
+          ) : transactions.length === 0 ? (
+            <div className="text-center py-8 text-muted-foreground">
+              <History className="h-8 w-8 mx-auto mb-2 opacity-30" />
+              <p className="text-sm">No payment records found</p>
+            </div>
+          ) : (
+            transactions.map((tx, idx) => {
+              const meta = parseNotes(tx.notes);
+              const mode = meta.paymentMode || tx.paymentMode || tx.payment_mode || "—";
+              const ref = meta.reference || tx.reference || "—";
+              const createdBy = meta.createdBy || "";
+              const amount = Number(tx.amount) || 0;
+
+              return (
+                <div key={tx.id || idx} className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-border/50 hover:border-border transition-colors">
+                  <div className="flex-shrink-0 w-9 h-9 rounded-full bg-emerald-500/10 flex items-center justify-center">
+                    <span className="text-emerald-600 text-xs font-bold">₹</span>
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between">
+                      <p className="text-sm font-semibold text-foreground">{formatINR(amount)}</p>
+                      <span className="text-[10px] text-muted-foreground">{tx.date || "—"}</span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1">
+                      <span className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium bg-blue-500/10 text-blue-600">{mode}</span>
+                      {ref !== "—" && (
+                        <span className="text-[10px] text-muted-foreground truncate">Ref: {ref}</span>
+                      )}
+                    </div>
+                    {createdBy && (
+                      <p className="text-[10px] text-muted-foreground mt-1">By: {createdBy}</p>
+                    )}
+                  </div>
+                </div>
+              );
+            })
+          )}
+        </div>
+
+        <div className="flex justify-end pt-2 border-t border-border">
+          <Button variant="outline" size="sm" onClick={onClose}>Close</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/* ─── Customer Status View ─── */
 export function InsuranceCustomerStatusView({ policies, setPolicies }: { policies: any[], setPolicies: any }) {
   const auth = getAuth();
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
+  const [historyPolicy, setHistoryPolicy] = useState<any>(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
@@ -23,7 +171,6 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
         const fromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
         const toTime = dateTo ? new Date(dateTo).getTime() : Infinity;
         
-        // Handle timezone/end of day logic for "to" date if needed, but standard timestamp comparison works if dates are YYYY-MM-DD
         if (dateTo) {
             const toDateObj = new Date(dateTo);
             toDateObj.setHours(23, 59, 59, 999);
@@ -270,12 +417,23 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                           </span>
                         </td>
                         <td className="px-6 py-4 text-right">
-                          {outstanding > 0 && (
-                            <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(p)} className="h-8">
-                              <Plus className="h-4 w-4 mr-1" />
-                              Pay
+                          <div className="flex items-center justify-end gap-1">
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              onClick={() => setHistoryPolicy(p)}
+                              className="h-8 px-2 text-muted-foreground hover:text-primary"
+                              title="Payment History"
+                            >
+                              <History className="h-4 w-4" />
                             </Button>
-                          )}
+                            {outstanding > 0 && (
+                              <Button size="sm" variant="outline" onClick={() => setSelectedPolicy(p)} className="h-8">
+                                <Plus className="h-4 w-4 mr-1" />
+                                Pay
+                              </Button>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     )
@@ -292,9 +450,17 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
           onClose={() => setSelectedPolicy(null)}
           title={`Add Customer Payment: ${selectedPolicy.customer_name || 'Unknown'}`}
           maxAmount={Math.max((Number(selectedPolicy.customer_paid) || 0) - (Number(selectedPolicy.amount_paid) || 0), 0)}
+          policy={selectedPolicy}
           onSubmit={handleSavePayment}
         />
       )}
+
+      <PaymentHistoryModal
+        policy={historyPolicy}
+        isOpen={!!historyPolicy}
+        onClose={() => setHistoryPolicy(null)}
+      />
     </div>
   );
 }
+

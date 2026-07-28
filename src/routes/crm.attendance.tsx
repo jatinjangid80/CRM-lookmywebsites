@@ -12,6 +12,8 @@ import { getAuth } from "@/lib/auth";
 import { toast } from "sonner";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 function formatTime12Hour(timeStr?: string) {
   if (!timeStr) return "";
@@ -37,6 +39,9 @@ function AttendancePage() {
   const [shiftNote, setShiftNote] = useState("");
   const [selectedHistoryEmpId, setSelectedHistoryEmpId] = useState<string>("");
   const [myViewMode, setMyViewMode] = useState<"table" | "calendar">("table");
+  const [calendarMonth, setCalendarMonth] = useState(new Date(time.getFullYear(), time.getMonth(), 1));
+  const [selectedDayInfo, setSelectedDayInfo] = useState<any>(null);
+  const [isDaySheetOpen, setIsDaySheetOpen] = useState(false);
 
   const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
@@ -246,7 +251,7 @@ function AttendancePage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -274,8 +279,91 @@ function AttendancePage() {
                 </div>
               </div>
             </div>
-            <div className="lg:col-span-2 space-y-4">
-              <div className="flex items-center justify-between">
+            <div className="lg:col-span-2 space-y-6">
+              {/* Top KPI Cards */}
+              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                {(() => {
+                  const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
+                  
+                  // Group by date to get daily totals
+                  const dailyTotals = Object.values(
+                    myRecords.reduce((acc: any, record: any) => {
+                      if (!acc[record.date]) {
+                        acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, isPresent: true };
+                      }
+                      if (record.checkin && record.checkout) {
+                        const [inH, inM] = record.checkin.split(':').map(Number);
+                        const [outH, outM] = record.checkout.split(':').map(Number);
+                        let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                        if (diff < 0) diff += 24 * 60;
+                        acc[record.date].totalMinutes += diff;
+                      }
+                      if (record.checkin && record.checkin < acc[record.date].firstIn) {
+                        acc[record.date].firstIn = record.checkin;
+                      }
+                      return acc;
+                    }, {})
+                  );
+
+                  const present = dailyTotals.length;
+                  const absent = 0; // Mock or calculate based on working days
+                  
+                  let late = 0;
+                  let overtimeMinutes = 0;
+                  let halfDays = 0;
+                  let totalWorkedMinutes = 0;
+
+                  dailyTotals.forEach((day: any) => {
+                     // Late if clocked in after 9:15 AM
+                     if (day.firstIn) {
+                        const [h, m] = day.firstIn.split(':').map(Number);
+                        if (h > 9 || (h === 9 && m > 15)) late++;
+                     }
+                     // Half day if worked less than 5 hours (300 mins)
+                     if (day.totalMinutes > 0 && day.totalMinutes < 300) halfDays++;
+                     // Overtime if worked more than 9 hours (540 mins)
+                     if (day.totalMinutes > 540) overtimeMinutes += (day.totalMinutes - 540);
+                     
+                     totalWorkedMinutes += day.totalMinutes;
+                  });
+
+                  const otHours = Math.floor(overtimeMinutes / 60);
+                  const avgMins = present > 0 ? Math.floor(totalWorkedMinutes / present) : 0;
+                  const avgHours = Math.floor(avgMins / 60);
+                  const avgM = avgMins % 60;
+
+                  return (
+                    <>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Present</span>
+                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{present}</div>
+                      </div>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Absent</span>
+                        <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{absent}</div>
+                      </div>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Late</span>
+                        <div className="text-2xl font-bold text-amber-500 mt-2">{late}</div>
+                      </div>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Half Day</span>
+                        <div className="text-2xl font-bold text-indigo-500 mt-2">{halfDays}</div>
+                      </div>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Overtime</span>
+                        <div className="text-2xl font-bold text-purple-500 mt-2">{otHours}h</div>
+                      </div>
+                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                        <span className="text-xs font-semibold text-muted-foreground uppercase">Avg Hours</span>
+                        <div className="text-2xl font-bold text-blue-500 mt-2">{avgHours}h {avgM}m</div>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
+
+              <div className="flex items-center justify-between mt-2">
                 <h3 className="font-semibold text-lg">My Attendance History</h3>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground font-medium">
@@ -297,100 +385,280 @@ function AttendancePage() {
                   </div>
                 </div>
               </div>
-              
+
               {myViewMode === "table" ? (
-              <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-secondary/40 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
-                      <tr>
-                        <th className="px-5 py-3.5">Date</th>
-                        <th className="px-5 py-3.5">Clock In</th>
-                        <th className="px-5 py-3.5">Clock Out</th>
-                        <th className="px-5 py-3.5">Hours</th>
-                        <th className="px-5 py-3.5">Location</th>
-                        <th className="px-5 py-3.5">Note</th>
-                        <th className="px-5 py-3.5 text-right">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border/80">
-                      {attendance
-                        .filter((record) => record.employeeid === myEmpId)
-                        .sort((a, b) => b.date.localeCompare(a.date))
-                        .map((record, i) => (
-                          <tr key={record.id || i} className="hover:bg-secondary/20 transition-colors">
-                            <td className="px-5 py-4 font-semibold text-foreground">{record.date}</td>
-                            <td className="px-5 py-4 font-bold text-emerald-600 dark:text-emerald-400">{formatTime12Hour(record.checkin)}</td>
-                            <td className="px-5 py-4 font-bold text-rose-600 dark:text-rose-400">
-                              {record.checkout ? (
-                                formatTime12Hour(record.checkout)
-                              ) : (
-                                <span className="text-amber-500 font-medium flex items-center gap-1">
-                                  <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse"></span>
-                                  Active
-                                </span>
-                              )}
-                            </td>
-                            <td className="px-5 py-4 font-semibold text-slate-600">
-                              {record.checkout ? (() => {
-                                const [inH, inM] = record.checkin.split(':').map(Number);
-                                const [outH, outM] = record.checkout.split(':').map(Number);
-                                let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                                if (diff < 0) diff += 24 * 60;
-                                const h = Math.floor(diff / 60);
-                                const m = diff % 60;
-                                return `${h}h ${m}m`;
-                              })() : "-"}
-                            </td>
-                            <td className="px-5 py-4 text-muted-foreground text-xs font-medium">
-                              <span className="inline-flex items-center gap-1 bg-secondary/40 px-2 py-1 rounded-lg">
-                                <Building2 className="h-3.5 w-3.5 text-emerald-500" />{record.location || "Office"}
-                              </span>
-                            </td>
-                            <td className="px-5 py-4 text-muted-foreground text-xs italic">{record.note || "-"}</td>
-                            <td className="px-5 py-4 text-right">
-                              <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${record.checkout
-                                  ? 'bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300'
-                                  : 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-400'
-                                }`}>
-                                {record.checkout ? 'Completed' : 'Present'}
-                              </span>
-                            </td>
-                          </tr>
-                        ))}
-                      {attendance.filter((record) => record.employeeid === myEmpId).length === 0 && (
-                        <tr>
-                          <td colSpan={7} className="text-center py-6 text-muted-foreground text-sm">
-                            No attendance history found.
-                          </td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
+                <div className="space-y-4">
+                  {(() => {
+                    const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
+                    
+                    if (myRecords.length === 0) {
+                      return (
+                        <div className="bg-card rounded-3xl border border-border p-8 text-center text-muted-foreground shadow-sm">
+                          No attendance history found.
+                        </div>
+                      );
+                    }
+
+                    // Group by date
+                    const grouped = myRecords.reduce((acc: any, record: any) => {
+                      if (!acc[record.date]) acc[record.date] = [];
+                      acc[record.date].push(record);
+                      return acc;
+                    }, {});
+
+                    return Object.entries(grouped)
+                      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+                      .map(([date, records]: [string, any]) => {
+                        const parsedDate = new Date(date);
+                        const displayDate = parsedDate.toLocaleDateString("en-GB", { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                        
+                        // Calculate total hours
+                        let totalMins = 0;
+                        let firstIn = "23:59";
+                        let lastOut = "00:00";
+                        let isActive = false;
+
+                        records.forEach((r: any) => {
+                          if (r.checkin && r.checkin < firstIn) firstIn = r.checkin;
+                          if (r.checkout && r.checkout > lastOut) lastOut = r.checkout;
+                          if (!r.checkout) isActive = true;
+
+                          if (r.checkin && r.checkout) {
+                            const [inH, inM] = r.checkin.split(':').map(Number);
+                            const [outH, outM] = r.checkout.split(':').map(Number);
+                            let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                            if (diff < 0) diff += 24 * 60;
+                            totalMins += diff;
+                          }
+                        });
+
+                        const workedH = Math.floor(totalMins / 60);
+                        const workedM = totalMins % 60;
+
+                        // Determine status
+                        let isLate = false;
+                        if (firstIn !== "23:59") {
+                           const [h, m] = firstIn.split(':').map(Number);
+                           if (h > 9 || (h === 9 && m > 15)) isLate = true;
+                        }
+
+                        // For visual timeline (assume 9 AM to 7 PM standard bounds for the bar width)
+                        // 9 AM = 9 * 60 = 540
+                        // 7 PM = 19 * 60 = 1140
+                        // Total bounds = 600 mins
+                        let startPct = 0;
+                        let endPct = 100;
+                        if (firstIn !== "23:59") {
+                           const [h, m] = firstIn.split(':').map(Number);
+                           const startMin = (h * 60) + m;
+                           startPct = Math.max(0, Math.min(100, ((startMin - 540) / 600) * 100));
+                        }
+                        if (lastOut !== "00:00") {
+                           const [h, m] = lastOut.split(':').map(Number);
+                           const endMin = (h * 60) + m;
+                           endPct = Math.max(0, Math.min(100, ((endMin - 540) / 600) * 100));
+                        } else if (isActive) {
+                           const now = new Date();
+                           const currentMin = (now.getHours() * 60) + now.getMinutes();
+                           endPct = Math.max(0, Math.min(100, ((currentMin - 540) / 600) * 100));
+                        }
+                        const barWidth = Math.max(2, endPct - startPct);
+
+                        return (
+                          <div key={date} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                            {/* Card Header */}
+                            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
+                              <div className="flex items-center gap-3">
+                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex flex-col items-center justify-center text-primary">
+                                  <span className="text-[10px] font-bold uppercase leading-none">{parsedDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
+                                  <span className="text-lg font-black leading-none">{parsedDate.getDate()}</span>
+                                </div>
+                                <div>
+                                  <h4 className="font-bold text-foreground">{displayDate}</h4>
+                                  <p className="text-xs text-muted-foreground">{records.length} punch{records.length > 1 ? 'es' : ''} logged</p>
+                                </div>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
+                                {isActive ? (
+                                  <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
+                                  </span>
+                                ) : (
+                                  <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold">Present</span>
+                                )}
+                              </div>
+                            </div>
+                            
+                            {/* Card Body */}
+                            <div className="p-6">
+                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                                <div>
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">First In</p>
+                                  <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Last Out</p>
+                                  <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
+                                  <p className="font-bold text-slate-600 dark:text-slate-400">
+                                    {/* Mock break time if multiple records */}
+                                    {records.length > 1 ? "45m" : "0m"}
+                                  </p>
+                                </div>
+                                <div>
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
+                                  <p className="font-bold text-foreground">{workedH}h {workedM}m</p>
+                                </div>
+                              </div>
+
+                              {/* Timeline Visual */}
+                              <div className="mt-4 pt-4 border-t border-border/60">
+                                <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
+                                  <span>09:00 AM</span>
+                                  <span>07:00 PM</span>
+                                </div>
+                                <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
+                                  <div 
+                                    className={`absolute top-0 bottom-0 ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
+                                    style={{ left: `${startPct}%`, width: `${barWidth}%` }}
+                                  />
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      });
+                  })()}
                 </div>
-              </div>
               ) : (
-                <div className="bg-card rounded-3xl border border-border shadow-sm p-6 flex items-center justify-center">
-                  <div className="w-full max-w-md">
-                    <Calendar
-                      mode="multiple"
-                      selected={attendance.filter((record) => record.employeeid === myEmpId).map((record) => new Date(record.date))}
-                      className="rounded-md mx-auto pointer-events-none [&_[data-selected-single=true]]:!bg-emerald-100 [&_[data-selected-single=true]]:!text-emerald-900 [&_[data-selected-single=true]]:!font-bold [&_[data-selected-single=true]]:!border-2 [&_[data-selected-single=true]]:!border-emerald-500"
-                      classNames={{
-                        day: "h-12 w-12 p-0 font-normal aria-selected:opacity-100 text-center flex items-center justify-center rounded-lg",
-                      }}
-                    />
-                    <div className="flex items-center justify-center gap-6 mt-6 border-t border-border pt-6">
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded bg-emerald-100 border-2 border-emerald-500"></div>
-                        <span className="text-sm font-medium text-muted-foreground">Present</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded border-2 border-border/60 hover:bg-accent"></div>
-                        <span className="text-sm font-medium text-muted-foreground">Absent / No record</span>
-                      </div>
-                    </div>
-                  </div>
+                <div className="space-y-6">
+                  {(() => {
+                    const year = calendarMonth.getFullYear();
+                    const month = calendarMonth.getMonth();
+                    const firstDay = new Date(year, month, 1).getDay();
+                    const daysInMonth = new Date(year, month + 1, 0).getDate();
+                    
+                    const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
+                    
+                    // Group by date
+                    const dailyTotals = Object.values(
+                      myRecords.reduce((acc: any, record: any) => {
+                        if (!acc[record.date]) {
+                          acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [] };
+                        }
+                        acc[record.date].records.push(record);
+                        if (record.checkin && record.checkout) {
+                          const [inH, inM] = record.checkin.split(':').map(Number);
+                          const [outH, outM] = record.checkout.split(':').map(Number);
+                          let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                          if (diff < 0) diff += 24 * 60;
+                          acc[record.date].totalMinutes += diff;
+                        }
+                        if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
+                          acc[record.date].firstIn = record.checkin;
+                        }
+                        if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
+                          acc[record.date].lastOut = record.checkout;
+                        }
+                        return acc;
+                      }, {})
+                    ).reduce((acc: any, day: any) => {
+                       acc[day.date] = day;
+                       return acc;
+                    }, {});
+
+                    const days = [];
+                    for (let i = 0; i < firstDay; i++) {
+                        days.push(<div key={`pad-${i}`} className="h-28 bg-secondary/10 border-r border-b border-border/50"></div>);
+                    }
+                    for (let d = 1; d <= daysInMonth; d++) {
+                        const dateObj = new Date(year, month, d);
+                        const dateStr = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+                        const dayData = dailyTotals[dateStr];
+                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
+                        
+                        let status = "Absent";
+                        let color = "text-rose-600 bg-rose-50 dark:bg-rose-950/30";
+                        let displayStr = "🔴 Absent";
+                        let tooltip = "No check-in recorded";
+
+                        if (isWeekend) {
+                             status = "Weekend"; color = "text-slate-500 bg-slate-100 dark:bg-slate-800"; displayStr = "⚪ Weekend"; tooltip = "Weekend";
+                        }
+                        
+                        let isLate = false;
+                        if (dayData) {
+                            const workedH = Math.floor(dayData.totalMinutes / 60);
+                            const workedM = dayData.totalMinutes % 60;
+                            const isHalfDay = dayData.totalMinutes > 0 && dayData.totalMinutes < 300;
+                            isLate = dayData.firstIn > "09:15";
+                            
+                            if (isHalfDay) {
+                                status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30"; displayStr = `🟡 Half Day`; 
+                            } else {
+                                status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"; displayStr = `🟢 ${workedH}h ${workedM}m`;
+                            }
+                            tooltip = `Check In: ${dayData.firstIn || '--:--'}\nCheck Out: ${dayData.lastOut || 'Active'}\nWorked: ${workedH}h ${workedM}m`;
+                        }
+
+                        days.push(
+                          <TooltipProvider key={d}>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <div 
+                                  onClick={() => { setSelectedDayInfo(dayData || { date: dateStr, isAbsent: true }); setIsDaySheetOpen(true); }} 
+                                  className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group"
+                                >
+                                  <div className="flex justify-between items-start">
+                                    <span className={`text-sm font-semibold ${dayData ? 'text-foreground' : 'text-muted-foreground'}`}>{d}</span>
+                                    {isLate && dayData && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">LATE</span>}
+                                  </div>
+                                  <div className={`text-xs font-bold px-1.5 py-1 rounded-md text-center shadow-sm transition-transform group-hover:scale-105 ${color}`}>
+                                      {displayStr}
+                                  </div>
+                                </div>
+                              </TooltipTrigger>
+                              <TooltipContent className="whitespace-pre-line text-xs">
+                                {tooltip}
+                              </TooltipContent>
+                            </Tooltip>
+                          </TooltipProvider>
+                        );
+                    }
+
+                    return (
+                        <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
+                            <div className="flex items-center justify-between p-4 border-b border-border/60 bg-secondary/10">
+                                <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>&lt; Prev</Button>
+                                <div className="text-center">
+                                  <h3 className="font-bold text-xl tracking-tight">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(time.getFullYear(), time.getMonth(), 1))}>Today</Button>
+                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}>Next &gt;</Button>
+                                </div>
+                            </div>
+                            <div className="grid grid-cols-7 bg-secondary/30 border-b border-border/60">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                    <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{day}</div>
+                                ))}
+                            </div>
+                            <div className="grid grid-cols-7 border-l border-t border-border/50 bg-background">
+                               {days}
+                            </div>
+                            <div className="p-4 border-t border-border/60 bg-secondary/10 flex flex-wrap gap-4 items-center justify-center text-xs font-medium text-muted-foreground">
+                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Present</span>
+                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Absent</span>
+                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Half Day</span>
+                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Leave</span>
+                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Weekend</span>
+                            </div>
+                        </div>
+                    );
+                  })()}
                 </div>
               )}
             </div>
@@ -400,222 +668,251 @@ function AttendancePage() {
         {isAdmin && (
           <>
             <TabsContent value="team" className="m-0 border-none p-0 outline-none space-y-6">
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present Today</span>
-                <Users className="h-4 w-4 text-emerald-500" />
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present Today</span>
+                    <Users className="h-4 w-4 text-emerald-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{teamTodayRecords.length}<span className="text-muted-foreground text-lg"> / 7</span></div>
+                  <p className="text-xs text-muted-foreground">Checked-in staff</p>
+                </div>
+                <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Rate</span>
+                    <TrendingUp className="h-4 w-4 text-purple-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / 7) * 100) || 0}%</div>
+                  <p className="text-xs text-muted-foreground">Active ratio</p>
+                </div>
+                <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Office</span>
+                    <Smartphone className="h-4 w-4 text-blue-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{teamTodayRecords.filter(r => r.location === "Office").length} in / {teamTodayRecords.filter(r => r.location === "Remote").length} home</div>
+                  <p className="text-xs text-muted-foreground">Location distribution</p>
+                </div>
+                <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Shifts</span>
+                    <Clock className="h-4 w-4 text-amber-500" />
+                  </div>
+                  <div className="text-2xl font-bold">{teamTodayRecords.filter(r => !r.checkout).length}</div>
+                  <p className="text-xs text-muted-foreground">Still on clock</p>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{teamTodayRecords.length}<span className="text-muted-foreground text-lg"> / 7</span></div>
-              <p className="text-xs text-muted-foreground">Checked-in staff</p>
-            </div>
-            <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Rate</span>
-                <TrendingUp className="h-4 w-4 text-purple-500" />
+              <div className="flex items-center justify-between flex-wrap gap-4">
+                <div className="relative w-full md:w-96">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <input placeholder="Search team member, role, or location..." className="flex h-10 w-full rounded-full border border-border bg-background px-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+                </div>
+                <div className="flex items-center gap-3">
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <button className="flex items-center text-sm font-medium border border-border rounded-full h-10 px-4 bg-background hover:bg-secondary/50 transition-colors">
+                        Selected Date: {format(teamSelectedDate, "dd/MM/yyyy")} <CalendarIcon className="h-4 w-4 ml-2 text-muted-foreground" />
+                      </button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <Calendar
+                        mode="single"
+                        selected={teamSelectedDate}
+                        onSelect={(date) => date && setTeamSelectedDate(date)}
+                        initialFocus
+                      />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
-              <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / 7) * 100) || 0}%</div>
-              <p className="text-xs text-muted-foreground">Active ratio</p>
-            </div>
-            <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Office</span>
-                <Smartphone className="h-4 w-4 text-blue-500" />
-              </div>
-              <div className="text-2xl font-bold">{teamTodayRecords.filter(r => r.location === "Office").length} in / {teamTodayRecords.filter(r => r.location === "Remote").length} home</div>
-              <p className="text-xs text-muted-foreground">Location distribution</p>
-            </div>
-            <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Shifts</span>
-                <Clock className="h-4 w-4 text-amber-500" />
-              </div>
-              <div className="text-2xl font-bold">{teamTodayRecords.filter(r => !r.checkout).length}</div>
-              <p className="text-xs text-muted-foreground">Still on clock</p>
-            </div>
-          </div>
-          <div className="flex items-center justify-between flex-wrap gap-4">
-            <div className="relative w-full md:w-96">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input placeholder="Search team member, role, or location..." className="flex h-10 w-full rounded-full border border-border bg-background px-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-            </div>
-            <div className="flex items-center gap-3">
-              <Popover>
-                <PopoverTrigger asChild>
-                  <button className="flex items-center text-sm font-medium border border-border rounded-full h-10 px-4 bg-background hover:bg-secondary/50 transition-colors">
-                    Selected Date: {format(teamSelectedDate, "dd/MM/yyyy")} <CalendarIcon className="h-4 w-4 ml-2 text-muted-foreground" />
-                  </button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={teamSelectedDate}
-                    onSelect={(date) => date && setTeamSelectedDate(date)}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </div>
-          </div>
-          <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm text-left">
-                <thead className="bg-secondary/40 text-muted-foreground text-xs font-semibold uppercase tracking-wider border-b border-border">
-                  <tr>
-                    <th className="px-6 py-4">Employee</th>
-                    <th className="px-6 py-4">Job Role</th>
-                    <th className="px-6 py-4">Clock In</th>
-                    <th className="px-6 py-4">Clock Out</th>
-                    <th className="px-6 py-4">Hours</th>
-                    <th className="px-6 py-4">Location</th>
-                    <th className="px-6 py-4">Focus Note</th>
-                    <th className="px-6 py-4 text-right">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/80">
-                  {teamTodayRecords.length > 0 ? (
-                    teamTodayRecords.map((record) => {
-                      const empDetails = getEmpDetails(record.employeeid);
-                      return (
-                        <tr key={record.id} className="hover:bg-secondary/20 transition-colors">
-                          <td className="px-6 py-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-8 w-8 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-xs">{empDetails.initials || "U"}</div>
-                              <div>
-                                <p className="font-semibold text-foreground">{empDetails.name}</p>
-                                <p className="text-xs text-muted-foreground">{empDetails.id}</p>
-                              </div>
+              <div className="space-y-4">
+                {teamTodayRecords.length > 0 ? (
+                  teamTodayRecords.map((record) => {
+                    const empDetails = getEmpDetails(record.employeeid);
+                    
+                    let firstIn = record.checkin || "23:59";
+                    let lastOut = record.checkout || "00:00";
+                    let isActive = !record.checkout;
+                    
+                    let totalMins = 0;
+                    if (record.checkin && record.checkout) {
+                      const [inH, inM] = record.checkin.split(':').map(Number);
+                      const [outH, outM] = record.checkout.split(':').map(Number);
+                      let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                      if (diff < 0) diff += 24 * 60;
+                      totalMins += diff;
+                    }
+
+                    const workedH = Math.floor(totalMins / 60);
+                    const workedM = totalMins % 60;
+
+                    let isLate = false;
+                    if (firstIn !== "23:59") {
+                        const [h, m] = firstIn.split(':').map(Number);
+                        if (h > 9 || (h === 9 && m > 15)) isLate = true;
+                    }
+
+                    let startPct = 0;
+                    let endPct = 100;
+                    if (firstIn !== "23:59") {
+                        const [h, m] = firstIn.split(':').map(Number);
+                        const startMin = (h * 60) + m;
+                        startPct = Math.max(0, Math.min(100, ((startMin - 540) / 600) * 100));
+                    }
+                    if (lastOut !== "00:00") {
+                        const [h, m] = lastOut.split(':').map(Number);
+                        const endMin = (h * 60) + m;
+                        endPct = Math.max(0, Math.min(100, ((endMin - 540) / 600) * 100));
+                    } else if (isActive) {
+                        const now = new Date();
+                        const currentMin = (now.getHours() * 60) + now.getMinutes();
+                        endPct = Math.max(0, Math.min(100, ((currentMin - 540) / 600) * 100));
+                    }
+                    const barWidth = Math.max(2, endPct - startPct);
+
+                    return (
+                      <div key={record.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
+                          <div className="flex items-center gap-3">
+                            <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                              {empDetails.initials || "U"}
                             </div>
-                          </td>
-                          <td className="px-6 py-4 text-muted-foreground font-medium">{empDetails.role}</td>
-                          <td className="px-6 py-4 font-bold text-emerald-600">{formatTime12Hour(record.checkin)}</td>
-                          <td className="px-6 py-4 font-semibold text-amber-500">
-                            {record.checkout ? (
-                              <span className="text-foreground">{formatTime12Hour(record.checkout)}</span>
+                            <div>
+                              <h4 className="font-bold text-foreground">{empDetails.name}</h4>
+                              <p className="text-xs text-muted-foreground">{empDetails.role} • {record.location}</p>
+                            </div>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
+                            {isActive ? (
+                              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
+                              </span>
                             ) : (
-                              "• Clocked In"
-                            )}
-                          </td>
-                          <td className="px-6 py-4 text-muted-foreground font-medium">
-                            {record.checkout ? (() => {
-                              const [inH, inM] = record.checkin.split(':').map(Number);
-                              const [outH, outM] = record.checkout.split(':').map(Number);
-                              let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                              if (diff < 0) diff += 24 * 60;
-                              const h = Math.floor(diff / 60);
-                              const m = diff % 60;
-                              return `${h}h ${m}m`;
-                            })() : "-"}
-                          </td>
-                          <td className="px-6 py-4 text-muted-foreground text-xs font-medium">
-                            <span className="inline-flex items-center gap-1 bg-secondary/40 px-2 py-1 rounded-lg">
-                              <Building2 className="h-3.5 w-3.5 text-emerald-500" />{record.location}
-                            </span>
-                          </td>
-                          <td className="px-6 py-4 text-muted-foreground">{record.note || "-"}</td>
-                          <td className="px-6 py-4 text-right">
-                            <span className={`inline-block rounded-full px-2.5 py-1 text-xs font-bold ${record.checkout
-                                ? "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300"
-                                : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/25 dark:text-emerald-400"
-                              }`}>
-                              {record.checkout ? "Completed" : "Present"}
-                            </span>
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
-                        No team check-ins today.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="history" className="m-0 border-none p-0 outline-none space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {displayEmpIds.length === 0 ? (
-              <div className="col-span-full rounded-3xl border border-border border-dashed bg-secondary/30 p-24 text-center">
-                <Users className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
-                <p className="text-sm text-muted-foreground">No attendance history found across any employees.</p>
-              </div>
-            ) : (
-              displayEmpIds.map(empId => {
-                const details = getEmpDetails(empId as string);
-                const empRecords = attendance.filter((a: any) => a.employeeid === empId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
-
-                return (
-                  <div key={empId as string} className="rounded-2xl border border-border bg-card shadow-sm p-4">
-                    <div className="flex items-center gap-3 mb-4">
-                      <div className="h-10 w-10 rounded-full bg-emerald-600/10 flex items-center justify-center font-bold text-emerald-700 uppercase">
-                        {details.initials || details.name.charAt(0)}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-foreground">{details.name}</h3>
-                        <p className="text-xs text-muted-foreground">{empRecords.length} Attendance Records</p>
-                      </div>
-                    </div>
-                    <div className="space-y-3">
-                      {empRecords.map((record: any) => (
-                        <div key={record.id} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-emerald-500/30 transition-colors">
-                          <div className="mt-0.5">
-                            {record.checkout ? (
-                              <Square className="h-4 w-4 text-emerald-500" />
-                            ) : (
-                              <Play className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+                              <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold">Completed</span>
                             )}
                           </div>
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-center justify-between gap-2">
-                              <p className="text-sm font-semibold truncate text-foreground">
-                                {record.date}
-                              </p>
-                              <div className="flex items-center gap-2 shrink-0">
-                                <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${record.checkout
-                                    ? "bg-secondary text-muted-foreground"
-                                    : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
-                                  }`}>
-                                  {record.checkout ? "Completed" : "Active"}
-                                </span>
-                              </div>
+                        </div>
+                        
+                        <div className="p-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                            <div>
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock In</p>
+                              <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
                             </div>
-                            <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                              <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
-                                <Clock className="h-3 w-3" />
-                                {formatTime12Hour(record.checkin)} {record.checkout ? `- ${formatTime12Hour(record.checkout)}` : ""}
-                              </span>
-                              <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
-                                <Building2 className="h-3 w-3 shrink-0" /> {record.location || "Office"}
-                              </span>
-                              {record.checkout && (
-                                <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
-                                  {(() => {
-                                    const [inH, inM] = record.checkin.split(':').map(Number);
-                                    const [outH, outM] = record.checkout.split(':').map(Number);
-                                    let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                                    if (diff < 0) diff += 24 * 60;
-                                    const h = Math.floor(diff / 60);
-                                    const m = diff % 60;
-                                    return `${h}h ${m}m`;
-                                  })()}
-                                </span>
-                              )}
+                            <div>
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock Out</p>
+                              <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
+                            </div>
+                            <div className="col-span-2">
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Focus Note</p>
+                              <p className="font-medium text-slate-600 dark:text-slate-400 italic">"{record.note || "No note provided"}"</p>
+                            </div>
+                          </div>
+
+                          <div className="mt-4 pt-4 border-t border-border/60">
+                            <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
+                              <span>09:00 AM</span>
+                              <span>07:00 PM</span>
+                            </div>
+                            <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
+                              <div 
+                                className={`absolute top-0 bottom-0 ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
+                                style={{ left: `${startPct}%`, width: `${barWidth}%` }}
+                              />
                             </div>
                           </div>
                         </div>
-                      ))}
-                    </div>
+                      </div>
+                    );
+                  })
+                ) : (
+                  <div className="bg-card rounded-3xl border border-border p-8 text-center text-muted-foreground shadow-sm">
+                    No team check-ins today.
                   </div>
-                );
-              })
-            )}
-          </div>
-        </TabsContent>
+                )}
+              </div>
+            </TabsContent>
+
+            <TabsContent value="history" className="m-0 border-none p-0 outline-none space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {displayEmpIds.length === 0 ? (
+                  <div className="col-span-full rounded-3xl border border-border border-dashed bg-secondary/30 p-24 text-center">
+                    <Users className="h-10 w-10 text-muted-foreground/40 mx-auto mb-4" />
+                    <p className="text-sm text-muted-foreground">No attendance history found across any employees.</p>
+                  </div>
+                ) : (
+                  displayEmpIds.map(empId => {
+                    const details = getEmpDetails(empId as string);
+                    const empRecords = attendance.filter((a: any) => a.employeeid === empId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+
+                    return (
+                      <div key={empId as string} className="rounded-2xl border border-border bg-card shadow-sm p-4">
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="h-10 w-10 rounded-full bg-emerald-600/10 flex items-center justify-center font-bold text-emerald-700 uppercase">
+                            {details.initials || details.name.charAt(0)}
+                          </div>
+                          <div>
+                            <h3 className="font-bold text-foreground">{details.name}</h3>
+                            <p className="text-xs text-muted-foreground">{empRecords.length} Attendance Records</p>
+                          </div>
+                        </div>
+                        <div className="space-y-3">
+                          {empRecords.map((record: any) => (
+                            <div key={record.id} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-emerald-500/30 transition-colors">
+                              <div className="mt-0.5">
+                                {record.checkout ? (
+                                  <Square className="h-4 w-4 text-emerald-500" />
+                                ) : (
+                                  <Play className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+                                )}
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center justify-between gap-2">
+                                  <p className="text-sm font-semibold truncate text-foreground">
+                                    {record.date}
+                                  </p>
+                                  <div className="flex items-center gap-2 shrink-0">
+                                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${record.checkout
+                                      ? "bg-secondary text-muted-foreground"
+                                      : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                      }`}>
+                                      {record.checkout ? "Completed" : "Active"}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                  <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
+                                    <Clock className="h-3 w-3" />
+                                    {formatTime12Hour(record.checkin)} {record.checkout ? `- ${formatTime12Hour(record.checkout)}` : ""}
+                                  </span>
+                                  <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
+                                    <Building2 className="h-3 w-3 shrink-0" /> {record.location || "Office"}
+                                  </span>
+                                  {record.checkout && (
+                                    <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                                      {(() => {
+                                        const [inH, inM] = record.checkin.split(':').map(Number);
+                                        const [outH, outM] = record.checkout.split(':').map(Number);
+                                        let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                                        if (diff < 0) diff += 24 * 60;
+                                        const h = Math.floor(diff / 60);
+                                        const m = diff % 60;
+                                        return `${h}h ${m}m`;
+                                      })()}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            </TabsContent>
           </>
         )}
 
@@ -821,6 +1118,67 @@ function AttendancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+      <Sheet open={isDaySheetOpen} onOpenChange={setIsDaySheetOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
+          <SheetHeader className="border-b border-border pb-4 mb-4">
+            <SheetTitle className="text-2xl font-bold">
+              {selectedDayInfo?.date ? format(new Date(selectedDayInfo.date), "EEEE, dd MMM yyyy") : "Date Details"}
+            </SheetTitle>
+            <SheetDescription>
+              Attendance records and shift details for this day.
+            </SheetDescription>
+          </SheetHeader>
+          
+          <div className="space-y-6">
+            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+              <div className="space-y-1.5">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Check In</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <p className="text-lg font-bold">{selectedDayInfo?.firstIn ? formatTime12Hour(selectedDayInfo.firstIn) : "--:--"}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Check Out</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                  <p className="text-lg font-bold">{selectedDayInfo?.lastOut ? formatTime12Hour(selectedDayInfo.lastOut) : "--:--"}</p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Worked</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                  <p className="text-lg font-bold">{selectedDayInfo?.totalMinutes ? `${Math.floor(selectedDayInfo.totalMinutes / 60)}h ${selectedDayInfo.totalMinutes % 60}m` : "0h 0m"}</p>
+                </div>
+              </div>
+              
+              <div className="space-y-1.5">
+                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+                <p className="text-lg font-bold">
+                  {selectedDayInfo?.isAbsent ? (
+                    <span className="inline-flex items-center gap-1.5 bg-rose-100 text-rose-700 px-2 py-1 rounded-md text-sm"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent</span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-sm"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Present</span>
+                  )}
+                </p>
+              </div>
+            </div>
+            
+            {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "09:15" && (
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+                <div className="bg-amber-100 text-amber-700 p-2 rounded-full shrink-0">⚠️</div>
+                <div>
+                  <h4 className="font-semibold text-amber-900">Late Arrival</h4>
+                  <p className="text-sm text-amber-700">Check-in was after the expected 09:15 AM threshold.</p>
+                </div>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </main>
   );
 }

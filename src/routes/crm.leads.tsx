@@ -503,14 +503,14 @@ function PackageFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: a
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
         <select value={form.pax} onChange={set("pax")} className={FIELD_CLS}>
-          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n}</option>)}
           <option value="10+">10+</option>
         </select>
       </div>
       <div className="col-span-2 sm:col-span-4">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hotel Preference</label>
         <div className="flex items-center gap-5 mt-1">
-          {[1,2,3,4,5].map(star => (
+          {[1, 2, 3, 4, 5].map(star => (
             <label key={star} className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
               <input
                 type="checkbox"
@@ -556,15 +556,15 @@ function InsuranceFields({ form, set, service }: { form: typeof EMPTY_FORM; set:
           {(service === "Travel Insurance"
             ? ["Single Trip", "Multi Trip", "Student Travel", "Senior Citizen", "Family Travel", "Corporate Travel", "Domestic", "International"]
             : form.leadSection === "General Insurance"
-            ? ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle","Fire","Marine","Property","Liability","Life"]
-            : ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"]
+              ? ["Four Wheeler", "Two Wheeler", "School Bus", "Pickup", "Tractor", "Health", "LIC", "Commercial Vehicle", "Fire", "Marine", "Property", "Liability", "Life"]
+              : ["Four Wheeler", "Two Wheeler", "School Bus", "Pickup", "Tractor", "Health", "LIC", "Commercial Vehicle"]
           ).map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <div className="col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Query Type</label>
         <select value={form.queryType} onChange={set("queryType")} className={FIELD_CLS}>
-          {["New","Renewal","Expired"].map(q => <option key={q}>{q}</option>)}
+          {["New", "Renewal", "Expired"].map(q => <option key={q}>{q}</option>)}
         </select>
       </div>
       <div className="col-span-2">
@@ -657,8 +657,8 @@ function getServiceFormType(service: string): string {
   if (service === "Travel Insurance" || service === "General Insurance") return "insurance";
   if (["Corporate Travel", "MICE Events", "Conference Booking"].includes(service)) return "corporate";
   const packages = [
-    "International Package","Domestic Package","Honeymoon Package",
-    "Family Package","Group Tour","Corporate Tour","Luxury Tour","Adventure Tour",
+    "International Package", "Domestic Package", "Honeymoon Package",
+    "Family Package", "Group Tour", "Corporate Tour", "Luxury Tour", "Adventure Tour",
   ];
   if (packages.includes(service)) return "package";
   return "generic";
@@ -817,10 +817,9 @@ function DynamicFormStep({
                   onClick={handleFetchCustomer}
                   disabled={!(form.phone || "").trim()}
                   className={
-                    `shrink-0 rounded-xl px-3 py-2 text-xs font-semibold border transition-all duration-200 ${
-                      fetchStatus === "found"
-                        ? "bg-green-500 border-green-500 text-white"
-                        : fetchStatus === "notfound"
+                    `shrink-0 rounded-xl px-3 py-2 text-xs font-semibold border transition-all duration-200 ${fetchStatus === "found"
+                      ? "bg-green-500 border-green-500 text-white"
+                      : fetchStatus === "notfound"
                         ? "bg-red-500 border-red-500 text-white"
                         : "bg-primary border-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
                     }`
@@ -1796,7 +1795,7 @@ function LeadDetail({
                           const newNote = `Booking details updated. Vendor: ${bookingDetails.vendorName || "N/A"}, PNR: ${bookingDetails.bookingReference || "N/A"}`;
                           currentNotes.push({ text: newNote, date: noteDate });
 
-                          onUpdateLead?.(lead.id, { 
+                          onUpdateLead?.(lead.id, {
                             ...bookingDetails,
                             notes: newNote,
                             noteDate: noteDate,
@@ -2433,24 +2432,23 @@ function LeadsPage() {
     const bDate = new Date(b.createdAt || "");
     const aTime = isNaN(aDate.getTime()) ? 0 : aDate.getTime();
     const bTime = isNaN(bDate.getTime()) ? 0 : bDate.getTime();
-    
+
     if (aTime !== bTime) {
       return aTime < bTime ? -1 * dir : 1 * dir;
     }
-    
+
     // Tie-breaker for items on the exact same date: newer ID comes first
     const aId = Number(a.id);
     const bId = Number(b.id);
     if (!isNaN(aId) && !isNaN(bId) && aId !== bId) {
       return bId - aId; // Newest first
     }
-    
+
     return 0;
   });
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);
-    toast.success(`Lead "${l.name}" added successfully`);
   };
 
   const updateStatus = async (id: string, status: LeadStatus) => {
@@ -2467,41 +2465,88 @@ function LeadsPage() {
     if (["on conform", "Confirmed", "in process", "Payment Pending"].includes(status)) {
       const lead = leads.find((l) => l.id === id);
       if (lead) {
-        if (lead.phone) {
-        setCustomers((prev) => {
-          const exists = prev.find((c) => c.phone === lead.phone);
-          if (exists) {
-            return prev.map((c) =>
-              c.phone === lead.phone
-                ? { ...c, trips: (c.trips || 0) + 1, totalSpend: (c.totalSpend || 0) + (Number(lead.budget) || 0) }
-                : c
-            );
-          } else {
-            const currentMaxId = prev.reduce((max, c) => {
-              const num = parseInt(c.id.replace("CRN", ""));
-              return !isNaN(num) && num > max ? num : max;
-            }, 0);
-            const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
-            return [
-              {
-                id: nextId,
-                name: lead.name,
+        // Auto push to respective module based on lead service
+        (async () => {
+          try {
+            const service = lead.service || "";
+            if (service === "Visa") {
+              const newVisa = {
+                id: `VISA-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+                customer: lead.name,
+                phone: lead.phone || "",
                 email: lead.email || "",
-                phone: lead.phone,
-                company: lead.clientCompany || "",
-                city: lead.destination || "", // Using destination as placeholder if city isn't present
-                source: lead.source || "Website",
-                status: "Active",
-                assignedTo: lead.assignedTo || "Unassigned", // Can customize based on feedback later
-                createdAt: new Date().toISOString().slice(0, 10),
-                trips: 1,
-                totalSpend: Number(lead.budget) || 0,
-                tier: "Silver",
-              },
-              ...prev,
-            ];
+                avatar: "",
+                country: lead.destination || "",
+                flag: "",
+                visaType: lead.visaType || "",
+                appliedOn: new Date().toISOString().slice(0, 10),
+                travelDate: lead.travelDate || "",
+                status: "Pending Documents",
+                docs: []
+              };
+              await supabase.from("visa").insert([newVisa]);
+            } else if (service === "General Insurance" || service === "Travel Insurance") {
+              const newInsurance = {
+                customer_name: lead.name,
+                mobile_number: lead.phone || "",
+                email: lead.email || "",
+                policy_type: service === "Travel Insurance" ? "Travel" : "Comprehensive",
+                payment_status: "Pending",
+                total_premium: Number(lead.budget) || 0
+              };
+              await supabase.from("insurance_policies").insert([newInsurance]);
+            } else {
+              const newBooking = {
+                id: `BK-${Math.random().toString(36).substring(2, 9).toUpperCase()}`,
+                customer: lead.name,
+                mobileNumber: lead.phone || "",
+                bookingType: service || "Other",
+                status: "Pending",
+                bookingDate: new Date().toISOString().slice(0, 10),
+                amount: Number(lead.budget) || 0
+              };
+              await supabase.from("bookings").insert([newBooking]);
+            }
+          } catch (err) {
+            console.error("Failed to auto-create service record:", err);
           }
-        });
+        })();
+
+        if (lead.phone) {
+          setCustomers((prev) => {
+            const exists = prev.find((c) => c.phone === lead.phone);
+            if (exists) {
+              return prev.map((c) =>
+                c.phone === lead.phone
+                  ? { ...c, trips: (c.trips || 0) + 1, totalSpend: (c.totalSpend || 0) + (Number(lead.budget) || 0) }
+                  : c
+              );
+            } else {
+              const currentMaxId = prev.reduce((max, c) => {
+                const num = parseInt(c.id.replace("CRN", ""));
+                return !isNaN(num) && num > max ? num : max;
+              }, 0);
+              const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
+              return [
+                {
+                  id: nextId,
+                  name: lead.name,
+                  email: lead.email || "",
+                  phone: lead.phone,
+                  company: lead.clientCompany || "",
+                  city: lead.destination || "", // Using destination as placeholder if city isn't present
+                  source: lead.source || "Website",
+                  status: "Active",
+                  assignedTo: lead.assignedTo || "Unassigned", // Can customize based on feedback later
+                  createdAt: new Date().toISOString().slice(0, 10),
+                  trips: 1,
+                  totalSpend: Number(lead.budget) || 0,
+                  tier: "Silver",
+                },
+                ...prev,
+              ];
+            }
+          });
         }
       }
     }
@@ -2952,15 +2997,15 @@ function LeadsPage() {
         {/* ── KANBAN VIEW ── */}
         {view === "kanban" && (
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x w-full">
-              {STATUSES.map((s) => (
-                <KanbanCol
-                  key={s}
-                  status={s}
-                  leads={sortedLeads.filter((l) => l.status === s)}
-                  onSelect={setSelected}
-                  onDropLead={(id) => updateStatus(id, s)}
-                />
-              ))}
+            {STATUSES.map((s) => (
+              <KanbanCol
+                key={s}
+                status={s}
+                leads={sortedLeads.filter((l) => l.status === s)}
+                onSelect={setSelected}
+                onDropLead={(id) => updateStatus(id, s)}
+              />
+            ))}
           </div>
         )}
       </div>
