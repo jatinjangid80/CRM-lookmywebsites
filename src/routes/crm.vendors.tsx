@@ -584,9 +584,15 @@ function VendorsPage() {
               <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortDir(sortField === "name" && sortDir === "asc" ? "desc" : "asc"); setSortField("name"); }}>
                 <div className="flex items-center gap-1">Vendor Info {sortField === "name" ? (sortDir === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
               </TableHead>
-              <TableHead>Contact Details</TableHead>
-              <TableHead>Location</TableHead>
-              <TableHead>Status</TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortDir(sortField === "mobile" && sortDir === "asc" ? "desc" : "asc"); setSortField("mobile"); }}>
+                <div className="flex items-center gap-1">Contact Details {sortField === "mobile" ? (sortDir === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortDir(sortField === "officeCity" && sortDir === "asc" ? "desc" : "asc"); setSortField("officeCity"); }}>
+                <div className="flex items-center gap-1">Location {sortField === "officeCity" ? (sortDir === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortDir(sortField === "status" && sortDir === "asc" ? "desc" : "asc"); setSortField("status"); }}>
+                <div className="flex items-center gap-1">Status {sortField === "status" ? (sortDir === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
               <TableHead className="text-right">Actions</TableHead>
             </TableRow>
           </TableHeader>
