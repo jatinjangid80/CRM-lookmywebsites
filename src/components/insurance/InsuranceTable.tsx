@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Eye, Edit2, Copy, FileText, Download, Trash2, ShieldAlert, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
+import { Eye, Edit2, Copy, FileText, Download, Trash2, ShieldAlert, Search, Filter, ArrowUpDown, ArrowUp, ArrowDown, MoreVertical } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -300,8 +300,8 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                   <td className="px-4 py-3 text-right">
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8 px-2 rounded-lg text-xs bg-muted hover:bg-muted/80">
-                          Options
+                        <Button variant="ghost" size="sm" className="h-8 w-8 p-0 rounded-lg text-xs bg-muted hover:bg-muted/80">
+                          <MoreVertical className="h-4 w-4 text-muted-foreground" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-40 rounded-xl">
