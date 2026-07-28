@@ -164,10 +164,10 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
     return acc;
   }, {} as Record<string, ExtBooking[]>);
 
-  const types = Object.keys(groupedBookings);
-  const [activeTab, setActiveTab] = useState<string>(types[0] || "");
-  const currentTab = types.includes(activeTab) ? activeTab : (types[0] || "");
-  const displayedBookings = groupedBookings[currentTab] || [];
+  const types = ["All", ...Object.keys(groupedBookings)];
+  const [activeTab, setActiveTab] = useState<string>("All");
+  const currentTab = types.includes(activeTab) ? activeTab : "All";
+  const displayedBookings = currentTab === "All" ? customerBookings : (groupedBookings[currentTab] || []);
 
   return (
     <div className="space-y-6">
@@ -188,7 +188,7 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
                 )}
                 <h4 className={`text-sm font-bold uppercase tracking-wider ${currentTab === type ? "pl-2" : ""}`}>{type}</h4>
                 <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${currentTab === type ? "bg-primary/20 text-primary" : "bg-secondary text-secondary-foreground"}`}>
-                  {groupedBookings[type]?.length || 0}
+                  {type === "All" ? customerBookings.length : (groupedBookings[type]?.length || 0)}
                 </span>
                 {currentTab === type && (
                   <div className="absolute bottom-0 left-0 right-0 h-[2px] bg-primary"></div>
