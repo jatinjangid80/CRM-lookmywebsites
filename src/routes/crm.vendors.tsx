@@ -62,6 +62,7 @@ import {
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { toast } from "sonner";
 import { supabase } from "@/lib/supabase";
+import { formatINR } from "@/lib/mock-data";
 import { ImportVendorsModal } from "@/components/ui/import-vendors-modal";
 import { generateWhatsAppLink } from "@/lib/whatsapp";
 import * as XLSX from "xlsx";
