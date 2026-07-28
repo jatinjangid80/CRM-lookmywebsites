@@ -1645,7 +1645,7 @@ function BookingsPage() {
                   <button
                     key={tab}
                     onClick={() => setManageTab(tab as any)}
-                    className={`py-3 text-sm font-semibold transition-colors border-b-2 -mb-[1px] ${manageTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
+                    className={`py-3 text-sm font-semibold transition-colors border-b-2 -mb-[1px] focus:outline-none ${manageTab === tab ? "border-primary text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"}`}
                   >
                     {tab}
                   </button>
