@@ -62,6 +62,8 @@ export function InsuranceForm({
 
   const [form, setForm] = useState<any>({
     client_company: "",
+    school_name: "",
+    reference_name: "",
     customer_name: "",
     additional_passengers: [],
     mobile_number: "",
@@ -323,6 +325,25 @@ export function InsuranceForm({
                   placeholder="e.g. Acme Corp or Customer Name"
                 />
               </div>
+
+              <div className="space-y-1 col-span-2">
+                <Label>School Name</Label>
+                <Input
+                  value={form.school_name}
+                  onChange={(e) => setForm({ ...form, school_name: e.target.value })}
+                  placeholder="e.g. Genius Public School"
+                />
+              </div>
+
+              <div className="space-y-1 col-span-2">
+                <Label>Reference Name</Label>
+                <Input
+                  value={form.reference_name}
+                  onChange={(e) => setForm({ ...form, reference_name: e.target.value })}
+                  placeholder="Referred By"
+                />
+              </div>
+
 
               <div className="space-y-1 col-span-2">
                 <Label className="after:content-['*'] after:ml-0.5 after:text-red-500">Customer Name</Label>
