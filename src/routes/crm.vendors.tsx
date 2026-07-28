@@ -152,6 +152,11 @@ type SortDir = "asc" | "desc";
 function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
 
+  const formatCityName = (city: string) => {
+    if (!city) return "";
+    return city.trim().split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' ');
+  };
+
   const normalizeVendor = (vendor: any) => {
     let extra: any = {};
     if (typeof vendor.notes === 'string' && vendor.notes.startsWith('{')) {
@@ -164,8 +169,8 @@ function VendorsPage() {
     return {
       ...vendor,
       ...extra,
-      place: vendor.place || vendor.location || "",
-      officeCity: vendor.officeCity || extra.officeCity || vendor.city || "",
+      place: formatCityName(vendor.place || vendor.location || ""),
+      officeCity: formatCityName(vendor.officeCity || extra.officeCity || vendor.city || ""),
       mobile: vendor.mobile || vendor.phone || "",
       vendorType: vendor.vendorType || vendor.category || "",
       contactPerson: vendor.contactPerson || vendor.contactperson || vendor.contact_person || "",
@@ -213,8 +218,8 @@ function VendorsPage() {
     setFormContacts((prev) => prev.map((c, idx) => idx === i ? { ...c, [field]: value } : c));
 
   // ── Derived lists ──
-  const uniquePlaces = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.place).filter(Boolean))), [normalizedVendors]);
-  const uniqueCities = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.officeCity).filter(Boolean))), [normalizedVendors]);
+  const uniquePlaces = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.place).filter(Boolean))).sort((a, b) => a.localeCompare(b)), [normalizedVendors]);
+  const uniqueCities = useMemo(() => Array.from(new Set(normalizedVendors.map((v) => v.officeCity).filter(Boolean))).sort((a, b) => a.localeCompare(b)), [normalizedVendors]);
 
   // ── Stats ──
   const stats = useMemo(() => ({
