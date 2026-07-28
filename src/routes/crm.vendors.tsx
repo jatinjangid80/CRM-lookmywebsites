@@ -22,6 +22,9 @@ import {
   ChevronLeft,
   ChevronRight,
   MessageCircle,
+  ArrowUp,
+  ArrowDown,
+  ArrowUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +44,14 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   Select,
   SelectContent,
@@ -139,6 +150,8 @@ type SortDir = "asc" | "desc";
 
 function VendorsPage() {
   const [vendors, setVendors] = useSupabaseTable<Vendor[]>("vendors", []);
+  const [bookingList] = useSupabaseTable<any[]>("bookings", []);
+  const [transactions] = useSupabaseTable<any[]>("transactions", []);
 
   const normalizeVendor = (vendor: any) => {
     let extra: any = {};
@@ -311,7 +324,7 @@ function VendorsPage() {
       if (isDup) { setFormError("A vendor with this mobile number already exists."); return; }
 
       const id = `VND-${String(Date.now()).slice(-5)}`;
-      
+
       const newVendorData = {
         id,
         name: form.name,
@@ -354,7 +367,7 @@ function VendorsPage() {
         return v.mobile === primaryMobile || (v.contacts || []).some((c) => c.mobile === primaryMobile);
       });
       if (isDup) { setFormError("Another vendor already uses this mobile number."); return; }
-      
+
       const updatedVendorData = {
         name: form.name,
         category: form.vendorType,
@@ -558,109 +571,182 @@ function VendorsPage() {
               </select>
             </div>
           )}
-          <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+          <div className="text-sm text-muted-foreground whitespace-nowrap font-medium px-2 ml-auto">
             {filtered.length} vendors
           </div>
         </div>
       </div>
 
-      <div className="flex-1 overflow-y-auto pr-2 pb-2">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {paginated.length === 0 ? (
-          <div className="col-span-full py-16 text-center text-muted-foreground bg-card rounded-2xl border border-border">
-            <div className="flex flex-col items-center gap-3">
-              <Building2 className="h-12 w-12 opacity-30" />
-              <p className="font-medium">No vendors found</p>
-              <p className="text-xs">Try adjusting your search or filters, or add a new vendor.</p>
-            </div>
-          </div>
-        ) : (
-          paginated.map((v, i) => (
-            <div key={v.id} onClick={() => openView(v)} className="bg-card border border-border p-5 rounded-2xl shadow-sm hover:border-primary/50 cursor-pointer transition-colors group">
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-3">
-                  <div className={`h-12 w-12 rounded-2xl border flex items-center justify-center shrink-0 ${getInitialsColor(i)}`}>
-                    <span className="font-semibold text-lg">{getInitials(v.name)}</span>
+      {/* Table View */}
+      <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden mb-2">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-muted/50 select-none">
+              <TableHead className="cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortDir(sortField === "name" && sortDir === "asc" ? "desc" : "asc"); setSortField("name"); }}>
+                <div className="flex items-center gap-1">Vendor Info {sortField === "name" ? (sortDir === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+              </TableHead>
+              <TableHead>Contact Details</TableHead>
+              <TableHead>Location</TableHead>
+              <TableHead>Financials</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {paginated.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={6} className="h-48 text-center text-muted-foreground">
+                  <div className="flex flex-col items-center justify-center">
+                    <Building2 className="h-10 w-10 mb-3 opacity-50" />
+                    <p>No vendors found matching your criteria.</p>
                   </div>
-                  <div>
-                    <h3 className="font-semibold text-lg line-clamp-1 break-all" title={v.name}>{v.name}</h3>
-                    <p className="text-xs text-muted-foreground">{v.id}</p>
-                  </div>
-                </div>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" className="h-8 w-8 p-0 text-muted-foreground -mr-2">
-                        <MoreVertical className="h-4 w-4" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end" className="w-48 rounded-xl">
-                      <DropdownMenuItem onClick={() => openView(v)}>
-                        <Eye className="mr-2 h-4 w-4" /> View Details
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => openEdit(v)}>
-                        <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
-                      </DropdownMenuItem>
+                </TableCell>
+              </TableRow>
+            ) : (
+              paginated.map((v, i) => {
+                const vBookings = bookingList.filter(b => b.supplier === v.name || b.supplier === v.id);
+                const vSpend = transactions
+                  .filter(tx => tx.entityType === "Vendor" && (tx.entityId === v.id || tx.entityId === v.name) && tx.type === "Payment")
+                  .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+                const vTotalBilled = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
+                const vPending = vTotalBilled - vSpend;
 
-                      <DropdownMenuSeparator />
-                      {v.mobile && (
-                        <>
-                          <DropdownMenuItem asChild>
-                            <a href={`tel:${v.mobile}`}>
-                              <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
+                return (
+                  <TableRow key={v.id} className="group hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => openView(v)}>
+                    <TableCell>
+                      <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold shrink-0 ${getInitialsColor(i)}`}>
+                          {getInitials(v.name)}
+                        </div>
+                        <div>
+                          <div className="font-semibold text-foreground line-clamp-1 break-all" title={v.name}>{v.name}</div>
+                          <div className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span>{v.id}</span>
+                            <span className="inline-block px-1.5 py-0.5 rounded-[4px] text-[10px] font-medium border bg-secondary text-secondary-foreground border-border">
+                              {v.vendorType}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1.5">
+                        <div className="flex items-center gap-2 text-sm text-foreground/80">
+                          <Phone className="h-3.5 w-3.5 text-muted-foreground" />
+                          {v.mobile || v.contacts?.[0]?.mobile || "N/A"}
+                          {(v.mobile || v.contacts?.[0]?.mobile) && (
+                            <a
+                              href={generateWhatsAppLink(v.mobile || v.contacts?.[0]?.mobile || "", "Hello!")}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="ml-1 text-emerald-500 hover:text-emerald-600 transition-colors"
+                              title="Message on WhatsApp"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <MessageCircle className="h-3.5 w-3.5" />
                             </a>
+                          )}
+                        </div>
+                        {v.email && (
+                          <div className="flex items-center gap-2 text-sm text-foreground/80">
+                            <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                            <span className="truncate max-w-[150px] sm:max-w-[200px]">{v.email}</span>
+                          </div>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      {(v.place || v.officeCity) ? (
+                        <div className="flex items-center gap-2 text-sm text-foreground/80">
+                          <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                          {v.place || v.officeCity}
+                        </div>
+                      ) : (
+                        <span className="text-muted-foreground text-sm">-</span>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col gap-1 text-xs">
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">Billed:</span>
+                          <span className="font-medium text-blue-600 dark:text-blue-400">{formatINR(vTotalBilled)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4">
+                          <span className="text-muted-foreground">Paid:</span>
+                          <span className="font-medium text-emerald-600 dark:text-emerald-400">{formatINR(vSpend)}</span>
+                        </div>
+                        <div className="flex justify-between gap-4 pt-1 border-t border-border">
+                          <span className="text-muted-foreground">Pending:</span>
+                          <span className="font-semibold text-rose-600 dark:text-rose-400">{formatINR(vPending)}</span>
+                        </div>
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${
+                        v.status === "Active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                        v.status === "Inactive" ? "bg-rose-100 text-rose-700 border-rose-200" :
+                        "bg-slate-100 text-slate-700 border-slate-200"
+                      }`}>
+                        {v.status || "Unknown"}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="opacity-50 group-hover:opacity-100 transition-opacity" onClick={(e) => e.stopPropagation()}>
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 rounded-xl" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={() => openView(v)}>
+                            <Eye className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem asChild>
-                            <a href={generateWhatsAppLink(v.mobile, "Hello!")} target="_blank" rel="noopener noreferrer">
-                              <MessageCircle className="mr-2 h-4 w-4 text-emerald-500" /> WhatsApp Message
-                            </a>
+                          <DropdownMenuItem onClick={() => openEdit(v)}>
+                            <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
                           </DropdownMenuItem>
-                        </>
-                      )}
-                      {v.email && (
-                        <DropdownMenuItem asChild>
-                          <a href={`mailto:${v.email}`}>
-                            <Mail className="mr-2 h-4 w-4 text-blue-600" /> Send Email
-                          </a>
-                        </DropdownMenuItem>
-                      )}
-                      {v.website && (
-                        <DropdownMenuItem asChild>
-                          <a href={v.website} target="_blank" rel="noopener noreferrer">
-                            <Globe className="mr-2 h-4 w-4 text-purple-600" /> Open Website
-                          </a>
-                        </DropdownMenuItem>
-                      )}
-                      <DropdownMenuSeparator />
-                      {isAdmin && (
-                        <DropdownMenuItem
-                          className="text-red-600 focus:text-red-600 focus:bg-red-50"
-                          onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" /> Delete
-                        </DropdownMenuItem>
-                      )}
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
-              </div>
-              <div className="mb-3 flex items-center gap-2">
-                <span className="inline-block px-2 py-0.5 rounded text-xs font-medium border bg-secondary text-secondary-foreground border-border">
-                  {v.vendorType}
-                </span>
-                <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider border ${v.status === "Active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" : "bg-slate-100 text-slate-600 border-slate-200"}`}>
-                  {v.status}
-                </span>
-              </div>
-              <div className="space-y-2 text-sm text-muted-foreground mb-4">
-                <p>👤 {v.contactPerson || v.contacts?.[0]?.name || "N/A"}</p>
-                <p>📞 {v.mobile || v.contacts?.[0]?.mobile || "N/A"}</p>
-                <p>📍 {v.place || v.officeCity || "N/A"}</p>
-              </div>
-            </div>
-          ))
-        )}
-        </div>
+
+                          <DropdownMenuSeparator />
+                          {v.mobile && (
+                            <>
+                              <DropdownMenuItem asChild>
+                                <a href={`tel:${v.mobile}`}>
+                                  <Phone className="mr-2 h-4 w-4 text-emerald-600" /> Call Vendor
+                                </a>
+                              </DropdownMenuItem>
+                            </>
+                          )}
+                          {v.email && (
+                            <DropdownMenuItem asChild>
+                              <a href={`mailto:${v.email}`}>
+                                <Mail className="mr-2 h-4 w-4 text-blue-600" /> Send Email
+                              </a>
+                            </DropdownMenuItem>
+                          )}
+                          {v.website && (
+                            <DropdownMenuItem asChild>
+                              <a href={v.website} target="_blank" rel="noopener noreferrer">
+                                <Globe className="mr-2 h-4 w-4 text-purple-600" /> Open Website
+                              </a>
+                            </DropdownMenuItem>
+                          )}
+                          <DropdownMenuSeparator />
+                          {isAdmin && (
+                            <DropdownMenuItem
+                              className="text-red-600 focus:text-red-600 focus:bg-red-50"
+                              onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" /> Delete
+                            </DropdownMenuItem>
+                          )}
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </div>
 
       {/* Pagination */}
