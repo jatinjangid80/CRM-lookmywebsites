@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useRef, useEffect, useCallback } from "react";
+import mammoth from "mammoth";
 import {
   Folder,
   FolderOpen,
@@ -214,17 +215,18 @@ const SEED_FOLDERS: FolderItem[] = [
   },
 ];
 
-/* ─── Modal ─── */
 function Modal({
   open,
   onClose,
   title,
   children,
+  className,
 }: {
   open: boolean;
   onClose: () => void;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) {
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
@@ -239,8 +241,8 @@ function Modal({
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
     >
-      <div className="w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200">
-        <div className="mb-4 flex items-center justify-between">
+      <div className={`w-full rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${className || "max-w-md"} overflow-hidden max-h-[95vh] flex flex-col`}>
+        <div className="mb-4 flex shrink-0 items-center justify-between">
           <h2 className="font-display text-lg font-bold">{title}</h2>
           <button
             onClick={onClose}
@@ -252,6 +254,45 @@ function Modal({
         {children}
       </div>
     </div>
+  );
+}
+
+function DocxViewer({ dataUrl }: { dataUrl: string }) {
+  const [html, setHtml] = useState<string>("");
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function renderDoc() {
+      try {
+        setLoading(true);
+        const base64 = dataUrl.split(",")[1];
+        if (!base64) throw new Error("Invalid dataUrl");
+        const binaryString = window.atob(base64);
+        const len = binaryString.length;
+        const bytes = new Uint8Array(len);
+        for (let i = 0; i < len; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+        
+        const result = await mammoth.convertToHtml({ arrayBuffer: bytes.buffer });
+        setHtml(result.value);
+      } catch (err) {
+        console.error("Docx render error", err);
+        setHtml("<p class='text-red-500'>Error loading document preview.</p>");
+      } finally {
+        setLoading(false);
+      }
+    }
+    renderDoc();
+  }, [dataUrl]);
+
+  if (loading) return <div className="flex justify-center p-8"><span className="animate-pulse text-muted-foreground">Loading preview...</span></div>;
+
+  return (
+    <div 
+      className="prose prose-sm max-w-none docx-preview" 
+      dangerouslySetInnerHTML={{ __html: html }} 
+    />
   );
 }
 
@@ -762,9 +803,10 @@ function FolderDetail({
         open={!!previewFile}
         onClose={() => setPreviewFile(null)}
         title={previewFile?.name ?? ""}
+        className={previewFile && (previewFile.name.endsWith(".docx") || previewFile.type === "application/pdf" || previewFile.type.startsWith("image/")) ? "max-w-4xl" : "max-w-md"}
       >
         {previewFile && (
-          <div className="space-y-4">
+          <div className="space-y-4 overflow-y-auto">
             <div className="flex items-center gap-3 rounded-xl border border-border bg-secondary/40 p-3">
               {fileIcon(previewFile.type)}
               <div className="min-w-0 flex-1">
@@ -774,6 +816,20 @@ function FolderDetail({
                 </p>
               </div>
             </div>
+
+            {previewFile.name.endsWith(".docx") && (
+              <div className="mb-6 w-full max-w-2xl max-h-[60vh] overflow-y-auto rounded-xl border border-border bg-white p-6 text-black text-left">
+                <DocxViewer dataUrl={previewFile.dataUrl} />
+              </div>
+            )}
+
+            {!previewFile.type.startsWith("image/") &&
+              previewFile.type !== "application/pdf" &&
+              !previewFile.name.endsWith(".docx") && (
+                <div className="flex flex-col items-center justify-center p-8 bg-secondary/20 rounded-xl">
+                  <p className="text-muted-foreground text-sm">No preview available for this file type.</p>
+                </div>
+              )}
 
             {previewFile.type.startsWith("image/") && (
               <img
