@@ -269,7 +269,7 @@ function CustomersPage() {
   const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
       case "VIP": return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm border border-amber-200">VIP</span>;
-      case "Active": return <span className="bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Active</span>;
+      case "Active": return <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Active</span>;
       default: return <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Inactive</span>;
     }
   };
@@ -387,7 +387,7 @@ function CustomersPage() {
                 <TableRow key={c.id} className="group">
                   <TableCell>
                     <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center font-bold shrink-0">
+                      <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold shrink-0">
                         {c.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
@@ -721,8 +721,8 @@ function CustomersPage() {
                               </div>
                               <div className="text-right">
                                 <p className="font-display font-bold text-primary">{formatINR(b.amount)}</p>
-                                <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md ${
-                                  b.status === "Confirmed" || b.status === "Completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  b.status === "Confirmed" || b.status === "Completed" ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-700"
                                 }`}>{b.status}</span>
                               </div>
                             </div>
@@ -757,7 +757,7 @@ function CustomersPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Via {b.paymentMode || "Unknown"} • {b.transactionId || "No TXN ID"}</p>
                               </div>
                               <div className="text-right">
-                                <p className="font-display font-bold text-emerald-600">{formatINR(b.paid)}</p>
+                                <p className="font-display font-bold text-primary">{formatINR(b.paid)}</p>
                                 <p className="text-[10px] text-muted-foreground mt-1">Out of {formatINR(b.amount)}</p>
                               </div>
                             </div>
@@ -817,8 +817,8 @@ function CustomersPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Due {t.due_date} • Priority: {t.priority}</p>
                               </div>
                               <div className="text-right">
-                                <span className={`inline-block mt-1 text-[10px] uppercase font-bold px-2 py-0.5 rounded-md ${
-                                  t.status === "Completed" ? "bg-emerald-100 text-emerald-700" :
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
+                                  t.status === "Completed" ? "bg-primary/10 text-primary" :
                                   t.status === "In Progress" ? "bg-blue-100 text-blue-700" :
                                   "bg-amber-100 text-amber-700"
                                 }`}>

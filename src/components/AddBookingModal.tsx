@@ -664,6 +664,30 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Flight Number</Label>
+                  <Input
+                    value={details.flightNumber || ""}
+                    onChange={(e) => updateDetail("flightNumber", e.target.value)}
+                    placeholder="6E-123"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Departure Time</Label>
+                  <Input
+                    type="time"
+                    value={details.departureTime || ""}
+                    onChange={(e) => updateDetail("departureTime", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Arrival Time</Label>
+                  <Input
+                    type="time"
+                    value={details.arrivalTime || ""}
+                    onChange={(e) => updateDetail("arrivalTime", e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>No. of Pax *</Label>
                   <Input
                     type="number"

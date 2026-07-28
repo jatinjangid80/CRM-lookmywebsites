@@ -617,7 +617,7 @@ function VendorsPage() {
                   <TableRow key={v.id} className="group hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => openView(v)}>
                     <TableCell>
                       <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-bold shrink-0 ${getInitialsColor(i)}`}>
+                        <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold shrink-0 bg-primary/10 text-primary">
                           {getInitials(v.name)}
                         </div>
                         <div>
@@ -669,11 +669,11 @@ function VendorsPage() {
                     </TableCell>
                     <TableCell>
                       <span className={`inline-block px-2.5 py-1 rounded-full text-xs font-semibold border ${
-                        v.status === "Active" ? "bg-emerald-100 text-emerald-700 border-emerald-200" :
+                        (v.status === "Active" || v.status === "null" || !v.status) ? "bg-primary/10 text-primary border-primary/20" :
                         v.status === "Inactive" ? "bg-rose-100 text-rose-700 border-rose-200" :
                         "bg-slate-100 text-slate-700 border-slate-200"
                       }`}>
-                        {v.status || "Unknown"}
+                        {v.status === "null" || !v.status ? "Active" : v.status}
                       </span>
                     </TableCell>
                     <TableCell className="text-right">

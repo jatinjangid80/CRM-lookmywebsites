@@ -859,8 +859,8 @@ function BookingsPage() {
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Airline</p><p className="font-semibold">{booking.details?.airline || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Flight Number</p><p className="font-semibold">{booking.details?.flightNumber || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details?.departureAirport || "—"} at {booking.details?.departureTime || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details?.arrivalAirport || "—"} at {booking.details?.arrivalTime || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Departure</p><p className="font-semibold">{booking.details?.departureAirport || booking.details?.sector?.split('-')[0]?.trim() || "—"} at {booking.details?.departureTime || "—"}</p></div>
+              <div><p className="text-xs text-muted-foreground uppercase mb-1">Arrival</p><p className="font-semibold">{booking.details?.arrivalAirport || booking.details?.sector?.split('-')[1]?.trim() || "—"} at {booking.details?.arrivalTime || "—"}</p></div>
             </>
           )}
           {booking.bookingType === "Hotel" && (

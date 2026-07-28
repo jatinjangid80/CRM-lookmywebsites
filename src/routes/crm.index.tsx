@@ -53,7 +53,14 @@ export const Route = createFileRoute("/crm/")({
   component: Dashboard,
 });
 
-const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFD9BF", "#FFE9D9"];
+const COLORS = [
+  "var(--primary)",
+  "color-mix(in oklch, var(--primary) 85%, var(--background))",
+  "color-mix(in oklch, var(--primary) 70%, var(--background))",
+  "color-mix(in oklch, var(--primary) 55%, var(--background))",
+  "color-mix(in oklch, var(--primary) 40%, var(--background))",
+  "color-mix(in oklch, var(--primary) 25%, var(--background))"
+];
 
 const SOURCE_HEX_COLORS: Record<string, string> = {
   Instagram: "#ec4899", // pink-500
@@ -71,11 +78,11 @@ const SOURCE_HEX_COLORS: Record<string, string> = {
 };
 
 const FUNNEL_COLORS = [
-  "#3b82f6", // 0: New Lead (blue)
-  "#f59e0b", // 1: Contacted (amber)
-  "#06b6d4", // 2: Quotation (cyan)
-  "#a855f7", // 3: Negotiate (purple)
-  "#14b8a6", // 4: Confirmed (teal)
+  "color-mix(in oklch, var(--primary) 20%, var(--background))",
+  "color-mix(in oklch, var(--primary) 40%, var(--background))",
+  "color-mix(in oklch, var(--primary) 60%, var(--background))",
+  "color-mix(in oklch, var(--primary) 80%, var(--background))",
+  "var(--primary)",
 ];
 
 const AVATARS = ["", "", "", "", "", "", ""];
@@ -590,7 +597,7 @@ function Dashboard() {
                       label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}
                     >
                       {sourceData.map((entry, i) => (
-                        <Cell key={i} fill={SOURCE_HEX_COLORS[entry.name] || COLORS[i % COLORS.length]} />
+                        <Cell key={i} fill={COLORS[i % COLORS.length]} />
                       ))}
                     </Pie>
                     <Tooltip />
@@ -775,7 +782,7 @@ function Dashboard() {
                   allowDecimals={false}
                 />
                 <Tooltip cursor={{ fill: "rgba(255,107,0,0.05)" }} />
-                <Bar dataKey="bookings" fill="#FF8A33" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="bookings" fill="var(--primary)" radius={[6, 6, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>

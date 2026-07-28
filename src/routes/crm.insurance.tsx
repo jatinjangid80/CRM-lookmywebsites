@@ -213,8 +213,12 @@ function GeneralInsurancePage() {
     }
 
     const headers = [
-      "Policy No", "Issue Date", "Expiry Date", "Customer Name", "Customer Phone",
-      "Company", "Vendor", "Vehicle No", "Total Premium", "Profit", "Payment Status"
+      "Policy No", "Issue Date", "Expiry Date", "Client / Company", "School Name", "Reference Name", 
+      "Referred By", "Customer Name", "Mobile Number", "Alt. Mobile", "Email", "City", "State", "Address", 
+      "Additional Passenger Names", "Insurance Company", "Vendor", "Vehicle Number", "Vehicle Model", 
+      "Seating Capacity", "Registration Date", "Policy Type", "IDV Value", "Previous Policy No", 
+      "Previous Insurer", "NCB %", "OD Premium", "TP Premium", "Net Premium", "GST", "Total Premium", 
+      "Customer Paid Amounts", "Vendor Paid", "Calculated Profit", "Transaction Ref.", "Payment Status", "Remarks"
     ];
     
     const csvRows = [headers.join(",")];
@@ -224,14 +228,40 @@ function GeneralInsurancePage() {
         p.policy_number || "",
         p.issue_date || "",
         p.expiry_date || "",
+        `"${p.company_name || ""}"`,
+        `"${p.school_name || ""}"`,
+        `"${p.reference_name || ""}"`,
+        `"${p.referred_by || ""}"`,
         `"${p.customer_name || ""}"`,
         p.mobile_number || "",
-        `"${p.company_name || ""}"`,
-        `"${p.vendor_name || ""}"`,
+        p.alternate_mobile || "",
+        p.email || "",
+        `"${p.city || ""}"`,
+        `"${p.state || ""}"`,
+        `"${p.address || ""}"`,
+        `"${p.additional_passenger_names || ""}"`,
+        `"${p.insurance_company || p.company_id || ""}"`,
+        `"${p.vendor_name || p.vendor_id || ""}"`,
         p.vehicle_number || "",
+        `"${p.vehicle_model || ""}"`,
+        p.seating_capacity || "",
+        p.registration_date || "",
+        p.policy_type || "",
+        p.idv_value || "",
+        p.previous_policy_number || "",
+        `"${p.previous_insurer || ""}"`,
+        p.ncb_percentage || "",
+        p.od_premium || 0,
+        p.tp_premium || 0,
+        p.net_premium || 0,
+        p.gst || "",
         p.total_premium || 0,
+        p.customer_paid || p.amount_paid || 0,
+        p.vendor_paid || 0,
         p.profit || 0,
-        p.payment_status || ""
+        `"${p.transaction_reference || ""}"`,
+        p.payment_status || "",
+        `"${p.notes || ""}"`
       ];
       csvRows.push(row.join(","));
     }

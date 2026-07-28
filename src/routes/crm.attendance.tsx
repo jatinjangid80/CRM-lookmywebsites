@@ -522,7 +522,7 @@ function AttendancePage() {
                                 </div>
                                 <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
                                   <div 
-                                    className={`absolute top-0 bottom-0 ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
+                                    className={`absolute top-0 bottom-0 ${isActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
                                     style={{ left: `${startPct}%`, width: `${barWidth}%` }}
                                   />
                                 </div>
@@ -774,7 +774,7 @@ function AttendancePage() {
                       <div key={record.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
                           <div className="flex items-center gap-3">
-                            <div className="h-10 w-10 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center font-bold text-sm">
+                            <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
                               {empDetails.initials || "U"}
                             </div>
                             <div>
@@ -785,8 +785,8 @@ function AttendancePage() {
                           <div className="flex items-center gap-2">
                             {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
                             {isActive ? (
-                              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
-                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
+                              <span className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>Active
                               </span>
                             ) : (
                               <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold">Completed</span>
@@ -798,7 +798,7 @@ function AttendancePage() {
                           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock In</p>
-                              <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
+                              <p className="font-bold text-primary dark:text-primary">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock Out</p>
@@ -849,7 +849,7 @@ function AttendancePage() {
                     return (
                       <div key={empId as string} className="rounded-2xl border border-border bg-card shadow-sm p-4">
                         <div className="flex items-center gap-3 mb-4">
-                          <div className="h-10 w-10 rounded-full bg-emerald-600/10 flex items-center justify-center font-bold text-emerald-700 uppercase">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center font-bold text-primary uppercase">
                             {details.initials || details.name.charAt(0)}
                           </div>
                           <div>
@@ -859,12 +859,12 @@ function AttendancePage() {
                         </div>
                         <div className="space-y-3">
                           {empRecords.map((record: any) => (
-                            <div key={record.id} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-emerald-500/30 transition-colors">
+                            <div key={record.id} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
                               <div className="mt-0.5">
                                 {record.checkout ? (
-                                  <Square className="h-4 w-4 text-emerald-500" />
+                                  <Square className="h-4 w-4 text-primary" />
                                 ) : (
-                                  <Play className="h-4 w-4 text-emerald-600 fill-emerald-600" />
+                                  <Play className="h-4 w-4 text-primary fill-primary" />
                                 )}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -875,7 +875,7 @@ function AttendancePage() {
                                   <div className="flex items-center gap-2 shrink-0">
                                     <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${record.checkout
                                       ? "bg-secondary text-muted-foreground"
-                                      : "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400"
+                                      : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
                                       }`}>
                                       {record.checkout ? "Completed" : "Active"}
                                     </span>
@@ -890,7 +890,7 @@ function AttendancePage() {
                                     <Building2 className="h-3 w-3 shrink-0" /> {record.location || "Office"}
                                   </span>
                                   {record.checkout && (
-                                    <span className="flex items-center gap-1 bg-emerald-500/10 text-emerald-600 px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                                    <span className="flex items-center gap-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[10px] font-bold">
                                       {(() => {
                                         const [inH, inM] = record.checkin.split(':').map(Number);
                                         const [outH, outM] = record.checkout.split(':').map(Number);
