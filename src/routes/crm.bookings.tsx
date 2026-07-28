@@ -214,15 +214,15 @@ function ManageAllBookingsComponent({ booking, allBookings, setManagingBooking }
                 <div className="mt-3 pt-3 border-t border-border flex flex-col gap-1">
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Total:</span>
-                    <span className="font-medium">₹{b.amount?.toLocaleString() || "0"}</span>
+                    <span className="font-medium">₹{(b.sellingPrice || b.amount || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Paid:</span>
-                    <span className="font-medium text-emerald-600">₹{b.paid?.toLocaleString() || "0"}</span>
+                    <span className="font-medium text-emerald-600">₹{(b.paid || 0).toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-xs">
                     <span className="text-muted-foreground">Pending:</span>
-                    <span className="font-medium text-rose-600 dark:text-rose-400">₹{((b.amount || 0) - (b.paid || 0)).toLocaleString()}</span>
+                    <span className="font-medium text-rose-600 dark:text-rose-400">₹{((b.sellingPrice || b.amount || 0) - (b.paid || 0)).toLocaleString()}</span>
                   </div>
                 </div>
               </div>
@@ -997,7 +997,7 @@ function BookingsPage() {
       <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
         <div className="bg-secondary/10 p-4 rounded-xl border border-border">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Selling Price</p>
-          <p className="text-xl font-bold">{formatINR(booking.amount || 0)}</p>
+          <p className="text-xl font-bold">{formatINR(booking.sellingPrice || booking.amount || 0)}</p>
         </div>
         <div className="bg-secondary/10 p-4 rounded-xl border border-border">
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Purchase Price</p>
@@ -1009,7 +1009,7 @@ function BookingsPage() {
         </div>
         <div className="bg-rose-50 text-rose-800 p-4 rounded-xl border border-rose-200">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Pending Amount</p>
-          <p className="text-xl font-bold">{formatINR((booking.amount || 0) - (booking.paid || 0))}</p>
+          <p className="text-xl font-bold">{formatINR((booking.sellingPrice || booking.amount || 0) - (booking.paid || 0))}</p>
         </div>
         <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Profit</p>
