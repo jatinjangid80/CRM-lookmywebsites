@@ -24,6 +24,7 @@ import {
   Link2,
   Unlink,
   Share2,
+  Eye,
 } from "lucide-react";
 import { getAuth } from "@/lib/auth";
 import { useLocalStorage } from "@/lib/use-local-storage";
@@ -564,6 +565,13 @@ function FileRow({
       <td className="py-3 px-3 text-sm text-muted-foreground">{fmtDate(file.uploadedAt)}</td>
       <td className="py-3 pl-3 pr-4">
         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <button
+            onClick={() => onPreview(file)}
+            className="rounded-lg p-1.5 text-muted-foreground hover:bg-secondary hover:text-foreground transition-colors"
+            title="Preview"
+          >
+            <Eye className="h-3.5 w-3.5" />
+          </button>
           <a
             href={file.dataUrl}
             download={file.name}
