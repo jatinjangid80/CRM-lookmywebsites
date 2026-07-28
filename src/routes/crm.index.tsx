@@ -365,10 +365,7 @@ function Dashboard() {
 
   // User Action Items (Row 4)
   const myPendingTasks = tasksList
-    .filter(
-      (t) =>
-        (user?.role === "admin" || t.assignee === user?.name) && t.status !== "Done",
-    )
+    .filter((t) => t.status !== "Done")
     .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
     .slice(0, 5);
 
@@ -865,9 +862,9 @@ function Dashboard() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="font-display text-lg font-bold flex items-center gap-2">
-                  <CheckCircle2 className="h-5 w-5 text-primary" /> My Pending Tasks
+                  <CheckCircle2 className="h-5 w-5 text-primary" /> Pending Tasks
                 </h3>
-                <p className="text-xs text-muted-foreground">Action items assigned to you</p>
+                <p className="text-xs text-muted-foreground">Action items for employees</p>
               </div>
             </div>
 
@@ -887,11 +884,21 @@ function Dashboard() {
                     </button>
                     <div className="min-w-0 flex-1">
                       <p className="text-sm font-semibold truncate text-foreground">{task.title}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
-                        <span className="font-medium text-amber-600 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-100">
+                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
+                        <span className={`font-medium px-1.5 py-0.5 rounded border ${
+                          task.priority === "High" ? "text-red-600 bg-red-50 border-red-100" :
+                          task.priority === "Medium" ? "text-amber-600 bg-amber-50 border-amber-100" :
+                          "text-green-600 bg-green-50 border-green-100"
+                        }`}>
                           {task.priority}
                         </span>
                         <span>Due: {task.dueDate}</span>
+                        {task.assignee && (
+                          <>
+                            <span className="text-muted-foreground/50">•</span>
+                            <span className="font-medium text-foreground/80">For: {task.assignee}</span>
+                          </>
+                        )}
                       </p>
                     </div>
                   </div>
@@ -899,9 +906,9 @@ function Dashboard() {
               ) : (
                 <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
                   <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold text-foreground">You're all caught up!</p>
+                  <p className="text-sm font-semibold text-foreground">All caught up!</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    No pending tasks found for you.
+                    No pending tasks found for employees.
                   </p>
                 </div>
               )}

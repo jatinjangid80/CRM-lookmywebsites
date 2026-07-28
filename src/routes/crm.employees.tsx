@@ -1240,8 +1240,21 @@ function EmployeesPage() {
                                     {task.title}
                                   </p>
                                   <div className="flex items-center gap-2 mt-1 text-[9px] uppercase tracking-wide font-semibold text-muted-foreground">
+                                    {task.priority && (
+                                      <span
+                                        className={`px-1.5 py-0.5 rounded-md border ${
+                                          task.priority === "High"
+                                            ? "text-red-600 bg-red-50 border-red-100"
+                                            : task.priority === "Medium"
+                                              ? "text-amber-600 bg-amber-50 border-amber-100"
+                                              : "text-green-600 bg-green-50 border-green-100"
+                                        }`}
+                                      >
+                                        {task.priority}
+                                      </span>
+                                    )}
                                     <span className="bg-background px-1.5 py-0.5 rounded-md border border-border/50">
-                                      {task.type}
+                                      {task.type || "Individual"}
                                     </span>
                                     {!isDone && (
                                       <span

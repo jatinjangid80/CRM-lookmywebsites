@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { formatINR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
@@ -11,8 +11,65 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
   const auth = getAuth();
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [customerSearchQuery, setCustomerSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
-  const customerStats = policies.reduce((acc, p) => {
+  const filteredPolicies = useMemo(() => {
+    return policies
+      .filter(p => p.customer_name?.toLowerCase().includes(customerSearchQuery.toLowerCase()))
+      .filter(p => {
+        if (!dateFrom && !dateTo) return true;
+        const pDate = new Date(p.issue_date || 0).getTime();
+        const fromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
+        const toTime = dateTo ? new Date(dateTo).getTime() : Infinity;
+        
+        // Handle timezone/end of day logic for "to" date if needed, but standard timestamp comparison works if dates are YYYY-MM-DD
+        if (dateTo) {
+            const toDateObj = new Date(dateTo);
+            toDateObj.setHours(23, 59, 59, 999);
+            return pDate >= fromTime && pDate <= toDateObj.getTime();
+        }
+        
+        return pDate >= fromTime && pDate <= toTime;
+      })
+      .sort((a, b) => new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime());
+  }, [policies, customerSearchQuery, dateFrom, dateTo]);
+
+  const handleExportCustomerStatus = () => {
+    const csvData = [
+      ["Customer Name", "Phone", "Vehicle No.", "School Name", "Customer Paid Amount", "Add Payment", "Total Outstanding", "Status"]
+    ];
+
+    filteredPolicies.forEach(p => {
+      const customerPaidAmount = Number(p.customer_paid) || 0;
+      const addPayment = Number(p.amount_paid) || 0;
+      const outstanding = Math.max(customerPaidAmount - addPayment, 0);
+      const status = outstanding === 0 ? "Full Paid" : addPayment > 0 ? "Partial" : "Pending";
+
+      csvData.push([
+        p.customer_name || "Unknown",
+        p.mobile_number || "",
+        p.vehicle_number || "-",
+        p.school_name || "-",
+        customerPaidAmount.toString(),
+        addPayment.toString(),
+        outstanding.toString(),
+        status
+      ]);
+    });
+
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `General_Insurance_Customer_Status_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
+  const customerStats = filteredPolicies.reduce((acc, p) => {
     const customerPaidAmount = Number(p.customer_paid) || 0;
     const addPayment = Number(p.amount_paid) || 0;
     const outstanding = Math.max(customerPaidAmount - addPayment, 0);
@@ -120,15 +177,36 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
         </div>
       </div>
 
-      <div className="flex justify-end mb-4">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Input
-            placeholder="Search customers..."
-            className="pl-9 bg-background/50"
-            value={customerSearchQuery}
-            onChange={(e) => setCustomerSearchQuery(e.target.value)}
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full sm:w-[150px]"
           />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full sm:w-[150px]"
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search customers..."
+              className="pl-9 bg-background/50"
+              value={customerSearchQuery}
+              onChange={(e) => setCustomerSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" onClick={handleExportCustomerStatus} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
         </div>
       </div>
 
@@ -149,17 +227,14 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {policies.length === 0 ? (
+              {filteredPolicies.length === 0 ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-12 text-center text-muted-foreground">
                     No policies found.
                   </td>
                 </tr>
               ) : (
-                policies
-                  .filter(p => p.customer_name?.toLowerCase().includes(customerSearchQuery.toLowerCase()))
-                  .sort((a, b) => new Date(b.issue_date || 0).getTime() - new Date(a.issue_date || 0).getTime())
-                  .map((p) => {
+                filteredPolicies.map((p) => {
                     const customerPaidAmount = Number(p.customer_paid) || 0;
                     const addPayment = Number(p.amount_paid) || 0;
                     const outstanding = Math.max(customerPaidAmount - addPayment, 0);

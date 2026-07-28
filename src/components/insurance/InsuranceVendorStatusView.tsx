@@ -1,7 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { formatINR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
-import { Plus, ChevronDown, Search } from "lucide-react";
+import { Plus, ChevronDown, Search, Download } from "lucide-react";
 import { InsurancePaymentModal } from "./InsurancePaymentModal";
 import { supabase } from "@/lib/supabase";
 import { getAuth } from "@/lib/auth";
@@ -12,10 +12,64 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
   const [selectedPolicy, setSelectedPolicy] = useState<any>(null);
   const [expandedVendor, setExpandedVendor] = useState<string | null>(null);
   const [vendorSearchQuery, setVendorSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
 
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
-  const vendorStats = policies.reduce((acc, p) => {
+  const filteredPolicies = useMemo(() => {
+    return policies.filter(p => {
+      if (!dateFrom && !dateTo) return true;
+      const pDate = new Date(p.issue_date || 0).getTime();
+      const fromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
+      const toTime = dateTo ? new Date(dateTo).getTime() : Infinity;
+      
+      if (dateTo) {
+          const toDateObj = new Date(dateTo);
+          toDateObj.setHours(23, 59, 59, 999);
+          return pDate >= fromTime && pDate <= toDateObj.getTime();
+      }
+      
+      return pDate >= fromTime && pDate <= toTime;
+    });
+  }, [policies, dateFrom, dateTo]);
+
+  const handleExportVendorStatus = () => {
+    const csvData = [
+      ["Vendor Name", "Policies Count", "Vendor Pending Amount", "Payments (Out)", "Total Balance", "Status"]
+    ];
+
+    uniqueVendors.forEach(vendorName => {
+      const vPolicies = filteredPolicies.filter(p => getVendorName(p) === vendorName);
+      
+      const vendorPendingAmount = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
+      const paymentsOut = vPolicies.reduce((sum, p) => sum + (Number(p.payments_out) || 0), 0);
+      const totalBalance = Math.max(vendorPendingAmount - paymentsOut, 0);
+      
+      const status = totalBalance === 0 ? "Paid" : paymentsOut > 0 ? "Partial" : "Pending";
+
+      csvData.push([
+        vendorName || "Unknown",
+        vPolicies.length.toString(),
+        vendorPendingAmount.toString(),
+        paymentsOut.toString(),
+        totalBalance.toString(),
+        status
+      ]);
+    });
+
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `General_Insurance_Vendor_Status_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+
+  const vendorStats = filteredPolicies.reduce((acc, p) => {
     const vendPaid = Number(p.vendor_paid) || 0; // Vendor Pending Amount
     const paymentsOut = Number(p.payments_out) || 0;
     const pending = Math.max(vendPaid - paymentsOut, 0);
@@ -77,7 +131,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
 
   // Group policies by vendor
   const allVendorNames = new Set<string>();
-  policies.forEach(p => {
+  filteredPolicies.forEach(p => {
     const name = getVendorName(p);
     if (name) allVendorNames.add(name);
   });
@@ -92,7 +146,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
           <p className="text-sm font-medium text-muted-foreground mb-2">Total Policies Handled</p>
-          <h3 className="text-3xl font-bold text-foreground">{policies.length}</h3>
+          <h3 className="text-3xl font-bold text-foreground">{filteredPolicies.length}</h3>
         </div>
         
         <div className="bg-card rounded-2xl border border-border p-6 shadow-sm">
@@ -106,15 +160,36 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
         </div>
       </div>
 
-      <div className="flex justify-end mb-4">
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
           <Input
-            placeholder="Search vendors..."
-            className="pl-9 bg-background/50"
-            value={vendorSearchQuery}
-            onChange={(e) => setVendorSearchQuery(e.target.value)}
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full sm:w-[150px]"
           />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full sm:w-[150px]"
+          />
+        </div>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search vendors..."
+              className="pl-9 bg-background/50"
+              value={vendorSearchQuery}
+              onChange={(e) => setVendorSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" onClick={handleExportVendorStatus} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
         </div>
       </div>
 
@@ -147,7 +222,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                 const vendorId = vendorName; // We use the name as ID here since we don't always have a strict vendor object
                 const isExpanded = expandedVendor === vendorId;
                 
-                const vPolicies = policies.filter(p => getVendorName(p) === vendorName);
+                const vPolicies = filteredPolicies.filter(p => getVendorName(p) === vendorName);
                 
                 const vendorPendingAmount = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
                 const paymentsOut = vPolicies.reduce((sum, p) => sum + (Number(p.payments_out) || 0), 0);

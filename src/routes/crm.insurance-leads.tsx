@@ -2595,7 +2595,7 @@ function LeadsPage() {
         </div>
 
         {/* ── Stat cards ── */}
-        <div className="grid gap-4 sm:grid-cols-3 lg:grid-cols-3">
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-2">
           {[
             {
               label: "Total Leads",
@@ -2610,14 +2610,6 @@ function LeadsPage() {
               icon: <Sparkles className="h-4 w-4" />,
               color: "bg-emerald-100 text-emerald-600",
               sub: `${conversion}% conversion`,
-            },
-
-            {
-              label: "Avg Budget",
-              value: formatINR(genInsuranceLeads.length ? Math.round(totalBudget / genInsuranceLeads.length) : 0),
-              icon: <TrendingUp className="h-4 w-4" />,
-              color: "bg-violet-100 text-violet-600",
-              sub: "Per lead",
             },
           ].map((s) => (
             <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
