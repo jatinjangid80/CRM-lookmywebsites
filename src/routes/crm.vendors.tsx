@@ -591,7 +591,7 @@ function VendorsPage() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {paginated.length === 0 ? (
+            {filtered.length === 0 ? (
               <TableRow>
                 <TableCell colSpan={5} className="h-48 text-center text-muted-foreground">
                   <div className="flex flex-col items-center justify-center">
@@ -601,7 +601,7 @@ function VendorsPage() {
                 </TableCell>
               </TableRow>
             ) : (
-              paginated.map((v, i) => {
+              filtered.map((v, i) => {
                 return (
                   <TableRow key={v.id} className="group hover:bg-secondary/20 transition-colors cursor-pointer" onClick={() => openView(v)}>
                     <TableCell>
@@ -724,24 +724,6 @@ function VendorsPage() {
         </Table>
       </div>
 
-      {/* Pagination */}
-      {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 py-2 border-t border-border mt-auto shrink-0">
-          <div className="text-sm text-muted-foreground">
-            Showing <span className="font-medium text-foreground">{(page - 1) * perPage + 1}-{Math.min(page * perPage, filtered.length)}</span> of <span className="font-medium text-foreground">{filtered.length}</span> vendors
-          </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" disabled={page === 1} onClick={() => setPage((p) => Math.max(1, p - 1))}>
-              <ChevronLeft className="h-4 w-4 mr-1" />
-              Previous
-            </Button>
-            <Button variant="outline" size="sm" disabled={page === totalPages} onClick={() => setPage((p) => Math.min(totalPages, p + 1))}>
-              Next
-              <ChevronRight className="h-4 w-4 ml-1" />
-            </Button>
-          </div>
-        </div>
-      )}
 
       {/* ── Import Modal ── */}
       <ImportVendorsModal
