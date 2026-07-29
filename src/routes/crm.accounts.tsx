@@ -704,8 +704,8 @@ function AccountsPage() {
         });
         const vSpend = vSpendTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
         
-        const vTotalBilled = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
-        const vPending = Math.max(0, vTotalBilled - vSpend);
+        const vPending = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
+        const vTotalBilled = vPending - vSpend;
         
         return {
           vendorName: name,
