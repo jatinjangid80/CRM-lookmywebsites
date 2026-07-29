@@ -425,6 +425,9 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.createdAt;
       delete newRow.lastBookingDate;
       delete newRow.assignedTo;
+      delete newRow.trips;
+      delete newRow.totalSpend;
+      delete newRow.tier;
     }
 
     return newRow;

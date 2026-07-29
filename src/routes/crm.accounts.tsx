@@ -756,7 +756,7 @@ function AccountsPage() {
   };
 
   const handleExportCustomerStatus = () => {
-    const headers = ["Customer Name", "Phone No.", "Payments Pending", "Received Amounts", "Total Amounts"];
+    const headers = ["Customer Name", "Phone No.", "Total Amounts", "Received Amounts", "Payments Pending"];
     const csvContent = [
       headers.join(","),
       ...customerDataList.map(c =>
@@ -1328,9 +1328,9 @@ function AccountsPage() {
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Customer Name <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Phone No. <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Total Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Received Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
