@@ -599,30 +599,39 @@ function AccountsPage() {
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
   const customerDataList = useMemo(() => {
-    const allCustomerNames = new Set<string>();
-    customers.forEach(c => c.name && allCustomerNames.add(c.name));
+    const customerNameMap = new Map<string, string>();
+    const addName = (name: string) => {
+      if (!name) return;
+      const trimmed = name.trim();
+      const lower = trimmed.toLowerCase();
+      if (!customerNameMap.has(lower)) {
+        customerNameMap.set(lower, trimmed);
+      }
+    };
+
+    customers.forEach(c => c.name && addName(c.name));
     leads.forEach(l => {
-      if (l.name) allCustomerNames.add(l.name);
-      if (l.customer) allCustomerNames.add(l.customer);
+      if (l.name) addName(l.name);
+      if (l.customer) addName(l.customer);
     });
     allBookings.forEach(b => {
-      if (b.customer) allCustomerNames.add(b.customer);
+      if (b.customer) addName(b.customer);
     });
     tasks.forEach(t => {
-      if (t.customer_id) allCustomerNames.add(t.customer_id);
-      if (t.lead) allCustomerNames.add(t.lead);
+      if (t.customer_id) addName(t.customer_id);
+      if (t.lead) addName(t.lead);
     });
     transactions.forEach(tx => {
       if (tx.entityType === "Customer") {
         const c = customers.find(c => c.id === tx.entityId);
-        if (c && c.name) allCustomerNames.add(c.name);
+        if (c && c.name) addName(c.name);
       }
     });
     followUpsList.forEach(fu => {
-      if (fu.customerName) allCustomerNames.add(fu.customerName);
+      if (fu.customerName) addName(fu.customerName);
     });
 
-    return Array.from(allCustomerNames)
+    return Array.from(customerNameMap.values())
       .filter(Boolean)
       .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
       .map((customerName, index) => {
@@ -667,7 +676,7 @@ function AccountsPage() {
           cPendingBalance
         };
       })
-      .filter(data => data.cPendingBalance > 0 || data.cTotalRevenue > 0)
+      .filter(data => data.cPendingBalance !== 0 || data.cTotalRevenue !== 0)
       .sort((a, b) => a.customerName.localeCompare(b.customerName));
   }, [customers, leads, allBookings, tasks, transactions, followUpsList, insurancePolicies, customerSearchQuery, customerStatusDateFrom, customerStatusDateTo]);
 
@@ -747,16 +756,16 @@ function AccountsPage() {
   };
 
   const handleExportCustomerStatus = () => {
-    const headers = ["Customer Name", "Phone No.", "Payments Pending", "Received Amounts", "Total Revenue"];
+    const headers = ["Customer Name", "Phone No.", "Payments Pending", "Received Amounts", "Total Amounts"];
     const csvContent = [
       headers.join(","),
       ...customerDataList.map(c =>
         [
           `"${c.customerName.replace(/"/g, '""')}"`,
           `"${(c.customerData.phone || c.customerData.mobile || "").replace(/"/g, '""')}"`,
-          c.cPendingBalance,
+          c.cTotalRevenue,
           c.cReceivedAmount,
-          c.cTotalRevenue
+          c.cPendingBalance
         ].join(",")
       )
     ].join("\\n");
@@ -1321,7 +1330,7 @@ function AccountsPage() {
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Phone No. <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Received Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Revenue <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -1368,8 +1377,8 @@ function AccountsPage() {
                             {customerData.phone || <span className="italic opacity-50">N/A</span>}
                           </td>
                           <td className="px-6 py-4">
-                            <span className={`font-bold ${cPendingBalance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                              {formatINR(cPendingBalance)}
+                            <span className="font-bold text-foreground">
+                              {formatINR(cTotalRevenue)}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -1378,7 +1387,9 @@ function AccountsPage() {
                             </span>
                           </td>
                           <td className="px-6 py-4 text-right">
-                            <span className="font-bold text-foreground">{formatINR(cTotalRevenue)}</span>
+                            <span className={`font-bold ${cPendingBalance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
+                              {formatINR(cPendingBalance)}
+                            </span>
                           </td>
                         </tr>
 
