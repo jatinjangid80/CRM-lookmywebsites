@@ -322,8 +322,8 @@ function AccountsPage() {
 
   const filteredExpenseList = useMemo(() => {
     return expenseList.filter(e => {
-      const matchesSearch = expenseSearchQuery === "" || 
-        (e.description && e.description.toLowerCase().includes(expenseSearchQuery.toLowerCase())) || 
+      const matchesSearch = expenseSearchQuery === "" ||
+        (e.description && e.description.toLowerCase().includes(expenseSearchQuery.toLowerCase())) ||
         (e.category && e.category.toLowerCase().includes(expenseSearchQuery.toLowerCase()));
       const matchesDateFrom = expenseDateFrom === "" || (e.date && e.date >= expenseDateFrom);
       const matchesDateTo = expenseDateTo === "" || (e.date && e.date <= expenseDateTo);
@@ -394,18 +394,18 @@ function AccountsPage() {
       setFollowUpsList(prev => prev.filter(f => f.id !== deleteTarget.id));
     } else if (deleteTarget.type === "Transaction") {
       const txToDelete = transactions.find(t => t.id === deleteTarget.id);
-      
+
       if (txToDelete && txToDelete.invoiceId && txToDelete.amount > 0) {
         const targetBooking = bookings.find(b =>
           String(b.id).toLowerCase() === String(txToDelete.invoiceId).toLowerCase() ||
           String(b.saleInvoiceNo || "").toLowerCase() === String(txToDelete.invoiceId).toLowerCase() ||
           String(b.purchaseInvoiceNo || "").toLowerCase() === String(txToDelete.invoiceId).toLowerCase()
         );
-        
+
         if (targetBooking) {
           const currentPaid = targetBooking.paid || 0;
           const newPaid = Math.max(0, currentPaid - txToDelete.amount);
-          
+
           let newPaymentStatus = targetBooking.paymentStatus;
           if (txToDelete.type === "Receipt") {
             const totalAmount = targetBooking.amount || 0;
@@ -417,15 +417,15 @@ function AccountsPage() {
               newPaymentStatus = "Paid / Completed";
             }
           }
-          
+
           const updatedBooking = {
             ...targetBooking,
             paid: newPaid,
             paymentStatus: newPaymentStatus
           };
-          
+
           setBookings(bookings.map(b => b.id === targetBooking.id ? updatedBooking : b));
-          
+
           // Async update to DB
           (async () => {
             try {
@@ -439,7 +439,7 @@ function AccountsPage() {
           })();
         }
       }
-      
+
       setTransactions(prev => prev.filter(t => t.id !== deleteTarget.id));
     } else if (deleteTarget.type === "PaymentRequest") {
       setPaymentRequests(prev => prev.filter(r => r.id !== deleteTarget.id));
@@ -590,8 +590,8 @@ function AccountsPage() {
 
   const filteredTransactions = [...transactions]
     .filter((tx) => {
-      const matchesSearch = txSearchQuery === "" || 
-        tx.entityName?.toLowerCase().includes(txSearchQuery.toLowerCase()) || 
+      const matchesSearch = txSearchQuery === "" ||
+        tx.entityName?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
         tx.id?.toLowerCase().includes(txSearchQuery.toLowerCase());
       const matchesType = txTypeFilter === "All" || tx.type === txTypeFilter;
       return matchesSearch && matchesType;
@@ -621,14 +621,14 @@ function AccountsPage() {
     followUpsList.forEach(fu => {
       if (fu.customerName) allCustomerNames.add(fu.customerName);
     });
-    
+
     return Array.from(allCustomerNames)
       .filter(Boolean)
       .filter(name => name.toLowerCase().includes(customerSearchQuery.toLowerCase()))
       .map((customerName, index) => {
         const customerData = customers.find(c => c.name === customerName) || { id: `synth-${index}`, name: customerName };
         const normalizedCustomerName = (customerName || "").trim().toLowerCase();
-        
+
         const cBookings = allBookings.filter(b => {
           if ((b.customer || "").trim().toLowerCase() !== normalizedCustomerName) return false;
           if (customerStatusDateFrom && b.bookingDate && b.bookingDate < customerStatusDateFrom) return false;
@@ -641,10 +641,10 @@ function AccountsPage() {
           if (customerStatusDateTo && p.issueDate && p.issueDate > customerStatusDateTo) return false;
           return true;
         });
-        
+
         let cTotalRevenue = cBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
         let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
-        
+
         cTotalRevenue += cPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
         const policyIds = cPolicies.map(p => p.id);
         const cPolicyTxs = transactions.filter(tx => {
@@ -654,9 +654,9 @@ function AccountsPage() {
           return true;
         });
         cReceivedAmount += cPolicyTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-        
+
         const cPendingBalance = cTotalRevenue - cReceivedAmount;
-        
+
         return {
           customerName,
           customerData,
@@ -684,7 +684,7 @@ function AccountsPage() {
         else allVendorNames.add(tx.entityId);
       }
     });
-    
+
     return Array.from(allVendorNames)
       .filter(Boolean)
       .filter(name => name.toLowerCase().includes(vendorSearchQuery.toLowerCase()))
@@ -703,10 +703,10 @@ function AccountsPage() {
           return true;
         });
         const vSpend = vSpendTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
-        
+
         const vPending = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
         const vTotalBilled = vPending - vSpend;
-        
+
         return {
           vendorName: name,
           vendorData,
@@ -750,7 +750,7 @@ function AccountsPage() {
     const headers = ["Customer Name", "Phone No.", "Payments Pending", "Received Amounts", "Total Revenue"];
     const csvContent = [
       headers.join(","),
-      ...customerDataList.map(c => 
+      ...customerDataList.map(c =>
         [
           `"${c.customerName.replace(/"/g, '""')}"`,
           `"${(c.customerData.phone || c.customerData.mobile || "").replace(/"/g, '""')}"`,
@@ -774,7 +774,7 @@ function AccountsPage() {
     const headers = ["Vendor Name", "Mobile", "Bookings", "Payments Pending", "Payments (Out)", "Total Billed"];
     const csvContent = [
       headers.join(","),
-      ...vendorDataList.map(v => 
+      ...vendorDataList.map(v =>
         [
           `"${v.vendorName.replace(/"/g, '""')}"`,
           `"${(v.vendorData.mobile || "").replace(/"/g, '""')}"`,
@@ -848,8 +848,8 @@ function AccountsPage() {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 mr-2">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">From:</span>
-                <Input 
-                  type="date" 
+                <Input
+                  type="date"
                   value={expenseDateFrom}
                   onChange={(e) => setExpenseDateFrom(e.target.value)}
                   className="h-9 w-[130px] rounded-lg shadow-sm"
@@ -857,8 +857,8 @@ function AccountsPage() {
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">To:</span>
-                <Input 
-                  type="date" 
+                <Input
+                  type="date"
                   value={expenseDateTo}
                   onChange={(e) => setExpenseDateTo(e.target.value)}
                   className="h-9 w-[130px] rounded-lg shadow-sm"
@@ -868,8 +868,8 @@ function AccountsPage() {
             <div className="flex items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search expenses..." 
+                <Input
+                  placeholder="Search expenses..."
                   value={expenseSearchQuery}
                   onChange={(e) => setExpenseSearchQuery(e.target.value)}
                   className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
@@ -888,13 +888,13 @@ function AccountsPage() {
             <table className="w-full text-sm text-left">
               <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
                 <tr>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Category <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Description <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Payment Mode <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                  <th className="px-6 py-4 font-semibold text-center"><div className="flex items-center justify-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Category <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Description <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Payment Mode <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                  <th className="px-6 py-4 font-semibold text-center"><div className="flex items-center justify-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                   <th className="px-6 py-4 text-right">Actions</th>
                 </tr>
               </thead>
@@ -1072,8 +1072,8 @@ function AccountsPage() {
             <div className="flex gap-4 items-center flex-1">
               <div className="relative max-w-sm flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search transactions..." 
+                <Input
+                  placeholder="Search transactions..."
                   className="pl-9 bg-background h-10 rounded-xl"
                   value={txSearchQuery}
                   onChange={(e) => setTxSearchQuery(e.target.value)}
@@ -1112,12 +1112,12 @@ function AccountsPage() {
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/30 text-muted-foreground text-xs uppercase font-semibold">
                   <tr>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mode <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mode <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4 text-right">Actions</th>
                   </tr>
                 </thead>
@@ -1212,11 +1212,11 @@ function AccountsPage() {
                       <table className="w-full text-sm text-left">
                         <thead className="bg-secondary/50 text-muted-foreground font-medium border-b border-border">
                           <tr>
-                            <th className="px-6 py-4"><div className="flex items-center gap-1">Request ID <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                            <th className="px-6 py-4"><div className="flex items-center gap-1">Employee <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                            <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                            <th className="px-6 py-4"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                            <th className="px-6 py-4"><div className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Request ID <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Employee <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                            <th className="px-6 py-4"><div className="flex items-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                             <th className="px-6 py-4 text-right">Actions</th>
                           </tr>
                         </thead>
@@ -1237,10 +1237,10 @@ function AccountsPage() {
                               </td>
                               <td className="px-6 py-4">
                                 <span className={`px-2 py-1 rounded-full text-[10px] font-bold ${req.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' :
-                                    req.status === 'Approved' ? 'bg-blue-500/10 text-blue-500' :
-                                      req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
-                                        req.status === 'Accounts Verified' ? 'bg-purple-100 text-purple-700' :
-                                          'bg-orange-100 text-orange-700'
+                                  req.status === 'Approved' ? 'bg-blue-500/10 text-blue-500' :
+                                    req.status === 'Rejected' ? 'bg-red-100 text-red-700' :
+                                      req.status === 'Accounts Verified' ? 'bg-purple-100 text-purple-700' :
+                                        'bg-orange-100 text-orange-700'
                                   }`}>
                                   {req.status}
                                 </span>
@@ -1310,66 +1310,66 @@ function AccountsPage() {
               </Button>
             </div>
           </div>
-          
+
           <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden animate-in fade-in duration-300">
             <div className="overflow-x-auto">
               <table className="w-full text-sm text-left">
                 <thead className="bg-secondary/50 text-muted-foreground font-semibold">
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Customer Name <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Phone No. <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Received Amounts <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Revenue <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Customer Name <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Phone No. <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Received Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Revenue <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {customerDataList.length === 0 ? (
-                      <tr>
-                        <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
-                          <div className="flex flex-col items-center gap-2">
-                            <Search className="h-8 w-8 opacity-20" />
-                            <p>No customers found.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : customerDataList.map(({
-                          customerName,
-                          customerData,
-                          cBookings,
-                          cPolicies,
-                          cTotalRevenue,
-                          cReceivedAmount,
-                          cPendingBalance
-                        }) => {
-                      const isExpanded = expandedCustomer === customerData.id;
-                      
-                      const vendorSet = new Set<string>();
-                      cBookings.forEach(b => {
-                        if (b.supplier) vendorSet.add(b.supplier);
-                      });
-                      const cVendors = Array.from(vendorSet);
-                      
-                      return (
-                        <React.Fragment key={customerData.id}>
-                          <tr 
-                            onClick={() => setExpandedCustomer(isExpanded ? null : customerData.id)}
-                            className="hover:bg-secondary/20 transition-colors cursor-pointer"
-                          >
-                            <td className="px-6 py-4">
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                            </td>
-                            <td className="px-6 py-4 font-bold text-foreground">
-                              {customerName}
-                              {customerData.company && <div className="text-xs font-normal text-muted-foreground mt-0.5">{customerData.company}</div>}
-                            </td>
+                    <tr>
+                      <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Search className="h-8 w-8 opacity-20" />
+                          <p>No customers found.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : customerDataList.map(({
+                    customerName,
+                    customerData,
+                    cBookings,
+                    cPolicies,
+                    cTotalRevenue,
+                    cReceivedAmount,
+                    cPendingBalance
+                  }) => {
+                    const isExpanded = expandedCustomer === customerData.id;
+
+                    const vendorSet = new Set<string>();
+                    cBookings.forEach(b => {
+                      if (b.supplier) vendorSet.add(b.supplier);
+                    });
+                    const cVendors = Array.from(vendorSet);
+
+                    return (
+                      <React.Fragment key={customerData.id}>
+                        <tr
+                          onClick={() => setExpandedCustomer(isExpanded ? null : customerData.id)}
+                          className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                        >
+                          <td className="px-6 py-4">
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          </td>
+                          <td className="px-6 py-4 font-bold text-foreground">
+                            {customerName}
+                            {customerData.company && <div className="text-xs font-normal text-muted-foreground mt-0.5">{customerData.company}</div>}
+                          </td>
                           <td className="px-6 py-4 text-muted-foreground">
                             {customerData.phone || <span className="italic opacity-50">N/A</span>}
                           </td>
                           <td className="px-6 py-4">
                             <span className={`font-bold ${cPendingBalance > 0 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'}`}>
-                              {formatINR(cPendingBalance > 0 ? cPendingBalance : 0)}
+                              {formatINR(cPendingBalance)}
                             </span>
                           </td>
                           <td className="px-6 py-4">
@@ -1381,12 +1381,12 @@ function AccountsPage() {
                             <span className="font-bold text-foreground">{formatINR(cTotalRevenue)}</span>
                           </td>
                         </tr>
-                        
+
                         {isExpanded && (
                           <tr className="bg-secondary/5 border-b border-border">
                             <td colSpan={6} className="p-0">
                               <div className="p-6 grid grid-cols-1 gap-6 animate-in slide-in-from-top-2 duration-200">
-                                
+
                                 {/* Bookings List */}
                                 <div className="bg-background rounded-xl border border-border p-4 space-y-3">
                                   <h4 className="font-semibold flex justify-between items-center text-sm">
@@ -1421,7 +1421,7 @@ function AccountsPage() {
                                     )) : <div className="text-xs text-muted-foreground italic">No bookings found.</div>}
                                   </div>
                                 </div>
-                                
+
                               </div>
                             </td>
                           </tr>
@@ -1460,114 +1460,114 @@ function AccountsPage() {
                 <thead className="bg-secondary/50 text-muted-foreground font-semibold">
                   <tr>
                     <th className="px-6 py-4 rounded-tl-xl w-10"></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Vendor Name <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mobile <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Bookings <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments (Out) <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
-                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Billed <ArrowUpDown className="w-3 h-3 opacity-30"/></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Vendor Name <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Mobile <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Bookings <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments Pending <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Payments (Out) <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right rounded-tr-xl"><div className="flex items-center justify-end gap-1">Total Amounts <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {vendorDataList.length === 0 ? (
-                      <tr>
-                        <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
-                          <div className="flex flex-col items-center gap-2">
-                            <Search className="h-8 w-8 opacity-20" />
-                            <p>No vendors found.</p>
-                          </div>
-                        </td>
-                      </tr>
-                    ) : vendorDataList.map(({ vendorName, vendorData, vBookings, vSpend, vTotalBilled, vPending }, index) => {
-                      const isExpanded = expandedVendor === vendorData.id;
-                      
-                      const customerSet = new Set<string>();
-                      vBookings.forEach(b => {
-                        if (b.customer) customerSet.add(b.customer);
-                      });
-                      const vCustomers = Array.from(customerSet);
-                      
-                      return (
-                        <React.Fragment key={vendorData.id}>
-                          <tr 
-                            onClick={() => setExpandedVendor(isExpanded ? null : vendorData.id)}
-                            className="hover:bg-secondary/20 transition-colors cursor-pointer"
-                          >
-                            <td className="px-6 py-4">
-                              <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
-                            </td>
-                            <td className="px-6 py-4 font-bold text-foreground">
-                              {vendorName}
-                              {vendorData.serviceType && <div className="text-xs font-normal text-muted-foreground mt-0.5">{vendorData.serviceType}</div>}
-                            </td>
-                            <td className="px-6 py-4 text-muted-foreground">
-                              {vendorData.mobile || "-"}
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-medium">{vBookings.length} Total</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-rose-600 dark:text-rose-400">{formatINR(vPending)}</span>
-                            </td>
-                            <td className="px-6 py-4">
-                              <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(vSpend)}</span>
-                            </td>
-                            <td className="px-6 py-4 text-right">
-                              <span className="font-bold text-blue-600 dark:text-blue-400">{formatINR(vTotalBilled)}</span>
+                    <tr>
+                      <td colSpan={7} className="px-6 py-12 text-center text-muted-foreground">
+                        <div className="flex flex-col items-center gap-2">
+                          <Search className="h-8 w-8 opacity-20" />
+                          <p>No vendors found.</p>
+                        </div>
+                      </td>
+                    </tr>
+                  ) : vendorDataList.map(({ vendorName, vendorData, vBookings, vSpend, vTotalBilled, vPending }, index) => {
+                    const isExpanded = expandedVendor === vendorData.id;
+
+                    const customerSet = new Set<string>();
+                    vBookings.forEach(b => {
+                      if (b.customer) customerSet.add(b.customer);
+                    });
+                    const vCustomers = Array.from(customerSet);
+
+                    return (
+                      <React.Fragment key={vendorData.id}>
+                        <tr
+                          onClick={() => setExpandedVendor(isExpanded ? null : vendorData.id)}
+                          className="hover:bg-secondary/20 transition-colors cursor-pointer"
+                        >
+                          <td className="px-6 py-4">
+                            <ChevronDown className={`h-4 w-4 text-muted-foreground transition-transform ${isExpanded ? "rotate-180" : ""}`} />
+                          </td>
+                          <td className="px-6 py-4 font-bold text-foreground">
+                            {vendorName}
+                            {vendorData.serviceType && <div className="text-xs font-normal text-muted-foreground mt-0.5">{vendorData.serviceType}</div>}
+                          </td>
+                          <td className="px-6 py-4 text-muted-foreground">
+                            {vendorData.mobile || "-"}
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-medium">{vBookings.length} Total</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-bold text-rose-600 dark:text-rose-400">{formatINR(vPending)}</span>
+                          </td>
+                          <td className="px-6 py-4">
+                            <span className="font-bold text-emerald-600 dark:text-emerald-400">{formatINR(vSpend)}</span>
+                          </td>
+                          <td className="px-6 py-4 text-right">
+                            <span className="font-bold text-blue-600 dark:text-blue-400">{formatINR(vTotalBilled)}</span>
+                          </td>
+                        </tr>
+
+                        {isExpanded && (
+                          <tr className="bg-secondary/5 border-b border-border">
+                            <td colSpan={7} className="p-0">
+                              <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
+                                {/* Bookings List */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Bookings via Vendor</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vBookings.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {vBookings.length > 0 ? vBookings.map((bk: any, i: number) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
+                                        <div className="flex justify-between items-start mb-1">
+                                          <span className="font-medium">{bk.bookingType}</span>
+                                          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
+                                        </div>
+                                        <div className="flex justify-between mt-1">
+                                          <span className="text-muted-foreground">{bk.customer}</span>
+                                          <span className="text-muted-foreground">{bk.bookingDate}</span>
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No bookings found for this vendor.</div>}
+                                  </div>
+                                </div>
+
+                                {/* Customers List */}
+                                <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                                  <h4 className="font-semibold flex justify-between items-center text-sm">
+                                    <span>Associated Customers</span>
+                                    <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vCustomers.length}</span>
+                                  </h4>
+                                  <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                    {vCustomers.length > 0 ? vCustomers.map((cust, i) => (
+                                      <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium flex justify-between items-center gap-2">
+                                        <span>{cust}</span>
+                                        <div className="text-[9px] bg-secondary px-1.5 py-0.5 rounded-full text-muted-foreground">
+                                          {vBookings.filter(b => b.customer === cust).length} Bookings
+                                        </div>
+                                      </div>
+                                    )) : <div className="text-xs text-muted-foreground italic">No customers linked.</div>}
+                                  </div>
+                                </div>
+
+                              </div>
                             </td>
                           </tr>
-                          
-                          {isExpanded && (
-                            <tr className="bg-secondary/5 border-b border-border">
-                              <td colSpan={7} className="p-0">
-                                <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
-                                  {/* Bookings List */}
-                                  <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                    <h4 className="font-semibold flex justify-between items-center text-sm">
-                                      <span>Bookings via Vendor</span>
-                                      <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vBookings.length}</span>
-                                    </h4>
-                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                      {vBookings.length > 0 ? vBookings.map((bk: any, i: number) => (
-                                        <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
-                                          <div className="flex justify-between items-start mb-1">
-                                            <span className="font-medium">{bk.bookingType}</span>
-                                            <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
-                                          </div>
-                                          <div className="flex justify-between mt-1">
-                                            <span className="text-muted-foreground">{bk.customer}</span>
-                                            <span className="text-muted-foreground">{bk.bookingDate}</span>
-                                          </div>
-                                        </div>
-                                      )) : <div className="text-xs text-muted-foreground italic">No bookings found for this vendor.</div>}
-                                    </div>
-                                  </div>
-                                  
-                                  {/* Customers List */}
-                                  <div className="bg-background rounded-xl border border-border p-4 space-y-3">
-                                    <h4 className="font-semibold flex justify-between items-center text-sm">
-                                      <span>Associated Customers</span>
-                                      <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vCustomers.length}</span>
-                                    </h4>
-                                    <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
-                                      {vCustomers.length > 0 ? vCustomers.map((cust, i) => (
-                                        <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 font-medium flex justify-between items-center gap-2">
-                                          <span>{cust}</span>
-                                          <div className="text-[9px] bg-secondary px-1.5 py-0.5 rounded-full text-muted-foreground">
-                                            {vBookings.filter(b => b.customer === cust).length} Bookings
-                                          </div>
-                                        </div>
-                                      )) : <div className="text-xs text-muted-foreground italic">No customers linked.</div>}
-                                    </div>
-                                  </div>
-                                  
-                                </div>
-                              </td>
-                            </tr>
-                          )}
-                        </React.Fragment>
-                      );
-                    })}
+                        )}
+                      </React.Fragment>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
@@ -1663,7 +1663,7 @@ function AccountsPage() {
                 }}
               />
             </div>
-            
+
             {(newTx.type === "Receipt" || newTx.type === "Payment") && newTx.invoiceId && (() => {
               const selectedBooking = bookings.find(b =>
                 String(b.id).toLowerCase() === String(newTx.invoiceId).toLowerCase() ||
@@ -1671,12 +1671,12 @@ function AccountsPage() {
                 String(b.purchaseInvoiceNo || "").toLowerCase() === String(newTx.invoiceId).toLowerCase()
               );
               if (!selectedBooking) return null;
-              
+
               const isPayment = newTx.type === "Payment";
-              const totalAmt = isPayment 
-                ? (Number(selectedBooking.purchasePrice) || 0) 
+              const totalAmt = isPayment
+                ? (Number(selectedBooking.purchasePrice) || 0)
                 : (Number(selectedBooking.sellingPrice) || Number(selectedBooking.amount) || 0);
-              
+
               let currentPaid = 0;
               if (isPayment) {
                 const vendorTxs = transactions.filter(t => t.type === "Payment" && (t.invoiceId === newTx.invoiceId || t.invoiceId === selectedBooking.id));
@@ -1687,7 +1687,7 @@ function AccountsPage() {
 
               const oldTxAmount = editingTxId ? (transactions.find(t => t.id === editingTxId)?.amount || 0) : 0;
               currentPaid = Math.max(0, currentPaid - oldTxAmount);
-              
+
               const newPaid = currentPaid + (Number(newTx.amount) || 0);
               const remaining = Math.max(0, totalAmt - newPaid);
 
@@ -1763,10 +1763,10 @@ function AccountsPage() {
                   const vendorName = matched.name?.split('---META---')[0];
                   const vendorBookings = bookings.filter(b => b.supplier === vendorName);
                   totalAmount = vendorBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
-                  
+
                   const vendorTxs = transactions.filter(t => t.type === "Payment" && t.entityType === "Vendor" && (t.entityId === matched.id || t.entityId === vendorName));
                   totalPaid = vendorTxs.reduce((sum, t) => sum + (Number(t.amount) || 0), 0);
-                  
+
                   isMatch = vendorBookings.length > 0 || vendorTxs.length > 0;
                 }
               }
@@ -1861,12 +1861,12 @@ function AccountsPage() {
                   const currentPaid = targetBooking.paid || 0;
                   const oldTx = editingTxId ? transactions.find(t => t.id === editingTxId) : null;
                   const oldAmount = oldTx ? (Number(oldTx.amount) || 0) : 0;
-                  
+
                   const newPaid = currentPaid - oldAmount + newTx.amount;
-                  
+
                   let newPaymentStatus = targetBooking.paymentStatus;
                   let newCustomerStatus = "";
-                  
+
                   if (newTx.type === "Receipt") {
                     const totalAmount = targetBooking.amount || 0;
                     if (newPaid === 0) {
@@ -1886,7 +1886,7 @@ function AccountsPage() {
                     paid: newPaid,
                     paymentStatus: newPaymentStatus
                   };
-                  
+
                   setBookings(bookings.map(b => b.id === targetBooking.id ? updatedBooking : b));
 
                   // Async update to database for Booking and Customer

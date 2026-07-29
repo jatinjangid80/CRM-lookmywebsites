@@ -697,10 +697,63 @@ function DynamicFormStep({
   onSubmit: () => void;
   onBack: () => void;
   customers: ExtCustomer[];
+  setCustomers: React.Dispatch<React.SetStateAction<ExtCustomer[]>>;
 }) {
   const icon = SERVICE_ICONS[service] ?? "📋";
   const formType = getServiceFormType(service);
   const [fetchStatus, setFetchStatus] = useState<"idle" | "found" | "notfound">("idle");
+  const [isAddCustomerOpen, setIsAddCustomerOpen] = useState(false);
+  const [newCustomer, setNewCustomer] = useState<Partial<ExtCustomer>>({
+    name: "", phone: "", email: "", status: "Active" as any, source: "Website", assignedTo: "Unassigned", company: "", city: "", reference: "", dob: "", dateOfAnniversary: "", gst: ""
+  });
+
+  const handleSaveCustomer = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCustomer.name || !newCustomer.phone) return;
+
+    const isDuplicate = customers.some((c) => c.phone === newCustomer.phone);
+    if (isDuplicate) {
+      alert("A customer with this phone number already exists.");
+      return;
+    }
+
+    const currentMaxId = customers.reduce((max, c) => {
+      const num = parseInt(c.id.replace("CRN", ""));
+      return !isNaN(num) && num > max ? num : max;
+    }, 0);
+    const nextId = `CRN${String(currentMaxId + 1).padStart(3, "0")}`;
+
+    const customer = {
+      id: nextId,
+      name: newCustomer.name || "",
+      phone: newCustomer.phone || "",
+      email: newCustomer.email || "",
+      company: newCustomer.company || "",
+      city: newCustomer.city || "",
+      source: newCustomer.source || "Website",
+      reference: newCustomer.reference || "",
+      status: (newCustomer.status as any) || "Active",
+      assignedTo: newCustomer.assignedTo || "Unassigned",
+      dob: newCustomer.dob || "",
+      dateOfAnniversary: newCustomer.dateOfAnniversary || "",
+      gst: newCustomer.gst || "",
+      createdAt: new Date().toISOString().slice(0, 10),
+      trips: 0,
+      totalSpend: 0,
+      tier: "Silver",
+    } as ExtCustomer;
+
+    setCustomers([customer, ...customers]);
+    setForm((f) => ({
+      ...f,
+      name: customer.name,
+      phone: customer.phone,
+      email: customer.email,
+      whatsapp: customer.phone,
+    }));
+    setIsAddCustomerOpen(false);
+    setNewCustomer({ name: "", phone: "", email: "", status: "Active" as any, source: "Website", assignedTo: "Unassigned", company: "", city: "", reference: "", dob: "", dateOfAnniversary: "", gst: "" });
+  };
 
   const handleFetchCustomer = () => {
     const cleanPhone = (form.phone || "").replace(/[^0-9+]/g, "");
@@ -724,7 +777,7 @@ function DynamicFormStep({
   };
 
   return (
-    <div className="flex flex-col gap-0 overflow-y-auto">
+    <div className="flex flex-col gap-0 overflow-y-auto" {...(isAddCustomerOpen ? { inert: "" } : {})}>
       {/* Sub-header: service badge + back button */}
       <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-secondary/30">
         <button
@@ -756,16 +809,23 @@ function DynamicFormStep({
 
         {/* ── Customer / Contact ── */}
         <div className="rounded-2xl border border-border bg-secondary/20 p-4">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Customer Info</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Customer Info</p>
+            <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs text-primary" onClick={() => setIsAddCustomerOpen(true)}>
+              <Plus className="h-3 w-3 mr-1" /> Add Customer
+            </Button>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Full Name *</label>
-              <Input list="lead-customers" id="lead-name" placeholder="e.g. Priya Sharma" value={form.name} onChange={set("name")} className="rounded-xl" />
-              <datalist id="lead-customers">
-                {customers?.map((c) => (
-                  <option key={c.id} value={c.name} />
-                ))}
-              </datalist>
+              <Input {...(!isAddCustomerOpen ? { list: "lead-customers" } : {})} id="lead-name" placeholder="e.g. Priya Sharma" value={form.name} onChange={set("name")} className="rounded-xl" />
+              {!isAddCustomerOpen && (
+                <datalist id="lead-customers">
+                  {customers?.map((c) => (
+                    <option key={c.id} value={c.name} />
+                  ))}
+                </datalist>
+              )}
             </div>
             <div>
               <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">
@@ -884,7 +944,6 @@ function DynamicFormStep({
           />
         </div>
 
-        {/* ── Actions ── */}
         <button
           id="submit-lead-btn"
           disabled={!canSubmit}
@@ -896,6 +955,88 @@ function DynamicFormStep({
           Save Lead
         </button>
       </div>
+
+      <Dialog open={isAddCustomerOpen} onOpenChange={setIsAddCustomerOpen}>
+        <DialogContent className="sm:max-w-[600px] z-[60]">
+          <DialogHeader>
+            <DialogTitle>Add Customer</DialogTitle>
+            <DialogDescription>
+              Create a new customer profile.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleSaveCustomer} className="grid grid-cols-2 gap-4 py-4">
+            <div className="space-y-2">
+              <label htmlFor="name" className="text-sm font-medium">Customer Name <span className="text-red-500">*</span></label>
+              <Input id="name" autoComplete="off" placeholder="e.g. jatin jangid" required value={newCustomer.name || ""} onChange={(e) => setNewCustomer({ ...newCustomer, name: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="phone" className="text-sm font-medium">Mobile Number <span className="text-red-500">*</span></label>
+              <Input id="phone" placeholder="e.g. 9876543210" required value={newCustomer.phone || ""} onChange={(e) => setNewCustomer({ ...newCustomer, phone: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium">Email Address</label>
+              <Input id="email" type="email" placeholder="e.g. jatin@example.com" value={newCustomer.email || ""} onChange={(e) => setNewCustomer({ ...newCustomer, email: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="company" className="text-sm font-medium">Company Name</label>
+              <Input id="company" placeholder="e.g. NxtWave" value={newCustomer.company || ""} onChange={(e) => setNewCustomer({ ...newCustomer, company: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="city" className="text-sm font-medium">City</label>
+              <Input id="city" placeholder="e.g. jaipur" value={newCustomer.city || ""} onChange={(e) => setNewCustomer({ ...newCustomer, city: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="reference" className="text-sm font-medium">Reference Name</label>
+              <Input id="reference" placeholder="e.g. jatin jangid" value={newCustomer.reference || ""} onChange={(e) => setNewCustomer({ ...newCustomer, reference: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="source" className="text-sm font-medium">Lead Source</label>
+              <Select value={newCustomer.source || "Website"} onValueChange={(v) => setNewCustomer({ ...newCustomer, source: v })}>
+                <SelectTrigger id="source"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {SOURCES.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="status" className="text-sm font-medium">Status</label>
+              <Select value={newCustomer.status || "Active"} onValueChange={(v: any) => setNewCustomer({ ...newCustomer, status: v })}>
+                <SelectTrigger id="status"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {["Active", "Inactive", "VIP"].map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="assignedTo" className="text-sm font-medium">Assigned Employee</label>
+              <Select value={newCustomer.assignedTo || "Unassigned"} onValueChange={(v) => setNewCustomer({ ...newCustomer, assignedTo: v })}>
+                <SelectTrigger id="assignedTo"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {assignees.map(s => <SelectItem key={s} value={s}>{s}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="dob" className="text-sm font-medium">DOB</label>
+              <Input id="dob" type="date" value={newCustomer.dob || ""} onChange={(e) => setNewCustomer({ ...newCustomer, dob: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="dateOfAnniversary" className="text-sm font-medium">Date of Anniversary</label>
+              <Input id="dateOfAnniversary" type="date" value={newCustomer.dateOfAnniversary || ""} onChange={(e) => setNewCustomer({ ...newCustomer, dateOfAnniversary: e.target.value })} />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="gst" className="text-sm font-medium">GST</label>
+              <Input id="gst" placeholder="GST Number" value={newCustomer.gst || ""} onChange={(e) => setNewCustomer({ ...newCustomer, gst: e.target.value })} />
+            </div>
+            <DialogFooter className="col-span-2 mt-4">
+              <Button type="button" variant="outline" onClick={() => setIsAddCustomerOpen(false)}>
+                Cancel
+              </Button>
+              <Button type="submit">Save Customer</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -910,7 +1051,7 @@ function AddLeadModal({
   onAdd: (l: ExtLead) => void;
   existingLeads: ExtLead[];
 }) {
-  const [customers] = useSupabaseTable<ExtCustomer[]>("customers", []);
+  const [customers, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
@@ -1078,6 +1219,7 @@ function AddLeadModal({
             onSubmit={submit}
             onBack={handleBack}
             customers={customers}
+            setCustomers={setCustomers as React.Dispatch<React.SetStateAction<ExtCustomer[]>>}
           />
         )}
       </div>
