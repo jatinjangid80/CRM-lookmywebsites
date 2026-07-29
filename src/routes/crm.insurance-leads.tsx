@@ -532,7 +532,7 @@ function InsuranceFields({ form, set, service }: { form: typeof EMPTY_FORM; set:
       <div className="col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Query Type</label>
         <select value={form.queryType} onChange={set("queryType")} className={FIELD_CLS}>
-          {["New","Renewal","Expired"].map(q => <option key={q}>{q}</option>)}
+          {["New","Renewal","Expired","Endorsement"].map(q => <option key={q}>{q}</option>)}
         </select>
       </div>
       <div className="col-span-2">
