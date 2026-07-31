@@ -18,6 +18,7 @@ import { InsuranceCompaniesView } from "@/components/insurance/InsuranceCompanie
 import { InsuranceTransactionsView } from "@/components/insurance/InsuranceTransactionsView";
 import { InsuranceCustomerStatusView } from "@/components/insurance/InsuranceCustomerStatusView";
 import { InsuranceVendorStatusView } from "@/components/insurance/InsuranceVendorStatusView";
+import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
@@ -26,6 +27,9 @@ export const Route = createFileRoute("/crm/insurance")({
 export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus" | "GenTransactions" | "Claims";
 
 function GeneralInsurancePage() {
+  const auth = getAuth();
+  const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
+
   const [activeTab, setActiveTab] = useState<TabType>("Policies");
   const [showForm, setShowForm] = useState(false);
   const [editingPolicy, setEditingPolicy] = useState<any>(null);
@@ -293,9 +297,11 @@ function GeneralInsurancePage() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <Button variant="outline" className="hidden md:flex" onClick={() => setIsExportOpen(true)}>
-            <Download className="mr-2 h-4 w-4" /> Export Data
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" className="hidden md:flex" onClick={() => setIsExportOpen(true)}>
+              <Download className="mr-2 h-4 w-4" /> Export Data
+            </Button>
+          )}
           <Button onClick={handleAddNew}>
             <Plus className="mr-2 h-4 w-4" /> New Policy
           </Button>

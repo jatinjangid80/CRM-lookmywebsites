@@ -547,13 +547,15 @@ function PackagesPage() {
           </p>
         </div>
         <div className="flex gap-2 flex-wrap">
-          <Button
-            variant="outline"
-            className="gap-2 rounded-xl"
-            onClick={() => setIsExportOpen(true)}
-          >
-            <Download className="h-4 w-4" /> Export
-          </Button>
+          {isAdmin && (
+            <Button
+              variant="outline"
+              className="gap-2 rounded-xl"
+              onClick={() => setIsExportOpen(true)}
+            >
+              <Download className="h-4 w-4" /> Export
+            </Button>
+          )}
           <Button className="btn-hero gap-2" onClick={openAdd}>
             <Plus className="h-4 w-4" /> New Package
           </Button>
@@ -736,7 +738,8 @@ function PackagesPage() {
                         >
                           <Paperclip className="h-4 w-4" /> Attachments
                         </DropdownMenuItem>
-                        <DropdownMenuItem
+                        <>{auth?.role === admin && (
+<DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
                             openEdit(pkg);
@@ -745,8 +748,10 @@ function PackagesPage() {
                         >
                           <Edit2 className="h-4 w-4" /> Edit
                         </DropdownMenuItem>
+)}</>
                         {isAdmin && (
-                          <DropdownMenuItem
+                          <>{auth?.role === admin && (
+<DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();
                               setDeleteTarget(pkg);
@@ -755,6 +760,7 @@ function PackagesPage() {
                           >
                             <Trash2 className="h-4 w-4" /> Delete
                           </DropdownMenuItem>
+)}</>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

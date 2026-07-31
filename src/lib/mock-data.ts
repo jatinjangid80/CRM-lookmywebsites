@@ -48,9 +48,8 @@ export type Lead = {
   | "Payment Pending"
   | "on conform"
   | "in process"
-  |
+  | "Postponed"
   | "Completed"
-   "Postponed"
   | "Lost";
   source: string;
   reference?: string;

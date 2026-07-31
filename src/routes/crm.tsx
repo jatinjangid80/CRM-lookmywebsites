@@ -10,6 +10,7 @@ import {
   Package as Pkg,
   CalendarCheck,
   FileText,
+  FileEdit,
   ClipboardList,
   FolderOpen,
   Star,
@@ -61,10 +62,10 @@ export const Route = createFileRoute("/crm")({
   component: CrmLayout,
 });
 
-type NavItem = { 
-  to: string; 
-  label: string; 
-  icon: React.ElementType; 
+type NavItem = {
+  to: string;
+  label: string;
+  icon: React.ElementType;
   exact?: boolean;
   subItems?: { label: string; to: string; icon?: React.ElementType }[];
 };
@@ -77,14 +78,15 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/visa", label: "Visa", icon: Plane },
   { to: "/crm/customers", label: "Customers", icon: UserCheck },
   { to: "/crm/bookings", label: "Bookings", icon: CalendarCheck },
-  { 
-    to: "/crm/insurance", 
-    label: "General Insurance", 
+  {
+    to: "/crm/insurance",
+    label: "General Insurance",
     icon: ShieldCheck,
     subItems: [
       { label: "Leads", to: "/crm/insurance-leads", icon: ClipboardList },
       { label: "Policies", to: "/crm/insurance?tab=Policies", icon: Shield },
-      { label: "Claims", to: "/crm/insurance-claims", icon: FileText }
+      { label: "Claims", to: "/crm/insurance-claims", icon: FileText },
+      { label: "Endorsement", to: "/crm/insurance-endorsement", icon: FileEdit }
     ]
   },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
@@ -98,64 +100,53 @@ const FULL_NAV: NavItem[] = [
 ];
 
 function getNavForUser(auth: AuthUser): NavItem[] {
-  // Nikita
+  const name = auth.name.toLowerCase();
+
+  // IMPORTANT: We check specific names FIRST because some users (like Suman/HR) 
+  // might have an "admin" role in the database for permissions (like Edit/Delete),
+  // but we still want to strictly limit which tabs they can see.
+  
+  if (name.includes("puspa") || name.includes("pushpa")) {
+    return FULL_NAV.filter((n) => [
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors",
+    ].includes(n.label));
+  }
+
+  if (name.includes("deepak")) {
+    return FULL_NAV.filter((n) => [
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Vendors", "Documents",
+    ].includes(n.label));
+  }
+
+  if (name.includes("suman")) {
+    return FULL_NAV.filter((n) => [
+      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents",
+    ].includes(n.label));
+  }
+
+  if (name.includes("nikita")) {
+    return FULL_NAV.filter((n) => [
+      "Tasks", "Customers", "General Insurance", "Attendance"
+    ].includes(n.label));
+  }
+
+  if (name.includes("aman")) {
+    return FULL_NAV.filter((n) => [
+      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents",
+    ].includes(n.label));
+  }
+
+  // After name checks, if they are a pure Admin, give them full access to everything.
   if (auth.role === "admin") {
     return FULL_NAV;
   }
 
   if (auth.role === "manager") {
-    // Manager has access to Employees and Tasks, plus regular modules
     return FULL_NAV.filter((n) => n.label !== "Settings");
   }
 
-  // Employee role
-  // Maintain some specific access for demonstration based on old role names if they exist
-  const empSpecificNav = FULL_NAV.filter((n) => !["Employees", "Settings", "Payments"].includes(n.label));
-
-  if (auth.name.toLowerCase().includes("nikita")) {
-    return FULL_NAV.filter((n) => [
-      "Leads",
-      "Tasks",
-      "Customers",
-      "General Insurance",
-      "Documents",
-      "Attendance",
-      "Vendors",
-      "Accounts",
-      "Settings"
-    ].includes(n.label));
-  }
-  if (auth.name.toLowerCase().includes("aman")) {
-    return FULL_NAV.filter((n) => ["Vendors", "Settings", "Tasks"].includes(n.label));
-  }
-  if (auth.name.toLowerCase().includes("deepak")) {
-    return FULL_NAV.filter((n) => [
-      "Leads",
-      "Tasks",
-      "Visa",
-      "Customers",
-      "Bookings",
-      "Documents",
-      "Vendors",
-      "Accounts",
-      "Attendance",
-      "Settings"
-    ].includes(n.label));
-  }
-  if (auth.name.toLowerCase().includes("puspa") || auth.name.toLowerCase().includes("pushpa")) {
-    return FULL_NAV.filter((n) => [
-      "Leads",
-      "Quotations",
-      "Tasks",
-      "Customers",
-      "Bookings",
-      "Documents",
-      "Packages",
-      "Accounts"
-    ].includes(n.label));
-  }
-
-  return empSpecificNav;
+  // Default for other employees
+  return FULL_NAV.filter((n) => !["Employees", "Settings", "Payments"].includes(n.label));
 }
 
 function CrmLayout() {
@@ -268,7 +259,14 @@ function CrmLayout() {
             className={`mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${isAdmin ? "bg-primary/10 text-primary" : "bg-violet-100 text-violet-700"}`}
           >
             <Shield className="h-3.5 w-3.5" />
-            {isAdmin ? "Admin Portal" : `Employee — ${auth.name.split(" ")[0]}`}
+            {auth.name.toLowerCase().includes("suman")
+              ? "HR Portal"
+              : auth.name.toLowerCase().includes("aman")
+                ? "Accountant Portal"
+                : isAdmin
+                  ? "Admin Portal"
+                  : `Employee — ${auth.name.split(" ")[0]}`
+            }
           </div>
         )}
 
@@ -285,8 +283,8 @@ function CrmLayout() {
                     <button
                       title={isCompact ? n.label : undefined}
                       className={`group w-full flex items-center justify-between ${isCompact ? "justify-center p-3" : "gap-3 px-4 py-2.5"} rounded-full text-sm font-medium transition-all ${active || isSubActive
-                          ? "bg-primary/10 text-primary"
-                          : "text-sidebar-foreground hover:bg-sidebar-accent"
+                        ? "bg-primary/10 text-primary"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent"
                         }`}
                     >
                       <div className="flex items-center gap-3">
@@ -299,18 +297,18 @@ function CrmLayout() {
                   <HoverCardContent side="right" align="start" sideOffset={12} className="w-48 p-2 rounded-2xl shadow-xl border-border bg-popover/95 backdrop-blur flex flex-col gap-1">
                     {n.subItems.map((sub) => {
                       const SubIcon = sub.icon;
-                      const subActive = sub.to.includes('?') 
+                      const subActive = sub.to.includes('?')
                         ? location.href.includes(sub.to)
                         : pathname === sub.to;
-                        
+
                       return (
                         <Link
                           key={sub.to}
                           to={sub.to.split('?')[0]}
                           search={sub.to.includes('?') ? Object.fromEntries(new URLSearchParams(sub.to.split('?')[1])) : undefined}
                           className={`flex items-center w-full gap-3 px-4 py-2.5 rounded-full text-sm font-semibold transition-all ${subActive
-                              ? "bg-primary/10 text-primary shadow-sm"
-                              : "bg-transparent text-foreground hover:bg-primary/5 hover:text-primary"
+                            ? "bg-primary/10 text-primary shadow-sm"
+                            : "bg-transparent text-foreground hover:bg-primary/5 hover:text-primary"
                             }`}
                         >
                           {SubIcon && <SubIcon className="h-4 w-4" />}
@@ -344,7 +342,7 @@ function CrmLayout() {
         <button
           onClick={handleLogout}
           title={isCompact ? "Logout" : undefined}
-          className={`mt-4 flex items-center ${isCompact ? "justify-center p-3" : "gap-2 px-3 py-2.5"} rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-red-100 hover:text-red-600 transition-colors`}
+          className={`mt-4 flex items-center ${isCompact ? "justify-center p-3" : "gap-2 px-3 py-2.5"} rounded-lg text-sm font-medium text-sidebar-foreground hover:bg-primary/10 hover:text-primary transition-colors`}
         >
           <LogOut className={isCompact ? "h-6 w-6" : "h-5 w-5"} /> {!isCompact && "Logout"}
         </button>
@@ -374,7 +372,11 @@ function CrmLayout() {
                       {auth.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {isAdmin ? "Administrator" : "Employee"}
+                      {auth.name.toLowerCase().includes("suman")
+                        ? "HR"
+                        : auth.name.toLowerCase().includes("aman")
+                          ? "Accountant"
+                          : isAdmin ? "Administrator" : "Employee"}
                     </p>
                   </div>
                 </button>
@@ -388,7 +390,11 @@ function CrmLayout() {
                     <div className="flex flex-col space-y-0.5">
                       <p className="text-[15px] font-bold leading-none text-foreground">{auth.name}</p>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {auth.role === "admin" ? "Administrator" : "Team Member"}
+                        {auth.name.toLowerCase().includes("suman")
+                          ? "HR"
+                          : auth.name.toLowerCase().includes("aman")
+                            ? "Accountant"
+                            : auth.role === "admin" ? "Administrator" : "Team Member"}
                       </p>
                     </div>
                   </div>
@@ -458,9 +464,9 @@ function CrmLayout() {
                 <DropdownMenuSeparator className="my-2" />
                 <DropdownMenuItem
                   onClick={handleLogout}
-                  className="cursor-pointer gap-2 py-2.5 text-red-600 focus:text-red-600 focus:bg-red-50 rounded-lg justify-center font-medium"
+                  className="cursor-pointer gap-2 py-2.5 text-primary focus:text-primary focus:bg-primary/10 rounded-lg justify-center font-medium"
                 >
-                  <LogOut className="h-4 w-4 text-red-600" />
+                  <LogOut className="h-4 w-4 text-primary" />
                   <span>Log out securely</span>
                 </DropdownMenuItem>
               </DropdownMenuContent>

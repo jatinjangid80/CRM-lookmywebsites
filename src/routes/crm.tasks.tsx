@@ -70,7 +70,7 @@ const STATUS_COLORS: Record<string, string> = {
 function TasksPage() {
   const auth = getAuth();
   const currentUser = auth?.name || "Admin";
-  const isAdmin = auth?.role === "admin" || currentUser.toLowerCase().includes("aman");
+  const isAdmin = auth?.role === "admin" && !currentUser.toLowerCase().includes("aman");
 
   const [tasks, setTasks] = useSupabaseTable<Task[]>("tasks", SEED);
   const [employees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
@@ -608,17 +608,21 @@ function TasksPage() {
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-40 rounded-xl">
                                 {isAdmin && (
-                                  <DropdownMenuItem onClick={() => handleEditTask(task)} className="cursor-pointer gap-2 py-2">
+                                  <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleEditTask(task)} className="cursor-pointer gap-2 py-2">
                                     <Edit className="h-4 w-4" /> Edit
                                   </DropdownMenuItem>
+)}</>
                                 )}
                                 <DropdownMenuItem onClick={() => setViewingTask(task)} className="cursor-pointer gap-2 py-2">
                                   <Eye className="h-4 w-4" /> View
                                 </DropdownMenuItem>
                                 {isAdmin && (
-                                  <DropdownMenuItem onClick={() => handleDeleteTask(task.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                  <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDeleteTask(task.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
                                     <Trash2 className="h-4 w-4" /> Delete
                                   </DropdownMenuItem>
+)}</>
                                 )}
                               </DropdownMenuContent>
                             </DropdownMenu>
@@ -724,17 +728,21 @@ function TasksPage() {
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end" className="w-40 rounded-xl">
                                   {isAdmin && (
-                                    <DropdownMenuItem onClick={() => handleEditTask(st)} className="cursor-pointer gap-2 py-2">
+                                    <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleEditTask(st)} className="cursor-pointer gap-2 py-2">
                                       <Edit className="h-4 w-4" /> Edit
                                     </DropdownMenuItem>
+)}</>
                                   )}
                                   <DropdownMenuItem onClick={() => setViewingTask(st)} className="cursor-pointer gap-2 py-2">
                                     <Eye className="h-4 w-4" /> View
                                   </DropdownMenuItem>
                                   {isAdmin && (
-                                    <DropdownMenuItem onClick={() => handleDeleteTask(st.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                    <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDeleteTask(st.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
                                       <Trash2 className="h-4 w-4" /> Delete
                                     </DropdownMenuItem>
+)}</>
                                   )}
                                 </DropdownMenuContent>
                               </DropdownMenu>
@@ -817,17 +825,21 @@ function TasksPage() {
                                       </DropdownMenuTrigger>
                                       <DropdownMenuContent align="end" className="w-40 rounded-xl">
                                         {isAdmin && (
-                                          <DropdownMenuItem onClick={() => handleEditTask(t)} className="cursor-pointer gap-2 py-2">
+                                          <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleEditTask(t)} className="cursor-pointer gap-2 py-2">
                                             <Edit className="h-4 w-4" /> Edit
                                           </DropdownMenuItem>
+)}</>
                                         )}
                                         <DropdownMenuItem onClick={() => setViewingTask(t)} className="cursor-pointer gap-2 py-2">
                                           <Eye className="h-4 w-4" /> View
                                         </DropdownMenuItem>
                                         {isAdmin && (
-                                          <DropdownMenuItem onClick={() => handleDeleteTask(t.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                          <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDeleteTask(t.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
                                             <Trash2 className="h-4 w-4" /> Delete
                                           </DropdownMenuItem>
+)}</>
                                         )}
                                       </DropdownMenuContent>
                                     </DropdownMenu>

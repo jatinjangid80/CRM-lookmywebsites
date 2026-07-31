@@ -1804,204 +1804,6 @@ function LeadDetail({
             )}
           </div>
 
-          {/* Booking & Payment Details */}
-          {(lead.status === "on conform" ||
-            lead.status === "Confirmed" ||
-            lead.status === "in process" ||
-            lead.status === "Payment Pending" ||
-            lead.bookingReference ||
-            isEditingBooking) && (
-              <div className="space-y-2">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Booking & Payment
-                  </p>
-                  {isAdmin && onUpdateLead && !isEditingBooking && (
-                    <button
-                      onClick={() => setIsEditingBooking(true)}
-                      className="text-[10px] text-blue-500 hover:underline"
-                    >
-                      Edit Details
-                    </button>
-                  )}
-                </div>
-
-                {isEditingBooking ? (
-                  <div className="rounded-2xl border border-border bg-secondary/30 p-4 space-y-4 animate-in fade-in">
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Vendor Name
-                        </label>
-                        <Input
-                          value={bookingDetails.vendorName}
-                          onChange={(e) =>
-                            setBookingDetails({ ...bookingDetails, vendorName: e.target.value })
-                          }
-                          className="h-8 mt-1 text-xs"
-                          placeholder="e.g. MakeMyTrip"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Booking Ref / PNR
-                        </label>
-                        <Input
-                          value={bookingDetails.bookingReference}
-                          onChange={(e) =>
-                            setBookingDetails({ ...bookingDetails, bookingReference: e.target.value })
-                          }
-                          className="h-8 mt-1 text-xs"
-                          placeholder="e.g. PNR12345"
-                        />
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2">
-                        <div>
-                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                            Total Amount
-                          </label>
-                          <Input
-                            type="number"
-                            value={bookingDetails.totalAmount}
-                            onChange={(e) =>
-                              setBookingDetails({
-                                ...bookingDetails,
-                                totalAmount: Number(e.target.value),
-                              })
-                            }
-                            className="h-8 mt-1 text-xs"
-                          />
-                        </div>
-                        <div>
-                          <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                            Amount Paid
-                          </label>
-                          <Input
-                            type="number"
-                            value={bookingDetails.amountPaid}
-                            onChange={(e) =>
-                              setBookingDetails({
-                                ...bookingDetails,
-                                amountPaid: Number(e.target.value),
-                              })
-                            }
-                            className="h-8 mt-1 text-xs"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Payment Status
-                        </label>
-                        <select
-                          value={bookingDetails.paymentStatus}
-                          onChange={(e) =>
-                            setBookingDetails({
-                              ...bookingDetails,
-                              paymentStatus: e.target.value as "Pending" | "Partial" | "Paid",
-                            })
-                          }
-                          className="flex h-8 mt-1 w-full items-center justify-between rounded-md border border-input bg-background px-3 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-primary"
-                        >
-                          <option value="Pending">Pending</option>
-                          <option value="Partial">Partial</option>
-                          <option value="Paid">Paid</option>
-                        </select>
-                      </div>
-                    </div>
-                    <div className="flex gap-2 pt-2 border-t border-border/50">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 text-xs flex-1 rounded-lg"
-                        onClick={() => setIsEditingBooking(false)}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        size="sm"
-                        className="h-8 text-xs flex-1 rounded-lg"
-                        onClick={() => {
-                          const currentNotes = Array.isArray(lead.allNotes) ? [...lead.allNotes] : [];
-                          if (lead.notes && currentNotes.length === 0) {
-                            currentNotes.push({ text: lead.notes, date: lead.noteDate || new Date().toISOString() });
-                          }
-                          const noteDate = new Date().toISOString();
-                          const newNote = `Booking details updated. Vendor: ${bookingDetails.vendorName || "N/A"}, PNR: ${bookingDetails.bookingReference || "N/A"}`;
-                          currentNotes.push({ text: newNote, date: noteDate });
-
-                          onUpdateLead?.(lead.id, {
-                            ...bookingDetails,
-                            notes: newNote,
-                            noteDate: noteDate,
-                            allNotes: currentNotes
-                          });
-                          setIsEditingBooking(false);
-                        }}
-                      >
-                        Save Details
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="rounded-2xl border border-border p-4 space-y-3 bg-secondary/10">
-                    <div className="grid grid-cols-2 gap-y-3 gap-x-2">
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Vendor
-                        </p>
-                        <p className="text-xs font-medium mt-0.5">{lead.vendorName || "—"}</p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Ref / PNR
-                        </p>
-                        <p className="text-xs font-medium mt-0.5">{lead.bookingReference || "—"}</p>
-                      </div>
-
-                    </div>
-
-                    <div className="border-t border-border pt-3 mt-1 grid grid-cols-3 gap-2">
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Total
-                        </p>
-                        <p className="text-xs font-semibold mt-0.5">
-                          {formatINR(lead.totalAmount || 0)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Paid
-                        </p>
-                        <p className="text-xs font-semibold text-emerald-600 mt-0.5">
-                          {formatINR(lead.amountPaid || 0)}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Status
-                        </p>
-                        <div className="mt-1">
-                          <span
-                            className={`inline-flex items-center px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider ${lead.paymentStatus === "Paid"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : lead.paymentStatus === "Partial"
-                                ? "bg-amber-100 text-amber-700"
-                                : "bg-rose-100 text-rose-700"
-                              }`}
-                          >
-                            {lead.paymentStatus || "Pending"}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
           {/* Notes & Updates Feed */}
           <div className="mt-4 pt-3 border-t border-border border-dashed w-full block">
             <div className="flex items-center justify-between mb-3">
@@ -2378,7 +2180,7 @@ function LeadsPage() {
   const [tableEditTaskText, setTableEditTaskText] = useState("");
   const [editingTaskLeadId, setEditingTaskLeadId] = useState<string | null>(null);
   const auth = getAuth();
-  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+  const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
 
   const assignees = Array.from(
     new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),
@@ -2628,20 +2430,24 @@ function LeadsPage() {
             </p>
           </div>
           <div className="flex gap-2">
-            <Button
-              variant="outline"
-              className="gap-2 rounded-xl"
-              onClick={() => setIsExportOpen(true)}
-            >
-              <Download className="h-4 w-4" /> Export Leads
-            </Button>
-            <Button
-              variant="outline"
-              className="gap-2 rounded-xl"
-              onClick={() => setIsImportOpen(true)}
-            >
-              <Upload className="h-4 w-4" /> Import Leads
-            </Button>
+            {isAdmin && (
+              <>
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl"
+                  onClick={() => setIsExportOpen(true)}
+                >
+                  <Download className="h-4 w-4" /> Export Leads
+                </Button>
+                <Button
+                  variant="outline"
+                  className="gap-2 rounded-xl"
+                  onClick={() => setIsImportOpen(true)}
+                >
+                  <Upload className="h-4 w-4" /> Import Leads
+                </Button>
+              </>
+            )}
             <Button
               id="add-lead-btn"
               onClick={() => setShowModal(true)}

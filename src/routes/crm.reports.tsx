@@ -19,6 +19,7 @@ import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
+import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/reports")({ component: ReportsPage });
 
@@ -63,6 +64,8 @@ function SectionHeader({ title, sub }: { title: string; sub: string }) {
 }
 
 function ReportsPage() {
+  const auth = getAuth();
+  const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
   const [leadsList] = useSupabaseTable<any[]>("leads", []);
   const [bookingsList] = useSupabaseTable<any[]>("bookings", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
@@ -119,7 +122,8 @@ function ReportsPage() {
   // Compute destData
   const destMap = new Map();
   bookingsList.forEach((b) => {
-    const dest = b.details?.destination || b.destination || "Other";
+    const destRaw = b.details?.destination || b.destination || "Other";
+    const dest = destRaw.trim().toUpperCase();
     destMap.set(dest, (destMap.get(dest) || 0) + (b.amount || 0));
   });
   const destData = Array.from(destMap.entries())
@@ -204,9 +208,11 @@ function ReportsPage() {
             Revenue, pipeline and consultant performance at a glance.
           </p>
         </div>
-        <Button variant="outline" className="gap-2 rounded-xl" onClick={exportCSV}>
-          <Download className="h-4 w-4" /> Export CSV
-        </Button>
+        {isAdmin && (
+          <Button variant="outline" className="gap-2 rounded-xl" onClick={exportCSV}>
+            <Download className="h-4 w-4" /> Export CSV
+          </Button>
+        )}
       </div>
 
       {/* KPI strip */}

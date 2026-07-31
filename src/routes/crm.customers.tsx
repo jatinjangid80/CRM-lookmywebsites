@@ -287,12 +287,16 @@ function CustomersPage() {
           </p>
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
-          <Button variant="outline" onClick={exportToCSV}>
-            <Download className="mr-2 h-4 w-4" /> Export
-          </Button>
-          <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-            <Download className="mr-2 h-4 w-4 rotate-180" /> Import
-          </Button>
+          {isAdmin && (
+            <>
+              <Button variant="outline" onClick={exportToCSV}>
+                <Download className="mr-2 h-4 w-4" /> Export
+              </Button>
+              <Button variant="outline" onClick={() => setIsImportOpen(true)}>
+                <Download className="mr-2 h-4 w-4 rotate-180" /> Import
+              </Button>
+            </>
+          )}
           <Button onClick={() => setIsAddOpen(true)} style={{ background: "var(--gradient-brand)" }} className="text-white shadow-md">
             <Plus className="mr-2 h-4 w-4" /> Add Customer
           </Button>
@@ -451,14 +455,18 @@ function CustomersPage() {
                         <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setDialogType("profile"); }}>
                           <History className="mr-2 h-4 w-4" /> View History
                         </DropdownMenuItem>
-                        <DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
+                        <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => { setSelectedCustomer(c); setNewCustomer(c); setDialogType("edit"); }}>
                           <FileText className="mr-2 h-4 w-4" /> Edit Customer
                         </DropdownMenuItem>
+)}</>
                         <DropdownMenuSeparator />
                         {isAdmin && (
-                          <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
+                          <>{auth?.role === "admin" && (
+<DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onClick={() => { setSelectedCustomer(c); setDialogType("delete"); }}>
                             <Trash2 className="mr-2 h-4 w-4" /> Delete
                           </DropdownMenuItem>
+)}</>
                         )}
                       </DropdownMenuContent>
                     </DropdownMenu>

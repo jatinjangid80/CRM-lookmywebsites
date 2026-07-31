@@ -201,7 +201,7 @@ export const Route = createFileRoute("/crm/accounts")({
 
 function AccountsPage() {
   const auth = getAuth();
-  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+  const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
   const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
   const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
 
@@ -916,9 +916,11 @@ function AccountsPage() {
                   className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
                 />
               </div>
-              <Button variant="outline" size="sm" onClick={handleExportExpenses} className="h-9 shadow-sm">
-                <Download className="mr-2 h-4 w-4" /> Export
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={handleExportExpenses} className="h-9 shadow-sm">
+                  <Download className="mr-2 h-4 w-4" /> Export
+                </Button>
+              )}
               <Button onClick={() => setIsAddExpenseOpen(true)} className="h-9 shadow-sm">
                 <Plus className="mr-2 h-4 w-4" /> Add Expense
               </Button>
@@ -1002,13 +1004,17 @@ function AccountsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                          <DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                          <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
                             <Pencil className="h-4 w-4" /> Edit
                           </DropdownMenuItem>
+)}</>
                           {isAdmin && (
-                            <DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                            <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
                               <Trash2 className="h-4 w-4" /> Delete
                             </DropdownMenuItem>
+)}</>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1202,7 +1208,8 @@ function AccountsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                              <DropdownMenuItem onClick={() => {
+                              <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => {
                                 setNewTx({
                                   date: tx.date || new Date().toISOString().split('T')[0],
                                   type: tx.type || "Receipt",
@@ -1218,9 +1225,12 @@ function AccountsPage() {
                               }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
                                 <Pencil className="h-4 w-4" /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+)}</>
+                              <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
                                 <Trash2 className="h-4 w-4" /> Delete
                               </DropdownMenuItem>
+)}</>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -1357,9 +1367,11 @@ function AccountsPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search customers..." className="pl-9 bg-background/50 h-9" value={customerSearchQuery} onChange={(e) => setCustomerSearchQuery(e.target.value)} />
               </div>
-              <Button variant="outline" size="sm" onClick={handleExportCustomerStatus} className="h-9">
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={handleExportCustomerStatus} className="h-9">
+                  <Download className="w-4 h-4 mr-2" /> Export
+                </Button>
+              )}
             </div>
           </div>
 
@@ -1502,9 +1514,11 @@ function AccountsPage() {
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input placeholder="Search vendors..." className="pl-9 bg-background/50 h-9" value={vendorSearchQuery} onChange={(e) => setVendorSearchQuery(e.target.value)} />
               </div>
-              <Button variant="outline" size="sm" onClick={handleExportVendorStatus} className="h-9">
-                <Download className="w-4 h-4 mr-2" /> Export
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" size="sm" onClick={handleExportVendorStatus} className="h-9">
+                  <Download className="w-4 h-4 mr-2" /> Export
+                </Button>
+              )}
             </div>
           </div>
 

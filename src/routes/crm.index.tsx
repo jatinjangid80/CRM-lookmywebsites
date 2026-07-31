@@ -202,7 +202,8 @@ function Dashboard() {
   // Destination-wise Sales
   const destSalesMap: Record<string, number> = {};
   bookingsList.forEach((b) => {
-    const dest = b.details?.destination || b.package?.split(" ")[0] || "Other";
+    const destRaw = b.details?.destination || b.package?.split(" ")[0] || "Other";
+    const dest = destRaw.trim().toUpperCase();
     destSalesMap[dest] = (destSalesMap[dest] || 0) + b.amount;
   });
   const destinationSalesData = Object.entries(destSalesMap)

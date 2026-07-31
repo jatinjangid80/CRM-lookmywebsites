@@ -634,13 +634,15 @@ function FileRow({
                 </a>
               </DropdownMenuItem>
               {isAdmin && (
-                <DropdownMenuItem
+                <>{auth?.role === admin && (
+<DropdownMenuItem
                   onClick={() => onDelete(file.id)}
                   className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
                   Delete
                 </DropdownMenuItem>
+)}</>
               )}
             </DropdownMenuContent>
           </DropdownMenu>

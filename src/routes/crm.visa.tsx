@@ -1974,13 +1974,17 @@ function VisaPage() {
                                     </Button>
                                   </DropdownMenuTrigger>
                                   <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                    <DropdownMenuItem onClick={() => handleOpenEditReq(req)} className="cursor-pointer gap-2 py-2">
+                                    <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleOpenEditReq(req)} className="cursor-pointer gap-2 py-2">
                                       <Edit className="h-4 w-4" /> Edit
                                     </DropdownMenuItem>
+)}</>
                                     {isAdmin && (
-                                      <DropdownMenuItem onClick={() => handleDeleteReq(req.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
+                                      <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => handleDeleteReq(req.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
                                         <Trash2 className="h-4 w-4" /> Delete
                                       </DropdownMenuItem>
+)}</>
                                     )}
                                   </DropdownMenuContent>
                                 </DropdownMenu>

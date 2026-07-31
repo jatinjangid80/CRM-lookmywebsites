@@ -662,7 +662,8 @@ function QuotationsPage() {
                               >
                                 <Eye className="mr-2 h-4 w-4" /> View / Share
                               </DropdownMenuItem>
-                              <DropdownMenuItem
+                              <>{auth?.role === admin && (
+<DropdownMenuItem
                                 onClick={() => {
                                   setEditingQuoteId(quote.id);
                                   setForm(quote.details || { ...DEFAULT_FORM });
@@ -672,7 +673,9 @@ function QuotationsPage() {
                               >
                                 <Edit2 className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem
+)}</>
+                              <>{auth?.role === admin && (
+<DropdownMenuItem
                                 onClick={() => {
                                   if (confirm("Are you sure you want to delete this quote?")) {
                                     setQuotations(quotations.filter(q => q.id !== quote.id));
@@ -682,6 +685,7 @@ function QuotationsPage() {
                               >
                                 <Trash2 className="mr-2 h-4 w-4" /> Delete
                               </DropdownMenuItem>
+)}</>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </td>
@@ -1273,7 +1277,8 @@ function QuotationsPage() {
                             >
                               <Eye className="h-4 w-4" /> View
                             </DropdownMenuItem>
-                            <DropdownMenuItem
+                            <>{auth?.role === admin && (
+<DropdownMenuItem
                               onClick={() => {
                                 if (q.details) {
                                   try {
@@ -1296,8 +1301,10 @@ function QuotationsPage() {
                             >
                               <Edit2 className="h-4 w-4" /> Edit
                             </DropdownMenuItem>
+)}</>
                             {isAdmin && (
-                              <DropdownMenuItem
+                              <>{auth?.role === admin && (
+<DropdownMenuItem
                                 onClick={() => {
                                   setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
                                   toast.success(`Quote ${q.id} deleted`);
@@ -1306,6 +1313,7 @@ function QuotationsPage() {
                               >
                                 <Trash2 className="h-4 w-4" /> Delete
                               </DropdownMenuItem>
+)}</>
                             )}
                           </DropdownMenuContent>
                         </DropdownMenu>

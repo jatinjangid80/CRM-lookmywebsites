@@ -1,9 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
-import dotenv from 'dotenv';
-dotenv.config({ path: '.env.local' });
+import { createClient } from "@supabase/supabase-js";
+import 'dotenv/config';
+
 const supabase = createClient(process.env.VITE_SUPABASE_URL, process.env.VITE_SUPABASE_ANON_KEY);
-async function test() {
-  const { data, error } = await supabase.from('expenses').select('*').limit(1);
-  console.log('expenses:', error ? error.message : 'OK');
-}
-test();
+const { data, error } = await supabase.from('insurance_claims').select('*').limit(1);
+console.log(error ? "Error: " + error.message : "Success: " + JSON.stringify(data));

@@ -24,6 +24,8 @@ import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
 import { Route as CrmInsuranceLeadsRouteImport } from './routes/crm.insurance-leads'
+import { Route as CrmInsuranceEndorsementRouteImport } from './routes/crm.insurance-endorsement'
+import { Route as CrmInsuranceClaimsRouteImport } from './routes/crm.insurance-claims'
 import { Route as CrmInsuranceRouteImport } from './routes/crm.insurance'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
 import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
@@ -115,6 +117,16 @@ const CrmLeadsRoute = CrmLeadsRouteImport.update({
 const CrmInsuranceLeadsRoute = CrmInsuranceLeadsRouteImport.update({
   id: '/insurance-leads',
   path: '/insurance-leads',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmInsuranceEndorsementRoute = CrmInsuranceEndorsementRouteImport.update({
+  id: '/insurance-endorsement',
+  path: '/insurance-endorsement',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmInsuranceClaimsRoute = CrmInsuranceClaimsRouteImport.update({
+  id: '/insurance-claims',
+  path: '/insurance-claims',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmInsuranceRoute = CrmInsuranceRouteImport.update({
@@ -217,6 +229,8 @@ export interface FileRoutesByFullPath {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
+  '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
@@ -250,6 +264,8 @@ export interface FileRoutesByTo {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
+  '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
@@ -285,6 +301,8 @@ export interface FileRoutesById {
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
   '/crm/insurance': typeof CrmInsuranceRoute
+  '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
+  '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/notifications': typeof CrmNotificationsRoute
@@ -321,6 +339,8 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-claims'
+    | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
@@ -354,6 +374,8 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-claims'
+    | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
@@ -388,6 +410,8 @@ export interface FileRouteTypes {
     | '/crm/documents'
     | '/crm/employees'
     | '/crm/insurance'
+    | '/crm/insurance-claims'
+    | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/notifications'
@@ -524,6 +548,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmInsuranceLeadsRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/insurance-endorsement': {
+      id: '/crm/insurance-endorsement'
+      path: '/insurance-endorsement'
+      fullPath: '/crm/insurance-endorsement'
+      preLoaderRoute: typeof CrmInsuranceEndorsementRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/insurance-claims': {
+      id: '/crm/insurance-claims'
+      path: '/insurance-claims'
+      fullPath: '/crm/insurance-claims'
+      preLoaderRoute: typeof CrmInsuranceClaimsRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/insurance': {
       id: '/crm/insurance'
       path: '/insurance'
@@ -655,6 +693,8 @@ interface CrmRouteChildren {
   CrmDocumentsRoute: typeof CrmDocumentsRoute
   CrmEmployeesRoute: typeof CrmEmployeesRoute
   CrmInsuranceRoute: typeof CrmInsuranceRoute
+  CrmInsuranceClaimsRoute: typeof CrmInsuranceClaimsRoute
+  CrmInsuranceEndorsementRoute: typeof CrmInsuranceEndorsementRoute
   CrmInsuranceLeadsRoute: typeof CrmInsuranceLeadsRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
@@ -687,6 +727,8 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmDocumentsRoute: CrmDocumentsRoute,
   CrmEmployeesRoute: CrmEmployeesRoute,
   CrmInsuranceRoute: CrmInsuranceRoute,
+  CrmInsuranceClaimsRoute: CrmInsuranceClaimsRoute,
+  CrmInsuranceEndorsementRoute: CrmInsuranceEndorsementRoute,
   CrmInsuranceLeadsRoute: CrmInsuranceLeadsRoute,
   CrmLeadsRoute: CrmLeadsRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,

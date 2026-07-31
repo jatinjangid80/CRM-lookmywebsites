@@ -186,7 +186,7 @@ function VendorsPage() {
 
   const normalizedVendors = useMemo(() => vendors.map(normalizeVendor), [vendors]);
   const auth = getAuth();
-  const isAdmin = auth?.role === "admin" || auth?.role === "manager";
+  const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
 
   // Search & Filters
   const [q, setQ] = useState("");
@@ -531,9 +531,11 @@ function VendorsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage service providers, DMCs, and suppliers.</p>
         </div>
         <div className="flex gap-2">
-          <Button variant="outline" className="shadow-sm" onClick={() => setIsImportOpen(true)}>
-            <Download className="mr-2 h-4 w-4" /> Import
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" className="shadow-sm" onClick={() => setIsImportOpen(true)}>
+              <Download className="mr-2 h-4 w-4" /> Import
+            </Button>
+          )}
           <Button onClick={openAdd} className="shadow">
             <Plus className="mr-2 h-4 w-4" /> Add Vendor
           </Button>
@@ -687,9 +689,11 @@ function VendorsPage() {
                           <DropdownMenuItem onClick={() => openView(v)}>
                             <Eye className="mr-2 h-4 w-4" /> View Details
                           </DropdownMenuItem>
-                          <DropdownMenuItem onClick={() => openEdit(v)}>
+                          <>{auth?.role === "admin" && (
+<DropdownMenuItem onClick={() => openEdit(v)}>
                             <Edit2 className="mr-2 h-4 w-4" /> Edit Vendor
                           </DropdownMenuItem>
+)}</>
 
                           <DropdownMenuSeparator />
                           {v.mobile && (
@@ -717,12 +721,14 @@ function VendorsPage() {
                           )}
                           <DropdownMenuSeparator />
                           {isAdmin && (
-                            <DropdownMenuItem
+                            <>{auth?.role === "admin" && (
+<DropdownMenuItem
                               className="text-red-600 focus:text-red-600 focus:bg-red-50"
                               onClick={() => { setSelectedVendor(v); setDialogType("delete"); }}
                             >
                               <Trash2 className="mr-2 h-4 w-4" /> Delete
                             </DropdownMenuItem>
+)}</>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>

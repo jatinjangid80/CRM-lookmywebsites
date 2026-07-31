@@ -1544,10 +1544,12 @@ function BookingsPage() {
               ))}
             </select>
           </div>
-          <Button variant="outline" className="rounded-full" onClick={() => setIsExportOpen(true)}>
-            <Download className="w-4 h-4 mr-2" />
-            Export
-          </Button>
+          {isAdmin && (
+            <Button variant="outline" className="rounded-full" onClick={() => setIsExportOpen(true)}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+          )}
         </div>
       </div>
 
@@ -1631,7 +1633,8 @@ function BookingsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                              <DropdownMenuItem
+                              <>{auth?.role === admin && (
+<DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setEditingAddBooking(b);
@@ -1641,7 +1644,9 @@ function BookingsPage() {
                               >
                                 <Pencil className="h-4 w-4" /> Edit
                               </DropdownMenuItem>
-                              <DropdownMenuItem
+)}</>
+                              <>{auth?.role === admin && (
+<DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
                                   setDeleteTarget(b);
@@ -1650,6 +1655,7 @@ function BookingsPage() {
                               >
                                 <Trash2 className="h-4 w-4" /> Delete
                               </DropdownMenuItem>
+)}</>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
