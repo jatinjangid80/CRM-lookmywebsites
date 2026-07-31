@@ -1828,19 +1828,7 @@ function LeadDetail({
                           placeholder="e.g. PNR12345"
                         />
                       </div>
-                      <div>
-                        <label className="text-[10px] font-semibold uppercase text-muted-foreground">
-                          Hotel Details
-                        </label>
-                        <Input
-                          value={bookingDetails.hotelDetails}
-                          onChange={(e) =>
-                            setBookingDetails({ ...bookingDetails, hotelDetails: e.target.value })
-                          }
-                          className="h-8 mt-1 text-xs"
-                          placeholder="e.g. Taj Hotel, 3 Nights"
-                        />
-                      </div>
+
                       <div className="grid grid-cols-2 gap-2">
                         <div>
                           <label className="text-[10px] font-semibold uppercase text-muted-foreground">
@@ -1944,12 +1932,7 @@ function LeadDetail({
                         </p>
                         <p className="text-xs font-medium mt-0.5">{lead.bookingReference || "—"}</p>
                       </div>
-                      <div className="col-span-2">
-                        <p className="text-[10px] font-semibold text-muted-foreground uppercase">
-                          Hotel
-                        </p>
-                        <p className="text-xs font-medium mt-0.5">{lead.hotelDetails || "—"}</p>
-                      </div>
+
                     </div>
 
                     <div className="border-t border-border pt-3 mt-1 grid grid-cols-3 gap-2">
