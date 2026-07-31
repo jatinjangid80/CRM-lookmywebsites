@@ -755,6 +755,7 @@ function DynamicFormStep({
     }));
     setIsAddCustomerOpen(false);
     setNewCustomer({ name: "", phone: "", email: "", status: "Active" as any, source: "Website", assignedTo: "Unassigned", company: "", city: "", reference: "", dob: "", dateOfAnniversary: "", gst: "" });
+    toast.success("Customer saved successfully! 👍");
   };
 
   const handleFetchCustomer = () => {

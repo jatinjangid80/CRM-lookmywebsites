@@ -139,6 +139,7 @@ function CustomersPage() {
     setCustomerList([customer, ...customerList]);
     setIsAddOpen(false);
     setNewCustomer({ name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned" });
+    toast.success("Customer saved successfully! 👍");
   };
 
 
