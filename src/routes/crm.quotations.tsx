@@ -662,7 +662,7 @@ function QuotationsPage() {
                               >
                                 <Eye className="mr-2 h-4 w-4" /> View / Share
                               </DropdownMenuItem>
-                              <>{auth?.role === admin && (
+                              <>{auth?.role === "admin" && (
 <DropdownMenuItem
                                 onClick={() => {
                                   setEditingQuoteId(quote.id);
@@ -674,7 +674,7 @@ function QuotationsPage() {
                                 <Edit2 className="mr-2 h-4 w-4" /> Edit
                               </DropdownMenuItem>
 )}</>
-                              <>{auth?.role === admin && (
+                              <>{auth?.role === "admin" && (
 <DropdownMenuItem
                                 onClick={() => {
                                   if (confirm("Are you sure you want to delete this quote?")) {
@@ -1277,7 +1277,7 @@ function QuotationsPage() {
                             >
                               <Eye className="h-4 w-4" /> View
                             </DropdownMenuItem>
-                            <>{auth?.role === admin && (
+                            <>{auth?.role === "admin" && (
 <DropdownMenuItem
                               onClick={() => {
                                 if (q.details) {
@@ -1303,7 +1303,7 @@ function QuotationsPage() {
                             </DropdownMenuItem>
 )}</>
                             {isAdmin && (
-                              <>{auth?.role === admin && (
+                              <>{auth?.role === "admin" && (
 <DropdownMenuItem
                                 onClick={() => {
                                   setQuotations(quotations.filter((quote: any) => quote.id !== q.id));

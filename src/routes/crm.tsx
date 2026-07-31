@@ -106,15 +106,15 @@ function getNavForUser(auth: AuthUser): NavItem[] {
   // might have an "admin" role in the database for permissions (like Edit/Delete),
   // but we still want to strictly limit which tabs they can see.
   
-  if (name.includes("puspa") || name.includes("pushpa")) {
+  if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors",
+        "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", 
     ].includes(n.label));
   }
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Vendors", "Documents",
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts",
     ].includes(n.label));
   }
 
@@ -259,13 +259,17 @@ function CrmLayout() {
             className={`mb-4 flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-semibold ${isAdmin ? "bg-primary/10 text-primary" : "bg-violet-100 text-violet-700"}`}
           >
             <Shield className="h-3.5 w-3.5" />
-            {auth.name.toLowerCase().includes("suman")
-              ? "HR Portal"
-              : auth.name.toLowerCase().includes("aman")
-                ? "Accountant Portal"
-                : isAdmin
-                  ? "Admin Portal"
-                  : `Employee — ${auth.name.split(" ")[0]}`
+            {auth.name.toLowerCase().includes("manvendra")
+              ? "CEO & Founder"
+              : auth.name.toLowerCase().includes("jatin")
+                ? "IT Portal"
+                : auth.name.toLowerCase().includes("suman")
+                  ? "HR Portal"
+                  : auth.name.toLowerCase().includes("aman")
+                    ? "Accountant Portal"
+                    : isAdmin
+                      ? "Admin Portal"
+                      : `Employee — ${auth.name.split(" ")[0]}`
             }
           </div>
         )}
@@ -372,11 +376,15 @@ function CrmLayout() {
                       {auth.name}
                     </p>
                     <p className="text-xs text-muted-foreground">
-                      {auth.name.toLowerCase().includes("suman")
-                        ? "HR"
-                        : auth.name.toLowerCase().includes("aman")
-                          ? "Accountant"
-                          : isAdmin ? "Administrator" : "Employee"}
+                      {auth.name.toLowerCase().includes("manvendra")
+                        ? "CEO Founder • Admin"
+                        : auth.name.toLowerCase().includes("jatin")
+                          ? "IT Administrator"
+                          : auth.name.toLowerCase().includes("suman")
+                            ? "HR Manager"
+                            : auth.name.toLowerCase().includes("aman")
+                              ? "Accountant"
+                              : isAdmin ? "Administrator" : "Employee"}
                     </p>
                   </div>
                 </button>
@@ -390,11 +398,15 @@ function CrmLayout() {
                     <div className="flex flex-col space-y-0.5">
                       <p className="text-[15px] font-bold leading-none text-foreground">{auth.name}</p>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
-                        {auth.name.toLowerCase().includes("suman")
-                          ? "HR"
-                          : auth.name.toLowerCase().includes("aman")
-                            ? "Accountant"
-                            : auth.role === "admin" ? "Administrator" : "Team Member"}
+                        {auth.name.toLowerCase().includes("manvendra")
+                          ? "CEO Founder • Admin"
+                          : auth.name.toLowerCase().includes("jatin")
+                            ? "IT Admin"
+                            : auth.name.toLowerCase().includes("suman")
+                              ? "HR"
+                              : auth.name.toLowerCase().includes("aman")
+                                ? "Accountant"
+                                : auth.role === "admin" ? "Administrator" : "Team Member"}
                       </p>
                     </div>
                   </div>

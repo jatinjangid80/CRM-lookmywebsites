@@ -43,8 +43,14 @@ function AttendancePage() {
   const [selectedDayInfo, setSelectedDayInfo] = useState<any>(null);
   const [isDaySheetOpen, setIsDaySheetOpen] = useState(false);
 
-  const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
+  const [rawAttendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
+
+  const user = getAuth();
+  const myEmpId = user?.empId || "EMP001";
+  
+  // Normalize EMP001 records to the current user's actual ID to merge history cards
+  const attendance = rawAttendance.map(a => a.employeeid === "EMP001" ? { ...a, employeeid: myEmpId } : a);
 
   const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
@@ -53,8 +59,7 @@ function AttendancePage() {
   const [leaveEndDate, setLeaveEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveReason, setLeaveReason] = useState("");
 
-  const user = getAuth();
-  const myEmpId = user?.empId || "EMP001";
+
   // Get date in local timezone YYYY-MM-DD
   const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
   const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
@@ -68,7 +73,7 @@ function AttendancePage() {
     if (emp) return { name: emp.name, role: emp.role || "Employee", initials: emp.name?.charAt(0) || "U", id: emp.id };
 
     if (empId === myEmpId && user) return { name: user.name, role: user.role, initials: user.name?.charAt(0) || "U", id: myEmpId };
-    if (empId === "EMP001") return { name: "Current User", role: "Employee", initials: "CU", id: "EMP001" };
+    if (empId === "EMP001") return { name: "Manvendra Singhal", role: "CEO & Founder", initials: "MS", id: "EMP001" };
     return { name: "Unknown Employee", role: "Unknown", initials: "U", id: empId };
   };
   const isClockedIn = !!myCurrentSession;

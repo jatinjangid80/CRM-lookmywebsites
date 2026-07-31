@@ -738,7 +738,7 @@ function PackagesPage() {
                         >
                           <Paperclip className="h-4 w-4" /> Attachments
                         </DropdownMenuItem>
-                        <>{auth?.role === admin && (
+                        <>{auth?.role === "admin" && (
 <DropdownMenuItem
                           onClick={(e) => {
                             e.stopPropagation();
@@ -750,7 +750,7 @@ function PackagesPage() {
                         </DropdownMenuItem>
 )}</>
                         {isAdmin && (
-                          <>{auth?.role === admin && (
+                          <>{auth?.role === "admin" && (
 <DropdownMenuItem
                             onClick={(e) => {
                               e.stopPropagation();

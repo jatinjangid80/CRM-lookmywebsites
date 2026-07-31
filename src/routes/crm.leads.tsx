@@ -2181,6 +2181,7 @@ function LeadsPage() {
   const [editingTaskLeadId, setEditingTaskLeadId] = useState<string | null>(null);
   const auth = getAuth();
   const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
+  const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
 
   const assignees = Array.from(
     new Set([...employees.map((e: any) => e.name), ...(auth?.name ? [auth.name] : []), "Other"]),

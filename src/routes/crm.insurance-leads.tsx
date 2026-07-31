@@ -475,14 +475,14 @@ function PackageFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set: a
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Travellers</label>
         <select value={form.pax} onChange={set("pax")} className={FIELD_CLS}>
-          {[1,2,3,4,5,6,7,8,9,10].map(n => <option key={n} value={n}>{n}</option>)}
+          {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(n => <option key={n} value={n}>{n}</option>)}
           <option value="10+">10+</option>
         </select>
       </div>
       <div className="col-span-2 sm:col-span-4">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Hotel Preference</label>
         <div className="flex items-center gap-5 mt-1">
-          {[1,2,3,4,5].map(star => (
+          {[1, 2, 3, 4, 5].map(star => (
             <label key={star} className="flex items-center gap-1.5 text-sm font-medium cursor-pointer">
               <input
                 type="checkbox"
@@ -528,15 +528,15 @@ function InsuranceFields({ form, set, service }: { form: typeof EMPTY_FORM; set:
           {(service === "Travel Insurance"
             ? ["Single Trip", "Multi Trip", "Student Travel", "Senior Citizen", "Family Travel", "Corporate Travel", "Domestic", "International"]
             : form.leadSection === "General Insurance"
-            ? ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle","Fire","Marine","Property","Liability","Life"]
-            : ["Four Wheeler","Two Wheeler","School Bus","Pickup","Tractor","Health","LIC","Commercial Vehicle"]
+              ? ["Four Wheeler", "Two Wheeler", "School Bus", "Pickup", "Tractor", "Health", "LIC", "Commercial Vehicle", "Fire", "Marine", "Property", "Liability", "Life"]
+              : ["Four Wheeler", "Two Wheeler", "School Bus", "Pickup", "Tractor", "Health", "LIC", "Commercial Vehicle"]
           ).map(p => <option key={p}>{p}</option>)}
         </select>
       </div>
       <div className="col-span-2">
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Query Type</label>
         <select value={form.queryType} onChange={set("queryType")} className={FIELD_CLS}>
-          {["New","Renewal","Expired","Endorsement"].map(q => <option key={q}>{q}</option>)}
+          {["New", "Renewal", "Expired", "Endorsement"].map(q => <option key={q}>{q}</option>)}
         </select>
       </div>
       <div className="col-span-2">
@@ -629,8 +629,8 @@ function getServiceFormType(service: string): string {
   if (service === "Travel Insurance" || service === "General Insurance") return "insurance";
   if (["Corporate Travel", "MICE Events", "Conference Booking"].includes(service)) return "corporate";
   const packages = [
-    "International Package","Domestic Package","Honeymoon Package",
-    "Family Package","Group Tour","Corporate Tour","Luxury Tour","Adventure Tour",
+    "International Package", "Domestic Package", "Honeymoon Package",
+    "Family Package", "Group Tour", "Corporate Tour", "Luxury Tour", "Adventure Tour",
   ];
   if (packages.includes(service)) return "package";
   return "generic";
@@ -852,10 +852,9 @@ function DynamicFormStep({
                   onClick={handleFetchCustomer}
                   disabled={!(form.phone || "").trim()}
                   className={
-                    `shrink-0 rounded-xl px-3 py-2 text-xs font-semibold border transition-all duration-200 ${
-                      fetchStatus === "found"
-                        ? "bg-green-500 border-green-500 text-white"
-                        : fetchStatus === "notfound"
+                    `shrink-0 rounded-xl px-3 py-2 text-xs font-semibold border transition-all duration-200 ${fetchStatus === "found"
+                      ? "bg-green-500 border-green-500 text-white"
+                      : fetchStatus === "notfound"
                         ? "bg-red-500 border-red-500 text-white"
                         : "bg-primary border-primary text-primary-foreground hover:opacity-90 disabled:opacity-40"
                     }`
@@ -2343,7 +2342,7 @@ function LeadsPage() {
 
   const addLead = (l: ExtLead) => {
     setLeads((prev) => [l, ...prev]);
-    
+
     // Explicitly insert into Supabase to guarantee it's saved
     supabase.from("insurance_leads").insert([{
       id: l.id,
@@ -2827,15 +2826,15 @@ function LeadsPage() {
         {/* ── KANBAN VIEW ── */}
         {view === "kanban" && (
           <div className="flex gap-3 overflow-x-auto pb-4 snap-x w-full">
-              {STATUSES.map((s) => (
-                <KanbanCol
-                  key={s}
-                  status={s}
-                  leads={sortedLeads.filter((l) => l.status === s)}
-                  onSelect={setSelected}
-                  onDropLead={(id) => updateStatus(id, s)}
-                />
-              ))}
+            {STATUSES.map((s) => (
+              <KanbanCol
+                key={s}
+                status={s}
+                leads={sortedLeads.filter((l) => l.status === s)}
+                onSelect={setSelected}
+                onDropLead={(id) => updateStatus(id, s)}
+              />
+            ))}
           </div>
         )}
       </div>

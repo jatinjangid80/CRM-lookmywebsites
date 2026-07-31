@@ -1633,7 +1633,7 @@ function BookingsPage() {
                               </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                              <>{auth?.role === admin && (
+                              <>{auth?.role === "admin" && (
 <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();
@@ -1645,7 +1645,7 @@ function BookingsPage() {
                                 <Pencil className="h-4 w-4" /> Edit
                               </DropdownMenuItem>
 )}</>
-                              <>{auth?.role === admin && (
+                              <>{auth?.role === "admin" && (
 <DropdownMenuItem
                                 onClick={(e) => {
                                   e.stopPropagation();

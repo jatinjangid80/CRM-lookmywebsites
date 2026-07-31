@@ -203,7 +203,8 @@ function AccountsPage() {
   const auth = getAuth();
   const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
   const isManagement = auth?.name?.toLowerCase().includes("deepak") || auth?.name?.toLowerCase().includes("pushp");
-  const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : "expenses");
+  const canViewExpenses = auth?.role === "admin" || auth?.name?.toLowerCase().includes("suman") || auth?.name?.toLowerCase().includes("aman");
+  const [activeTab, setActiveTab] = useState(isManagement ? "payments-approval" : canViewExpenses ? "expenses" : "follow-ups");
 
   // Entities for Receipts & Payments
   const [customers] = useSupabaseTable<any[]>("customers", []);
@@ -280,6 +281,7 @@ function AccountsPage() {
   const [selectedFuId, setSelectedFuId] = useState<string | null>(null);
   const [logNotes, setLogNotes] = useState("");
   const [logDate, setLogDate] = useState("");
+  const [logStatus, setLogStatus] = useState("");
 
   // Payment Approvals State
   const [paymentRequests, setPaymentRequests] = useSupabaseTable<PaymentRequest[]>("payment_requests", initialPaymentRequests);
@@ -371,7 +373,8 @@ function AccountsPage() {
           ? {
             ...f,
             notes: logNotes || f.notes,
-            nextFollowUpDate: logDate || f.nextFollowUpDate
+            nextFollowUpDate: logDate || f.nextFollowUpDate,
+            outcome: logStatus || f.outcome
           }
           : f
         )
@@ -380,6 +383,7 @@ function AccountsPage() {
     setIsLogFollowUpOpen(false);
     setLogNotes("");
     setLogDate("");
+    setLogStatus("");
     setSelectedFuId(null);
   };
 
@@ -854,7 +858,7 @@ function AccountsPage() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
         <TabsList className="grid w-full overflow-x-auto sm:overflow-visible flex-nowrap sm:w-auto grid-cols-2 sm:grid-cols-6 bg-secondary/50 rounded-xl p-1 shadow-sm gap-1 overflow-x-auto min-w-max">
-          <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>
+          {canViewExpenses && <TabsTrigger value="expenses" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Expenses</TabsTrigger>}
           <TabsTrigger value="follow-ups" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payment Follow-ups</TabsTrigger>
           <TabsTrigger value="receipts" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Receipts & Payments</TabsTrigger>
           <TabsTrigger value="payments-approval" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Payments Approval</TabsTrigger>
@@ -862,7 +866,8 @@ function AccountsPage() {
           <TabsTrigger value="vendor-status" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Vendor Status</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="expenses" className="space-y-6 mt-6">
+        {canViewExpenses && (
+          <TabsContent value="expenses" className="space-y-6 mt-6">
           {/* Stats */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
@@ -1005,16 +1010,16 @@ function AccountsPage() {
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32 rounded-xl">
                           <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
-                            <Pencil className="h-4 w-4" /> Edit
-                          </DropdownMenuItem>
-)}</>
+                            <DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                              <Pencil className="h-4 w-4" /> Edit
+                            </DropdownMenuItem>
+                          )}</>
                           {isAdmin && (
                             <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
-                              <Trash2 className="h-4 w-4" /> Delete
-                            </DropdownMenuItem>
-)}</>
+                              <DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                                <Trash2 className="h-4 w-4" /> Delete
+                              </DropdownMenuItem>
+                            )}</>
                           )}
                         </DropdownMenuContent>
                       </DropdownMenu>
@@ -1025,6 +1030,7 @@ function AccountsPage() {
             </table>
           </div>
         </TabsContent>
+        )}
 
         <TabsContent value="follow-ups" className="space-y-6 mt-6">
           <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
@@ -1078,6 +1084,12 @@ function AccountsPage() {
                     <span className="text-muted-foreground mb-1">Notes:</span>
                     <span className="font-medium text-left whitespace-pre-wrap break-words">{fu.notes}</span>
                   </div>
+                  {fu.outcome && (
+                    <div className="flex flex-col text-sm mt-2 border-t border-border/40 pt-2">
+                      <span className="text-muted-foreground mb-1">Outcome / Status:</span>
+                      <span className="font-medium text-left whitespace-pre-wrap break-words">{fu.outcome}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 border-t border-border gap-4">
@@ -1103,6 +1115,7 @@ function AccountsPage() {
                       setSelectedFuId(fu.id);
                       setLogNotes(fu.notes);
                       setLogDate(fu.nextFollowUpDate);
+                      setLogStatus(fu.outcome || "");
                       setIsLogFollowUpOpen(true);
                     }}>
                       {fu.status === 'Completed' ? 'View Log' : 'Log Follow-up'}
@@ -1209,28 +1222,28 @@ function AccountsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-32 rounded-xl">
                               <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => {
-                                setNewTx({
-                                  date: tx.date || new Date().toISOString().split('T')[0],
-                                  type: tx.type || "Receipt",
-                                  entityType: tx.entityType || "Customer",
-                                  entityId: tx.entityId || "",
-                                  amount: tx.amount || 0,
-                                  paymentMode: tx.paymentMode || "Cash",
-                                  invoiceId: tx.invoiceId || "",
-                                  notes: tx.notes || ""
-                                });
-                                setEditingTxId(tx.id);
-                                setIsAddTxOpen(true);
-                              }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
-                                <Pencil className="h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-)}</>
+                                <DropdownMenuItem onClick={() => {
+                                  setNewTx({
+                                    date: tx.date || new Date().toISOString().split('T')[0],
+                                    type: tx.type || "Receipt",
+                                    entityType: tx.entityType || "Customer",
+                                    entityId: tx.entityId || "",
+                                    amount: tx.amount || 0,
+                                    paymentMode: tx.paymentMode || "Cash",
+                                    invoiceId: tx.invoiceId || "",
+                                    notes: tx.notes || ""
+                                  });
+                                  setEditingTxId(tx.id);
+                                  setIsAddTxOpen(true);
+                                }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                                  <Pencil className="h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                              )}</>
                               <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-)}</>
+                                <DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              )}</>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
@@ -2433,7 +2446,11 @@ function AccountsPage() {
             </div>
             <div className="space-y-2">
               <Label>Outcome / Status</Label>
-              <Input placeholder="e.g. Call back tomorrow, Not interested, etc." />
+              <Input 
+                placeholder="e.g. Call back tomorrow, Not interested, etc." 
+                value={logStatus}
+                onChange={(e) => setLogStatus(e.target.value)}
+              />
             </div>
           </div>
           <DialogFooter>
