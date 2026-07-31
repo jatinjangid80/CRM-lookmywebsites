@@ -601,7 +601,7 @@ function AttendancePage() {
                             } else {
                                 status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"; displayStr = `🟢 ${workedH}h ${workedM}m`;
                             }
-                            tooltip = `Check In: ${dayData.firstIn || '--:--'}\nCheck Out: ${dayData.lastOut || 'Active'}\nWorked: ${workedH}h ${workedM}m`;
+                            tooltip = `Check In: ${dayData.firstIn ? formatTime12Hour(dayData.firstIn) : '--:--'}\nCheck Out: ${dayData.lastOut ? formatTime12Hour(dayData.lastOut) : 'Active'}\nWorked: ${workedH}h ${workedM}m`;
                         }
 
                         days.push(
@@ -1167,12 +1167,12 @@ function AttendancePage() {
               </div>
             </div>
             
-            {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "09:15" && (
+            {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "10:15" && (
               <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
                 <div className="bg-amber-100 text-amber-700 p-2 rounded-full shrink-0">⚠️</div>
                 <div>
                   <h4 className="font-semibold text-amber-900">Late Arrival</h4>
-                  <p className="text-sm text-amber-700">Check-in was after the expected 09:15 AM threshold.</p>
+                  <p className="text-sm text-amber-700">Check-in was after the expected 10:15 AM threshold.</p>
                 </div>
               </div>
             )}
