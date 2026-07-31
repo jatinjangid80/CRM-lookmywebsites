@@ -364,7 +364,7 @@ function AttendancePage() {
               </div>
 
               <div className="flex items-center justify-between mt-2">
-                <h3 className="font-semibold text-lg">My Attendance History</h3>
+                <h3 className="font-semibold text-lg">{auth?.name ? `${auth.name}'s Attendance History` : "My Attendance History"}</h3>
                 <div className="flex items-center gap-3">
                   <span className="text-xs text-muted-foreground font-medium">
                     {attendance.filter((record) => record.employeeid === myEmpId).length} total shifts logged
