@@ -109,7 +109,8 @@ function CustomersPage() {
       return;
     }
 
-    const currentMaxId = customerList.reduce((max, c) => {
+    const currentMaxId = (customerList || []).reduce((max, c) => {
+      if (!c.id || typeof c.id !== 'string') return max;
       const num = parseInt(c.id.replace("CRN", ""));
       return !isNaN(num) && num > max ? num : max;
     }, 0);
