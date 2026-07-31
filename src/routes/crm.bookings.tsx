@@ -1344,10 +1344,10 @@ function BookingsPage() {
               <TrendingUp className="h-16 w-16 text-blue-600" />
             </div>
             <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Avg Booking Value
+              Total Profit
             </p>
             <p className="text-3xl font-display font-bold text-blue-600">
-              {formatINR(dashboardData.avgValue)}
+              {formatINR(dashboardData.totalProfit)}
             </p>
           </div>
         </div>
