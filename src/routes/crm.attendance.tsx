@@ -690,7 +690,7 @@ function AttendancePage() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Office</span>
                     <Smartphone className="h-4 w-4 text-blue-500" />
                   </div>
-                  <div className="text-2xl font-bold">{teamTodayRecords.filter(r => r.location === "Office").length} in / {teamTodayRecords.filter(r => r.location === "Remote").length} home</div>
+                  <div className="text-2xl font-bold">{teamTodayRecords.filter(r => r.location === "Office").length} in Office</div>
                   <p className="text-xs text-muted-foreground">Location distribution</p>
                 </div>
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
