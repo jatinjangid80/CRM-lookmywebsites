@@ -229,6 +229,8 @@ function AccountsPage() {
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
   const [txSearchQuery, setTxSearchQuery] = useState("");
   const [txTypeFilter, setTxTypeFilter] = useState("All");
+  const [txDateFrom, setTxDateFrom] = useState("");
+  const [txDateTo, setTxDateTo] = useState("");
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
   const [editingTxId, setEditingTxId] = useState<string | null>(null);
   const [invoiceMatchStatusTx, setInvoiceMatchStatusTx] = useState<"found" | "not_found" | null>(null);
@@ -594,7 +596,10 @@ function AccountsPage() {
         tx.entityName?.toLowerCase().includes(txSearchQuery.toLowerCase()) ||
         tx.id?.toLowerCase().includes(txSearchQuery.toLowerCase());
       const matchesType = txTypeFilter === "All" || tx.type === txTypeFilter;
-      return matchesSearch && matchesType;
+      const isBooking = !tx.module || tx.module !== "Insurance";
+      const matchesFrom = !txDateFrom || (tx.date && tx.date >= txDateFrom);
+      const matchesTo = !txDateTo || (tx.date && tx.date <= txDateTo);
+      return matchesSearch && matchesType && isBooking && matchesFrom && matchesTo;
     })
     .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
@@ -728,6 +733,33 @@ function AccountsPage() {
       .filter(data => data.vBookings.length > 0 || data.vSpend > 0)
       .sort((a, b) => a.vendorName.localeCompare(b.vendorName));
   }, [vendors, allBookings, transactions, vendorSearchQuery, vendorStatusDateFrom, vendorStatusDateTo]);
+
+  const handleExportTransactions = () => {
+    const csvRows = [
+      ["Date", "Type", "Entity", "Mode", "Amount", "Added By"]
+    ];
+
+    filteredTransactions.forEach(tx => {
+      csvRows.push([
+        tx.date || "-",
+        tx.type || "-",
+        (tx.entityName?.replace(/---META---.*/, "") || "-").replace(/,/g, ""),
+        tx.paymentMode || "-",
+        String(tx.amount || "0"),
+        tx.addedBy || "-"
+      ]);
+    });
+
+    const csvContent = csvRows.map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `transactions_export_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
 
   const handleExportExpenses = () => {
     const csvRows = [
@@ -1077,9 +1109,9 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="receipts" className="space-y-6 mt-6">
-          <div className="flex justify-between items-center">
-            <div className="flex gap-4 items-center flex-1">
-              <div className="relative max-w-sm flex-1">
+          <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+            <div className="flex flex-wrap gap-4 items-center flex-1">
+              <div className="relative w-[200px] md:w-[250px]">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search transactions..."
@@ -1098,11 +1130,22 @@ function AccountsPage() {
                   <SelectItem value="Payment">Payments</SelectItem>
                 </SelectContent>
               </Select>
+              <div className="flex items-center gap-2">
+                <Input type="date" className="h-10 w-[140px] rounded-xl bg-background" value={txDateFrom} onChange={(e) => setTxDateFrom(e.target.value)} />
+                <span className="text-muted-foreground text-sm">to</span>
+                <Input type="date" className="h-10 w-[140px] rounded-xl bg-background" value={txDateTo} onChange={(e) => setTxDateTo(e.target.value)} />
+              </div>
             </div>
-            <Button className="shadow-sm rounded-xl px-5 h-10" onClick={() => setIsAddTxOpen(true)}>
-              <Plus className="h-4 w-4 mr-2" />
-              Add Transaction
-            </Button>
+            <div className="flex items-center gap-2 shrink-0">
+              <Button variant="outline" className="shadow-sm rounded-xl px-4 h-10" onClick={handleExportTransactions}>
+                <Download className="h-4 w-4 mr-2" />
+                Export
+              </Button>
+              <Button className="shadow-sm rounded-xl px-5 h-10" onClick={() => setIsAddTxOpen(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Transaction
+              </Button>
+            </div>
           </div>
 
           {filteredTransactions.length === 0 ? (
