@@ -16,7 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download, Clock } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -374,7 +374,9 @@ function AccountsPage() {
             ...f,
             notes: logNotes || f.notes,
             nextFollowUpDate: logDate || f.nextFollowUpDate,
-            outcome: logStatus || f.outcome
+            outcomeLog: logStatus 
+              ? [...(f.outcomeLog || []), { status: logStatus, date: new Date().toISOString(), by: auth?.name || "Unknown" }]
+              : f.outcomeLog || []
           }
           : f
         )
@@ -1084,10 +1086,20 @@ function AccountsPage() {
                     <span className="text-muted-foreground mb-1">Notes:</span>
                     <span className="font-medium text-left whitespace-pre-wrap break-words">{fu.notes}</span>
                   </div>
-                  {fu.outcome && (
+                  {(fu.outcomeLog && fu.outcomeLog.length > 0) && (
                     <div className="flex flex-col text-sm mt-2 border-t border-border/40 pt-2">
-                      <span className="text-muted-foreground mb-1">Outcome / Status:</span>
-                      <span className="font-medium text-left whitespace-pre-wrap break-words">{fu.outcome}</span>
+                      <span className="text-muted-foreground mb-2">Outcome / Status History:</span>
+                      <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
+                        {fu.outcomeLog.map((log: any, idx: number) => (
+                          <div key={idx} className="bg-background rounded-md p-2.5 text-xs border border-border/50 shadow-sm relative">
+                             <div className="font-medium text-foreground whitespace-pre-wrap break-words pr-4">{log.status}</div>
+                             <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-between border-t border-border/30 pt-1.5">
+                               <span className="font-semibold text-primary/80">{log.by}</span>
+                               <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(log.date).toLocaleString()}</span>
+                             </div>
+                          </div>
+                        ))}
+                      </div>
                     </div>
                   )}
                 </div>
@@ -1115,7 +1127,7 @@ function AccountsPage() {
                       setSelectedFuId(fu.id);
                       setLogNotes(fu.notes);
                       setLogDate(fu.nextFollowUpDate);
-                      setLogStatus(fu.outcome || "");
+                      setLogStatus(""); // Clear the input field for a fresh log entry
                       setIsLogFollowUpOpen(true);
                     }}>
                       {fu.status === 'Completed' ? 'View Log' : 'Log Follow-up'}

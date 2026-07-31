@@ -296,6 +296,11 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         delete newRow.status;
         hasMeta = true;
       }
+      if (newRow.outcomeLog !== undefined) {
+        metaObj.outcomeLog = newRow.outcomeLog;
+        delete newRow.outcomeLog;
+        hasMeta = true;
+      }
       if (hasMeta) {
         newRow.notes = JSON.stringify(metaObj);
       }
@@ -620,6 +625,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           newRow.notes = parsed.text;
           if (parsed.createdBy !== undefined) newRow.createdBy = parsed.createdBy;
           if (parsed.status !== undefined) newRow.status = parsed.status;
+          if (parsed.outcomeLog !== undefined) newRow.outcomeLog = parsed.outcomeLog;
         }
       } catch (e) { }
     }
