@@ -749,7 +749,8 @@ function DynamicFormStep({
       return;
     }
 
-    const currentMaxId = customers.reduce((max, c) => {
+    const currentMaxId = (customers || []).reduce((max, c) => {
+      if (!c.id || typeof c.id !== 'string') return max;
       const num = parseInt(c.id.replace("CRN", ""));
       return !isNaN(num) && num > max ? num : max;
     }, 0);
@@ -1077,12 +1078,15 @@ function AddLeadModal({
   onClose,
   onAdd,
   existingLeads,
+  customers,
+  setCustomers,
 }: {
   onClose: () => void;
   onAdd: (l: ExtLead) => void;
   existingLeads: ExtLead[];
+  customers: ExtCustomer[];
+  setCustomers: React.Dispatch<React.SetStateAction<ExtCustomer[]>>;
 }) {
-  const [customers, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
@@ -2368,7 +2372,7 @@ function LeadsPage() {
   const [leads, setLeads] = useSupabaseTable<ExtLead[]>("leads", _LEADS_INIT);
   const [localEmployees] = useSupabaseTable<unknown[]>("employees", INITIAL_EMPLOYEES);
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
-  const [, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);
+  const [customers, setCustomers] = useSupabaseTable<ExtCustomer[]>("customers", []);
   const [newNote, setNewNote] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [q, setQ] = useState("");
@@ -3164,6 +3168,8 @@ function LeadsPage() {
       {showModal && (
         <AddLeadModal
           existingLeads={leads}
+          customers={customers}
+          setCustomers={setCustomers}
           onClose={() => setShowModal(false)}
           onAdd={(l) => {
             addLead(l);
