@@ -83,7 +83,8 @@ const FULL_NAV: NavItem[] = [
     icon: ShieldCheck,
     subItems: [
       { label: "Leads", to: "/crm/insurance-leads", icon: ClipboardList },
-      { label: "Policies", to: "/crm/insurance?tab=Policies", icon: Shield }
+      { label: "Policies", to: "/crm/insurance?tab=Policies", icon: Shield },
+      { label: "Claims", to: "/crm/insurance?tab=Claims", icon: FileText }
     ]
   },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },

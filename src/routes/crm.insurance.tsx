@@ -23,7 +23,7 @@ export const Route = createFileRoute("/crm/insurance")({
   component: GeneralInsurancePage,
 });
 
-export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus" | "GenTransactions";
+export type TabType = "Policies" | "Renewals" | "Vendors" | "Companies" | "CustomerStatus" | "VendorStatus" | "GenTransactions" | "Claims";
 
 function GeneralInsurancePage() {
   const [activeTab, setActiveTab] = useState<TabType>("Policies");
@@ -401,6 +401,13 @@ function GeneralInsurancePage() {
 
         {activeTab === "GenTransactions" && (
           <InsuranceTransactionsView policies={policies} />
+        )}
+
+        {activeTab === "Claims" && (
+          <div className="flex flex-col items-center justify-center p-12 bg-card border border-border rounded-2xl shadow-sm">
+            <h3 className="text-xl font-bold mb-2">Claims Management</h3>
+            <p className="text-muted-foreground text-center max-w-md">The Claims module is currently under construction. Check back soon for updates.</p>
+          </div>
         )}
       </div>
 
