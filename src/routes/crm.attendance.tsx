@@ -314,15 +314,15 @@ function AttendancePage() {
                   let totalWorkedMinutes = 0;
 
                   dailyTotals.forEach((day: any) => {
-                     // Late if clocked in after 9:15 AM
+                     // Late if clocked in after 10:15 AM
                      if (day.firstIn) {
                         const [h, m] = day.firstIn.split(':').map(Number);
-                        if (h > 9 || (h === 9 && m > 15)) late++;
+                        if (h > 10 || (h === 10 && m > 15)) late++;
                      }
-                     // Half day if worked less than 5 hours (300 mins)
-                     if (day.totalMinutes > 0 && day.totalMinutes < 300) halfDays++;
-                     // Overtime if worked more than 9 hours (540 mins)
-                     if (day.totalMinutes > 540) overtimeMinutes += (day.totalMinutes - 540);
+                     // Half day if worked less than 4 hours (240 mins)
+                     if (day.totalMinutes > 0 && day.totalMinutes < 240) halfDays++;
+                     // Overtime if worked more than 8 hours (480 mins)
+                     if (day.totalMinutes > 480) overtimeMinutes += (day.totalMinutes - 480);
                      
                      totalWorkedMinutes += day.totalMinutes;
                   });
@@ -439,28 +439,28 @@ function AttendancePage() {
                         let isLate = false;
                         if (firstIn !== "23:59") {
                            const [h, m] = firstIn.split(':').map(Number);
-                           if (h > 9 || (h === 9 && m > 15)) isLate = true;
+                           if (h > 10 || (h === 10 && m > 15)) isLate = true;
                         }
 
-                        // For visual timeline (assume 9 AM to 7 PM standard bounds for the bar width)
-                        // 9 AM = 9 * 60 = 540
-                        // 7 PM = 19 * 60 = 1140
-                        // Total bounds = 600 mins
+                        // For visual timeline (assume 10 AM to 6 PM standard bounds for the bar width)
+                        // 10 AM = 10 * 60 = 600
+                        // 6 PM = 18 * 60 = 1080
+                        // Total bounds = 480 mins
                         let startPct = 0;
                         let endPct = 100;
                         if (firstIn !== "23:59") {
                            const [h, m] = firstIn.split(':').map(Number);
                            const startMin = (h * 60) + m;
-                           startPct = Math.max(0, Math.min(100, ((startMin - 540) / 600) * 100));
+                           startPct = Math.max(0, Math.min(100, ((startMin - 600) / 480) * 100));
                         }
                         if (lastOut !== "00:00") {
                            const [h, m] = lastOut.split(':').map(Number);
                            const endMin = (h * 60) + m;
-                           endPct = Math.max(0, Math.min(100, ((endMin - 540) / 600) * 100));
+                           endPct = Math.max(0, Math.min(100, ((endMin - 600) / 480) * 100));
                         } else if (isActive) {
                            const now = new Date();
                            const currentMin = (now.getHours() * 60) + now.getMinutes();
-                           endPct = Math.max(0, Math.min(100, ((currentMin - 540) / 600) * 100));
+                           endPct = Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
                         }
                         const barWidth = Math.max(2, endPct - startPct);
 
@@ -517,8 +517,8 @@ function AttendancePage() {
                               {/* Timeline Visual */}
                               <div className="mt-4 pt-4 border-t border-border/60">
                                 <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
-                                  <span>09:00 AM</span>
-                                  <span>07:00 PM</span>
+                                  <span>10:00 AM</span>
+                                  <span>06:00 PM</span>
                                 </div>
                                 <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
                                   <div 
@@ -593,8 +593,8 @@ function AttendancePage() {
                         if (dayData) {
                             const workedH = Math.floor(dayData.totalMinutes / 60);
                             const workedM = dayData.totalMinutes % 60;
-                            const isHalfDay = dayData.totalMinutes > 0 && dayData.totalMinutes < 300;
-                            isLate = dayData.firstIn > "09:15";
+                            const isHalfDay = dayData.totalMinutes > 0 && dayData.totalMinutes < 240;
+                            isLate = dayData.firstIn > "10:15";
                             
                             if (isHalfDay) {
                                 status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30"; displayStr = `🟡 Half Day`; 
@@ -749,7 +749,7 @@ function AttendancePage() {
                     let isLate = false;
                     if (firstIn !== "23:59") {
                         const [h, m] = firstIn.split(':').map(Number);
-                        if (h > 9 || (h === 9 && m > 15)) isLate = true;
+                        if (h > 10 || (h === 10 && m > 15)) isLate = true;
                     }
 
                     let startPct = 0;
@@ -757,16 +757,16 @@ function AttendancePage() {
                     if (firstIn !== "23:59") {
                         const [h, m] = firstIn.split(':').map(Number);
                         const startMin = (h * 60) + m;
-                        startPct = Math.max(0, Math.min(100, ((startMin - 540) / 600) * 100));
+                        startPct = Math.max(0, Math.min(100, ((startMin - 600) / 480) * 100));
                     }
                     if (lastOut !== "00:00") {
                         const [h, m] = lastOut.split(':').map(Number);
                         const endMin = (h * 60) + m;
-                        endPct = Math.max(0, Math.min(100, ((endMin - 540) / 600) * 100));
+                        endPct = Math.max(0, Math.min(100, ((endMin - 600) / 480) * 100));
                     } else if (isActive) {
                         const now = new Date();
                         const currentMin = (now.getHours() * 60) + now.getMinutes();
-                        endPct = Math.max(0, Math.min(100, ((currentMin - 540) / 600) * 100));
+                        endPct = Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
                     }
                     const barWidth = Math.max(2, endPct - startPct);
 
@@ -812,8 +812,8 @@ function AttendancePage() {
 
                           <div className="mt-4 pt-4 border-t border-border/60">
                             <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
-                              <span>09:00 AM</span>
-                              <span>07:00 PM</span>
+                              <span>10:00 AM</span>
+                              <span>06:00 PM</span>
                             </div>
                             <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
                               <div 
