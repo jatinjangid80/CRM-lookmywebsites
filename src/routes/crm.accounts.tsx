@@ -243,7 +243,8 @@ function AccountsPage() {
     amount: 0,
     date: new Date().toISOString().split('T')[0],
     paymentMode: "Bank Transfer",
-    notes: ""
+    notes: "",
+    company: ""
   });
 
   // Expenses State
@@ -742,7 +743,7 @@ function AccountsPage() {
 
   const handleExportTransactions = () => {
     const csvRows = [
-      ["Date", "Type", "Entity", "Mode", "Amount", "Added By"]
+      ["Date", "Type", "Entity", "Company", "Mode", "Amount", "Added By"]
     ];
 
     filteredTransactions.forEach(tx => {
@@ -750,6 +751,7 @@ function AccountsPage() {
         tx.date || "-",
         tx.type || "-",
         (tx.entityName?.replace(/---META---.*/, "") || "-").replace(/,/g, ""),
+        (tx.company || "-").replace(/,/g, ""),
         tx.paymentMode || "-",
         String(tx.amount || "0"),
         tx.addedBy || "-"
@@ -1198,6 +1200,7 @@ function AccountsPage() {
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Type <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Entity <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4"><div className="flex items-center gap-1">Company <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4"><div className="flex items-center gap-1">Mode <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
                     <th className="px-6 py-4 text-right"><div className="flex items-center justify-end gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
@@ -1217,6 +1220,9 @@ function AccountsPage() {
                         <div className="font-medium">{tx.entityName}</div>
                         <div className="text-xs text-muted-foreground">{tx.entityType}</div>
                       </td>
+                      <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
+                        {tx.company || "-"}
+                      </td>
                       <td className="px-6 py-4">{tx.paymentMode}</td>
                       <td className={`px-6 py-4 text-right font-bold ${tx.type === 'Receipt' ? 'text-emerald-500' : 'text-rose-500'}`}>
                         {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
@@ -1225,39 +1231,10 @@ function AccountsPage() {
                         {tx.createdBy || "none"}
                       </td>
                       <td className="px-6 py-4 text-right">
-                        {isAdmin && (
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                              <>{auth?.role === "admin" && (
-                                <DropdownMenuItem onClick={() => {
-                                  setNewTx({
-                                    date: tx.date || new Date().toISOString().split('T')[0],
-                                    type: tx.type || "Receipt",
-                                    entityType: tx.entityType || "Customer",
-                                    entityId: tx.entityId || "",
-                                    amount: tx.amount || 0,
-                                    paymentMode: tx.paymentMode || "Cash",
-                                    invoiceId: tx.invoiceId || "",
-                                    notes: tx.notes || ""
-                                  });
-                                  setEditingTxId(tx.id);
-                                  setIsAddTxOpen(true);
-                                }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
-                                  <Pencil className="h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                              )}</>
-                              <>{auth?.role === "admin" && (
-                                <DropdownMenuItem onClick={() => handleDelete(tx.id, "Transaction")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
-                                  <Trash2 className="h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                              )}</>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
+                        {isAdmin && auth?.role === "admin" && (
+                          <Button size="icon" variant="ghost" onClick={() => handleDelete(tx.id, "Transaction")} className="h-8 w-8 text-rose-500 hover:text-rose-600 hover:bg-rose-500/10">
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
                         )}
                       </td>
                     </tr>
@@ -1917,6 +1894,10 @@ function AccountsPage() {
                 <Label>Notes/Reference</Label>
                 <Input placeholder="Optional" value={newTx.notes} onChange={e => setNewTx({ ...newTx, notes: e.target.value })} />
               </div>
+              <div className="space-y-2 col-span-2 sm:col-span-1">
+                <Label>Company</Label>
+                <Input placeholder="e.g. LookMyHolidays" value={newTx.company || ""} onChange={e => setNewTx({ ...newTx, company: e.target.value })} />
+              </div>
             </div>
           </div>
           <DialogFooter>
@@ -2017,7 +1998,7 @@ function AccountsPage() {
               }
               setIsAddTxOpen(false);
               setEditingTxId(null);
-              setNewTx({ ...newTx, entityId: "", amount: 0, notes: "" });
+              setNewTx({ ...newTx, entityId: "", amount: 0, notes: "", company: "" });
             }}>{editingTxId ? "Update Transaction" : "Save Transaction"}</Button>
           </DialogFooter>
         </DialogContent>

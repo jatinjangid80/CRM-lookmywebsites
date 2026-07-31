@@ -308,7 +308,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
 
     if (tableName === "transactions") {
       const transactionMeta: Record<string, any> = {};
-      const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy"];
+      const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy", "company"];
       
       const existingNotes = newRow.notes || "";
       let hasMeta = false;
@@ -598,7 +598,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const parsed = JSON.parse(newRow.notes);
         if (parsed._isMeta) {
           newRow.notes = parsed.text;
-          const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy"];
+          const metaFields = ["reference", "status", "invoiceId", "receiptId", "createdBy", "company"];
           for (const field of metaFields) {
             if (parsed[field] !== undefined) {
               newRow[field] = parsed[field];

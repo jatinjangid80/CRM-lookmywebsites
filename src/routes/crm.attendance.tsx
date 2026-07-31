@@ -47,10 +47,15 @@ function AttendancePage() {
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
 
   const user = getAuth();
-  const myEmpId = user?.empId || "EMP001";
   
-  // Normalize EMP001 records to the current user's actual ID to merge history cards
-  const attendance = rawAttendance.map(a => a.employeeid === "EMP001" ? { ...a, employeeid: myEmpId } : a);
+  const meInDb = employeesList.find((e: any) => e.name === user?.name);
+  const myEmpId = user?.empId || (meInDb ? meInDb.id : "EMP001");
+  
+  const ceoInDb = employeesList.find((e: any) => e.name === "Manvendra Singhal");
+  const ceoId = ceoInDb ? ceoInDb.id : myEmpId;
+  
+  // Normalize EMP001 records to the actual CEO ID to merge history cards
+  const attendance = rawAttendance.map(a => a.employeeid === "EMP001" ? { ...a, employeeid: ceoId } : a);
 
   const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
