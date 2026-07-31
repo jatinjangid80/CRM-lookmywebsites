@@ -319,12 +319,13 @@ function AttendancePage() {
                         const [h, m] = day.firstIn.split(':').map(Number);
                         if (h > 10 || (h === 10 && m > 15)) late++;
                      }
+                     const effMins = day.totalMinutes >= 240 ? day.totalMinutes - 45 : day.totalMinutes;
                      // Half day if worked less than 4 hours (240 mins)
-                     if (day.totalMinutes > 0 && day.totalMinutes < 240) halfDays++;
+                     if (effMins > 0 && effMins < 240) halfDays++;
                      // Overtime if worked more than 8 hours (480 mins)
-                     if (day.totalMinutes > 480) overtimeMinutes += (day.totalMinutes - 480);
+                     if (effMins > 480) overtimeMinutes += (effMins - 480);
                      
-                     totalWorkedMinutes += day.totalMinutes;
+                     totalWorkedMinutes += effMins;
                   });
 
                   const otHours = Math.floor(overtimeMinutes / 60);
@@ -432,8 +433,9 @@ function AttendancePage() {
                           }
                         });
 
-                        const workedH = Math.floor(totalMins / 60);
-                        const workedM = totalMins % 60;
+                        const effectiveMins = totalMins >= 240 ? totalMins - 45 : totalMins;
+                        const workedH = Math.floor(effectiveMins / 60);
+                        const workedM = effectiveMins % 60;
 
                         // Determine status
                         let isLate = false;
@@ -504,8 +506,7 @@ function AttendancePage() {
                                 <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
                                   <p className="font-bold text-slate-600 dark:text-slate-400">
-                                    {/* Mock break time if multiple records */}
-                                    {records.length > 1 ? "45m" : "0m"}
+                                    {totalMins >= 240 ? "45m" : "0m"}
                                   </p>
                                 </div>
                                 <div>
@@ -591,8 +592,9 @@ function AttendancePage() {
                         
                         let isLate = false;
                         if (dayData) {
-                            const workedH = Math.floor(dayData.totalMinutes / 60);
-                            const workedM = dayData.totalMinutes % 60;
+                            const effMins = dayData.totalMinutes >= 240 ? dayData.totalMinutes - 45 : dayData.totalMinutes;
+                            const workedH = Math.floor(effMins / 60);
+                            const workedM = effMins % 60;
                             const isHalfDay = dayData.totalMinutes > 0 && dayData.totalMinutes < 240;
                             isLate = dayData.firstIn > "10:15";
                             
@@ -1168,7 +1170,7 @@ function AttendancePage() {
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Worked</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                  <p className="text-lg font-bold">{selectedDayInfo?.totalMinutes ? `${Math.floor(selectedDayInfo.totalMinutes / 60)}h ${selectedDayInfo.totalMinutes % 60}m` : "0h 0m"}</p>
+                  <p className="text-lg font-bold">{selectedDayInfo?.totalMinutes ? `${Math.floor((selectedDayInfo.totalMinutes >= 240 ? selectedDayInfo.totalMinutes - 45 : selectedDayInfo.totalMinutes) / 60)}h ${(selectedDayInfo.totalMinutes >= 240 ? selectedDayInfo.totalMinutes - 45 : selectedDayInfo.totalMinutes) % 60}m` : "0h 0m"}</p>
                 </div>
               </div>
               
