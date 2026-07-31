@@ -417,7 +417,7 @@ function BookingsPage() {
     ];
     const csvRows = [
       headers.join(","),
-      ...allBookings.map((b) =>
+      ...filteredBookings.map((b) =>
         [
           `"${b.id}"`,
           `"${b.customer.replace(/"/g, '""')}"`,
@@ -443,7 +443,7 @@ function BookingsPage() {
   const exportToWord = () => {
     const tableHeader =
       "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = allBookings
+    const tableRows = filteredBookings
       .map(
         (b) =>
           `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`,
@@ -471,7 +471,7 @@ function BookingsPage() {
     if (!printWindow) return;
     const tableHeader =
       "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = allBookings
+    const tableRows = filteredBookings
       .map(
         (b) =>
           `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>\u20b9${b.amount}</td><td>\u20b9${b.paid}</td><td>${b.status}</td></tr>`,
@@ -484,7 +484,7 @@ function BookingsPage() {
     const titleEl = printWindow.document.createElement("title");
     titleEl.textContent = "Bookings Export PDF";
     printWindow.document.head.appendChild(titleEl);
-    const bodyHtml = `<h2>Grand Journeys CRM - Bookings Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${allBookings.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const bodyHtml = `<h2>Grand Journeys CRM - Bookings Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${filteredBookings.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
     const wrapper = printWindow.document.createElement("div");
     wrapper.innerHTML = bodyHtml;
     printWindow.document.body.appendChild(wrapper);
@@ -1544,7 +1544,7 @@ function BookingsPage() {
               ))}
             </select>
           </div>
-          <Button variant="outline" className="rounded-full" onClick={handleExportCSV}>
+          <Button variant="outline" className="rounded-full" onClick={() => setIsExportOpen(true)}>
             <Download className="w-4 h-4 mr-2" />
             Export
           </Button>
@@ -1742,7 +1742,7 @@ function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Bookings</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {allBookings.length} bookings in your preferred file
+              Export the current list of {filteredBookings.length} bookings in your preferred file
               format.
             </DialogDescription>
           </DialogHeader>
