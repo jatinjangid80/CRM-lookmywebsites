@@ -845,6 +845,31 @@ function AttendancePage() {
                   displayEmpIds.map(empId => {
                     const details = getEmpDetails(empId as string);
                     const empRecords = attendance.filter((a: any) => a.employeeid === empId).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
+                    const dailyTotals = Object.values(
+                      empRecords.reduce((acc: any, record: any) => {
+                        if (!acc[record.date]) {
+                          acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [] };
+                        }
+                        acc[record.date].records.push(record);
+                        if (record.checkin && record.checkout) {
+                          const [inH, inM] = record.checkin.split(':').map(Number);
+                          const [outH, outM] = record.checkout.split(':').map(Number);
+                          let diff = (outH * 60 + outM) - (inH * 60 + inM);
+                          if (diff < 0) diff += 24 * 60;
+                          acc[record.date].totalMinutes += diff;
+                        }
+                        if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
+                          acc[record.date].firstIn = record.checkin;
+                        }
+                        if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
+                          acc[record.date].lastOut = record.checkout;
+                        }
+                        if (!record.checkout) {
+                          acc[record.date].hasActive = true;
+                        }
+                        return acc;
+                      }, {})
+                    ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
                     return (
                       <div key={empId as string} className="rounded-2xl border border-border bg-card shadow-sm p-4">
@@ -854,14 +879,14 @@ function AttendancePage() {
                           </div>
                           <div>
                             <h3 className="font-bold text-foreground">{details.name}</h3>
-                            <p className="text-xs text-muted-foreground">{empRecords.length} Attendance Records</p>
+                            <p className="text-xs text-muted-foreground">{dailyTotals.length} Days Logged</p>
                           </div>
                         </div>
                         <div className="space-y-3">
-                          {empRecords.map((record: any) => (
-                            <div key={record.id} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
+                          {dailyTotals.map((day: any) => (
+                            <div key={day.date} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
                               <div className="mt-0.5">
-                                {record.checkout ? (
+                                {!day.hasActive ? (
                                   <Square className="h-4 w-4 text-primary" />
                                 ) : (
                                   <Play className="h-4 w-4 text-primary fill-primary" />
@@ -870,36 +895,28 @@ function AttendancePage() {
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center justify-between gap-2">
                                   <p className="text-sm font-semibold truncate text-foreground">
-                                    {record.date}
+                                    {day.date}
                                   </p>
                                   <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${record.checkout
+                                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${!day.hasActive
                                       ? "bg-secondary text-muted-foreground"
                                       : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
                                       }`}>
-                                      {record.checkout ? "Completed" : "Active"}
+                                      {!day.hasActive ? "Completed" : "Active"}
                                     </span>
                                   </div>
                                 </div>
                                 <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                                   <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
                                     <Clock className="h-3 w-3" />
-                                    {formatTime12Hour(record.checkin)} {record.checkout ? `- ${formatTime12Hour(record.checkout)}` : ""}
+                                    {day.firstIn ? formatTime12Hour(day.firstIn) : "--:--"} {!day.hasActive ? `- ${day.lastOut ? formatTime12Hour(day.lastOut) : "--:--"}` : ""}
                                   </span>
                                   <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
-                                    <Building2 className="h-3 w-3 shrink-0" /> {record.location || "Office"}
+                                    <Building2 className="h-3 w-3 shrink-0" /> Office
                                   </span>
-                                  {record.checkout && (
+                                  {!day.hasActive && day.totalMinutes > 0 && (
                                     <span className="flex items-center gap-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[10px] font-bold">
-                                      {(() => {
-                                        const [inH, inM] = record.checkin.split(':').map(Number);
-                                        const [outH, outM] = record.checkout.split(':').map(Number);
-                                        let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                                        if (diff < 0) diff += 24 * 60;
-                                        const h = Math.floor(diff / 60);
-                                        const m = diff % 60;
-                                        return `${h}h ${m}m`;
-                                      })()}
+                                      {Math.floor(day.totalMinutes / 60)}h {day.totalMinutes % 60}m
                                     </span>
                                   )}
                                 </div>
