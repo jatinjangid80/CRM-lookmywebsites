@@ -687,6 +687,7 @@ function DynamicFormStep({
   onSubmit,
   onBack,
   customers,
+  setCustomers,
 }: {
   service: string;
   form: typeof EMPTY_FORM;
