@@ -845,7 +845,7 @@ function CustomersPage() {
       <Dialog open={dialogType === "delete"} onOpenChange={(val) => !val && setDialogType(null)}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle className="text-red-600 flex items-center gap-2">
+            <DialogTitle className="text-primary flex items-center gap-2">
               <Trash2 className="h-5 w-5" />
               Delete Customer
             </DialogTitle>
@@ -856,7 +856,7 @@ function CustomersPage() {
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2 sm:gap-0">
             <Button variant="outline" onClick={() => setDialogType(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={() => {
+            <Button variant="default" onClick={() => {
               if (selectedCustomer) {
                 setCustomerList(customerList.filter((c) => c.id !== selectedCustomer.id));
               }

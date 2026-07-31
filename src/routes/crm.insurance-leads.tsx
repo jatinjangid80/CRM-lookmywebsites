@@ -2220,7 +2220,7 @@ function LeadDetail({
                 Cancel
               </Button>
               <Button
-                variant="destructive"
+                variant="default"
                 onClick={() => {
                   onDelete(deleteConfirmId);
                   setDeleteConfirmId(null);
