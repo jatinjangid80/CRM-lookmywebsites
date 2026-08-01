@@ -162,10 +162,8 @@ function Dashboard() {
     (b) => b.status === "Confirmed" || b.status === "Pending",
   ).length;
   
-  // Pending Payments from Payment Follow-ups (Accounts)
-  const pendingPaymentsAmount = followUpsList
-    .filter(fu => fu.status !== "Completed")
-    .reduce((sum, fu) => sum + (Number(fu.pendingAmount) || 0), 0);
+  // Pending Payments from Bookings
+  const pendingPaymentsAmount = bookingsList.reduce((sum, b) => sum + ((b.amount || 0) - (b.paid || 0)), 0);
     
   const followupsTodayCount = leadsList.filter(
     (l) => l.nextFollowUp && l.nextFollowUp.slice(0, 10) === todayStr,
@@ -183,12 +181,8 @@ function Dashboard() {
   const conversionRate = leadsList.length > 0 ? ((convertedLeadsList.length / leadsList.length) * 100).toFixed(1) : "0.0";
   const convertedNames = convertedLeadsList.length > 0 ? convertedLeadsList.map((l) => l.name).join(", ") : "No conversions yet";
   
-  // Monthly Revenue from Transactions MTD (Accounts)
-  const currentMonth = new Date().getMonth();
-  const currentYear = new Date().getFullYear();
-  const monthlyRevenueTotal = transactions
-    .filter(tx => tx.type === "Receipt" && tx.date && new Date(tx.date).getMonth() === currentMonth && new Date(tx.date).getFullYear() === currentYear)
-    .reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+  // Monthly Revenue from Bookings
+  const monthlyRevenueTotal = bookingsList.reduce((sum, b) => sum + (b.paid || 0), 0);
 
   // 2. Chart data aggregations
   // Lead Source Distribution
@@ -497,7 +491,7 @@ function Dashboard() {
     },
     {
       label: "Monthly Revenue",
-      value: formatLakhs(monthlyRevenueTotal),
+      value: formatINR(monthlyRevenueTotal),
       icon: TrendingUp,
       trend: "MTD ledger",
       bg: "bg-primary/100/10",
@@ -581,18 +575,18 @@ function Dashboard() {
             <p className="text-xs text-muted-foreground mb-4">
               Distribution of channels acquiring current leads
             </p>
-            <div className="h-64 relative flex items-center justify-center">
+            <div className="h-72 relative flex items-center justify-center">
               {sourceData.length > 0 ? (
                 <ResponsiveContainer>
-                  <PieChart>
+                  <PieChart margin={{ top: 20, right: 20, bottom: 20, left: 20 }}>
                     <Pie
                       data={sourceData}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
-                      cy="42%"
-                      innerRadius={45}
-                      outerRadius={65}
+                      cy="45%"
+                      innerRadius={50}
+                      outerRadius={70}
                       paddingAngle={3}
                       labelLine={false}
                       label={({ name, percent }) => `${(percent * 100).toFixed(0)}%`}

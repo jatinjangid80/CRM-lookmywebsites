@@ -1188,14 +1188,21 @@ function AddLeadModal({
       leadSection: form.leadSection,
     });
   };
+  const [blink, setBlink] = useState(false);
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={handleBackdropClick}
     >
       <div
-        className={`w-full flex flex-col overflow-hidden max-h-[92vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl transition-all duration-300 ${selectedService ? "sm:max-w-2xl" : "sm:max-w-3xl"}`}
+        className={`w-full flex flex-col overflow-hidden max-h-[92vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl transition-all duration-300 ${selectedService ? "sm:max-w-2xl" : "sm:max-w-3xl"} ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""}`}
         style={{ animation: "floatUp 0.25s ease both" }}
       >
         <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border sm:hidden" />
@@ -1304,16 +1311,39 @@ function LeadDetail({
     packageType: lead.packageType || "",
     leadSection: lead.leadSection || "",
   });
+  const [blink, setBlink] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (deleteConfirmId) {
+          setDeleteConfirmId(null);
+        } else if (isEditingContact || isEditingTrip || isEditingBooking || isEditingNote) {
+          // Inner modal or edit mode is active; let it handle Escape.
+          return;
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteConfirmId, isEditingContact, isEditingTrip, isEditingBooking, isEditingNote, onClose]);
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={handleBackdropClick}
     >
       <div
-        className="flex w-full max-w-2xl max-h-[90vh] flex-col overflow-y-auto bg-background shadow-2xl rounded-2xl animate-in zoom-in-95 duration-200"
+        className={`flex w-full max-w-2xl max-h-[90vh] flex-col overflow-y-auto bg-background shadow-2xl rounded-2xl animate-in zoom-in-95 transition-all duration-150 ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-5">

@@ -29,20 +29,21 @@ interface AddBookingModalProps {
 
 const getFormType = (bt: string) => {
   if (!bt) return "";
-  if (bt === "Air Ticket") return "Air Ticket";
-  if (bt === "Hotel Booking") return "Hotel";
+  if (bt === "Air Ticket" || bt === "Air") return "Air Ticket";
+  if (bt === "Hotel Booking" || bt === "Hotel") return "Hotel";
   if (bt === "Visa") return "Visa";
-  if (bt === "Travel Insurance" || bt === "General Insurance") return "Travel Insurance";
-  if (bt === "Train Ticket") return "Train Ticket";
-  if (bt === "Bus Ticket") return "Bus Ticket";
-  if (bt === "Cruise Booking") return "Cruise";
+  if (bt === "Travel Insurance" || bt === "General Insurance" || bt === "Insurance") return "Travel Insurance";
+  if (bt === "Train Ticket" || bt === "Train") return "Train Ticket";
+  if (bt === "Bus Ticket" || bt === "Bus") return "Bus Ticket";
+  if (bt === "Cruise Booking" || bt === "Cruise") return "Cruise";
   if (bt === "Passport Assistance" || bt === "Visa Assistance") return "Assistance";
-  if (bt === "Forex Exchange") return "Forex";
-  if (bt === "Corporate Travel" || bt === "MICE Events" || bt === "Conference Booking") return "Corporate";
-  if (bt === "Taxi Booking" || bt === "Car Rental" || bt === "Airport Transfer") return "Taxi";
+  if (bt === "Forex Exchange" || bt === "Forex") return "Forex";
+  if (bt === "Corporate Travel" || bt === "MICE Events" || bt === "Conference Booking" || bt === "Corporate") return "Corporate";
+  if (bt === "Taxi Booking" || bt === "Car Rental" || bt === "Airport Transfer" || bt === "Taxi") return "Taxi";
   const packages = [
     "International Package","Domestic Package","Honeymoon Package",
     "Family Package","Group Tour","Corporate Tour","Luxury Tour","Adventure Tour",
+    "Holiday Package", "Holiday"
   ];
   if (packages.includes(bt)) return "Holiday Package";
   return "Generic";
@@ -356,7 +357,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto rounded-2xl border border-border p-0 shadow-2xl bg-card">
-        <div className="sticky top-0 z-10 bg-card border-b border-border p-6 pb-4 flex items-center justify-between">
+        <div className="sticky top-0 z-10 bg-card border-b border-border p-6 pb-4 flex items-start justify-between">
           <DialogHeader>
             <DialogTitle className="font-display text-xl font-bold flex items-center gap-2">
               {editingBooking ? "Edit Booking" : (bookingType ? `New ${bookingType} Booking` : "Add New Booking")}
@@ -365,6 +366,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
               {bookingType ? "Fill in the details below." : "Select a booking type to continue."}
             </DialogDescription>
           </DialogHeader>
+          <button
+            type="button"
+            onClick={() => onOpenChange(false)}
+            className="rounded-full p-2 hover:bg-secondary transition-colors -mt-2 -mr-2"
+          >
+            <X className="h-5 w-5 text-muted-foreground" />
+            <span className="sr-only">Close</span>
+          </button>
         </div>
 
         {bookingType && (

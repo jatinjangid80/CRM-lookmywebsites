@@ -228,20 +228,31 @@ function Modal({
   children: React.ReactNode;
   className?: string;
 }) {
+  const [blink, setBlink] = useState(false);
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
   useEffect(() => {
     const h = (e: KeyboardEvent) => {
-      if (e.key === "Escape") onClose();
+      if (e.key === "Escape") {
+        setBlink(true);
+        setTimeout(() => setBlink(false), 200);
+      }
     };
     if (open) window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, [open, onClose]);
+  }, [open]);
   if (!open) return null;
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center p-4"
       style={{ background: "rgba(0,0,0,0.45)", backdropFilter: "blur(4px)" }}
+      onClick={handleBackdropClick}
     >
-      <div className={`w-full rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-200 ${className || "max-w-md"} overflow-hidden max-h-[95vh] flex flex-col`}>
+      <div className={`w-full rounded-2xl border border-border bg-card p-6 shadow-2xl animate-in fade-in zoom-in-95 transition-all duration-150 ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""} ${className || "max-w-md"} overflow-hidden max-h-[95vh] flex flex-col`}>
         <div className="mb-4 flex shrink-0 items-center justify-between">
           <h2 className="font-display text-lg font-bold">{title}</h2>
           <button
@@ -634,7 +645,7 @@ function FileRow({
                 </a>
               </DropdownMenuItem>
               {isAdmin && (
-                <>{auth?.role === admin && (
+                <>{auth?.role === "admin" && (
 <DropdownMenuItem
                   onClick={() => onDelete(file.id)}
                   className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"

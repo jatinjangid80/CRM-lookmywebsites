@@ -245,9 +245,34 @@ export function InsuranceForm({
     onSave(payload);
   };
 
+  const [blink, setBlink] = useState(false);
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (isVendorModalOpen || isAddingVendor) {
+          // Inner modal is active, don't close the parent.
+          return;
+        }
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isVendorModalOpen, isAddingVendor, onClose]);
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4 sm:p-6">
-      <div className="w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-2xl bg-background shadow-2xl animate-in zoom-in-95 duration-300 flex flex-col">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4 sm:p-6"
+      onClick={handleBackdropClick}
+    >
+      <div className={`w-full max-w-4xl max-h-[95vh] overflow-hidden rounded-2xl bg-background shadow-2xl animate-in zoom-in-95 transition-all duration-150 flex flex-col ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""}`}>
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border p-4 bg-card">
           <div className="flex items-center gap-3">

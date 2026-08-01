@@ -43,7 +43,7 @@ export function clearAuth(): void {
 
 export async function login(username: string, password: string): Promise<AuthUser | null> {
   // Emergency override for Developer / IT Admin
-  if (username.trim().toLowerCase() === "jatin" || username.trim().toLowerCase() === "manvendra singhal" || username.trim().toLowerCase() === "admin") {
+  if (username.trim().toLowerCase() === "jatin" || username.trim().toLowerCase() === "Manvendra Singhal") {
     const user: AuthUser = {
       role: "admin",
       name: username.trim().toLowerCase() === "jatin" ? "Jatin Jangid" : "Manvendra Singhal",
@@ -65,7 +65,7 @@ export async function login(username: string, password: string): Promise<AuthUse
             if (parsed._isMeta && parsed.profile_details) {
               profile_details = parsed.profile_details;
             }
-          } catch (e) {}
+          } catch (e) { }
         }
         return { ...emp, profile_details };
       });
@@ -79,13 +79,12 @@ export async function login(username: string, password: string): Promise<AuthUse
       if (dynamicMatch) {
         const accessRole = dynamicMatch.accessRole
           ? dynamicMatch.accessRole.toLowerCase()
-          : (dynamicMatch.role === "HR & Admin Manager" || 
-             dynamicMatch.role?.toLowerCase().includes("admin") ||
-             dynamicMatch.role?.toLowerCase().includes("ceo") ||
-             dynamicMatch.role?.toLowerCase().includes("founder") ||
-             dynamicMatch.profile_details?.username === "admin" ||
-             dynamicMatch.name?.toLowerCase().includes("manvendra") ||
-             dynamicMatch.name?.toLowerCase().includes("jatin"))
+          : (dynamicMatch.role === "HR & Admin Manager" ||
+            dynamicMatch.role?.toLowerCase().includes("admin") ||
+            dynamicMatch.role?.toLowerCase().includes("ceo") ||
+            dynamicMatch.role?.toLowerCase().includes("founder") ||
+            dynamicMatch.name?.toLowerCase().includes("manvendra") ||
+            dynamicMatch.name?.toLowerCase().includes("jatin"))
             ? "admin"
             : "employee";
         const user: AuthUser = {

@@ -893,14 +893,18 @@ function BookingsPage() {
           {booking.bookingType === "Train Ticket" && (
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Train Number/Name</p><p className="font-semibold">{booking.details?.trainNumber || "—"} {booking.details?.trainName || ""}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">From - To</p><p className="font-semibold">{booking.details?.from || "—"} → {booking.details?.to || "—"}</p></div>
+              {(booking.details?.from || booking.details?.to) && (
+                <div><p className="text-xs text-muted-foreground uppercase mb-1">From - To</p><p className="font-semibold">{booking.details?.from || booking.details?.to ? `${booking.details?.from || "—"} → ${booking.details?.to || "—"}` : "—"}</p></div>
+              )}
             </>
           )}
           {booking.bookingType === "Bus Ticket" && (
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Operator</p><p className="font-semibold">{booking.details?.operator || "—"}</p></div>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Bus Type</p><p className="font-semibold">{booking.details?.busType || "—"}</p></div>
-              <div><p className="text-xs text-muted-foreground uppercase mb-1">Boarding - Dropping</p><p className="font-semibold">{booking.details?.boardingPoint || "—"} → {booking.details?.droppingPoint || "—"}</p></div>
+              {(booking.details?.boardingPoint || booking.details?.droppingPoint) && (
+                <div><p className="text-xs text-muted-foreground uppercase mb-1">Boarding - Dropping</p><p className="font-semibold">{booking.details?.boardingPoint || booking.details?.droppingPoint ? `${booking.details?.boardingPoint || "—"} → ${booking.details?.droppingPoint || "—"}` : "—"}</p></div>
+              )}
             </>
           )}
           {(booking.bookingType === "Holiday Package" || !booking.bookingType) && (
@@ -939,7 +943,9 @@ function BookingsPage() {
                   <div className="grid grid-cols-2 gap-4">
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Vehicle</p><p className="font-semibold">{booking.details.vehicleType} ({booking.details.tripType || "—"})</p></div>
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Pickup Time</p><p className="font-semibold">{booking.details.pickupTime ? new Date(booking.details.pickupTime).toLocaleString() : "—"}</p></div>
-                    <div><p className="text-xs text-muted-foreground uppercase mb-1">Route</p><p className="font-semibold">{booking.details.pickupLocation || "—"} → {booking.details.dropLocation || "—"}</p></div>
+                    {(booking.details.pickupLocation || booking.details.dropLocation) && (
+                      <div><p className="text-xs text-muted-foreground uppercase mb-1">Route</p><p className="font-semibold">{booking.details.pickupLocation || booking.details.dropLocation ? `${booking.details.pickupLocation || "—"} → ${booking.details.dropLocation || "—"}` : "—"}</p></div>
+                    )}
                     <div><p className="text-xs text-muted-foreground uppercase mb-1">Driver</p><p className="font-semibold">{booking.details.driverName || "—"} ({booking.details.vehicleNumber || "—"})</p></div>
                   </div>
                 </div>

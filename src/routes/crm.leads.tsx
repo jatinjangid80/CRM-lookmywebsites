@@ -37,6 +37,7 @@ import {
   Calendar,
   Copy,
   MessageCircle,
+  Plane,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -1216,14 +1217,21 @@ function AddLeadModal({
       leadSection: form.leadSection,
     });
   };
+  const [blink, setBlink] = useState(false);
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/50 p-0 sm:p-4 backdrop-blur-sm"
-      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+      onClick={handleBackdropClick}
     >
       <div
-        className={`w-full flex flex-col overflow-hidden max-h-[92vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl transition-all duration-300 ${selectedService ? "sm:max-w-2xl" : "sm:max-w-3xl"}`}
+        className={`w-full flex flex-col overflow-hidden max-h-[92vh] rounded-t-3xl sm:rounded-3xl border border-border bg-background shadow-2xl transition-all duration-300 ${selectedService ? "sm:max-w-2xl" : "sm:max-w-3xl"} ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""}`}
         style={{ animation: "floatUp 0.25s ease both" }}
       >
         <div className="mx-auto mt-3 h-1 w-10 rounded-full bg-border sm:hidden" />
@@ -1240,6 +1248,9 @@ function AddLeadModal({
               </p>
             </div>
           </div>
+          <button type="button" onClick={onClose} className="rounded-xl p-2 hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Step content */}
@@ -1264,6 +1275,95 @@ function AddLeadModal({
   );
 }
 /* ─── Lead Detail Slide-over ─── */
+function getLeadDetailFields(lead: any) {
+  const formType = getServiceFormType(lead.service);
+  let fields: { icon: any; label: string; val: any }[] = [];
+
+  switch(formType) {
+    case "air":
+      fields = [
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Source City", val: lead.sourceCity || "—" },
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Destination", val: lead.destinationCity || lead.destination || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Departure Date", val: lead.travelDate || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: `${lead.adults || 0} Adults, ${lead.children || 0} Children, ${lead.infants || 0} Infants` },
+        { icon: <Briefcase className="h-4 w-4 text-primary" />, label: "Fare Type", val: lead.fareType || "—" },
+        { icon: <AlertCircle className="h-4 w-4 text-primary" />, label: "Class", val: lead.flightClass || "—" },
+        { icon: <Plane className="h-4 w-4 text-primary" />, label: "Preferred Airline", val: lead.preferredAirline || "—" },
+        { icon: <CheckCircle2 className="h-4 w-4 text-primary" />, label: "Direct Flight", val: lead.directFlight ? "Yes" : "No" },
+      ];
+      break;
+    case "hotel":
+      fields = [
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Destination", val: lead.destination || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Check In", val: lead.checkIn || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Check Out", val: lead.checkOut || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Nights", val: lead.nights || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: `${lead.pax || 0} pax (${lead.adults || 0} Adults, ${lead.children || 0} Children)` },
+        { icon: <Building2 className="h-4 w-4 text-primary" />, label: "Rooms", val: lead.rooms || "—" },
+        { icon: <Sparkles className="h-4 w-4 text-primary" />, label: "Star Category", val: lead.starCategory || "—" },
+      ];
+      break;
+    case "visa":
+      fields = [
+        { icon: <Globe className="h-4 w-4 text-primary" />, label: "Country", val: lead.country || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Travel Date", val: lead.travelDate || "—" },
+        { icon: <FileText className="h-4 w-4 text-primary" />, label: "Visa Type", val: lead.visaType || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: lead.pax || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Passport Expiry", val: lead.passportExpiry || "—" },
+      ];
+      break;
+    case "package":
+      fields = [
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Destination", val: lead.destination || "—" },
+        { icon: <IndianRupee className="h-4 w-4 text-primary" />, label: "Budget", val: formatINR(lead.budget) },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Travel Date", val: lead.travelDate || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: `${lead.pax || 0} pax (Adults: ${lead.adults || 0}, Children: ${lead.children || 0})` },
+        { icon: <Package className="h-4 w-4 text-primary" />, label: "Package", val: lead.packageType || "—" },
+      ];
+      break;
+    case "insurance":
+      fields = [
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Expiry Date", val: lead.expiryDate || "—" },
+        { icon: <Shield className="h-4 w-4 text-primary" />, label: "Policy Type", val: lead.policyType || "—" },
+        { icon: <AlertCircle className="h-4 w-4 text-primary" />, label: "Query Type", val: lead.queryType || "—" },
+        { icon: <Building2 className="h-4 w-4 text-primary" />, label: "Client / Company", val: lead.clientCompany || "—" },
+        { icon: <UserCheck className="h-4 w-4 text-primary" />, label: "Reference", val: lead.reference || "—" },
+      ];
+      break;
+    case "corporate":
+      fields = [
+        { icon: <Building2 className="h-4 w-4 text-primary" />, label: "Client / Company", val: lead.clientCompany || "—" },
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Destination", val: lead.destination || "—" },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Travel Date", val: lead.travelDate || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: lead.pax || "—" },
+        { icon: <Briefcase className="h-4 w-4 text-primary" />, label: "Event Type", val: lead.eventType || "—" },
+        { icon: <IndianRupee className="h-4 w-4 text-primary" />, label: "Budget", val: formatINR(lead.budget) },
+      ];
+      break;
+    case "generic":
+    default:
+      fields = [
+        { icon: <MapPin className="h-4 w-4 text-primary" />, label: getGenericDestLabel(lead.service), val: lead.destination || "—" },
+        { icon: <IndianRupee className="h-4 w-4 text-primary" />, label: "Budget", val: formatINR(lead.budget) },
+        { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Travel Date", val: lead.travelDate || "—" },
+        { icon: <Users className="h-4 w-4 text-primary" />, label: "Travellers", val: `${lead.pax || 0} pax (Adults: ${lead.adults || 0}, Children: ${lead.children || 0})` },
+      ];
+      break;
+  }
+
+  // Common meta fields added for ALL leads at the end
+  const commonFields = [
+    { icon: <Phone className="h-4 w-4 text-primary" />, label: "WhatsApp", val: lead.whatsapp || lead.phone },
+    { icon: <CalendarDays className="h-4 w-4 text-primary" />, label: "Next Follow-up", val: lead.nextFollowUp || "Not scheduled" },
+    { icon: <Globe className="h-4 w-4 text-primary" />, label: "Source", val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}` },
+    { icon: <Briefcase className="h-4 w-4 text-primary" />, label: "Section", val: lead.leadSection || "—" },
+    { icon: <Briefcase className="h-4 w-4 text-primary" />, label: "Service", val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}` },
+    { icon: <AlertCircle className="h-4 w-4 text-primary" />, label: "Priority", val: PRIORITY_BADGE[lead.priority] || lead.priority },
+  ];
+
+  return [...fields, ...commonFields];
+}
+
 function LeadDetail({
   lead,
   allLeads = [],
@@ -1294,6 +1394,16 @@ function LeadDetail({
   const [editNoteText, setEditNoteText] = useState(lead.notes || "");
   const [newNoteText, setNewNoteText] = useState("");
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
+  const [blink, setBlink] = useState(false);
+
+  const handleBackdropClick = (e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      setBlink(true);
+      setTimeout(() => setBlink(false), 200);
+    }
+  };
+
+
 
   const [isEditingBooking, setIsEditingBooking] = useState(false);
   const [bookingDetails, setBookingDetails] = useState({
@@ -1333,20 +1443,35 @@ function LeadDetail({
     leadSection: lead.leadSection || "",
   });
 
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        if (deleteConfirmId) {
+          setDeleteConfirmId(null);
+        } else if (isEditingContact || isEditingTrip || isEditingBooking || isEditingNote) {
+          // Inner modal or edit mode is active; let it handle Escape.
+          return;
+        } else {
+          onClose();
+        }
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [deleteConfirmId, isEditingContact, isEditingTrip, isEditingBooking, isEditingNote, onClose]);
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
-      onClick={(e) => {
-        if (e.target === e.currentTarget) onClose();
-      }}
+      onClick={handleBackdropClick}
     >
       <div
-        className="flex w-full max-w-2xl max-h-[90vh] flex-col overflow-y-auto bg-background shadow-2xl rounded-2xl animate-in zoom-in-95 duration-200"
+        className={`flex w-full max-w-2xl max-h-[90vh] flex-col overflow-y-auto bg-background shadow-2xl rounded-2xl animate-in zoom-in-95 transition-all duration-150 ${blink ? "scale-[1.02] ring-4 ring-primary/40 opacity-90" : ""}`}
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-6 py-5">
           <h2 className="font-display text-xl font-bold">Lead Detail</h2>
-          <button onClick={onClose} className="rounded-xl p-2 hover:bg-secondary">
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onClose(); }} className="rounded-xl p-2 hover:bg-secondary">
             <X className="h-4 w-4" />
           </button>
         </div>
@@ -1684,122 +1809,15 @@ function LeadDetail({
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3">
-                {lead.service?.toLowerCase().includes("insurance")
-                  ? [
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Expiry Date",
-                      val: lead.expiryDate || "—",
-                    },
-                    {
-                      icon: <Shield className="h-4 w-4 text-primary" />,
-                      label: "Policy Type",
-                      val: lead.policyType || "—",
-                    },
-                    {
-                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                      label: "Query Type",
-                      val: lead.queryType || "—",
-                    },
-                    {
-                      icon: <Building2 className="h-4 w-4 text-primary" />,
-                      label: "Client / Company",
-                      val: lead.clientCompany || "—",
-                    },
-                    {
-                      icon: <UserCheck className="h-4 w-4 text-primary" />,
-                      label: "Reference",
-                      val: lead.reference || "—",
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Source",
-                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Section",
-                      val: lead.leadSection || "—",
-                    },
-                    {
-                      icon: <Briefcase className="h-4 w-4 text-primary" />,
-                      label: "Service",
-                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                    },
-                  ].map((r) => (
-                    <div key={r.label} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0">{r.icon}</span>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{r.label}</p>
-                        <p className="text-sm font-semibold">{r.val}</p>
-                      </div>
+                {getLeadDetailFields(lead).map((r) => (
+                  <div key={r.label} className="flex items-start gap-2">
+                    <span className="mt-0.5 shrink-0">{r.icon}</span>
+                    <div>
+                      <p className="text-xs text-muted-foreground">{r.label}</p>
+                      <p className="text-sm font-semibold">{r.val}</p>
                     </div>
-                  ))
-                  : [
-                    {
-                      icon: <MapPin className="h-4 w-4 text-primary" />,
-                      label: "Destination",
-                      val: lead.destination,
-                    },
-                    {
-                      icon: <IndianRupee className="h-4 w-4 text-primary" />,
-                      label: "Budget",
-                      val: formatINR(lead.budget),
-                    },
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Travel Date",
-                      val: lead.travelDate,
-                    },
-                    {
-                      icon: <Users className="h-4 w-4 text-primary" />,
-                      label: "Travellers",
-                      val: `${lead.pax} pax (Adults: ${lead.adults || 2}, Children: ${lead.children || 0})`,
-                    },
-                    {
-                      icon: <Phone className="h-4 w-4 text-primary" />,
-                      label: "WhatsApp",
-                      val: lead.whatsapp || lead.phone,
-                    },
-                    {
-                      icon: <CalendarDays className="h-4 w-4 text-primary" />,
-                      label: "Next Follow-up",
-                      val: lead.nextFollowUp || "Not scheduled",
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Source",
-                      val: `${SOURCE_ICONS[lead.source] || ""} ${lead.source}`,
-                    },
-                    {
-                      icon: <Globe className="h-4 w-4 text-primary" />,
-                      label: "Section",
-                      val: lead.leadSection || "—",
-                    },
-                    {
-                      icon: <Briefcase className="h-4 w-4 text-primary" />,
-                      label: "Service",
-                      val: `${SERVICE_ICONS[lead.service] || ""} ${lead.service}`,
-                    },
-                    {
-                      icon: <Package className="h-4 w-4 text-primary" />,
-                      label: "Package",
-                      val: lead.packageType || "—",
-                    },
-                    {
-                      icon: <AlertCircle className="h-4 w-4 text-primary" />,
-                      label: "Priority",
-                      val: PRIORITY_BADGE[lead.priority] || lead.priority,
-                    },
-                  ].map((r) => (
-                    <div key={r.label} className="flex items-start gap-2">
-                      <span className="mt-0.5 shrink-0">{r.icon}</span>
-                      <div>
-                        <p className="text-xs text-muted-foreground">{r.label}</p>
-                        <p className="text-sm font-semibold">{r.val}</p>
-                      </div>
-                    </div>
-                  ))}
+                  </div>
+                ))}
               </div>
             )}
           </div>
@@ -2694,7 +2712,9 @@ function LeadsPage() {
                           <div className="text-xs text-muted-foreground">{l.createdTime || "-"}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="text-sm max-w-[150px] truncate" title={l.destination}>{l.destination || "-"}</div>
+                          <div className="text-sm max-w-[150px] truncate" title={l.destination || l.country || l.destinationCity}>
+                            {l.destination || l.country || l.destinationCity || "-"}
+                          </div>
                           <div className="text-xs font-semibold text-muted-foreground">{l.service || "-"}</div>
                         </td>
                         <td className="px-4 py-3 whitespace-nowrap">
