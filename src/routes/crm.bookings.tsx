@@ -1311,7 +1311,7 @@ function BookingsPage() {
         </div>
 
         {/* Row 2: Revenue Analytics */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        <div className={`grid grid-cols-2 gap-4 ${isAdmin ? "md:grid-cols-4" : "md:grid-cols-3"}`}>
           <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
             <div className="absolute top-0 right-0 p-4 opacity-10">
               <TrendingUp className="h-16 w-16 text-primary" />
@@ -1345,17 +1345,19 @@ function BookingsPage() {
               {formatINR(dashboardData.totalRevenue - dashboardData.totalPaid)}
             </p>
           </div>
-          <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
-            <div className="absolute top-0 right-0 p-4 opacity-10">
-              <TrendingUp className="h-16 w-16 text-blue-600" />
+          {isAdmin && (
+            <div className="bg-card border border-border p-5 rounded-2xl shadow-sm flex flex-col gap-2 relative overflow-hidden">
+              <div className="absolute top-0 right-0 p-4 opacity-10">
+                <TrendingUp className="h-16 w-16 text-blue-600" />
+              </div>
+              <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Total Profit
+              </p>
+              <p className="text-3xl font-display font-bold text-blue-600">
+                {formatINR(dashboardData.totalProfit)}
+              </p>
             </div>
-            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              Total Profit
-            </p>
-            <p className="text-3xl font-display font-bold text-blue-600">
-              {formatINR(dashboardData.totalProfit)}
-            </p>
-          </div>
+          )}
         </div>
 
         {/* Row 3: Status Summary */}
