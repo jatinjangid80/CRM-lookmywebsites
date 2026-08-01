@@ -662,15 +662,15 @@ function ServiceSelectorStep({ onSelect }: { onSelect: (service: string) => void
             </span>
             <div className="flex-1 h-px bg-border" />
           </div>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2.5">
+          <div className="flex flex-wrap justify-center gap-4">
             {group.items.map((item) => (
               <button
                 key={item.label}
                 onClick={() => onSelect(item.label)}
-                className={`group relative flex flex-col items-center justify-center gap-2 rounded-2xl border bg-gradient-to-br p-3 text-center transition-all duration-200 hover:shadow-md hover:scale-[1.03] active:scale-[0.98] ${SVC_COLOR[group.group] ?? "hover:bg-secondary border-border"}`}
+                className={`group relative flex flex-col items-center justify-center gap-3 rounded-2xl border bg-gradient-to-br p-6 text-center transition-all duration-200 hover:shadow-md hover:scale-[1.03] active:scale-[0.98] w-48 ${SVC_COLOR[group.group] ?? "hover:bg-secondary border-border"}`}
               >
-                <span className="text-2xl leading-none">{item.icon}</span>
-                <span className="text-[11px] font-semibold leading-tight text-foreground line-clamp-2">{item.label}</span>
+                <span className="text-4xl leading-none">{item.icon}</span>
+                <span className="text-sm font-semibold leading-tight text-foreground line-clamp-2">{item.label}</span>
               </button>
             ))}
           </div>
@@ -1219,6 +1219,9 @@ function AddLeadModal({
               </p>
             </div>
           </div>
+          <button type="button" onClick={onClose} className="rounded-xl p-2 hover:bg-secondary">
+            <X className="h-4 w-4" />
+          </button>
         </div>
 
         {/* Step content */}
