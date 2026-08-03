@@ -1097,7 +1097,7 @@ function EmployeesPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32 rounded-xl" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedEmployeeId(emp.id); }} className="cursor-pointer gap-2 py-2">
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedEmployee(emp); }} className="cursor-pointer gap-2 py-2">
                             <Eye className="h-4 w-4" /> View
                           </DropdownMenuItem>
                           <DropdownMenuItem onClick={(e) => handleDeleteEmployee(e, emp.id)} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
