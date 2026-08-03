@@ -1156,15 +1156,7 @@ function AccountsPage() {
                         <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Complete Now
                       </Button>
                     )}
-                    <Button size="sm" className="h-8 text-xs shadow-sm" variant={fu.status === 'Completed' ? 'secondary' : 'default'} onClick={() => {
-                      setSelectedFuId(fu.id);
-                      setLogNotes(fu.notes);
-                      setLogDate(fu.nextFollowUpDate);
-                      setLogStatus(""); // Clear the input field for a fresh log entry
-                      setIsLogFollowUpOpen(true);
-                    }}>
-                      {fu.status === 'Completed' ? 'View Log' : 'Log Follow-up'}
-                    </Button>
+
                   </div>
                 </div>
               </div>
