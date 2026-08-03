@@ -1024,19 +1024,7 @@ function SettingsPage() {
               </div>
             </SectionCard>
 
-            <SectionCard title="Two-Factor Authentication">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium">2FA via Email OTP</p>
-                  <p className="text-xs text-muted-foreground">
-                    Add an extra layer of security to your account
-                  </p>
-                </div>
-                <Button variant="outline" className="rounded-xl text-xs gap-1.5">
-                  <Shield className="h-3.5 w-3.5" /> Enable 2FA
-                </Button>
-              </div>
-            </SectionCard>
+
           </div>
         );
 
