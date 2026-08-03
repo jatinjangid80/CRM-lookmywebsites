@@ -1059,8 +1059,7 @@ function EmployeesPage() {
             {filtered.map((emp) => (
               <div
                 key={emp.id}
-                onClick={() => setSelectedEmployee(emp)}
-                className="group relative rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-md hover:-translate-y-0.5 cursor-pointer"
+                className="group relative rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-md hover:-translate-y-0.5"
               >
                 {/* Top section */}
                 <div className="flex items-start justify-between gap-3">
