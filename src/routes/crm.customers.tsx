@@ -768,7 +768,10 @@ function CustomersPage() {
                           {custBookings.map((b: any) => (
                             <div key={b.id} className="bg-card border border-border p-4 rounded-xl shadow-sm flex items-center justify-between">
                               <div>
-                                <h4 className="font-semibold text-sm">{b.package || b.bookingType}</h4>
+                                <h4 className="font-semibold text-sm">
+                                  {b.package || b.bookingType}
+                                  {(b.details?.sector || b.details?.destination || b.details?.city) ? ` - ${b.details?.sector || b.details?.destination || b.details?.city}` : ""}
+                                </h4>
                                 <p className="text-xs text-muted-foreground mt-1">
                                   {b.id} • {b.bookingDate}
                                   {b.supplier ? ` • ${b.supplier}` : ""}

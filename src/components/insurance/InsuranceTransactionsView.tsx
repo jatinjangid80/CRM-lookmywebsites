@@ -75,8 +75,8 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
                   <tr key={tx.id} className="hover:bg-muted/30 transition-colors">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${tx.type === 'Receipt' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          {tx.type === 'Receipt' ? <ArrowDownRight className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
+                        <div className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 ${(tx.type === 'Receipt' || tx.entityType === 'Customer') ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {(tx.type === 'Receipt' || tx.entityType === 'Customer') ? <ArrowDownRight className="h-5 w-5" /> : <ArrowUpRight className="h-5 w-5" />}
                         </div>
                         <div>
                           <p className="font-medium text-foreground">{tx.id}</p>
@@ -95,8 +95,8 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <p className={`font-bold ${tx.type === 'Receipt' ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'}`}>
-                        {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
+                      <p className={`font-bold ${(tx.type === 'Receipt' || tx.entityType === 'Customer') ? 'text-emerald-600 dark:text-emerald-500' : 'text-rose-600 dark:text-rose-500'}`}>
+                        {(tx.type === 'Receipt' || tx.entityType === 'Customer') ? '+' : '-'}{formatINR(tx.amount)}
                       </p>
                     </td>
                     <td className="px-6 py-4">

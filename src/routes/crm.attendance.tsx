@@ -479,11 +479,6 @@ function AttendancePage() {
 
                         let breakMins = Math.max(0, Math.floor(elapsedMins - totalWorkedMins));
                         let effectiveSecs = totalWorkedSecs;
-                        
-                        if (records.length === 1 && effectiveSecs >= 240 * 60) {
-                             effectiveSecs -= 45 * 60;
-                             breakMins = 45;
-                        }
 
                         const workedH = Math.floor(effectiveSecs / 3600);
                         const workedM = Math.floor((effectiveSecs % 3600) / 60);

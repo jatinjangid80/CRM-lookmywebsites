@@ -1214,8 +1214,8 @@ function AccountsPage() {
                     <tr key={idx} className="hover:bg-muted/30 transition-colors">
                       <td className="px-6 py-4 font-medium">{tx.date}</td>
                       <td className="px-6 py-4">
-                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${tx.type === 'Receipt' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
-                          {tx.type}
+                        <span className={`px-2 py-1 rounded-full text-xs font-medium ${(tx.type === 'Receipt' || tx.entityType === 'Customer') && tx.entityType !== 'Vendor' ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          {(tx.type === 'Receipt' || tx.entityType === 'Customer') && tx.entityType !== 'Vendor' ? 'Receipt' : 'Payment'}
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -1226,8 +1226,8 @@ function AccountsPage() {
                         {tx.company || "-"}
                       </td>
                       <td className="px-6 py-4">{tx.paymentMode}</td>
-                      <td className={`px-6 py-4 text-right font-bold ${tx.type === 'Receipt' ? 'text-emerald-500' : 'text-rose-500'}`}>
-                        {tx.type === 'Receipt' ? '+' : '-'}{formatINR(tx.amount)}
+                      <td className={`px-6 py-4 text-right font-bold ${(tx.type === 'Receipt' || tx.entityType === 'Customer') && tx.entityType !== 'Vendor' ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        {(tx.type === 'Receipt' || tx.entityType === 'Customer') && tx.entityType !== 'Vendor' ? '+' : '-'}{formatINR(tx.amount)}
                       </td>
                       <td className="px-6 py-4 text-right text-xs text-muted-foreground font-medium">
                         {tx.createdBy || "none"}
@@ -1467,7 +1467,10 @@ function AccountsPage() {
                                     {cBookings.length > 0 ? cBookings.map((bk: any, i: number) => (
                                       <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
                                         <div className="flex justify-between items-start mb-2">
-                                          <span className="font-medium">{bk.bookingType || "Booking"}</span>
+                                          <span className="font-medium">
+                                            {bk.bookingType || "Booking"}
+                                            {(bk.details?.sector || bk.details?.destination || bk.details?.city) ? ` - ${bk.details?.sector || bk.details?.destination || bk.details?.city}` : ""}
+                                          </span>
                                           <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status || "Pending"}</span>
                                         </div>
                                         <div className="flex justify-between items-center bg-background/50 p-1.5 rounded border border-border/30">
@@ -1603,7 +1606,10 @@ function AccountsPage() {
                                     {vBookings.length > 0 ? vBookings.map((bk: any, i: number) => (
                                       <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10">
                                         <div className="flex justify-between items-start mb-1">
-                                          <span className="font-medium">{bk.bookingType}</span>
+                                          <span className="font-medium">
+                                            {bk.bookingType || "Booking"}
+                                            {(bk.details?.sector || bk.details?.destination || bk.details?.city) ? ` - ${bk.details?.sector || bk.details?.destination || bk.details?.city}` : ""}
+                                          </span>
                                           <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-primary/10 text-primary">{bk.status}</span>
                                         </div>
                                         <div className="flex justify-between mt-1">
@@ -1671,7 +1677,7 @@ function AccountsPage() {
               </div>
               <div className="space-y-2">
                 <Label>Entity Type</Label>
-                <Select value={newTx.entityType} onValueChange={v => setNewTx({ ...newTx, entityType: v, entityId: "" })}>
+                <Select value={newTx.entityType} onValueChange={v => setNewTx({ ...newTx, entityType: v, entityId: "", type: v === "Customer" ? "Receipt" : v === "Vendor" ? "Payment" : newTx.type })}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Customer">Customer</SelectItem>

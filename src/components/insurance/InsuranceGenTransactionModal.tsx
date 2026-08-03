@@ -192,7 +192,7 @@ export function InsuranceGenTransactionModal({ isOpen, onClose, policies = [] }:
           
           <div className="space-y-2">
             <Label>Entity Type</Label>
-            <Select value={newTx.entityType} onValueChange={v => setNewTx({ ...newTx, entityType: v })}>
+            <Select value={newTx.entityType} onValueChange={v => setNewTx({ ...newTx, entityType: v, type: v === "Customer" ? "Receipt" : (v === "Vendor" || v === "Company") ? "Payment" : newTx.type })}>
               <SelectTrigger><SelectValue /></SelectTrigger>
               <SelectContent>
                 <SelectItem value="Customer">Customer</SelectItem>

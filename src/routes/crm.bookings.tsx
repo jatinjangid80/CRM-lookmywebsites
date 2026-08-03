@@ -420,7 +420,8 @@ function BookingsPage() {
     "Travel Date",
     "Supplier",
     "PNR/Ref",
-    "Package/Sector",
+    "Package",
+    "Sector",
     "Booked By",
     "Payment Mode",
     "Selling Price (₹)",
@@ -439,7 +440,8 @@ function BookingsPage() {
     b.details?.travelDate || b.travelDate || "-",
     b.supplier || "-",
     b.details?.pnr || b.reference || "-",
-    b.package || b.details?.sector || b.details?.airline || "-",
+    b.package || "-",
+    b.details?.sector || b.details?.destination || b.details?.city || "-",
     b.bookedBy || "-",
     b.paymentMode || "-",
     b.sellingPrice || b.amount || 0,
@@ -1522,6 +1524,9 @@ function BookingsPage() {
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("bookingType")}>
                   <div className="flex items-center gap-1">Type {sortField === "bookingType" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
+                <th className="px-4 py-3 whitespace-nowrap text-left">
+                  <div className="flex items-center gap-1">Sector</div>
+                </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("amount")}>
                   <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
@@ -1556,6 +1561,7 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
                     <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{b.details?.pnr || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.bookingType || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.details?.sector || b.details?.destination || b.details?.city || "-"}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-primary">{formatINR(b.sellingPrice || b.amount || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-muted-foreground">{formatINR(b.purchasePrice || 0)}</td>
                     <td className="px-4 py-3 font-medium whitespace-nowrap text-emerald-600">{formatINR(b.profit || 0)}</td>
