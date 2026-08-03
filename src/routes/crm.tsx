@@ -91,7 +91,6 @@ const FULL_NAV: NavItem[] = [
   },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
   { to: "/crm/packages", label: "Packages", icon: Pkg },
-  { to: "/crm/employees", label: "Employees", icon: Briefcase },
   { to: "/crm/attendance", label: "Attendance", icon: Clock },
   { to: "/crm/vendors", label: "Vendors", icon: Building2 },
 
