@@ -200,6 +200,7 @@ const STATUSES: LeadStatus[] = [
   "Confirmed",
   "Payment Pending",
   "Postponed",
+  "Completed",
   "Lost",
 ];
 
@@ -213,6 +214,7 @@ const STATUS_PILL: Record<LeadStatus, string> = {
   "on conform": "bg-indigo-100 text-indigo-700",
   "in process": "bg-emerald-100 text-emerald-700",
   "Postponed": "bg-pink-100 text-pink-700",
+  "Completed": "bg-fuchsia-100 text-fuchsia-700",
   Lost: "bg-slate-100 text-slate-700",
 };
 
@@ -232,6 +234,7 @@ const STATUS_ACCENT: Record<LeadStatus, string> = {
   "on conform": "border-l-indigo-400",
   "in process": "border-l-emerald-400",
   "Postponed": "border-l-pink-400",
+  "Completed": "border-l-fuchsia-400",
   Lost: "border-l-slate-400",
 };
 
@@ -245,6 +248,7 @@ const STATUS_DOT: Record<LeadStatus, string> = {
   "on conform": "bg-indigo-500",
   "in process": "bg-emerald-500",
   "Postponed": "bg-pink-500",
+  "Completed": "bg-fuchsia-500",
   Lost: "bg-slate-500",
 };
 

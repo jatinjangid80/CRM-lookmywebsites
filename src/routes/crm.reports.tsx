@@ -434,6 +434,7 @@ function ReportsPage() {
                   "Confirmed",
                   "Payment Pending",
                   "Postponed",
+                  "Completed",
                   "Lost",
                 ] as const
               ).map((stage) => {

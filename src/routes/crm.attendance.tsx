@@ -443,9 +443,51 @@ function AttendancePage() {
                           }
                         });
 
-                        const effectiveMins = totalMins >= 240 ? totalMins - 45 : totalMins;
-                        const workedH = Math.floor(effectiveMins / 60);
-                        const workedM = effectiveMins % 60;
+                        // Add active session
+                        let currentSessionSecs = 0;
+                        if (isActive) {
+                           const activeRecord = records.find((r: any) => !r.checkout);
+                           if (activeRecord && activeRecord.checkin) {
+                             const [inH, inM] = activeRecord.checkin.split(':').map(Number);
+                             // Use 'time' for active tick
+                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
+                             if (diff < 0) diff += 24 * 3600;
+                             currentSessionSecs = diff;
+                           }
+                        }
+
+                        let totalWorkedSecs = totalMins * 60 + currentSessionSecs;
+                        let totalWorkedMins = Math.floor(totalWorkedSecs / 60);
+
+                        // Calculate total elapsed
+                        let elapsedMins = 0;
+                        if (firstIn !== "23:59") {
+                          const [inH, inM] = firstIn.split(':').map(Number);
+                          let endH, endM;
+                          if (isActive) {
+                            endH = time.getHours();
+                            endM = time.getMinutes();
+                          } else if (lastOut !== "00:00") {
+                            const [outH, outM] = lastOut.split(':').map(Number);
+                            endH = outH; endM = outM;
+                          } else {
+                            endH = inH; endM = inM;
+                          }
+                          elapsedMins = (endH * 60 + endM) - (inH * 60 + inM);
+                          if (elapsedMins < 0) elapsedMins += 24 * 60;
+                        }
+
+                        let breakMins = Math.max(0, Math.floor(elapsedMins - totalWorkedMins));
+                        let effectiveSecs = totalWorkedSecs;
+                        
+                        if (records.length === 1 && effectiveSecs >= 240 * 60) {
+                             effectiveSecs -= 45 * 60;
+                             breakMins = 45;
+                        }
+
+                        const workedH = Math.floor(effectiveSecs / 3600);
+                        const workedM = Math.floor((effectiveSecs % 3600) / 60);
+                        const workedS = effectiveSecs % 60;
 
                         // Determine status
                         let isLate = false;
@@ -516,12 +558,14 @@ function AttendancePage() {
                                 <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
                                   <p className="font-bold text-slate-600 dark:text-slate-400">
-                                    {totalMins >= 240 ? "45m" : "0m"}
+                                    {breakMins}m
                                   </p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
-                                  <p className="font-bold text-foreground">{workedH}h {workedM}m</p>
+                                  <p className="font-bold text-foreground">
+                                    {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
+                                  </p>
                                 </div>
                               </div>
 
@@ -746,17 +790,24 @@ function AttendancePage() {
                     let lastOut = record.checkout || "00:00";
                     let isActive = !record.checkout;
                     
-                    let totalMins = 0;
+                    let totalSecs = 0;
                     if (record.checkin && record.checkout) {
                       const [inH, inM] = record.checkin.split(':').map(Number);
                       const [outH, outM] = record.checkout.split(':').map(Number);
-                      let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                      if (diff < 0) diff += 24 * 60;
-                      totalMins += diff;
+                      let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
+                      if (diff < 0) diff += 24 * 3600;
+                      totalSecs += diff;
+                    } else if (isActive && record.checkin) {
+                      const [inH, inM] = record.checkin.split(':').map(Number);
+                      // Use the 'time' state which ticks every second
+                      let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
+                      if (diff < 0) diff += 24 * 3600;
+                      totalSecs += diff;
                     }
 
-                    const workedH = Math.floor(totalMins / 60);
-                    const workedM = totalMins % 60;
+                    const workedH = Math.floor(totalSecs / 3600);
+                    const workedM = Math.floor((totalSecs % 3600) / 60);
+                    const workedS = totalSecs % 60;
 
                     let isLate = false;
                     if (firstIn !== "23:59") {
@@ -807,7 +858,7 @@ function AttendancePage() {
                         </div>
                         
                         <div className="p-6">
-                          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock In</p>
                               <p className="font-bold text-primary dark:text-primary">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
@@ -815,6 +866,12 @@ function AttendancePage() {
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock Out</p>
                               <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
+                              <p className="font-bold text-foreground">
+                                {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
+                              </p>
                             </div>
                             <div className="col-span-2">
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Focus Note</p>
@@ -860,15 +917,15 @@ function AttendancePage() {
                     const dailyTotals = Object.values(
                       empRecords.reduce((acc: any, record: any) => {
                         if (!acc[record.date]) {
-                          acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [] };
+                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false };
                         }
                         acc[record.date].records.push(record);
                         if (record.checkin && record.checkout) {
                           const [inH, inM] = record.checkin.split(':').map(Number);
                           const [outH, outM] = record.checkout.split(':').map(Number);
-                          let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                          if (diff < 0) diff += 24 * 60;
-                          acc[record.date].totalMinutes += diff;
+                          let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
+                          if (diff < 0) diff += 24 * 3600;
+                          acc[record.date].totalSeconds += diff;
                         }
                         if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
                           acc[record.date].firstIn = record.checkin;
@@ -878,6 +935,12 @@ function AttendancePage() {
                         }
                         if (!record.checkout) {
                           acc[record.date].hasActive = true;
+                          if (record.checkin) {
+                             const [inH, inM] = record.checkin.split(':').map(Number);
+                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
+                             if (diff < 0) diff += 24 * 3600;
+                             acc[record.date].totalSeconds += diff;
+                          }
                         }
                         return acc;
                       }, {})
@@ -926,9 +989,10 @@ function AttendancePage() {
                                   <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
                                     <Building2 className="h-3 w-3 shrink-0" /> Office
                                   </span>
-                                  {!day.hasActive && day.totalMinutes > 0 && (
+                                  {day.totalSeconds > 0 && (
                                     <span className="flex items-center gap-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[10px] font-bold">
-                                      {Math.floor(day.totalMinutes / 60)}h {day.totalMinutes % 60}m
+                                      {Math.floor(day.totalSeconds / 3600)}h {Math.floor((day.totalSeconds % 3600) / 60)}m
+                                      {day.hasActive && <span className="opacity-70 ml-0.5">{day.totalSeconds % 60}s</span>}
                                     </span>
                                   )}
                                 </div>
