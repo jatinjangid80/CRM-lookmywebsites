@@ -198,6 +198,11 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
   const [amountPaid, setAmountPaid] = useState<number>(0);
   const [paymentMode, setPaymentMode] = useState<PaymentMode>("Cash");
   const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>("Pending");
+
+  // Attachments
+  const [ticketFileName, setTicketFileName] = useState<string | null>(null);
+  const [passportFileName, setPassportFileName] = useState<string | null>(null);
+  const [otherFileName, setOtherFileName] = useState<string | null>(null);
   const [transactionId, setTransactionId] = useState("");
 
   // Details Object
@@ -2221,23 +2226,49 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 col-span-full">
               <div className="space-y-3">
                 <p className="text-sm font-medium">Attachments</p>
-                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
-                  <span className="text-sm font-medium">1. Ticket / Voucher</span>
-                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
-                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
-                  </Button>
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex items-center justify-between p-3 border rounded-xl bg-card relative overflow-hidden group">
+                    <span className="text-sm font-medium z-10">1. Ticket / Voucher</span>
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                      onChange={(e) => setTicketFileName(e.target.files?.[0]?.name || null)} 
+                    />
+                    <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2 group-hover:bg-accent z-10 pointer-events-none">
+                      <Paperclip className="w-3.5 h-3.5 mr-1" /> {ticketFileName ? 'Change File' : 'Upload File'}
+                    </Button>
+                  </div>
+                  {ticketFileName && <p className="text-xs text-muted-foreground px-2 truncate max-w-full">Uploaded: {ticketFileName}</p>}
                 </div>
-                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
-                  <span className="text-sm font-medium">2. Passport / ID Copy</span>
-                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
-                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
-                  </Button>
+                
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex items-center justify-between p-3 border rounded-xl bg-card relative overflow-hidden group">
+                    <span className="text-sm font-medium z-10">2. Passport / ID Copy</span>
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                      onChange={(e) => setPassportFileName(e.target.files?.[0]?.name || null)} 
+                    />
+                    <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2 group-hover:bg-accent z-10 pointer-events-none">
+                      <Paperclip className="w-3.5 h-3.5 mr-1" /> {passportFileName ? 'Change File' : 'Upload File'}
+                    </Button>
+                  </div>
+                  {passportFileName && <p className="text-xs text-muted-foreground px-2 truncate max-w-full">Uploaded: {passportFileName}</p>}
                 </div>
-                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
-                  <span className="text-sm font-medium">3. Other Document</span>
-                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
-                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
-                  </Button>
+
+                <div className="flex flex-col gap-1 w-full">
+                  <div className="flex items-center justify-between p-3 border rounded-xl bg-card relative overflow-hidden group">
+                    <span className="text-sm font-medium z-10">3. Other Document</span>
+                    <input 
+                      type="file" 
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
+                      onChange={(e) => setOtherFileName(e.target.files?.[0]?.name || null)} 
+                    />
+                    <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2 group-hover:bg-accent z-10 pointer-events-none">
+                      <Paperclip className="w-3.5 h-3.5 mr-1" /> {otherFileName ? 'Change File' : 'Upload File'}
+                    </Button>
+                  </div>
+                  {otherFileName && <p className="text-xs text-muted-foreground px-2 truncate max-w-full">Uploaded: {otherFileName}</p>}
                 </div>
               </div>
               <div className="space-y-3">
