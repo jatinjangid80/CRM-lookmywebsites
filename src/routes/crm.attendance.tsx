@@ -495,23 +495,19 @@ function AttendancePage() {
                         // 10 AM = 10 * 60 = 600
                         // 6 PM = 18 * 60 = 1080
                         // Total bounds = 480 mins
-                        let startPct = 0;
-                        let endPct = 100;
-                        if (firstIn !== "23:59") {
-                           const [h, m] = firstIn.split(':').map(Number);
-                           const startMin = (h * 60) + m;
-                           startPct = Math.max(0, Math.min(100, ((startMin - 600) / 480) * 100));
-                        }
-                        if (lastOut !== "00:00") {
-                           const [h, m] = lastOut.split(':').map(Number);
-                           const endMin = (h * 60) + m;
-                           endPct = Math.max(0, Math.min(100, ((endMin - 600) / 480) * 100));
-                        } else if (isActive) {
-                           const now = new Date();
-                           const currentMin = (now.getHours() * 60) + now.getMinutes();
-                           endPct = Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
-                        }
-                        const barWidth = Math.max(2, endPct - startPct);
+                        const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
+                          if (!timeStr) {
+                             if (isOutActive) {
+                                const now = new Date();
+                                const currentMin = (now.getHours() * 60) + now.getMinutes();
+                                return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
+                             }
+                             return 100;
+                          }
+                          const [h, m] = timeStr.split(':').map(Number);
+                          const tMin = (h * 60) + m;
+                          return Math.max(0, Math.min(100, ((tMin - 600) / 480) * 100));
+                        };
 
                         return (
                           <div key={date} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
@@ -553,7 +549,7 @@ function AttendancePage() {
                                 <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
                                   <p className="font-bold text-slate-600 dark:text-slate-400">
-                                    {breakMins}m
+                                    {Math.floor(breakMins / 60) > 0 ? `${Math.floor(breakMins / 60)}h ` : ''}{breakMins % 60}m
                                   </p>
                                 </div>
                                 <div>
@@ -565,16 +561,47 @@ function AttendancePage() {
                               </div>
 
                               {/* Timeline Visual */}
+                              {records.length > 1 && (
+                                <div className="mb-4 pt-4 border-t border-border/30">
+                                  <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({records.length})</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {records.map((r: any, i: number) => (
+                                      <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
+                                        {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              )}
+
                               <div className="mt-4 pt-4 border-t border-border/60">
                                 <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
                                   <span>10:00 AM</span>
                                   <span>06:00 PM</span>
                                 </div>
                                 <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
-                                  <div 
-                                    className={`absolute top-0 bottom-0 ${isActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
-                                    style={{ left: `${startPct}%`, width: `${barWidth}%` }}
-                                  />
+                                  <TooltipProvider>
+                                    {records.map((r: any, idx: number) => {
+                                      const sPct = getPercent(r.checkin);
+                                      const isRecActive = !r.checkout;
+                                      const ePct = getPercent(r.checkout, isRecActive);
+                                      const wPct = Math.max(0.5, ePct - sPct);
+                                      const tooltipText = `${r.checkin ? formatTime12Hour(r.checkin) : '--'} - ${r.checkout ? formatTime12Hour(r.checkout) : 'Active'}`;
+                                      return (
+                                        <Tooltip key={idx}>
+                                          <TooltipTrigger asChild>
+                                            <div 
+                                              className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
+                                              style={{ left: `${sPct}%`, width: `${wPct}%` }}
+                                            />
+                                          </TooltipTrigger>
+                                          <TooltipContent>
+                                            <p className="font-semibold text-xs">{tooltipText}</p>
+                                          </TooltipContent>
+                                        </Tooltip>
+                                      );
+                                    })}
+                                  </TooltipProvider>
                                 </div>
                               </div>
                             </div>
