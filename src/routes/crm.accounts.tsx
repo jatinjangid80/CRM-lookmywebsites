@@ -1047,7 +1047,7 @@ function AccountsPage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
             {followUpsList.map(fu => (
               <div key={fu.id} className={cn("rounded-2xl border p-5 shadow-sm transition-all", fu.status === 'Completed' ? "bg-emerald-50/40 border-emerald-100" : "bg-card border-border hover:shadow-md")}>
                 <div className="flex justify-between items-start mb-4">
