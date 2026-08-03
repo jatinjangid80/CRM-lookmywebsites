@@ -63,6 +63,7 @@ function CustomersPage() {
   const [bookings] = useSupabaseTable<any[]>("bookings", []);
   const [tasks] = useSupabaseTable<any[]>("tasks", []);
   const [localEmployees] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
+  const [insurancePolicies] = useSupabaseTable<any[]>("insurance_policies", []);
   
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const auth = getAuth();
@@ -84,6 +85,7 @@ function CustomersPage() {
   const [filterStatus, setFilterStatus] = useState("All");
   const [filterCity, setFilterCity] = useState("All");
   const [filterAssignee, setFilterAssignee] = useState("All");
+  const [filterCategory, setFilterCategory] = useState("All Categories");
   const [sortField, setSortField] = useState<string>("id");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [currentPage, setCurrentPage] = useState(1);
@@ -231,12 +233,35 @@ function CustomersPage() {
     document.body.removeChild(link);
   };
 
+  const { travelPhones, insurancePhones } = useMemo(() => {
+    const tp = new Set<string>();
+    const ip = new Set<string>();
+
+    bookings?.forEach(b => {
+      if (b.mobileNumber) tp.add(String(b.mobileNumber).trim());
+    });
+    leads?.forEach(l => {
+      if (l.phone) tp.add(String(l.phone).trim());
+    });
+
+    insurancePolicies?.forEach(p => {
+      if (p.mobile_number) ip.add(String(p.mobile_number).trim());
+      if (p.customer_phone) ip.add(String(p.customer_phone).trim());
+    });
+
+    return { travelPhones: tp, insurancePhones: ip };
+  }, [bookings, leads, insurancePolicies]);
+
   const filtered = useMemo(() => {
     return customerList.filter(
       (c) =>
         (filterStatus === "All" || c.status === filterStatus) &&
         (filterCity === "All" || c.city === filterCity) &&
         (filterAssignee === "All" || c.assignedTo === filterAssignee) &&
+        (filterCategory === "All Categories" || 
+          (filterCategory === "Travel" && c.phone && travelPhones.has(String(c.phone).trim())) ||
+          (filterCategory === "Gen. Insurance" && c.phone && insurancePhones.has(String(c.phone).trim()))
+        ) &&
         (q === "" ||
           c.name?.toLowerCase().includes(q.toLowerCase()) ||
           c.phone?.includes(q) ||
@@ -264,9 +289,10 @@ function CustomersPage() {
       if (strA > strB) return sortOrder === "asc" ? 1 : -1;
       return 0;
     });
-  }, [customerList, filterStatus, filterCity, filterAssignee, q, sortField, sortOrder]);
+  }, [customerList, filterStatus, filterCity, filterAssignee, filterCategory, q, sortField, sortOrder, travelPhones, insurancePhones]);
 
   // Pagination removed - showing all data with scroll
+
 
   const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
@@ -352,6 +378,17 @@ function CustomersPage() {
             </SelectContent>
           </Select>
 
+          <Select value={filterCategory} onValueChange={(v) => { setFilterCategory(v); setCurrentPage(1); }}>
+            <SelectTrigger className="w-[150px] bg-background h-10 rounded-xl border border-border shadow-sm font-medium">
+              <SelectValue placeholder="All Categories" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="All Categories">All Categories</SelectItem>
+              <SelectItem value="Travel">Travel</SelectItem>
+              <SelectItem value="Gen. Insurance">Gen. Insurance</SelectItem>
+            </SelectContent>
+          </Select>
+
           <div className="text-sm text-muted-foreground whitespace-nowrap font-medium px-2">
             {filtered.length} customers
           </div>
@@ -399,6 +436,14 @@ function CustomersPage() {
                       <div>
                         <div className="font-semibold text-foreground">{c.name}</div>
                         <div className="text-xs text-muted-foreground">{c.id}</div>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {c.phone && travelPhones.has(String(c.phone).trim()) && (
+                            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 font-medium">Travel</span>
+                          )}
+                          {c.phone && insurancePhones.has(String(c.phone).trim()) && (
+                            <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">Gen. Insurance</span>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </TableCell>

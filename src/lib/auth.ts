@@ -77,16 +77,21 @@ export async function login(username: string, password: string): Promise<AuthUse
           emp.profile_details.password === password,
       );
       if (dynamicMatch) {
-        const accessRole = dynamicMatch.accessRole
+        let accessRole = dynamicMatch.accessRole
           ? dynamicMatch.accessRole.toLowerCase()
-          : (dynamicMatch.role === "HR & Admin Manager" ||
-            dynamicMatch.role?.toLowerCase().includes("admin") ||
-            dynamicMatch.role?.toLowerCase().includes("ceo") ||
-            dynamicMatch.role?.toLowerCase().includes("founder") ||
-            dynamicMatch.name?.toLowerCase().includes("manvendra") ||
-            dynamicMatch.name?.toLowerCase().includes("jatin"))
-            ? "admin"
-            : "employee";
+          : "employee";
+          
+        if (
+          dynamicMatch.role === "HR & Admin Manager" ||
+          dynamicMatch.role?.toLowerCase().includes("admin") ||
+          dynamicMatch.role?.toLowerCase().includes("ceo") ||
+          dynamicMatch.role?.toLowerCase().includes("founder") ||
+          dynamicMatch.name?.toLowerCase().includes("manvendra") ||
+          dynamicMatch.name?.toLowerCase().includes("jatin") ||
+          dynamicMatch.name?.toLowerCase().includes("aman")
+        ) {
+          accessRole = "admin";
+        }
         const user: AuthUser = {
           role: accessRole as UserRole,
           name: dynamicMatch.name,

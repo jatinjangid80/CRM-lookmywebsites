@@ -15,7 +15,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Booking, BookingType, PaymentMode, PaymentStatus } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown, Trash2 } from "lucide-react";
+import { Plane, Train, Hotel, Map, Car, FileText, Shield, Bus, Calculator, Plus, X, Check, ChevronsUpDown, Trash2, Paperclip } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Command, CommandInput, CommandEmpty, CommandGroup, CommandItem, CommandList } from "@/components/ui/command";
 import { cn } from "@/lib/utils";
@@ -2217,13 +2217,38 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
             </div>
 
 
-            {renderSectionHeader("Remarks")}
-            <div className="space-y-2 col-span-full">
-              <Input
-                value={remarks}
-                onChange={(e) => setRemarks(e.target.value)}
-                placeholder="Add any additional notes here..."
-              />
+            {renderSectionHeader("Attachments & Remarks")}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 col-span-full">
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Attachments</p>
+                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
+                  <span className="text-sm font-medium">1. Ticket / Voucher</span>
+                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
+                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
+                  <span className="text-sm font-medium">2. Passport / ID Copy</span>
+                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
+                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between p-3 border rounded-xl bg-card">
+                  <span className="text-sm font-medium">3. Other Document</span>
+                  <Button type="button" variant="outline" size="sm" className="h-8 rounded-full shadow-sm text-xs border-dashed border-2">
+                    <Paperclip className="w-3.5 h-3.5 mr-1" /> Upload File
+                  </Button>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <p className="text-sm font-medium">Remark</p>
+                <Textarea
+                  value={remarks}
+                  onChange={(e) => setRemarks(e.target.value)}
+                  placeholder="Add any remarks or notes..."
+                  className="min-h-[160px] resize-none bg-card rounded-xl"
+                />
+              </div>
             </div>
           </div>
 

@@ -403,30 +403,59 @@ function BookingsPage() {
 
   // Export state
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportScope, setExportScope] = useState<string>("All");
+
+  const getBookingsToExport = () => {
+    if (exportScope === "All") return filteredBookings;
+    return filteredBookings.filter(b => b.bookingType === exportScope);
+  };
+
+  // Shared export mapping
+  const exportHeaders = [
+    "ID",
+    "Type",
+    "Customer",
+    "Mobile",
+    "Booking Date",
+    "Travel Date",
+    "Supplier",
+    "PNR/Ref",
+    "Package/Sector",
+    "Booked By",
+    "Payment Mode",
+    "Selling Price (₹)",
+    "Purchase Price (₹)",
+    "Profit (₹)",
+    "Paid (₹)",
+    "Status"
+  ];
+
+  const getExportRow = (b: ExtBooking) => [
+    b.id || "-",
+    b.bookingType || "-",
+    b.customer || "-",
+    b.mobileNumber || "-",
+    b.bookingDate || "-",
+    b.details?.travelDate || b.travelDate || "-",
+    b.supplier || "-",
+    b.details?.pnr || b.reference || "-",
+    b.package || b.details?.sector || b.details?.airline || "-",
+    b.bookedBy || "-",
+    b.paymentMode || "-",
+    b.sellingPrice || b.amount || 0,
+    b.purchasePrice || 0,
+    b.profit || 0,
+    b.paid || 0,
+    b.status || "-"
+  ];
 
   // Export: Excel / CSV
   const exportToExcel = () => {
-    const headers = [
-      "ID",
-      "Customer",
-      "Package",
-      "Travel Date",
-      "Amount (₹)",
-      "Paid (₹)",
-      "Status",
-    ];
+    const dataToExport = getBookingsToExport();
     const csvRows = [
-      headers.join(","),
-      ...filteredBookings.map((b) =>
-        [
-          `"${b.id}"`,
-          `"${b.customer.replace(/"/g, '""')}"`,
-          `"${b.package.replace(/"/g, '""')}"`,
-          `"${b.travelDate}"`,
-          b.amount,
-          b.paid,
-          `"${b.status}"`,
-        ].join(","),
+      exportHeaders.join(","),
+      ...dataToExport.map((b) =>
+        getExportRow(b).map(val => `"${String(val).replace(/"/g, '""')}"`).join(",")
       ),
     ];
     const blob = new Blob([csvRows.join("\n")], { type: "text/csv;charset=utf-8;" });
@@ -441,17 +470,14 @@ function BookingsPage() {
 
   // Export: Word (.doc)
   const exportToWord = () => {
-    const tableHeader =
-      "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = filteredBookings
-      .map(
-        (b) =>
-          `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>₹${b.amount}</td><td>₹${b.paid}</td><td>${b.status}</td></tr>`,
-      )
+    const dataToExport = getBookingsToExport();
+    const tableHeader = `<tr>${exportHeaders.map(h => `<th>${h}</th>`).join("")}</tr>`;
+    const tableRows = dataToExport
+      .map(b => `<tr>${getExportRow(b).map(val => `<td>${val}</td>`).join("")}</tr>`)
       .join("");
     const htmlString = `
       <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
-      <head><title>Bookings Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <head><title>Bookings Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; font-size: 11px; } th, td { border: 1px solid #dddddd; padding: 6px; text-align: left; } th { background-color: #f2f2f2; font-weight: bold; }</style></head>
       <body><h2>Grand Journeys CRM - Bookings Export</h2><table>${tableHeader}${tableRows}</table></body>
       </html>
     `;
@@ -467,24 +493,20 @@ function BookingsPage() {
 
   // Export: PDF
   const exportToPDF = () => {
+    const dataToExport = getBookingsToExport();
     const printWindow = window.open("", "_blank");
     if (!printWindow) return;
-    const tableHeader =
-      "<tr><th>ID</th><th>Customer</th><th>Package</th><th>Travel Date</th><th>Amount</th><th>Paid</th><th>Status</th></tr>";
-    const tableRows = filteredBookings
-      .map(
-        (b) =>
-          `<tr><td>${b.id}</td><td>${b.customer}</td><td>${b.package}</td><td>${b.travelDate}</td><td>\u20b9${b.amount}</td><td>\u20b9${b.paid}</td><td>${b.status}</td></tr>`,
-      )
+    const tableHeader = `<tr>${exportHeaders.map(h => `<th>${h}</th>`).join("")}</tr>`;
+    const tableRows = dataToExport
+      .map(b => `<tr>${getExportRow(b).map(val => `<td>${val}</td>`).join("")}</tr>`)
       .join("");
-    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
-    const styleEl = printWindow.document.createElement("style");
-    styleEl.textContent = css;
-    printWindow.document.head.appendChild(styleEl);
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const docHtml = `<!DOCTYPE html><html><head><title>Bookings PDF</title><style>${css}</style></head><body>`;
+    
     const titleEl = printWindow.document.createElement("title");
     titleEl.textContent = "Bookings Export PDF";
     printWindow.document.head.appendChild(titleEl);
-    const bodyHtml = `<h2>Grand Journeys CRM - Bookings Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${filteredBookings.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const bodyHtml = `<h2>Grand Journeys CRM - Bookings Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Bookings: ${dataToExport.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
     const wrapper = printWindow.document.createElement("div");
     wrapper.innerHTML = bodyHtml;
     printWindow.document.body.appendChild(wrapper);
@@ -1400,91 +1422,7 @@ function BookingsPage() {
           </div>
         </div>
 
-        {/* Row 4: Charts */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-          {/* Bookings by Service */}
-          <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">
-              Bookings by Service
-            </h3>
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart
-                  data={dashboardData.serviceData}
-                  layout="vertical"
-                  margin={{ top: 0, right: 20, left: 10, bottom: 0 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e5e7eb" />
-                  <XAxis type="number" hide />
-                  <YAxis
-                    dataKey="name"
-                    type="category"
-                    axisLine={false}
-                    tickLine={false}
-                    tick={{ fontSize: 12, fill: "#6b7280" }}
-                    width={90}
-                  />
-                  <Tooltip
-                    cursor={{ fill: "rgba(0,0,0,0.05)" }}
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                  <Bar dataKey="value" radius={[0, 4, 4, 0]} barSize={20}>
-                    {dashboardData.serviceData.map((_, index) => (
-                      <Cell 
-                        key={`cell-${index}`} 
-                        fill={`color-mix(in oklch, var(--primary) ${100 - (index * 15)}%, var(--background))`} 
-                      />
-                    ))}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
 
-          {/* Booking Status */}
-          <div className="bg-card border border-border rounded-2xl shadow-sm p-5">
-            <h3 className="text-sm font-bold uppercase tracking-wider text-muted-foreground mb-6">
-              Booking Status
-            </h3>
-            <div className="h-[250px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={dashboardData.statusData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                    stroke="none"
-                  >
-                    {dashboardData.statusData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{
-                      borderRadius: "12px",
-                      border: "none",
-                      boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)",
-                    }}
-                  />
-                  <Legend
-                    verticalAlign="bottom"
-                    height={36}
-                    iconType="circle"
-                    wrapperStyle={{ fontSize: "12px" }}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Filter and Search Navigation */}
@@ -1756,12 +1694,29 @@ function BookingsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Bookings</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {filteredBookings.length} bookings in your preferred file
-              format.
+              Export bookings in your preferred file format. You can choose to export all currently filtered bookings or only a specific service type.
             </DialogDescription>
           </DialogHeader>
 
-          <div className="grid grid-cols-3 gap-3 py-6">
+          <div className="py-2 mt-2">
+            <label className="text-xs font-semibold text-muted-foreground mb-2 block uppercase tracking-wider">
+              Export Type
+            </label>
+            <select
+              value={exportScope}
+              onChange={(e) => setExportScope(e.target.value)}
+              className="w-full h-11 px-3 rounded-xl border border-border bg-secondary/20 text-sm focus:outline-none focus:border-primary transition-colors cursor-pointer"
+            >
+              <option value="All">Completely Export (All Bookings)</option>
+              {SERVICES.flatMap(g => g.items).map((s) => (
+                <option key={s.label} value={s.label}>
+                  {s.icon} {s.label} Only
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-4">
             <button
               type="button"
               onClick={() => {

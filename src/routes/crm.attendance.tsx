@@ -602,21 +602,30 @@ function AttendancePage() {
                     const dailyTotals = Object.values(
                       myRecords.reduce((acc: any, record: any) => {
                         if (!acc[record.date]) {
-                          acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [] };
+                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false };
                         }
                         acc[record.date].records.push(record);
                         if (record.checkin && record.checkout) {
                           const [inH, inM] = record.checkin.split(':').map(Number);
                           const [outH, outM] = record.checkout.split(':').map(Number);
-                          let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                          if (diff < 0) diff += 24 * 60;
-                          acc[record.date].totalMinutes += diff;
+                          let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
+                          if (diff < 0) diff += 24 * 3600;
+                          acc[record.date].totalSeconds += diff;
                         }
                         if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
                           acc[record.date].firstIn = record.checkin;
                         }
                         if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
                           acc[record.date].lastOut = record.checkout;
+                        }
+                        if (!record.checkout) {
+                          acc[record.date].hasActive = true;
+                          if (record.checkin) {
+                             const [inH, inM] = record.checkin.split(':').map(Number);
+                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
+                             if (diff < 0) diff += 24 * 3600;
+                             acc[record.date].totalSeconds += diff;
+                          }
                         }
                         return acc;
                       }, {})
@@ -646,10 +655,10 @@ function AttendancePage() {
                         
                         let isLate = false;
                         if (dayData) {
-                            const effMins = dayData.totalMinutes >= 240 ? dayData.totalMinutes - 45 : dayData.totalMinutes;
-                            const workedH = Math.floor(effMins / 60);
-                            const workedM = effMins % 60;
-                            const isHalfDay = dayData.totalMinutes > 0 && dayData.totalMinutes < 240;
+                            const effSecs = dayData.totalSeconds >= 240 * 60 ? dayData.totalSeconds - 45 * 60 : dayData.totalSeconds;
+                            const workedH = Math.floor(effSecs / 3600);
+                            const workedM = Math.floor((effSecs % 3600) / 60);
+                            const isHalfDay = dayData.totalSeconds > 0 && dayData.totalSeconds < 240 * 60;
                             isLate = dayData.firstIn > "10:15";
                             
                             if (isHalfDay) {
@@ -724,7 +733,7 @@ function AttendancePage() {
         {isAdmin && (
           <>
             <TabsContent value="team" className="m-0 border-none p-0 outline-none space-y-6">
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present Today</span>
@@ -740,14 +749,6 @@ function AttendancePage() {
                   </div>
                   <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / 7) * 100) || 0}%</div>
                   <p className="text-xs text-muted-foreground">Active ratio</p>
-                </div>
-                <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Office</span>
-                    <Smartphone className="h-4 w-4 text-blue-500" />
-                  </div>
-                  <div className="text-2xl font-bold">{teamTodayRecords.filter(r => r.location === "Office").length} in Office</div>
-                  <p className="text-xs text-muted-foreground">Location distribution</p>
                 </div>
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
@@ -1236,7 +1237,7 @@ function AttendancePage() {
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Check Out</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                  <p className="text-lg font-bold">{selectedDayInfo?.lastOut ? formatTime12Hour(selectedDayInfo.lastOut) : "--:--"}</p>
+                  <p className="text-lg font-bold">{selectedDayInfo?.lastOut ? formatTime12Hour(selectedDayInfo.lastOut) : (selectedDayInfo?.hasActive ? "Active Shift" : "--:--")}</p>
                 </div>
               </div>
 
@@ -1244,7 +1245,17 @@ function AttendancePage() {
                 <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Worked</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                  <p className="text-lg font-bold">{selectedDayInfo?.totalMinutes ? `${Math.floor((selectedDayInfo.totalMinutes >= 240 ? selectedDayInfo.totalMinutes - 45 : selectedDayInfo.totalMinutes) / 60)}h ${(selectedDayInfo.totalMinutes >= 240 ? selectedDayInfo.totalMinutes - 45 : selectedDayInfo.totalMinutes) % 60}m` : "0h 0m"}</p>
+                  <p className="text-lg font-bold">
+                    {selectedDayInfo?.totalSeconds ? (
+                        (() => {
+                           const eff = selectedDayInfo.totalSeconds >= 240 * 60 ? selectedDayInfo.totalSeconds - 45 * 60 : selectedDayInfo.totalSeconds;
+                           const h = Math.floor(eff / 3600);
+                           const m = Math.floor((eff % 3600) / 60);
+                           const s = eff % 60;
+                           return <>{h}h {m}m {selectedDayInfo.hasActive && <span className="text-muted-foreground/70 text-sm ml-1">{s}s</span>}</>;
+                        })()
+                    ) : "0h 0m"}
+                  </p>
                 </div>
               </div>
               
@@ -1254,18 +1265,46 @@ function AttendancePage() {
                   {selectedDayInfo?.isAbsent ? (
                     <span className="inline-flex items-center gap-1.5 bg-rose-100 text-rose-700 px-2 py-1 rounded-md text-sm"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent</span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-sm"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span> Present</span>
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-sm">
+                        <span className={`h-1.5 w-1.5 rounded-full ${selectedDayInfo?.hasActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`}></span> 
+                        {selectedDayInfo?.hasActive ? "Active" : "Present"}
+                    </span>
                   )}
                 </p>
               </div>
             </div>
             
             {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "10:15" && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 mt-6">
                 <div className="bg-amber-100 text-amber-700 p-2 rounded-full shrink-0">⚠️</div>
                 <div>
                   <h4 className="font-semibold text-amber-900">Late Arrival</h4>
                   <p className="text-sm text-amber-700">Check-in was after the expected 10:15 AM threshold.</p>
+                </div>
+              </div>
+            )}
+
+            {selectedDayInfo?.records && selectedDayInfo.records.length > 0 && (
+              <div className="mt-8">
+                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 border-b border-border pb-2">
+                  All Punches Today ({selectedDayInfo.records.length})
+                </h4>
+                <div className="space-y-3">
+                   {selectedDayInfo.records.map((r: any, idx: number) => (
+                      <div key={idx} className="flex justify-between items-center p-4 bg-secondary/20 rounded-xl border border-border/50">
+                        <div className="flex items-center gap-4">
+                           <div className="w-1 h-10 bg-primary/40 rounded-full"></div>
+                           <div>
+                              <p className="font-bold text-foreground text-base">{r.checkin ? formatTime12Hour(r.checkin) : "--:--"}</p>
+                              <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Clock In</p>
+                           </div>
+                        </div>
+                        <div className="text-right">
+                           <p className="font-bold text-rose-600 dark:text-rose-400 text-base">{r.checkout ? formatTime12Hour(r.checkout) : "Active Shift"}</p>
+                           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Clock Out</p>
+                        </div>
+                      </div>
+                   ))}
                 </div>
               </div>
             )}

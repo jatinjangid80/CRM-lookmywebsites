@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import {
   Plus,
@@ -20,6 +20,7 @@ import {
   Circle,
   Phone,
   Gift,
+  MessageCircle,
 } from "lucide-react";
 import {
   LineChart,
@@ -148,6 +149,9 @@ function Dashboard() {
   // Accounts tables for KPIs
   const [transactions] = useSupabaseTable<any[]>("transactions", []);
   const [followUpsList] = useSupabaseTable<any[]>("payment_followups", []);
+  const [insuranceList] = useSupabaseTable<any[]>("insurance_policies", []);
+
+  const [topClientType, setTopClientType] = useState<"Travel" | "Insurance">("Travel");
 
   const todayStr = new Date().toISOString().slice(0, 10);
 
@@ -280,8 +284,8 @@ function Dashboard() {
     })
     .sort((a, b) => b.completionRate - a.completionRate || b.totalTasks - a.totalTasks);
 
-  // Top Clients Aggregation
-  const clientStatsMap: Record<
+  // Top Clients Aggregation - Travel
+  const travelClientStatsMap: Record<
     string,
     {
       name: string;
@@ -293,20 +297,51 @@ function Dashboard() {
   bookingsList.forEach((b) => {
     const name = b.customer;
     if (!name) return;
-    if (!clientStatsMap[name]) {
-      clientStatsMap[name] = {
+    if (!travelClientStatsMap[name]) {
+      travelClientStatsMap[name] = {
         name,
         totalBookings: 0,
         totalRevenue: 0,
       };
     }
-    clientStatsMap[name].totalBookings += 1;
-    clientStatsMap[name].totalRevenue += b.amount || 0;
+    travelClientStatsMap[name].totalBookings += 1;
+    travelClientStatsMap[name].totalRevenue += b.amount || 0;
   });
 
-  const topClients = Object.values(clientStatsMap)
+  const topClientsTravel = Object.values(travelClientStatsMap)
     .sort((a, b) => b.totalRevenue - a.totalRevenue || b.totalBookings - a.totalBookings)
     .slice(0, 5); // top 5
+    
+  // Top Clients Aggregation - General Insurance
+  const insClientStatsMap: Record<
+    string,
+    {
+      name: string;
+      totalBookings: number;
+      totalRevenue: number;
+    }
+  > = {};
+
+  insuranceList.forEach((p) => {
+    const name = p.customer_name || p.customer;
+    if (!name) return;
+    if (!insClientStatsMap[name]) {
+      insClientStatsMap[name] = {
+        name,
+        totalBookings: 0,
+        totalRevenue: 0,
+      };
+    }
+    insClientStatsMap[name].totalBookings += 1;
+    const paid = Number(p.customer_paid) || Number(p.amount_paid) || 0;
+    insClientStatsMap[name].totalRevenue += paid;
+  });
+
+  const topClientsInsurance = Object.values(insClientStatsMap)
+    .sort((a, b) => b.totalRevenue - a.totalRevenue || b.totalBookings - a.totalBookings)
+    .slice(0, 5); // top 5
+    
+  const topClients = topClientType === "Travel" ? topClientsTravel : topClientsInsurance;
 
   // Booking Trend
   const bookingTrendData = useMemo(() => {
@@ -387,7 +422,7 @@ function Dashboard() {
   const upcomingEvents = useMemo(() => {
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const events: { id: string, name: string, type: "Birthday" | "Anniversary", date: Date, originalDate: string, daysUntil: number }[] = [];
+    const events: { id: string, name: string, type: "Birthday" | "Anniversary", date: Date, originalDate: string, daysUntil: number, phone: string }[] = [];
 
     (customersList || []).forEach(c => {
       if (c.dob) {
@@ -397,7 +432,7 @@ function Dashboard() {
           if (nextBday < today) nextBday.setFullYear(today.getFullYear() + 1);
           const diff = Math.ceil((nextBday.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           if (diff <= 30) {
-            events.push({ id: c.id, name: c.name, type: "Birthday", date: nextBday, originalDate: c.dob, daysUntil: diff });
+            events.push({ id: c.id, name: c.name, type: "Birthday", date: nextBday, originalDate: c.dob, daysUntil: diff, phone: c.phone || "" });
           }
         }
       }
@@ -408,7 +443,7 @@ function Dashboard() {
           if (nextAnniv < today) nextAnniv.setFullYear(today.getFullYear() + 1);
           const diff = Math.ceil((nextAnniv.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
           if (diff <= 30) {
-            events.push({ id: c.id, name: c.name, type: "Anniversary", date: nextAnniv, originalDate: c.dateOfAnniversary, daysUntil: diff });
+            events.push({ id: c.id, name: c.name, type: "Anniversary", date: nextAnniv, originalDate: c.dateOfAnniversary, daysUntil: diff, phone: c.phone || "" });
           }
         }
       }
@@ -1027,14 +1062,27 @@ function Dashboard() {
                         <span>Turns {new Date().getFullYear() - new Date(event.originalDate).getFullYear()}</span>
                       </p>
                     </div>
-                    <div className="shrink-0 text-right">
-                      <p className="text-[10px] font-semibold text-foreground bg-secondary px-2 py-1 rounded-md">
-                        {event.date.toLocaleDateString(undefined, {
-                          month: "short",
-                          day: "numeric",
-                        })}
-                      </p>
-                  <p className="text-[10px] text-muted-foreground mt-1">
+                    <div className="shrink-0 text-right flex flex-col items-end gap-2">
+                      <div className="flex items-center gap-2">
+                        {event.phone && (
+                          <a
+                            href={`https://wa.me/${event.phone.replace(/\\D/g, '')}?text=Happy%20${event.type}%20${event.name}!`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="bg-green-500/10 text-green-600 hover:bg-green-500 hover:text-white transition-colors p-1.5 rounded-full"
+                            title={`Send WhatsApp message to ${event.name}`}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                          </a>
+                        )}
+                        <p className="text-[10px] font-semibold text-foreground bg-secondary px-2 py-1 rounded-md">
+                          {event.date.toLocaleDateString(undefined, {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </p>
+                      </div>
+                      <p className="text-[10px] text-muted-foreground mt-1">
                         {event.daysUntil === 0 ? "Today!" : `In ${event.daysUntil} days`}
                       </p>
                     </div>
@@ -1077,6 +1125,28 @@ function Dashboard() {
                   Highest contributing customers by revenue
                 </p>
               </div>
+              <div className="flex items-center gap-1 bg-secondary p-1 rounded-lg">
+                <button
+                  onClick={() => setTopClientType("Travel")}
+                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                    topClientType === "Travel"
+                      ? "bg-primary text-primary-foreground shadow"
+                      : "text-muted-foreground hover:bg-background/50"
+                  }`}
+                >
+                  Travel
+                </button>
+                <button
+                  onClick={() => setTopClientType("Insurance")}
+                  className={`px-2 py-1 text-xs rounded-md transition-colors ${
+                    topClientType === "Insurance"
+                      ? "bg-primary text-primary-foreground shadow"
+                      : "text-muted-foreground hover:bg-background/50"
+                  }`}
+                >
+                  Gen Insurance
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
@@ -1095,7 +1165,7 @@ function Dashboard() {
                       <div className="min-w-0">
                         <p className="text-sm font-semibold truncate text-foreground">{client.name}</p>
                         <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2">
-                          <span>{client.totalBookings} {client.totalBookings === 1 ? "Booking" : "Bookings"}</span>
+                          <span>{client.totalBookings} {topClientType === "Travel" ? (client.totalBookings === 1 ? "Booking" : "Bookings") : (client.totalBookings === 1 ? "Policy" : "Policies")}</span>
                         </p>
                       </div>
                     </div>
@@ -1111,7 +1181,7 @@ function Dashboard() {
                   <Star className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
                   <p className="text-sm font-semibold text-foreground">No top clients yet</p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    Complete some bookings to see your top clients here.
+                    {topClientType === "Travel" ? "Complete some bookings to see your top clients here." : "Add some insurance policies to see your top clients here."}
                   </p>
                 </div>
               )}

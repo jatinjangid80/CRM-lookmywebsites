@@ -375,7 +375,7 @@ function AccountsPage() {
             ...f,
             notes: logNotes || f.notes,
             nextFollowUpDate: logDate || f.nextFollowUpDate,
-            outcomeLog: logStatus 
+            outcomeLog: logStatus
               ? [...(f.outcomeLog || []), { status: logStatus, date: new Date().toISOString(), by: auth?.name || "Unknown" }]
               : f.outcomeLog || []
           }
@@ -872,168 +872,168 @@ function AccountsPage() {
 
         {canViewExpenses && (
           <TabsContent value="expenses" className="space-y-6 mt-6">
-          {/* Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-500">
-                <TrendingDown className="h-6 w-6" />
+            {/* Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-blue-500/10 text-blue-500">
+                  <TrendingDown className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground">Total Expenses</p>
+                  <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(totalExpenses)}</p>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground">Total Expenses</p>
-                <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(totalExpenses)}</p>
+              <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
+                <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-orange-100 text-orange-600">
+                  <AlertCircle className="h-6 w-6" />
+                </div>
+                <div>
+                  <p className="text-sm font-semibold text-muted-foreground">Pending Approvals</p>
+                  <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(pendingExpenses)}</p>
+                </div>
               </div>
             </div>
-            <div className="bg-card border border-border rounded-2xl p-6 shadow-sm flex items-center gap-4">
-              <div className="h-12 w-12 rounded-xl flex items-center justify-center shrink-0 bg-orange-100 text-orange-600">
-                <AlertCircle className="h-6 w-6" />
-              </div>
-              <div>
-                <p className="text-sm font-semibold text-muted-foreground">Pending Approvals</p>
-                <p className="text-3xl font-display font-bold text-foreground mt-1">{formatINR(pendingExpenses)}</p>
-              </div>
-            </div>
-          </div>
 
-          <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 mr-2">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">From:</span>
-                <Input
-                  type="date"
-                  value={expenseDateFrom}
-                  onChange={(e) => setExpenseDateFrom(e.target.value)}
-                  className="h-9 w-[130px] rounded-lg shadow-sm"
-                />
+            <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 mr-2">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">From:</span>
+                  <Input
+                    type="date"
+                    value={expenseDateFrom}
+                    onChange={(e) => setExpenseDateFrom(e.target.value)}
+                    className="h-9 w-[130px] rounded-lg shadow-sm"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">To:</span>
+                  <Input
+                    type="date"
+                    value={expenseDateTo}
+                    onChange={(e) => setExpenseDateTo(e.target.value)}
+                    className="h-9 w-[130px] rounded-lg shadow-sm"
+                  />
+                </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">To:</span>
-                <Input
-                  type="date"
-                  value={expenseDateTo}
-                  onChange={(e) => setExpenseDateTo(e.target.value)}
-                  className="h-9 w-[130px] rounded-lg shadow-sm"
-                />
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search expenses..."
-                  value={expenseSearchQuery}
-                  onChange={(e) => setExpenseSearchQuery(e.target.value)}
-                  className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
-                />
-              </div>
-              {isAdmin && (
-                <Button variant="outline" size="sm" onClick={handleExportExpenses} className="h-9 shadow-sm">
-                  <Download className="mr-2 h-4 w-4" /> Export
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search expenses..."
+                    value={expenseSearchQuery}
+                    onChange={(e) => setExpenseSearchQuery(e.target.value)}
+                    className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
+                  />
+                </div>
+                {isAdmin && (
+                  <Button variant="outline" size="sm" onClick={handleExportExpenses} className="h-9 shadow-sm">
+                    <Download className="mr-2 h-4 w-4" /> Export
+                  </Button>
+                )}
+                <Button onClick={() => setIsAddExpenseOpen(true)} className="h-9 shadow-sm">
+                  <Plus className="mr-2 h-4 w-4" /> Add Expense
                 </Button>
-              )}
-              <Button onClick={() => setIsAddExpenseOpen(true)} className="h-9 shadow-sm">
-                <Plus className="mr-2 h-4 w-4" /> Add Expense
-              </Button>
+              </div>
             </div>
-          </div>
 
-          <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
-            <table className="w-full text-sm text-left">
-              <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
-                <tr>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Category <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Description <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Payment Mode <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 font-semibold text-center"><div className="flex items-center justify-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
-                  <th className="px-6 py-4 text-right">Actions</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border">
-                {filteredExpenseList.map(exp => (
-                  <tr key={exp.id} className="hover:bg-secondary/20 transition-colors">
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-foreground">{exp.date}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <span className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
-                        {exp.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="text-foreground font-medium">{exp.description}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">{exp.id}</p>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <Wallet className="h-4 w-4 text-muted-foreground" />
-                        <span>{exp.paymentMode}</span>
-                      </div>
-                      {exp.reference && <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{exp.reference}</p>}
-                    </td>
-                    <td className="px-6 py-4 font-bold text-foreground">
-                      {formatINR(exp.amount)}
-                    </td>
-                    <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
-                      {exp.createdBy || "none"}
-                    </td>
-                    <td className="px-6 py-4 text-center">
-                      <Popover>
-                        <PopoverTrigger asChild>
-                          <button
-                            className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity ${exp.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : exp.status === 'Cancelled' ? 'bg-muted text-muted-foreground border-border' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
-                              }`}
-                          >
-                            {exp.status} <ChevronDown className="h-2.5 w-2.5" />
-                          </button>
-                        </PopoverTrigger>
-                        <PopoverContent className="w-36 p-1" align="center">
-                          <div className="text-[10px] text-muted-foreground px-2 py-1">Change Status</div>
-                          {(["Paid", "Pending", "Cancelled"] as Expense["status"][]).map((s) => (
+            <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
+              <table className="w-full text-sm text-left">
+                <thead className="text-xs uppercase bg-secondary/50 text-muted-foreground border-b border-border">
+                  <tr>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Date <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Category <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Description <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Payment Mode <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Amount <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold"><div className="flex items-center gap-1">Added By <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 font-semibold text-center"><div className="flex items-center justify-center gap-1">Status <ArrowUpDown className="w-3 h-3 opacity-30" /></div></th>
+                    <th className="px-6 py-4 text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  {filteredExpenseList.map(exp => (
+                    <tr key={exp.id} className="hover:bg-secondary/20 transition-colors">
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium text-foreground">{exp.date}</span>
+                        </div>
+                      </td>
+                      <td className="px-6 py-4">
+                        <span className="inline-block px-2.5 py-1 rounded-md text-xs font-semibold bg-primary/10 text-primary border border-primary/20">
+                          {exp.category}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4">
+                        <p className="text-foreground font-medium">{exp.description}</p>
+                        <p className="text-xs text-muted-foreground mt-0.5">{exp.id}</p>
+                      </td>
+                      <td className="px-6 py-4">
+                        <div className="flex items-center gap-2">
+                          <Wallet className="h-4 w-4 text-muted-foreground" />
+                          <span>{exp.paymentMode}</span>
+                        </div>
+                        {exp.reference && <p className="text-[10px] text-muted-foreground mt-0.5 font-mono">{exp.reference}</p>}
+                      </td>
+                      <td className="px-6 py-4 font-bold text-foreground">
+                        {formatINR(exp.amount)}
+                      </td>
+                      <td className="px-6 py-4 text-xs font-medium text-muted-foreground">
+                        {exp.createdBy || "none"}
+                      </td>
+                      <td className="px-6 py-4 text-center">
+                        <Popover>
+                          <PopoverTrigger asChild>
                             <button
-                              key={s}
-                              className="w-full text-left px-2 py-1.5 text-xs rounded-sm hover:bg-secondary transition-colors mt-0.5"
-                              onClick={() => setExpenseList(expenseList.map(e => e.id === exp.id ? { ...e, status: s } : e))}
+                              className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider border cursor-pointer hover:opacity-80 transition-opacity ${exp.status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : exp.status === 'Cancelled' ? 'bg-muted text-muted-foreground border-border' : 'bg-rose-500/10 text-rose-500 border-rose-500/20'
+                                }`}
                             >
-                              {s}
+                              {exp.status} <ChevronDown className="h-2.5 w-2.5" />
                             </button>
-                          ))}
-                        </PopoverContent>
-                      </Popover>
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
-                            <MoreVertical className="h-4 w-4" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" className="w-32 rounded-xl">
-                          <>{auth?.role === "admin" && (
-                            <DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
-                              <Pencil className="h-4 w-4" /> Edit
-                            </DropdownMenuItem>
-                          )}</>
-                          {isAdmin && (
+                          </PopoverTrigger>
+                          <PopoverContent className="w-36 p-1" align="center">
+                            <div className="text-[10px] text-muted-foreground px-2 py-1">Change Status</div>
+                            {(["Paid", "Pending", "Cancelled"] as Expense["status"][]).map((s) => (
+                              <button
+                                key={s}
+                                className="w-full text-left px-2 py-1.5 text-xs rounded-sm hover:bg-secondary transition-colors mt-0.5"
+                                onClick={() => setExpenseList(expenseList.map(e => e.id === exp.id ? { ...e, status: s } : e))}
+                              >
+                                {s}
+                              </button>
+                            ))}
+                          </PopoverContent>
+                        </Popover>
+                      </td>
+                      <td className="px-6 py-4 text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground">
+                              <MoreVertical className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-32 rounded-xl">
                             <>{auth?.role === "admin" && (
-                              <DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
-                                <Trash2 className="h-4 w-4" /> Delete
+                              <DropdownMenuItem onClick={() => { setEditExpense({ ...exp }); setIsEditExpenseOpen(true); }} className="cursor-pointer gap-2 py-2 text-blue-600 focus:text-blue-700">
+                                <Pencil className="h-4 w-4" /> Edit
                               </DropdownMenuItem>
                             )}</>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </TabsContent>
+                            {isAdmin && (
+                              <>{auth?.role === "admin" && (
+                                <DropdownMenuItem onClick={() => handleDelete(exp.id, "Expense")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              )}</>
+                            )}
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </TabsContent>
         )}
 
         <TabsContent value="follow-ups" className="space-y-6 mt-6">
@@ -1094,11 +1094,11 @@ function AccountsPage() {
                       <div className="space-y-2 max-h-40 overflow-y-auto pr-1 custom-scrollbar">
                         {fu.outcomeLog.map((log: any, idx: number) => (
                           <div key={idx} className="bg-background rounded-md p-2.5 text-xs border border-border/50 shadow-sm relative">
-                             <div className="font-medium text-foreground whitespace-pre-wrap break-words pr-4">{log.status}</div>
-                             <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-between border-t border-border/30 pt-1.5">
-                               <span className="font-semibold text-primary/80">{log.by}</span>
-                               <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(log.date).toLocaleString()}</span>
-                             </div>
+                            <div className="font-medium text-foreground whitespace-pre-wrap break-words pr-4">{log.status}</div>
+                            <div className="text-[10px] text-muted-foreground mt-1.5 flex items-center justify-between border-t border-border/30 pt-1.5">
+                              <span className="font-semibold text-primary/80">{log.by}</span>
+                              <span className="flex items-center gap-1"><Clock className="w-3 h-3" /> {new Date(log.date).toLocaleString()}</span>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -1170,10 +1170,12 @@ function AccountsPage() {
               </div>
             </div>
             <div className="flex items-center gap-2 shrink-0">
-              <Button variant="outline" className="shadow-sm rounded-xl px-4 h-10" onClick={handleExportTransactions}>
-                <Download className="h-4 w-4 mr-2" />
-                Export
-              </Button>
+              {isAdmin && (
+                <Button variant="outline" className="shadow-sm rounded-xl px-4 h-10" onClick={handleExportTransactions}>
+                  <Download className="h-4 w-4 mr-2" />
+                  Export
+                </Button>
+              )}
               <Button className="shadow-sm rounded-xl px-5 h-10" onClick={() => setIsAddTxOpen(true)}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Transaction
@@ -2439,8 +2441,8 @@ function AccountsPage() {
             </div>
             <div className="space-y-2">
               <Label>Outcome / Status</Label>
-              <Input 
-                placeholder="e.g. Call back tomorrow, Not interested, etc." 
+              <Input
+                placeholder="e.g. Call back tomorrow, Not interested, etc."
                 value={logStatus}
                 onChange={(e) => setLogStatus(e.target.value)}
               />
