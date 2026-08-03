@@ -594,7 +594,7 @@ function AttendancePage() {
                     const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
                     
                     // Group by date
-                    const dailyTotals = Object.values(
+                    const dailyTotals: any = Object.values(
                       myRecords.reduce((acc: any, record: any) => {
                         if (!acc[record.date]) {
                           acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false };
@@ -623,11 +623,11 @@ function AttendancePage() {
                           }
                         }
                         return acc;
-                      }, {})
+                      }, {} as Record<string, any>)
                     ).reduce((acc: any, day: any) => {
                        acc[day.date] = day;
                        return acc;
-                    }, {});
+                    }, {} as any);
 
                     const days = [];
                     for (let i = 0; i < firstDay; i++) {
@@ -779,27 +779,84 @@ function AttendancePage() {
               </div>
               <div className="space-y-4">
                 {teamTodayRecords.length > 0 ? (
-                  teamTodayRecords.map((record) => {
-                    const empDetails = getEmpDetails(record.employeeid);
+                  Object.values(
+                    teamTodayRecords.reduce((acc: any, record: any) => {
+                      if (!acc[record.employeeid]) {
+                        acc[record.employeeid] = {
+                          employeeid: record.employeeid,
+                          id: record.id,
+                          records: [],
+                          firstIn: record.checkin || "23:59",
+                          lastOut: record.checkout || "00:00",
+                          isActive: false,
+                          totalSecs: 0,
+                          notes: [],
+                          locations: [],
+                        };
+                      }
+                      
+                      const empGroup = acc[record.employeeid];
+                      empGroup.records.push(record);
+                      
+                      if (record.checkin && record.checkin < empGroup.firstIn) {
+                        empGroup.firstIn = record.checkin;
+                      }
+                      
+                      if (!record.checkout) {
+                        empGroup.isActive = true;
+                        empGroup.lastOut = "00:00";
+                      } else if (record.checkout && !empGroup.isActive && record.checkout > empGroup.lastOut) {
+                        empGroup.lastOut = record.checkout;
+                      }
+
+                      if (record.checkin && record.checkout) {
+                        const [inH, inM] = record.checkin.split(':').map(Number);
+                        const [outH, outM] = record.checkout.split(':').map(Number);
+                        let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
+                        if (diff < 0) diff += 24 * 3600;
+                        empGroup.totalSecs += diff;
+                      } else if (!record.checkout && record.checkin) {
+                        const [inH, inM] = record.checkin.split(':').map(Number);
+                        let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
+                        if (diff < 0) diff += 24 * 3600;
+                        empGroup.totalSecs += diff;
+                      }
+
+                      if (record.note && !empGroup.notes.includes(record.note)) empGroup.notes.push(record.note);
+                      if (record.location && !empGroup.locations.includes(record.location)) empGroup.locations.push(record.location);
+
+                      return acc;
+                    }, {})
+                  ).map((empGroup: any) => {
+                    const empDetails = getEmpDetails(empGroup.employeeid);
                     
-                    let firstIn = record.checkin || "23:59";
-                    let lastOut = record.checkout || "00:00";
-                    let isActive = !record.checkout;
-                    
-                    let totalSecs = 0;
-                    if (record.checkin && record.checkout) {
-                      const [inH, inM] = record.checkin.split(':').map(Number);
-                      const [outH, outM] = record.checkout.split(':').map(Number);
-                      let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                      if (diff < 0) diff += 24 * 3600;
-                      totalSecs += diff;
-                    } else if (isActive && record.checkin) {
-                      const [inH, inM] = record.checkin.split(':').map(Number);
-                      // Use the 'time' state which ticks every second
-                      let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                      if (diff < 0) diff += 24 * 3600;
-                      totalSecs += diff;
+                    let firstIn = empGroup.firstIn;
+                    let lastOut = empGroup.lastOut;
+                    let isActive = empGroup.isActive;
+                    let totalSecs = empGroup.totalSecs;
+
+                    let totalElapsedSecs = 0;
+                    if (firstIn !== "23:59") {
+                        const [fH, fM] = firstIn.split(':').map(Number);
+                        let endH = 0, endM = 0, endS = 0;
+                        if (lastOut !== "00:00") {
+                             const [lH, lM] = lastOut.split(':').map(Number);
+                             endH = lH; endM = lM; endS = 0;
+                        } else if (isActive) {
+                             const now = new Date();
+                             endH = now.getHours(); endM = now.getMinutes(); endS = now.getSeconds();
+                        }
+                        
+                        if (endH !== 0 || endM !== 0 || isActive) {
+                           let diff = (endH * 3600 + endM * 60 + endS) - (fH * 3600 + fM * 60);
+                           if (diff < 0) diff += 24 * 3600;
+                           totalElapsedSecs = diff;
+                        }
                     }
+                    
+                    const breakSecs = Math.max(0, totalElapsedSecs - totalSecs);
+                    const breakH = Math.floor(breakSecs / 3600);
+                    const breakM = Math.floor((breakSecs % 3600) / 60);
 
                     const workedH = Math.floor(totalSecs / 3600);
                     const workedM = Math.floor((totalSecs % 3600) / 60);
@@ -811,26 +868,22 @@ function AttendancePage() {
                         if (h > 10 || (h === 10 && m > 15)) isLate = true;
                     }
 
-                    let startPct = 0;
-                    let endPct = 100;
-                    if (firstIn !== "23:59") {
-                        const [h, m] = firstIn.split(':').map(Number);
-                        const startMin = (h * 60) + m;
-                        startPct = Math.max(0, Math.min(100, ((startMin - 600) / 480) * 100));
-                    }
-                    if (lastOut !== "00:00") {
-                        const [h, m] = lastOut.split(':').map(Number);
-                        const endMin = (h * 60) + m;
-                        endPct = Math.max(0, Math.min(100, ((endMin - 600) / 480) * 100));
-                    } else if (isActive) {
-                        const now = new Date();
-                        const currentMin = (now.getHours() * 60) + now.getMinutes();
-                        endPct = Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
-                    }
-                    const barWidth = Math.max(2, endPct - startPct);
+                    const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
+                      if (!timeStr) {
+                         if (isOutActive) {
+                            const now = new Date();
+                            const currentMin = (now.getHours() * 60) + now.getMinutes();
+                            return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
+                         }
+                         return 100;
+                      }
+                      const [h, m] = timeStr.split(':').map(Number);
+                      const tMin = (h * 60) + m;
+                      return Math.max(0, Math.min(100, ((tMin - 600) / 480) * 100));
+                    };
 
                     return (
-                      <div key={record.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                      <div key={empGroup.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -838,7 +891,7 @@ function AttendancePage() {
                             </div>
                             <div>
                               <h4 className="font-bold text-foreground">{empDetails.name}</h4>
-                              <p className="text-xs text-muted-foreground">{empDetails.role} • {record.location}</p>
+                              <p className="text-xs text-muted-foreground">{empDetails.role} • {empGroup.locations.join(", ") || "Office"}</p>
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
@@ -854,7 +907,7 @@ function AttendancePage() {
                         </div>
                         
                         <div className="p-6">
-                          <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-6 gap-4 mb-6">
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock In</p>
                               <p className="font-bold text-primary dark:text-primary">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
@@ -869,11 +922,30 @@ function AttendancePage() {
                                 {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
                               </p>
                             </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
+                              <p className="font-bold text-amber-600 dark:text-amber-400">
+                                {breakH}h {breakM}m
+                              </p>
+                            </div>
                             <div className="col-span-2">
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Focus Note</p>
-                              <p className="font-medium text-slate-600 dark:text-slate-400 italic">"{record.note || "No note provided"}"</p>
+                              <p className="font-medium text-slate-600 dark:text-slate-400 italic">"{empGroup.notes.join(" | ") || "No note provided"}"</p>
                             </div>
                           </div>
+
+                          {empGroup.records.length > 1 && (
+                            <div className="mb-4 pt-4 border-t border-border/30">
+                              <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({empGroup.records.length})</p>
+                              <div className="flex flex-wrap gap-2">
+                                {empGroup.records.map((r: any, i: number) => (
+                                  <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
+                                    {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
 
                           <div className="mt-4 pt-4 border-t border-border/60">
                             <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
@@ -881,10 +953,28 @@ function AttendancePage() {
                               <span>06:00 PM</span>
                             </div>
                             <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
-                              <div 
-                                className={`absolute top-0 bottom-0 ${isActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000`}
-                                style={{ left: `${startPct}%`, width: `${barWidth}%` }}
-                              />
+                              <TooltipProvider>
+                                {empGroup.records.map((r: any, idx: number) => {
+                                  const sPct = getPercent(r.checkin);
+                                  const isRecActive = !r.checkout;
+                                  const ePct = getPercent(r.checkout, isRecActive);
+                                  const wPct = Math.max(0.5, ePct - sPct);
+                                  const tooltipText = `${r.checkin ? formatTime12Hour(r.checkin) : '--'} - ${r.checkout ? formatTime12Hour(r.checkout) : 'Active'}`;
+                                  return (
+                                    <Tooltip key={idx}>
+                                      <TooltipTrigger asChild>
+                                        <div 
+                                          className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
+                                          style={{ left: `${sPct}%`, width: `${wPct}%` }}
+                                        />
+                                      </TooltipTrigger>
+                                      <TooltipContent>
+                                        <p className="font-semibold text-xs">{tooltipText}</p>
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  );
+                                })}
+                              </TooltipProvider>
                             </div>
                           </div>
                         </div>
