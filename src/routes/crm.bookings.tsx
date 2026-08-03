@@ -1914,7 +1914,7 @@ function BookingsPage() {
             <Button variant="outline" className="rounded-xl" onClick={() => setDeleteTarget(null)}>
               Cancel
             </Button>
-            <Button variant="destructive" className="rounded-xl" onClick={handleDeleteBooking}>
+            <Button variant="default" className="rounded-xl" onClick={handleDeleteBooking}>
               Delete
             </Button>
           </DialogFooter>

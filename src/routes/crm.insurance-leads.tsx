@@ -1984,7 +1984,7 @@ function LeadDetail({
         <div className="flex gap-3 border-t border-border p-6">
           {isAdmin && (
             <Button
-              variant="destructive"
+              variant="default"
               className="flex-none gap-2 rounded-xl"
               onClick={() => setDeleteConfirmId(lead.id)}
             >

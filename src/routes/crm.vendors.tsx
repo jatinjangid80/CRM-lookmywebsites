@@ -1010,7 +1010,7 @@ function VendorsPage() {
           </DialogHeader>
           <DialogFooter className="mt-4 gap-2">
             <Button variant="outline" onClick={() => setDialogType(null)}>Cancel</Button>
-            <Button variant="destructive" onClick={handleDelete}>Yes, Delete Vendor</Button>
+            <Button variant="default" onClick={handleDelete}>Yes, Delete Vendor</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -4510,7 +4510,7 @@ function EmployeesPage() {
                 Cancel
               </Button>
               <Button
-                variant="destructive"
+                variant="default"
                 onClick={() => {
                   setEmployees(employees.filter((emp) => emp.id !== deleteConfirmId));
                   setDeleteConfirmId(null);
