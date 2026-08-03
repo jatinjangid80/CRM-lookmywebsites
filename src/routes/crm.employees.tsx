@@ -1301,12 +1301,29 @@ function EmployeesPage() {
                 setProfileIsEditing(false);
               };
 
-              // Calculated parameters (keep read-only)
+              // Calculate dynamic stats
+              const empAtt = attendance.filter((a) => a.empId === cur.id);
+              const presentDays = empAtt.filter((a) => a.status === "Present").length;
+              const attendancePct = empAtt.length > 0 ? Math.round((presentDays / empAtt.length) * 100) : 100;
+
+              const empTasks = tasks.filter((t) => t.assignee === cur.name);
+              const completedTasks = empTasks.filter((t) => t.status === "Done").length;
+
+              const empBookings = bookings.filter((b) => b.assignedTo === cur.name);
+              const completedBookings = empBookings.filter(
+                (b) => b.status === "Completed" || b.status === "Confirmed"
+              ).length;
+
+              const projectsCompleted = completedTasks + completedBookings;
+              const taskCompletionRate = empTasks.length > 0 ? (completedTasks / empTasks.length) * 100 : 100;
+              const kpiScore = Math.round((attendancePct + taskCompletionRate) / 2);
+
+              // Calculated parameters
               const mockPerf = {
-                kpiScore: cur.rating ? Math.round(cur.rating * 20) : 92,
-                attendancePct: 98.4,
-                projectsCompleted: cur.closedDeals || 12,
-                monthlyRating: cur.rating || 4.8,
+                kpiScore: kpiScore,
+                attendancePct: attendancePct,
+                projectsCompleted: projectsCompleted || cur.closedDeals || 0,
+                monthlyRating: cur.rating || 4.5,
                 activeProjects: [
                   {
                     name: "Maldives Luxury Group Travel",

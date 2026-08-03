@@ -117,6 +117,8 @@ function EmployeeProfileModalInner({
   // States for Employee Records loaded from Supabase
   const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
+  const [tasks] = useSupabaseTable<any[]>("tasks", []);
+  const [bookings] = useSupabaseTable<any[]>("bookings", []);
   const [reviews, setReviews] = useSupabaseTable<any[]>("reviews", [
     {
       id: "REV-01",
@@ -546,12 +548,29 @@ function EmployeeProfileModalInner({
     Inactive: "bg-slate-100 text-slate-800 border-slate-200",
   };
 
-  // Mock performance/project data (keep read-only, calculated dynamically)
+  // Calculate dynamic stats
+  const empAtt = attendance.filter((a) => a.empId === employee.id);
+  const presentDays = empAtt.filter((a) => a.status === "Present").length;
+  const attendancePct = empAtt.length > 0 ? Math.round((presentDays / empAtt.length) * 100) : 100;
+
+  const empTasks = tasks.filter((t) => t.assignee === employee.name);
+  const completedTasks = empTasks.filter((t) => t.status === "Done").length;
+
+  const empBookings = bookings.filter((b) => b.assignedTo === employee.name);
+  const completedBookings = empBookings.filter(
+    (b) => b.status === "Completed" || b.status === "Confirmed"
+  ).length;
+
+  const projectsCompleted = completedTasks + completedBookings;
+  const taskCompletionRate = empTasks.length > 0 ? (completedTasks / empTasks.length) * 100 : 100;
+  const kpiScore = Math.round((attendancePct + taskCompletionRate) / 2);
+
+  // Calculated dynamically
   const mockPerf = {
-    kpiScore: employee.rating ? Math.round(employee.rating * 20) : 92,
-    attendancePct: 98.4,
-    projectsCompleted: employee.closedDeals || 12,
-    monthlyRating: employee.rating || 4.8,
+    kpiScore: kpiScore,
+    attendancePct: attendancePct,
+    projectsCompleted: projectsCompleted || employee.closedDeals || 0,
+    monthlyRating: employee.rating || 4.5,
     activeProjects: [
       {
         name: "Maldives Luxury Group Travel",
