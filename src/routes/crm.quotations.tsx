@@ -634,13 +634,6 @@ function QuotationsPage() {
               <Button variant="outline" size="sm" onClick={handleExport} className="h-9 shadow-sm">
                 <Download className="mr-2 h-4 w-4" /> Export
               </Button>
-              <Button size="sm" onClick={() => {
-                setForm({ ...DEFAULT_FORM });
-                setEditingQuoteId(null);
-                setActiveView("builder");
-              }} className="h-9 shadow-sm bg-[#3b82f6] hover:bg-blue-600">
-                <Plus className="mr-2 h-4 w-4" /> Add Quote
-              </Button>
             </div>
           </div>
 
