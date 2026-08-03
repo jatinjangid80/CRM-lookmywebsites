@@ -29,8 +29,11 @@ import {
   Trash2,
   Heart,
   MessageSquare,
+  MoreVertical,
+  Eye,
 } from "lucide-react";
 import { Edit, Send, CheckCircle, Award, Upload, User } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 function EditField({
   label,
@@ -1087,13 +1090,21 @@ function EmployeesPage() {
                       {emp.status}
                     </span>
                     {isAdmin && (
-                      <button
-                        onClick={(e) => handleDeleteEmployee(e, emp.id)}
-                        className="rounded-lg p-1.5 text-muted-foreground opacity-0 transition-all hover:bg-red-100 hover:text-red-600 group-hover:opacity-100"
-                        title="Delete Employee"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-8 w-8 p-0 text-muted-foreground hover:bg-secondary">
+                            <MoreVertical className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-32 rounded-xl" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={(e) => { e.stopPropagation(); setSelectedEmployeeId(emp.id); }} className="cursor-pointer gap-2 py-2">
+                            <Eye className="h-4 w-4" /> View
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => handleDeleteEmployee(e, emp.id)} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
+                            <Trash2 className="h-4 w-4" /> Delete
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     )}
                   </div>
                 </div>
