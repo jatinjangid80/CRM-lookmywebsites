@@ -91,6 +91,7 @@ const FULL_NAV: NavItem[] = [
   },
   { to: "/crm/documents", label: "Documents", icon: ClipboardList },
   { to: "/crm/packages", label: "Packages", icon: Pkg },
+  { to: "/crm/employees", label: "Employees", icon: Briefcase },
   { to: "/crm/attendance", label: "Attendance", icon: Clock },
   { to: "/crm/vendors", label: "Vendors", icon: Building2 },
 
@@ -104,10 +105,10 @@ function getNavForUser(auth: AuthUser): NavItem[] {
   // IMPORTANT: We check specific names FIRST because some users (like Suman/HR) 
   // might have an "admin" role in the database for permissions (like Edit/Delete),
   // but we still want to strictly limit which tabs they can see.
-  
+
   if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-        "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", 
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors",
     ].includes(n.label));
   }
 
