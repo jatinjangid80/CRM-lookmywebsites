@@ -345,7 +345,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
         bookingType,
       travelDate: details.travelDate || details.checkIn || details.processDate || bookingDate,
 
-      details,
+      details: {
+        ...details,
+        attachments: {
+          ticket: ticketFileName,
+          passport: passportFileName,
+          other: otherFileName
+        }
+      },
     };
 
     onSave(newBooking);
@@ -2231,6 +2238,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     <span className="text-sm font-medium z-10">1. Ticket / Voucher</span>
                     <input 
                       type="file" 
+                      title=""
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                       onChange={(e) => setTicketFileName(e.target.files?.[0]?.name || null)} 
                     />
@@ -2246,6 +2254,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     <span className="text-sm font-medium z-10">2. Passport / ID Copy</span>
                     <input 
                       type="file" 
+                      title=""
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                       onChange={(e) => setPassportFileName(e.target.files?.[0]?.name || null)} 
                     />
@@ -2261,6 +2270,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     <span className="text-sm font-medium z-10">3. Other Document</span>
                     <input 
                       type="file" 
+                      title=""
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20"
                       onChange={(e) => setOtherFileName(e.target.files?.[0]?.name || null)} 
                     />
