@@ -1,8 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useRef, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
-import { getAuth, setAuth } from "@/lib/auth";
+import { getAuth, setAuth, clearAuth } from "@/lib/auth";
 import {
   Building2,
   User,
@@ -129,6 +129,7 @@ const ToggleRow = ({
 );
 
 function SettingsPage() {
+  const navigate = useNavigate();
   const initialAuth = getAuth();
   const [auth, setLocalAuth] = useState(initialAuth);
   const isAdmin = auth?.role === "admin";
@@ -345,15 +346,11 @@ function SettingsPage() {
   const [showPw, setShowPw] = useState({ current: false, newPass: false, confirm: false });
   const [pwError, setPwError] = useState("");
 
-  const handlePasswordChange = (e: React.FormEvent) => {
+  const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     setPwError("");
     if (!security.current) {
       setPwError("Enter your current password.");
-      return;
-    }
-    if (!["admin123", "emp123", auth?.password].includes(security.current)) {
-      setPwError("Current password is incorrect.");
       return;
     }
     if (security.newPass.length < 6) {
@@ -364,14 +361,65 @@ function SettingsPage() {
       setPwError("Passwords do not match.");
       return;
     }
-    // Persist new password in auth
-    if (auth) {
-      const updatedAuth = { ...auth, password: security.newPass };
-      setAuth(updatedAuth);
-      setLocalAuth(updatedAuth);
+    
+    try {
+      if (auth?.empId) {
+        // Fetch current employee to verify password and update
+        const { data: emp, error: fetchErr } = await supabase
+          .from("employees")
+          .select("*")
+          .eq("id", auth.empId)
+          .single();
+
+        if (fetchErr) throw fetchErr;
+
+        let profile_details = emp.profile_details || null;
+        if (!profile_details && typeof emp.description === "string" && emp.description.includes("_isMeta")) {
+          try {
+            const parsed = JSON.parse(emp.description);
+            if (parsed._isMeta) profile_details = parsed.profile_details;
+          } catch (e) {}
+        }
+
+        const currentPass = profile_details?.password;
+        if (currentPass !== security.current && !["admin123", "emp123"].includes(security.current)) {
+          setPwError("Current password is incorrect.");
+          return;
+        }
+
+        // Update password in Supabase
+        const newProfileDetails = {
+          ...profile_details,
+          password: security.newPass,
+        };
+
+        const { error: updateErr } = await supabase
+          .from("employees")
+          .update({ profile_details: newProfileDetails })
+          .eq("id", auth.empId);
+
+        if (updateErr) throw updateErr;
+      } else {
+        // Fallback for hardcoded users (like jatin)
+        if (!["admin123", "emp123", auth?.password].includes(security.current)) {
+          setPwError("Current password is incorrect.");
+          return;
+        }
+      }
+
+      setSecurity({ current: "", newPass: "", confirm: "" });
+      showToast("🔒 Password updated successfully! Please log in again.");
+      
+      // Log out and redirect
+      setTimeout(() => {
+        clearAuth();
+        navigate({ to: "/login" });
+      }, 1500);
+
+    } catch (err) {
+      console.error(err);
+      setPwError("An error occurred while updating password.");
     }
-    setSecurity({ current: "", newPass: "", confirm: "" });
-    showToast("🔒 Password updated successfully!");
   };
 
   // ── Helpers ─────────────────────────────────────────────────────
