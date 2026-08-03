@@ -16,7 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download, Clock } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download, Clock, Eye } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -1134,6 +1134,15 @@ function AccountsPage() {
                           </Button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-32 rounded-xl">
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedFuId(fu.id);
+                            setLogNotes(fu.notes);
+                            setLogDate(fu.nextFollowUpDate);
+                            setLogStatus("");
+                            setIsLogFollowUpOpen(true);
+                          }} className="cursor-pointer gap-2 py-2">
+                            <Eye className="h-4 w-4" /> View
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDelete(fu.id, "Follow-up")} className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700">
                             <Trash2 className="h-4 w-4" /> Delete
                           </DropdownMenuItem>
