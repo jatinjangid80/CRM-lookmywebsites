@@ -24,6 +24,7 @@ function InsuranceClaimsPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
   
   // Local state to store claims temporarily for UI demonstration
@@ -43,6 +44,14 @@ function InsuranceClaimsPage() {
     setClaims(claims.map(c => c.id === selectedClaim.id ? selectedClaim : c));
     setIsEditOpen(false);
     toast.success("Claim updated successfully!");
+  };
+
+  const handleDeleteClaim = () => {
+    if (deleteTarget) {
+      setClaims(claims.filter(c => c.id !== deleteTarget));
+      toast.success("Claim deleted successfully!");
+      setDeleteTarget(null);
+    }
   };
 
   const handleAddClaim = () => {
@@ -408,10 +417,7 @@ function InsuranceClaimsPage() {
                                 </DropdownMenuItem>
                                 <DropdownMenuItem className="text-red-600 focus:text-red-600 focus:bg-red-50" onSelect={(e) => {
                                   e.preventDefault();
-                                  if (confirm("Are you sure you want to delete this claim?")) {
-                                    setClaims(claims.filter(c => c.id !== claim.id));
-                                    toast.success("Claim deleted successfully!");
-                                  }
+                                  setDeleteTarget(claim.id);
                                 }}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Delete
@@ -428,6 +434,32 @@ function InsuranceClaimsPage() {
             </div>
           </div>
         )}
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+          <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border-0 shadow-2xl">
+            <div className="bg-primary p-6 flex flex-col items-center justify-center text-primary-foreground">
+              <div className="bg-white/20 p-3 rounded-full mb-3">
+                <Trash2 className="w-8 h-8 text-white" />
+              </div>
+              <DialogTitle className="font-display text-lg font-bold text-center text-white">Delete Claim</DialogTitle>
+            </div>
+            <div className="p-6 text-center space-y-6">
+              <p className="text-muted-foreground text-sm">
+                Are you sure you want to delete this claim? This action cannot be undone.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="outline" className="rounded-xl w-24" onClick={() => setDeleteTarget(null)}>
+                  Cancel
+                </Button>
+                <Button variant="default" className="rounded-xl w-24 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={handleDeleteClaim}>
+                  Delete
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
       </div>
     </div>
   );

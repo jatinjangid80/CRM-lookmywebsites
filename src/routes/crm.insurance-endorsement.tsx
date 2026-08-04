@@ -28,6 +28,7 @@ function InsuranceEndorsementPage() {
   const [isViewOpen, setIsViewOpen] = useState(false);
   const [isEditOpen, setIsEditOpen] = useState(false);
   const [selectedEndorsement, setSelectedEndorsement] = useState<any>(null);
+  const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   
   const [showPolicyDropdown, setShowPolicyDropdown] = useState(false);
   
@@ -75,9 +76,14 @@ function InsuranceEndorsementPage() {
   };
 
   const handleDelete = (id: string) => {
-    if (confirm("Are you sure you want to delete this endorsement?")) {
-      setEndorsements(endorsements.filter(e => e.id !== id));
+    setDeleteTarget(id);
+  };
+
+  const confirmDelete = () => {
+    if (deleteTarget) {
+      setEndorsements(endorsements.filter(e => e.id !== deleteTarget));
       toast.success("Endorsement deleted.");
+      setDeleteTarget(null);
     }
   };
 
@@ -511,6 +517,31 @@ function InsuranceEndorsementPage() {
               <Button variant="outline" onClick={() => setIsEditOpen(false)}>Cancel</Button>
               <Button onClick={handleEditEndorsement}>Save Changes</Button>
             </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={!!deleteTarget} onOpenChange={() => setDeleteTarget(null)}>
+          <DialogContent className="sm:max-w-md rounded-2xl overflow-hidden p-0 border-0 shadow-2xl">
+            <div className="bg-primary p-6 flex flex-col items-center justify-center text-primary-foreground">
+              <div className="bg-white/20 p-3 rounded-full mb-3">
+                <Trash2 className="w-8 h-8 text-white" />
+              </div>
+              <DialogTitle className="font-display text-lg font-bold text-center text-white">Delete Endorsement</DialogTitle>
+            </div>
+            <div className="p-6 text-center space-y-6">
+              <p className="text-muted-foreground text-sm">
+                Are you sure you want to delete this endorsement? This action cannot be undone.
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                <Button variant="outline" className="rounded-xl w-24" onClick={() => setDeleteTarget(null)}>
+                  Cancel
+                </Button>
+                <Button variant="default" className="rounded-xl w-24 bg-primary hover:bg-primary/90 text-primary-foreground" onClick={confirmDelete}>
+                  Delete
+                </Button>
+              </div>
+            </div>
           </DialogContent>
         </Dialog>
 
