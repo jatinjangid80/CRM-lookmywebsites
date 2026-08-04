@@ -1070,7 +1070,7 @@ function AttendancePage() {
                             <p className="text-xs text-muted-foreground">{dailyTotals.length} Days Logged</p>
                           </div>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
                           {dailyTotals.map((day: any) => (
                             <div key={day.date} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
                               <div className="mt-0.5">
