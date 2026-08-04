@@ -112,31 +112,31 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Personal Expenses"
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "marketing"
     ].includes(n.label));
   }
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Personal Expenses"
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "marketing"
     ].includes(n.label));
   }
 
   if (name.includes("suman")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Personal Expenses"
+      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "marketing"
     ].includes(n.label));
   }
 
   if (name.includes("nikita")) {
     return FULL_NAV.filter((n) => [
-      "Tasks", "Customers", "General Insurance", "Attendance"
+      "Tasks", "Customers", "General Insurance", "Attendance", "marketing"
     ].includes(n.label));
   }
 
   if (name.includes("aman")) {
     return FULL_NAV.filter((n) => [
-      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Personal Expenses"
+      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "marketing"
     ].includes(n.label));
   }
 
@@ -238,7 +238,7 @@ function CrmLayout() {
     <div className="flex min-h-screen bg-secondary/30">
       {/* Sidebar */}
       <aside
-        className={`sticky top-0 hidden h-screen ${isCompact ? "w-20" : "w-64"} shrink-0 flex-col border-r border-border bg-sidebar p-4 lg:flex transition-all duration-300`}
+        className={`print:hidden sticky top-0 hidden h-screen ${isCompact ? "w-20" : "w-64"} shrink-0 flex-col border-r border-border bg-sidebar p-4 lg:flex transition-all duration-300`}
       >
         <Link
           to="/crm"
@@ -357,9 +357,9 @@ function CrmLayout() {
 
       </aside>
 
-      <div className="flex min-w-0 flex-1 flex-col">
+      <div className="flex min-w-0 flex-1 flex-col print:block">
         {/* Topbar */}
-        <header className="sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-8">
+        <header className="print:hidden sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-8">
           {isAdmin && (
             <div className="flex-1">
               <CommandPalette />
