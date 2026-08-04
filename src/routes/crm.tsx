@@ -112,31 +112,31 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "marketing"
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Marketing"
     ].includes(n.label));
   }
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "marketing"
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing"
     ].includes(n.label));
   }
 
   if (name.includes("suman")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "marketing"
+      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing"
     ].includes(n.label));
   }
 
   if (name.includes("nikita")) {
     return FULL_NAV.filter((n) => [
-      "Tasks", "Customers", "General Insurance", "Attendance", "marketing"
+      "Tasks", "Customers", "General Insurance", "Attendance", "Marketing"
     ].includes(n.label));
   }
 
   if (name.includes("aman")) {
     return FULL_NAV.filter((n) => [
-      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "marketing"
+      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing"
     ].includes(n.label));
   }
 
