@@ -244,7 +244,8 @@ function BookingsPage() {
   const [transactions] = useSupabaseTable<any[]>("transactions", []);
 
   const allBookings = useMemo(() => {
-    return bookingList.map(b => ({
+    const deduplicated = [...new globalThis.Map(bookingList.map(b => [b.id, b])).values()];
+    return deduplicated.map(b => ({
       ...b,
       paid: b.paid || 0
     }));
@@ -859,6 +860,10 @@ function BookingsPage() {
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Customer</p>
             <p className="font-semibold">{booking.customer}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Lead Passenger Name</p>
+            <p className="font-semibold">{booking.details?.leaderName || booking.details?.passengerName || "—"}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Travel Date</p>
@@ -1513,7 +1518,10 @@ function BookingsPage() {
                   <div className="flex items-center gap-1">Travel Date {sortField === "travelDate" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("customer")}>
-                  <div className="flex items-center gap-1">Passenger Name {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Customer {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                </th>
+                <th className="px-4 py-3 whitespace-nowrap text-left">
+                  <div className="flex items-center gap-1">Lead Passenger</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("mobileNumber")}>
                   <div className="flex items-center gap-1">Mobile No {sortField === "mobileNumber" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
@@ -1548,7 +1556,7 @@ function BookingsPage() {
             <tbody>
               {filteredBookings.length === 0 ? (
                 <tr>
-                  <td colSpan={12} className="py-8 text-center text-muted-foreground">
+                  <td colSpan={13} className="py-8 text-center text-muted-foreground">
                     No bookings found for {activeTab}.
                   </td>
                 </tr>
@@ -1558,6 +1566,7 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookingDate || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.travelDate || "-"}</td>
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.details?.leaderName || b.details?.passengerName || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
                     <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{b.details?.pnr || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.bookingType || "-"}</td>

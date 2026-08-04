@@ -61,9 +61,20 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { generateWhatsAppLink, whatsappTemplates } from "@/lib/whatsapp";
 import logoImg from "../assets/Logo.svg";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 export const Route = createFileRoute("/crm/quotations")({
   component: QuotationsPage,
@@ -88,6 +99,7 @@ interface HotelOption {
   roomType: string;
   nights: number;
   mealPlan: string;
+  confirmationNo?: string;
 }
 
 interface FlightOption {
@@ -96,6 +108,7 @@ interface FlightOption {
   flightNo: string;
   sector: string;
   dateTime: string;
+  pnr?: string;
 }
 
 interface QuoteForm {
@@ -116,6 +129,7 @@ interface QuoteForm {
   inclusions: string;
   exclusions: string;
   terms: string;
+  bankDetails: string;
   itinerary: DayItinerary[];
 }
 
@@ -132,6 +146,7 @@ const DEFAULT_HOTEL: HotelOption = {
   roomType: "Deluxe",
   nights: 1,
   mealPlan: "Breakfast",
+  confirmationNo: "",
 };
 
 const DEFAULT_FLIGHT: FlightOption = {
@@ -140,6 +155,7 @@ const DEFAULT_FLIGHT: FlightOption = {
   flightNo: "",
   sector: "",
   dateTime: "",
+  pnr: "",
 };
 
 const DEFAULT_FORM: QuoteForm = {
@@ -163,6 +179,8 @@ const DEFAULT_FORM: QuoteForm = {
     "Any personal expenses\nMeals other than specified\nTips and gratuities\nTravel Insurance\nVisa fees (unless specified)",
   terms:
     "50% advance payment required for confirmation.\nCancellation policies apply as per supplier rules.\nRates are subject to availability at the time of actual booking.",
+  bankDetails:
+    "Bank Name: \nAccount Name: \nAccount No: \nIFSC Code: \nSWIFT Code: ",
   itinerary: [
     {
       day: 1,
@@ -185,6 +203,7 @@ function QuotationsPage() {
   const [packages] = useSupabaseTable<any[]>("packages", []);
   const [quotations, setQuotations] = useSupabaseTable<any[]>("quotations", []);
   const [editingQuoteId, setEditingQuoteId] = useState<string | null>(null);
+  const [deleteQuoteId, setDeleteQuoteId] = useState<string | null>(null);
 
   const [form, setForm] = useState<QuoteForm>({ ...DEFAULT_FORM });
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -200,6 +219,7 @@ function QuotationsPage() {
   const [sortField, setSortField] = useState<string>("created_at");
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("desc");
   const [agentFilter, setAgentFilter] = useState<string>("All");
+  const [activeTab, setActiveTab] = useState<string>("all");
 
   // Combobox states
   const [customerOpen, setCustomerOpen] = useState(false);
@@ -484,7 +504,7 @@ function QuotationsPage() {
   };
 
 
-  const filteredQuotationsList = [...quotations]
+  const filteredQuotationsList = [...new globalThis.Map(quotations.map(q => [q.id, q])).values()]
     .filter((q) =>
       !searchQuery ||
       q.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -499,6 +519,12 @@ function QuotationsPage() {
       const from = dateFrom ? new Date(dateFrom).getTime() : 0;
       const to = dateTo ? new Date(dateTo).getTime() + 86400000 : Infinity;
       return qDate >= from && qDate <= to;
+    })
+    .filter((q) => {
+      if (activeTab === "all") return true;
+      if (activeTab === "hotel") return q.package_name?.toLowerCase().includes("hotel");
+      if (activeTab === "package") return q.package_name?.toLowerCase().includes("package");
+      return true;
     });
 
   const handleExport = () => {
@@ -529,7 +555,11 @@ function QuotationsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
         <div>
           <h1 className="font-display text-3xl font-bold flex items-center gap-2">
-            <FileText className="h-8 w-8 text-primary" /> Quotation {activeView === "dashboard" ? "Dashboard" : "Builder"}
+            <FileText className="h-8 w-8 text-primary" />
+            {activeView === "dashboard" ? "Quotation Dashboard" : 
+              (form.packageName === "Hotel Quote" ? "Hotel Quotation Builder" : 
+               form.packageName === "Package Quote" ? "Package Quotation Builder" : 
+               "Quotation Builder")}
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
             {activeView === "dashboard"
@@ -556,16 +586,38 @@ function QuotationsPage() {
               </Button>
             </>
           ) : (
-            <Button
-              onClick={() => {
-                setForm({ ...DEFAULT_FORM });
-                setEditingQuoteId(null);
-                setActiveView("builder");
-              }}
-              className="btn-hero rounded-xl shadow-lg flex items-center gap-2"
-            >
-              <Plus className="h-4 w-4" /> Create New Quote
-            </Button>
+            <div className="flex items-center gap-2">
+              <Button
+                onClick={() => {
+                  setForm({ ...DEFAULT_FORM, packageName: "Hotel Quote" });
+                  setEditingQuoteId(null);
+                  setActiveView("builder");
+                }}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Hotel Quote
+              </Button>
+              <Button
+                onClick={() => {
+                  setForm({ ...DEFAULT_FORM, packageName: "Package Quote" });
+                  setEditingQuoteId(null);
+                  setActiveView("builder");
+                }}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Package Quote
+              </Button>
+              <Button
+                onClick={() => {
+                  setForm({ ...DEFAULT_FORM });
+                  setEditingQuoteId(null);
+                  setActiveView("builder");
+                }}
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+              >
+                <Plus className="h-4 w-4" /> Create New Quote
+              </Button>
+            </div>
           )}
         </div>
       </div>
@@ -581,6 +633,30 @@ function QuotationsPage() {
                 <div>
                   <p className="text-sm font-medium text-muted-foreground">Total Quotes</p>
                   <p className="text-2xl font-bold">{quotations.length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-blue-500/10 p-3">
+                  <Building2 className="h-6 w-6 text-blue-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Hotel Quotes</p>
+                  <p className="text-2xl font-bold">{quotations.filter(q => q.package_name?.toLowerCase().includes("hotel")).length}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
+              <div className="flex items-center gap-3">
+                <div className="rounded-xl bg-emerald-500/10 p-3">
+                  <Plane className="h-6 w-6 text-emerald-500" />
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Package Quotes</p>
+                  <p className="text-2xl font-bold">{quotations.filter(q => q.package_name?.toLowerCase().includes("package")).length}</p>
                 </div>
               </div>
             </div>
@@ -607,7 +683,7 @@ function QuotationsPage() {
                 />
               </div>
             </div>
-            
+
             <div className="flex flex-wrap items-center gap-2">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -637,127 +713,135 @@ function QuotationsPage() {
             </div>
           </div>
 
-          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
-                  <tr>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "id" && sortOrder === "asc" ? "desc" : "asc"); setSortField("id"); }}>
-                      <div className="flex items-center gap-1">Quote ID {sortField === "id" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "created_at" && sortOrder === "asc" ? "desc" : "asc"); setSortField("created_at"); }}>
-                      <div className="flex items-center gap-1">Date {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "customer_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("customer_name"); }}>
-                      <div className="flex items-center gap-1">Customer Name {sortField === "customer_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "package_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("package_name"); }}>
-                      <div className="flex items-center gap-1">Package / Dest {sortField === "package_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "total_amount" && sortOrder === "asc" ? "desc" : "asc"); setSortField("total_amount"); }}>
-                      <div className="flex items-center gap-1">Amount (₹) {sortField === "total_amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "agent_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("agent_name"); }}>
-                      <div className="flex items-center gap-1">Generated By {sortField === "agent_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                    </th>
-                    <th className="px-4 py-3 text-right">Actions</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  {filteredQuotationsList
-                    .sort((a, b) => {
-                      const valA = a[sortField];
-                      const valB = b[sortField];
-                      if (!valA && valB) return sortOrder === "asc" ? -1 : 1;
-                      if (valA && !valB) return sortOrder === "asc" ? 1 : -1;
-                      if (!valA && !valB) return 0;
+          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+            <TabsList className="mb-4">
+              <TabsTrigger value="all">All Quotes</TabsTrigger>
+              <TabsTrigger value="hotel">Hotel Quotes</TabsTrigger>
+              <TabsTrigger value="package">Package Quotes</TabsTrigger>
+            </TabsList>
 
-                      if (sortField === "total_amount") {
-                        return sortOrder === "asc" ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
-                      }
-                      if (sortField === "created_at") {
-                        return sortOrder === "asc"
-                          ? new Date(valA).getTime() - new Date(valB).getTime()
-                          : new Date(valB).getTime() - new Date(valA).getTime();
-                      }
+            {["all", "hotel", "package"].map((tabValue) => (
+              <TabsContent key={tabValue} value={tabValue} className="mt-0">
+                <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
+                        <tr>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "id" && sortOrder === "asc" ? "desc" : "asc"); setSortField("id"); }}>
+                            <div className="flex items-center gap-1">Quote ID {sortField === "id" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "created_at" && sortOrder === "asc" ? "desc" : "asc"); setSortField("created_at"); }}>
+                            <div className="flex items-center gap-1">Date {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "customer_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("customer_name"); }}>
+                            <div className="flex items-center gap-1">Customer Name {sortField === "customer_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "package_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("package_name"); }}>
+                            <div className="flex items-center gap-1">Package / Dest {sortField === "package_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "total_amount" && sortOrder === "asc" ? "desc" : "asc"); setSortField("total_amount"); }}>
+                            <div className="flex items-center gap-1">Amount (₹) {sortField === "total_amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "agent_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("agent_name"); }}>
+                            <div className="flex items-center gap-1">Generated By {sortField === "agent_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                          </th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {filteredQuotationsList
+                          .sort((a, b) => {
+                            const valA = a[sortField];
+                            const valB = b[sortField];
+                            if (!valA && valB) return sortOrder === "asc" ? -1 : 1;
+                            if (valA && !valB) return sortOrder === "asc" ? 1 : -1;
+                            if (!valA && !valB) return 0;
 
-                      const strA = String(valA).toLowerCase();
-                      const strB = String(valB).toLowerCase();
-                      if (strA < strB) return sortOrder === "asc" ? -1 : 1;
-                      if (strA > strB) return sortOrder === "asc" ? 1 : -1;
-                      return 0;
-                    })
-                    .map((quote) => (
-                      <tr key={quote.id} className="hover:bg-muted/50 transition-colors">
-                        <td className="px-4 py-4 whitespace-nowrap font-medium text-primary">{quote.id}</td>
-                        <td className="px-4 py-4 whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</td>
-                        <td className="px-4 py-4 whitespace-nowrap font-medium">{quote.customer_name}</td>
-                        <td className="px-4 py-4 whitespace-nowrap">
-                          <p className="text-foreground">{quote.package_name}</p>
-                          <p className="text-xs text-muted-foreground">{quote.destination}</p>
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap font-bold text-amber-600 dark:text-amber-500">
-                          {formatINR(quote.total_amount)}
-                        </td>
-                        <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
-                        <td className="px-4 py-4 whitespace-nowrap text-right">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-8 w-8">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                              <DropdownMenuItem
-                                onClick={() => {
-                                  setSavedQuoteId(quote.id);
-                                  setForm(quote.details || { ...DEFAULT_FORM });
-                                  setPreviewOpen(true);
-                                }}
-                                className="cursor-pointer"
-                              >
-                                <Eye className="mr-2 h-4 w-4" /> View / Share
-                              </DropdownMenuItem>
-                              <>{auth?.role === "admin" && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    setEditingQuoteId(quote.id);
-                                    setForm(quote.details || { ...DEFAULT_FORM });
-                                    setActiveView("builder");
-                                  }}
-                                  className="cursor-pointer"
-                                >
-                                  <Edit2 className="mr-2 h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                              )}</>
-                              <>{auth?.role === "admin" && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (confirm("Are you sure you want to delete this quote?")) {
-                                      setQuotations(quotations.filter(q => q.id !== quote.id));
-                                    }
-                                  }}
-                                  className="cursor-pointer text-destructive focus:text-destructive"
-                                >
-                                  <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                </DropdownMenuItem>
-                              )}</>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </td>
-                      </tr>
-                    ))}
-                  {quotations.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                        No quotations found. Click "Create New Quote" to build one!
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
+                            if (sortField === "total_amount") {
+                              return sortOrder === "asc" ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
+                            }
+                            if (sortField === "created_at") {
+                              return sortOrder === "asc"
+                                ? new Date(valA).getTime() - new Date(valB).getTime()
+                                : new Date(valB).getTime() - new Date(valA).getTime();
+                            }
+
+                            const strA = String(valA).toLowerCase();
+                            const strB = String(valB).toLowerCase();
+                            if (strA < strB) return sortOrder === "asc" ? -1 : 1;
+                            if (strA > strB) return sortOrder === "asc" ? 1 : -1;
+                            return 0;
+                          })
+                          .map((quote) => (
+                            <tr key={quote.id} className="hover:bg-muted/50 transition-colors">
+                              <td className="px-4 py-4 whitespace-nowrap font-medium text-primary">{quote.id}</td>
+                              <td className="px-4 py-4 whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</td>
+                              <td className="px-4 py-4 whitespace-nowrap font-medium">{quote.customer_name}</td>
+                              <td className="px-4 py-4 whitespace-nowrap">
+                                <p className="text-foreground">{quote.package_name}</p>
+                                <p className="text-xs text-muted-foreground">{quote.destination}</p>
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap font-bold text-amber-600 dark:text-amber-500">
+                                {formatINR(quote.total_amount)}
+                              </td>
+                              <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
+                              <td className="px-4 py-4 whitespace-nowrap text-right">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSavedQuoteId(quote.id);
+                                        setForm(quote.details || { ...DEFAULT_FORM });
+                                        setPreviewOpen(true);
+                                      }}
+                                      className="cursor-pointer"
+                                    >
+                                      <Eye className="mr-2 h-4 w-4" /> View / Share
+                                    </DropdownMenuItem>
+                                    <>{auth?.role === "admin" && (
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setEditingQuoteId(quote.id);
+                                          setForm(quote.details || { ...DEFAULT_FORM });
+                                          setActiveView("builder");
+                                        }}
+                                        className="cursor-pointer"
+                                      >
+                                        <Edit2 className="mr-2 h-4 w-4" /> Edit
+                                      </DropdownMenuItem>
+                                    )}</>
+                                    <>{auth?.role === "admin" && (
+                                      <DropdownMenuItem
+                                        onClick={() => setDeleteQuoteId(quote.id)}
+                                        className="cursor-pointer text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                      </DropdownMenuItem>
+                                    )}</>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </td>
+                            </tr>
+                          ))}
+                        {filteredQuotationsList.length === 0 && (
+                          <tr>
+                            <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                              No quotations found. Click "Create New Quote" to build one!
+                            </td>
+                          </tr>
+                        )}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </TabsContent>
+            ))}
+          </Tabs>
         </div>
       )}
 
@@ -821,60 +905,62 @@ function QuotationsPage() {
                   </PopoverContent>
                 </Popover>
               </div>
-              <div>
-                <Label
-                  htmlFor="pkg-select"
-                  className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
-                >
-                  Auto-fill Package Template
-                </Label>
-                <Popover open={packageOpen} onOpenChange={setPackageOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={packageOpen}
-                      className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
-                    >
-                      <span className="truncate">
-                        {form.packageName && form.packageName !== "Custom Holiday Package"
-                          ? packages.find((p) => p.title === form.packageName)?.title ||
-                          "-- Select Package --"
-                          : "-- Select Package --"}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search package..." className="h-9" />
-                      <CommandList>
-                        <CommandEmpty>No package found.</CommandEmpty>
-                        <CommandGroup>
-                          {packages.map((p) => (
-                            <CommandItem
-                              key={p.id}
-                              value={p.title}
-                              onSelect={() => {
-                                handlePackageSelect(p.id);
-                                setPackageOpen(false);
-                              }}
-                            >
-                              {p.title}
-                              <Check
-                                className={cn(
-                                  "ml-auto h-4 w-4",
-                                  form.packageName === p.title ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {form.packageName !== "Hotel Quote" && (
+                <div>
+                  <Label
+                    htmlFor="pkg-select"
+                    className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
+                  >
+                    Auto-fill Package Template
+                  </Label>
+                  <Popover open={packageOpen} onOpenChange={setPackageOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={packageOpen}
+                        className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+                      >
+                        <span className="truncate">
+                          {form.packageName && form.packageName !== "Custom Holiday Package"
+                            ? packages.find((p) => p.title === form.packageName)?.title ||
+                            "-- Select Package --"
+                            : "-- Select Package --"}
+                        </span>
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[300px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search package..." className="h-9" />
+                        <CommandList>
+                          <CommandEmpty>No package found.</CommandEmpty>
+                          <CommandGroup>
+                            {packages.map((p) => (
+                              <CommandItem
+                                key={p.id}
+                                value={p.title}
+                                onSelect={() => {
+                                  handlePackageSelect(p.id);
+                                  setPackageOpen(false);
+                                }}
+                              >
+                                {p.title}
+                                <Check
+                                  className={cn(
+                                    "ml-auto h-4 w-4",
+                                    form.packageName === p.title ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+              )}
             </div>
 
             {/* Customer Inputs */}
@@ -920,17 +1006,19 @@ function QuotationsPage() {
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                  2. Trip & Package Configuration
+                  2. {form.packageName === "Hotel Quote" ? "Hotel Configuration" : "Trip & Package Configuration"}
                 </h3>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleGenerateAIItinerary}
-                  className="rounded-full text-xs gap-1 border-primary/30 hover:bg-primary/5 text-primary"
-                >
-                  <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Generate Itinerary
-                </Button>
+                {form.packageName !== "Hotel Quote" && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleGenerateAIItinerary}
+                    className="rounded-full text-xs gap-1 border-primary/30 hover:bg-primary/5 text-primary"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Generate Itinerary
+                  </Button>
+                )}
               </div>
               <div className="grid gap-4 sm:grid-cols-4">
                 <div className="sm:col-span-2">
@@ -1042,17 +1130,21 @@ function QuotationsPage() {
                       </div>
 
                       <div className="grid gap-4 sm:grid-cols-12">
-                        <div className="sm:col-span-5">
+                        <div className="sm:col-span-3">
                           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Room Type</Label>
                           <Input placeholder="Deluxe" className="rounded-xl h-10 bg-background" value={hotel.roomType} onChange={(e) => handleUpdateHotel(hotel.id, 'roomType', e.target.value)} />
                         </div>
-                        <div className="sm:col-span-3">
+                        <div className="sm:col-span-2">
                           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Nights</Label>
                           <Input type="number" placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.nights} onChange={(e) => handleUpdateHotel(hotel.id, 'nights', Number(e.target.value))} />
                         </div>
-                        <div className="sm:col-span-4">
+                        <div className="sm:col-span-3">
                           <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Meal Type</Label>
                           <Input placeholder="Half Board" className="rounded-xl h-10 bg-background" value={hotel.mealPlan} onChange={(e) => handleUpdateHotel(hotel.id, 'mealPlan', e.target.value)} />
+                        </div>
+                        <div className="sm:col-span-4">
+                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Confirmation No.</Label>
+                          <Input placeholder="e.g. HTL-12345" className="rounded-xl h-10 bg-background" value={hotel.confirmationNo || ''} onChange={(e) => handleUpdateHotel(hotel.id, 'confirmationNo', e.target.value)} />
                         </div>
                       </div>
                     </div>
@@ -1070,7 +1162,7 @@ function QuotationsPage() {
 
                 <div className="space-y-4">
                   {form.flights?.map((flight) => (
-                    <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-4 rounded-2xl border border-border/50">
+                    <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-4 rounded-2xl border border-border/50">
                       <div>
                         <Input placeholder="Airline (e.g. Emirates)" className="rounded-xl h-10 bg-background" value={flight.airline} onChange={(e) => handleUpdateFlight(flight.id, 'airline', e.target.value)} />
                       </div>
@@ -1083,6 +1175,9 @@ function QuotationsPage() {
                       <div>
                         <Input placeholder="Date & Time" className="rounded-xl h-10 bg-background" value={flight.dateTime} onChange={(e) => handleUpdateFlight(flight.id, 'dateTime', e.target.value)} />
                       </div>
+                      <div>
+                        <Input placeholder="PNR" className="rounded-xl h-10 bg-background" value={flight.pnr || ''} onChange={(e) => handleUpdateFlight(flight.id, 'pnr', e.target.value)} />
+                      </div>
                       <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveFlight(flight.id)}>
                         <XCircle className="h-4 w-4" />
                       </Button>
@@ -1093,65 +1188,67 @@ function QuotationsPage() {
             </div>
 
             {/* Day Wise Itinerary */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                3. Day-Wise Program
-              </h3>
-              <div className="space-y-4">
-                {form.itinerary.map((day, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2 relative group"
-                  >
-                    <div className="flex items-center gap-2">
-                      <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
-                        Day {day.day}
-                      </span>
-                      <Input
-                        placeholder="Day Title"
-                        value={day.title}
-                        onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
-                        className="rounded-xl h-8 text-xs bg-background"
+            {form.packageName !== "Hotel Quote" && (
+              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                  3. Day-Wise Program
+                </h3>
+                <div className="space-y-4">
+                  {form.itinerary.map((day, idx) => (
+                    <div
+                      key={idx}
+                      className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2 relative group"
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
+                          Day {day.day}
+                        </span>
+                        <Input
+                          placeholder="Day Title"
+                          value={day.title}
+                          onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
+                          className="rounded-xl h-8 text-xs bg-background"
+                        />
+                        {idx >= 2 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon"
+                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={() => {
+                              setForm(f => {
+                                const newItin = [...f.itinerary];
+                                newItin.splice(idx, 1);
+                                newItin.forEach((d, i) => d.day = i + 1);
+                                return { ...f, itinerary: newItin, durationDays: newItin.length };
+                              });
+                            }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        )}
+                      </div>
+                      <Textarea
+                        placeholder="Day details and highlights"
+                        value={day.description}
+                        onChange={(e) => handleItineraryChange(idx, "description", e.target.value)}
+                        className="rounded-xl text-xs bg-background"
+                        rows={2}
                       />
-                      {idx >= 2 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={() => {
-                            setForm(f => {
-                              const newItin = [...f.itinerary];
-                              newItin.splice(idx, 1);
-                              newItin.forEach((d, i) => d.day = i + 1);
-                              return { ...f, itinerary: newItin, durationDays: newItin.length };
-                            });
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      )}
                     </div>
-                    <Textarea
-                      placeholder="Day details and highlights"
-                      value={day.description}
-                      onChange={(e) => handleItineraryChange(idx, "description", e.target.value)}
-                      className="rounded-xl text-xs bg-background"
-                      rows={2}
-                    />
-                  </div>
-                ))}
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  className="w-full rounded-xl border-dashed border-2 mt-2"
-                  onClick={() => setForm(f => ({ ...f, durationDays: Number(f.durationDays) + 1 }))}
-                >
-                  <Plus className="h-4 w-4 mr-2" /> Add Another Day
-                </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="w-full rounded-xl border-dashed border-2 mt-2"
+                    onClick={() => setForm(f => ({ ...f, durationDays: Number(f.durationDays) + 1 }))}
+                  >
+                    <Plus className="h-4 w-4 mr-2" /> Add Another Day
+                  </Button>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Right Side Column: Pricing & Share */}
@@ -1159,7 +1256,7 @@ function QuotationsPage() {
             {/* Pricing & GST Ledger */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                4. Pricing Estimate
+                {form.packageName === "Hotel Quote" ? "3. Pricing Estimate" : "4. Pricing Estimate"}
               </h3>
               <div className="space-y-3">
                 <div>
@@ -1250,7 +1347,7 @@ function QuotationsPage() {
             {/* Inclusions & Exclusions */}
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
               <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                5. Inclusions & Exclusions
+                {form.packageName === "Hotel Quote" ? "4. Inclusions & Exclusions" : "5. Inclusions & Exclusions"}
               </h3>
               <div className="space-y-3">
                 <div>
@@ -1279,6 +1376,16 @@ function QuotationsPage() {
                     id="terms"
                     value={form.terms}
                     onChange={(e) => setForm({ ...form, terms: e.target.value })}
+                    className="rounded-xl text-xs mt-1.5"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="bankDetails">Bank Details</Label>
+                  <Textarea
+                    id="bankDetails"
+                    value={form.bankDetails}
+                    onChange={(e) => setForm({ ...form, bankDetails: e.target.value })}
                     className="rounded-xl text-xs mt-1.5"
                     rows={3}
                   />
@@ -1412,8 +1519,132 @@ function QuotationsPage() {
           </DialogHeader>
 
           <div className="p-8 bg-muted/30 print:p-0 print:bg-card text-card-foreground">
-            {/* Printable branded A4 block */}
+            {form.packageName === "Hotel Quote" ? (
+              <div className="rounded-none bg-white max-w-3xl mx-auto shadow-md text-slate-800 print:shadow-none print:w-full print:max-w-none relative overflow-hidden font-sans">
+                {/* Header Background */}
+                <div className="relative h-48 md:h-56 bg-slate-800 flex flex-col justify-between p-8 text-white" style={{
+                  backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')",
+                  backgroundSize: "cover",
+                  backgroundPosition: "center"
+                }}>
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h2 className="text-4xl font-black tracking-widest uppercase opacity-90">Invoice</h2>
+                      <p className="text-orange-400 font-bold tracking-wider text-sm mt-1 uppercase">{auth?.name ? `${auth.name}'s Travel` : "HOTEL BLUE HOUSE"}</p>
+                    </div>
+                    <div className="text-right flex flex-col items-end">
+                      <img
+                        src={logoImg}
+                        alt="Logo"
+                        className="h-10 w-auto bg-white/90 p-1.5 rounded mix-blend-screen"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-between items-end text-xs opacity-80">
+                    <div>
+                      <p>27 Leitz Road</p>
+                      <p>Houston, TX 33035</p>
+                      <p>www.bluehousehotel.com</p>
+                    </div>
+                    <div>
+                      <p>Date: {new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Customer Name */}
+                <div className="px-8 py-8">
+                  <h3 className="text-lg font-bold text-slate-600 uppercase tracking-widest">{form.customerName || "MR. MARCUS ROCHESTER"}</h3>
+                </div>
+
+                {/* Invoice Bar & Details */}
+                <div className="mx-8">
+                  <div className="bg-orange-50 px-6 py-3 rounded-t-md border-b-2 border-orange-200">
+                    <p className="text-orange-500 font-bold uppercase tracking-wider text-sm">INVOICE #{savedQuoteId || "AB-54321"}</p>
+                  </div>
+                  <div className="bg-slate-50 px-6 py-5 rounded-b-md flex gap-8 text-xs text-slate-600">
+                    <div className="flex-1 space-y-1">
+                      <p><span className="font-semibold text-slate-700">Account:</span> {form.customerPhone || "10001"}</p>
+                      <p><span className="font-semibold text-slate-700">Room:</span> {form.hotels?.[0]?.roomType || "54-A"}</p>
+                      <p><span className="font-semibold text-slate-700">Arrival Date:</span> {form.hotels?.[0]?.checkIn || "May 22, 2022"}</p>
+                      <p><span className="font-semibold text-slate-700">Departure Date:</span> {form.hotels?.[0]?.checkOut || "May 25, 2022"}</p>
+                    </div>
+                    <div className="w-px bg-slate-300 mx-2"></div>
+                    <div className="flex-1 space-y-1">
+                      <p><span className="font-semibold text-slate-700">Check-in time:</span> 2:00 PM</p>
+                      <p><span className="font-semibold text-slate-700">Check-out time:</span> 11:00 AM</p>
+                      <p><span className="font-semibold text-slate-700">Checked in by:</span> {auth?.name || "Cole, N."}</p>
+                      <p><span className="font-semibold text-slate-700">Checked out by:</span> {auth?.name || "Lear, J."}</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Table */}
+                <div className="px-8 pt-8">
+                  <table className="w-full text-xs">
+                    <thead className="text-slate-500 border-b-2 border-slate-700 text-left">
+                      <tr>
+                        <th className="py-3 font-semibold w-1/4">Description</th>
+                        <th className="py-3 font-semibold text-center">Quantity</th>
+                        <th className="py-3 font-semibold text-center">Rate</th>
+                        <th className="py-3 font-semibold text-center">Comment</th>
+                        <th className="py-3 font-semibold text-right">Amount</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-200">
+                      <tr>
+                        <td className="py-4 font-bold text-slate-700">ROOM CHARGES</td>
+                        <td className="py-4 text-center">{form.hotels?.[0]?.nights || form.durationNights || 3} Nights</td>
+                        <td className="py-4 text-center">{formatINR((form.basePrice / (form.hotels?.[0]?.nights || form.durationNights || 3)) || 50)}/night</td>
+                        <td className="py-4 text-center text-slate-500">{form.hotels?.[0]?.hotelName || "Hotel"}, {form.hotels?.[0]?.roomType || "Standard"}</td>
+                        <td className="py-4 text-right font-semibold text-slate-700">{formatINR(form.basePrice)}</td>
+                      </tr>
+                      {form.discount > 0 && (
+                        <tr>
+                          <td className="py-4 font-bold text-slate-700">DISCOUNT</td>
+                          <td className="py-4 text-center">1</td>
+                          <td className="py-4 text-center">-</td>
+                          <td className="py-4 text-center text-slate-500">{form.discountType === "percentage" ? `${form.discount}% off` : "Flat discount"}</td>
+                          <td className="py-4 text-right font-semibold text-emerald-600">-{formatINR(discountAmount)}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Footer */}
+                <div className="flex px-8 pt-6 pb-12">
+                  <div className="w-1/2 flex flex-col justify-end">
+                    <p className="text-[10px] text-slate-500 max-w-[200px] mb-4">*Your qualifying points will be automatically added to your premium account.</p>
+                    <div className="bg-[#f0855d] text-white px-4 py-3 w-fit font-bold tracking-widest text-[10px] uppercase shadow-sm">
+                      We hope you had<br/>a great stay!
+                    </div>
+                  </div>
+                  <div className="w-1/2">
+                    <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
+                      <span>Subtotal</span>
+                      <span>{formatINR(form.basePrice - discountAmount)}</span>
+                    </div>
+                    {form.tcsRate > 0 && (
+                      <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
+                        <span>TCS ({form.tcsRate}%)</span>
+                        <span>{formatINR(tcsAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
+                      <span>GST ({form.gstRate}%)</span>
+                      <span>{formatINR(gstAmount)}</span>
+                    </div>
+                    <div className="flex justify-between py-4 text-sm text-slate-800 font-bold">
+                      <span>GRAND TOTAL</span>
+                      <span>{formatINR(totalAmount)}</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className="border border-border/80 rounded-2xl bg-card text-card-foreground p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
+              {/* Printable branded A4 block */}
               {/* Branded Header */}
               <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
                 <div className="flex items-center gap-3">
@@ -1587,14 +1818,50 @@ function QuotationsPage() {
                   Terms & Conditions
                 </p>
                 <p className="whitespace-pre-line leading-relaxed">{form.terms}</p>
+                
+                {form.bankDetails && (
+                  <div className="mt-4 pt-4 border-t border-border/40">
+                    <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
+                      Bank Details
+                    </p>
+                    <p className="whitespace-pre-line leading-relaxed">{form.bankDetails}</p>
+                  </div>
+                )}
+                
                 <p className="mt-4 text-center font-display font-semibold text-slate-400">
                   Thank you for letting us plan your holidays! ✈️
                 </p>
               </div>
             </div>
+            )}
           </div>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!deleteQuoteId} onOpenChange={(open) => !open && setDeleteQuoteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure you want to delete this quote?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete the quotation and remove it from your records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary hover:bg-primary/90 text-primary-foreground focus:ring-primary"
+              onClick={() => {
+                if (deleteQuoteId) {
+                  setQuotations(quotations.filter((q) => q.id !== deleteQuoteId));
+                  setDeleteQuoteId(null);
+                }
+              }}
+            >
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

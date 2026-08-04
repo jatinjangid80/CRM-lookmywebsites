@@ -4,7 +4,7 @@ import { Clock, Play, Building2, Square, Users, TrendingUp, Download, Calendar a
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
@@ -910,7 +910,7 @@ function AttendancePage() {
                     };
 
                     return (
-                      <div key={empGroup.id} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                      <div key={empGroup.id} onClick={() => { setSelectedDayInfo({ ...empGroup, date: teamSelectedDateStr, hasActive: isActive, totalSeconds: totalSecs, isAbsent: false }); setIsDaySheetOpen(true); }} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -1324,16 +1324,16 @@ function AttendancePage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      <Sheet open={isDaySheetOpen} onOpenChange={setIsDaySheetOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
-          <SheetHeader className="border-b border-border pb-4 mb-4">
-            <SheetTitle className="text-2xl font-bold">
+      <Dialog open={isDaySheetOpen} onOpenChange={setIsDaySheetOpen}>
+        <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh] rounded-3xl p-6">
+          <DialogHeader className="border-b border-border pb-4 mb-4">
+            <DialogTitle className="text-2xl font-bold">
               {selectedDayInfo?.date ? format(new Date(selectedDayInfo.date), "EEEE, dd MMM yyyy") : "Date Details"}
-            </SheetTitle>
-            <SheetDescription>
+            </DialogTitle>
+            <DialogDescription>
               Attendance records and shift details for this day.
-            </SheetDescription>
-          </SheetHeader>
+            </DialogDescription>
+          </DialogHeader>
           
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-y-6 gap-x-4">
@@ -1421,8 +1421,8 @@ function AttendancePage() {
               </div>
             )}
           </div>
-        </SheetContent>
-      </Sheet>
+        </DialogContent>
+      </Dialog>
     </main>
   );
 }

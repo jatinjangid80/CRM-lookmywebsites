@@ -26,6 +26,7 @@ export function InsuranceForm({
   policies?: any[];
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
+  const [folders, setFolders] = useSupabaseTable<any[]>("folders", []);
 
   const [newVendor, setNewVendor] = useState({ 
     name: "", contact_person: "", mobile: "", alternate_mobile: "", 
@@ -190,9 +191,65 @@ export function InsuranceForm({
     setShowCustomerDropdown(false);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const payload = { ...form };
     
+    // Auto-save attachments to Documents
+    const filesToUpload: { file: File, type: string }[] = [];
+    if (form.policy_copy instanceof File) filesToUpload.push({ file: form.policy_copy, type: "Policy Copy" });
+    if (form.RC_copy instanceof File) filesToUpload.push({ file: form.RC_copy, type: "RC Copy" });
+    if (form.PAN_card_copy instanceof File) filesToUpload.push({ file: form.PAN_card_copy, type: "PAN Card Copy" });
+
+    if (filesToUpload.length > 0) {
+      const passengerName = payload.customer_name || payload.client_company || payload.reference_name || "Unknown Insurance Customer";
+      let targetFolder = folders.find((f: any) => f.name === passengerName);
+      let isNewFolder = false;
+      if (!targetFolder) {
+        targetFolder = {
+          id: `F-${Date.now().toString(36)}`,
+          name: passengerName,
+          color: "bg-emerald-100 text-emerald-600 border-emerald-200",
+          iconColor: "#10b981",
+          createdAt: new Date().toISOString(),
+          description: `Insurance for ${passengerName}`,
+          files: [],
+        };
+        isNewFolder = true;
+      }
+
+      const newFiles = await Promise.all(filesToUpload.map(async ({ file }) => {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        return {
+          id: `U-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadedAt: new Date().toISOString(),
+          dataUrl,
+        };
+      }));
+
+      const updatedFolder = {
+        ...targetFolder,
+        files: [...(targetFolder.files || []), ...newFiles],
+      };
+
+      if (isNewFolder) {
+        setFolders((prev: any) => [...prev, updatedFolder]);
+      } else {
+        setFolders((prev: any) => prev.map((f: any) => f.id === updatedFolder.id ? updatedFolder : f));
+      }
+    }
+
+    if (payload.policy_copy instanceof File) payload.policy_copy = payload.policy_copy.name;
+    if (payload.RC_copy instanceof File) payload.RC_copy = payload.RC_copy.name;
+    if (payload.PAN_card_copy instanceof File) payload.PAN_card_copy = payload.PAN_card_copy.name;
+
     // Scrub empty strings to null for UUIDs, dates, and numbers
     const fieldsToScrub = [
       "customer_id", "company_id", "vendor_id", 

@@ -39,6 +39,7 @@ import {
   Receipt,
   ChevronDown,
   ChevronRight,
+  Megaphone,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -96,6 +97,7 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/vendors", label: "Vendors", icon: Building2 },
 
   { to: "/crm/Accounts", label: "Accounts", icon: CreditCard },
+  { to: "/crm/marketing", label: "Marketing", icon: Megaphone },
   { to: "/crm/settings", label: "Settings", icon: Settings },
 ];
 

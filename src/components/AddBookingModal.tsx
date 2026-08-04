@@ -172,6 +172,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [packages] = useSupabaseTable<any[]>("packages", []);
   const [vendors] = useSupabaseTable<any[]>("vendors", []);
+  const [folders, setFolders] = useSupabaseTable<any[]>("folders", []);
 
   // Common Header
   const [supplier, setSupplier] = useState("");
@@ -203,7 +204,11 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
   const [ticketFileName, setTicketFileName] = useState<string | null>(null);
   const [passportFileName, setPassportFileName] = useState<string | null>(null);
   const [otherFileName, setOtherFileName] = useState<string | null>(null);
+  const [ticketFile, setTicketFile] = useState<File | null>(null);
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [otherFile, setOtherFile] = useState<File | null>(null);
   const [transactionId, setTransactionId] = useState("");
+  const [bankDetails, setBankDetails] = useState("");
 
   // Details Object
   const [details, setDetails] = useState<any>({});
@@ -238,6 +243,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
         setPaymentMode(editingBooking.paymentMode || "Cash");
         setPaymentStatus(editingBooking.status || "Pending");
         setTransactionId(editingBooking.transactionId || "");
+        setBankDetails(editingBooking.details?.bankDetails || "");
 
         setDetails(editingBooking.details || {});
         setIncludedServices(editingBooking.includedServices || { flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
@@ -265,6 +271,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
         setPaymentMode("Cash");
         setPaymentStatus("Pending");
         setTransactionId("");
+        setBankDetails("");
 
         setDetails({});
         setIncludedServices({ flight: false, hotel: false, taxi: false, train: false, bus: false, visa: false, insurance: false });
@@ -300,11 +307,62 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
     return (sellingPrice || 0) - (amountPaid || 0);
   }, [sellingPrice, amountPaid]);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!customer) {
       alert("Customer name is required.");
       return;
+    }
+
+    const filesToUpload: { file: File, type: string }[] = [];
+    if (ticketFile) filesToUpload.push({ file: ticketFile, type: "Ticket" });
+    if (passportFile) filesToUpload.push({ file: passportFile, type: "Passport" });
+    if (otherFile) filesToUpload.push({ file: otherFile, type: "Other" });
+
+    if (filesToUpload.length > 0) {
+      const passengerName = details.passengerName || customer || "Unknown Customer";
+      let targetFolder = folders.find((f: any) => f.name === passengerName);
+      let isNewFolder = false;
+      if (!targetFolder) {
+        targetFolder = {
+          id: `F-${Date.now().toString(36)}`,
+          name: passengerName,
+          color: "bg-blue-100 text-blue-600 border-blue-200",
+          iconColor: "#3b82f6",
+          createdAt: new Date().toISOString(),
+          description: `Bookings for ${passengerName}`,
+          files: [],
+        };
+        isNewFolder = true;
+      }
+
+      const newFiles = await Promise.all(filesToUpload.map(async ({ file }) => {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(file);
+        });
+        return {
+          id: `U-${Date.now().toString(36)}-${Math.random().toString(36).substr(2, 5)}`,
+          name: file.name,
+          size: file.size,
+          type: file.type,
+          uploadedAt: new Date().toISOString(),
+          dataUrl,
+        };
+      }));
+
+      const updatedFolder = {
+        ...targetFolder,
+        files: [...(targetFolder.files || []), ...newFiles],
+      };
+
+      if (isNewFolder) {
+        setFolders((prev: any) => [...prev, updatedFolder]);
+      } else {
+        setFolders((prev: any) => prev.map((f: any) => f.id === updatedFolder.id ? updatedFolder : f));
+      }
     }
 
     const newBooking: Booking = {
@@ -320,7 +378,6 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
       saleInvoiceNo,
       purchaseInvoiceNo,
       remarks,
-
       sellingPrice,
       purchasePrice,
       gstAmount,
@@ -347,6 +404,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
 
       details: {
         ...details,
+        bankDetails,
         attachments: {
           ticket: ticketFileName,
           passport: passportFileName,
@@ -556,15 +614,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="PNR12345"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 ">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -719,15 +769,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="1"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -821,15 +863,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="CP/MAP"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Guest Name"
-                  />
-                </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -948,15 +982,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="2"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.leaderName || ""}
-                    onChange={(e) => updateDetail("leaderName", e.target.value)}
-                    placeholder="Guest Name"
-                  />
-                </div>
+
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -1085,7 +1111,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Train Name/No.</Label><Input value={details.trainName || ""} onChange={(e) => updateDetail("trainName", e.target.value)} placeholder="Rajdhani Exp" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MUM" /></div>
-                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
@@ -1111,7 +1137,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Bus Operator</Label><Input value={details.busOperator || ""} onChange={(e) => updateDetail("busOperator", e.target.value)} placeholder="Zingbus" /></div>
                       <div className="space-y-2"><Label>Travel Date</Label><Input type="date" value={details.travelDate || ""} onChange={(e) => updateDetail("travelDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MANALI" /></div>
-                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
@@ -1138,7 +1164,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Visa Type</Label><Input value={details.visaType || ""} onChange={(e) => updateDetail("visaType", e.target.value)} placeholder="Tourist 30 Days" /></div>
                       <div className="space-y-2"><Label>Process Date</Label><Input type="date" value={details.processDate || ""} onChange={(e) => updateDetail("processDate", e.target.value)} /></div>
                       <div className="space-y-2"><Label>Application Status</Label><Input value={details.applicationStatus || ""} onChange={(e) => updateDetail("applicationStatus", e.target.value)} placeholder="Submitted" /></div>
-                      <div className="space-y-2"><Label>Lead Passenger Name</Label><Input value={details.passengerName || ""} onChange={(e) => updateDetail("passengerName", e.target.value)} placeholder="John Doe" /></div>
+                      
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
@@ -1578,15 +1604,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="Submitted"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 ">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -1776,15 +1794,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     placeholder="TKT123"
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 ">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -1860,15 +1870,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -1944,15 +1946,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -2028,15 +2022,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     onChange={(e) => updateDetail("travellers", parseInt(e.target.value))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -2128,15 +2114,7 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     onChange={(e) => updateDetail("pax", parseInt(e.target.value))}
                   />
                 </div>
-                <div className="space-y-2">
-                  <Label>Lead Passenger Name *</Label>
-                  <Input
-                    required
-                    value={details.passengerName || ""}
-                    onChange={(e) => updateDetail("passengerName", e.target.value)}
-                    placeholder="Lead Passenger Name"
-                  />
-                </div>
+                
                 <div className="space-y-2 col-span-1 md:col-span-2">
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
@@ -2225,6 +2203,16 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     ₹{pendingAmount.toLocaleString()}
                   </p>
                 </div>
+              </div>
+
+              <div className="space-y-2 col-span-full">
+                <Label>Bank Details</Label>
+                <Textarea
+                  value={bankDetails}
+                  onChange={(e) => setBankDetails(e.target.value)}
+                  placeholder="Account Number, IFSC Code, Bank Name, etc."
+                  className="rounded-xl min-h-[80px]"
+                />
               </div>
             </div>
 

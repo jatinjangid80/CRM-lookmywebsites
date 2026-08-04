@@ -22,6 +22,7 @@ import { Route as CrmQuotationsRouteImport } from './routes/crm.quotations'
 import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
+import { Route as CrmMarketingRouteImport } from './routes/crm.marketing'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
 import { Route as CrmInsuranceLeadsRouteImport } from './routes/crm.insurance-leads'
 import { Route as CrmInsuranceEndorsementRouteImport } from './routes/crm.insurance-endorsement'
@@ -107,6 +108,11 @@ const CrmPackagesRoute = CrmPackagesRouteImport.update({
 const CrmNotificationsRoute = CrmNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmMarketingRoute = CrmMarketingRouteImport.update({
+  id: '/marketing',
+  path: '/marketing',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmLeadsRoute = CrmLeadsRouteImport.update({
@@ -233,6 +239,7 @@ export interface FileRoutesByFullPath {
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/portal': typeof CrmPortalRoute
@@ -268,6 +275,7 @@ export interface FileRoutesByTo {
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/portal': typeof CrmPortalRoute
@@ -305,6 +313,7 @@ export interface FileRoutesById {
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
+  '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/portal': typeof CrmPortalRoute
@@ -343,6 +352,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
+    | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/portal'
@@ -378,6 +388,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
+    | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/portal'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-endorsement'
     | '/crm/insurance-leads'
     | '/crm/leads'
+    | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/portal'
@@ -532,6 +544,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/crm/notifications'
       preLoaderRoute: typeof CrmNotificationsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/marketing': {
+      id: '/crm/marketing'
+      path: '/marketing'
+      fullPath: '/crm/marketing'
+      preLoaderRoute: typeof CrmMarketingRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/leads': {
@@ -697,6 +716,7 @@ interface CrmRouteChildren {
   CrmInsuranceEndorsementRoute: typeof CrmInsuranceEndorsementRoute
   CrmInsuranceLeadsRoute: typeof CrmInsuranceLeadsRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
+  CrmMarketingRoute: typeof CrmMarketingRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
   CrmPortalRoute: typeof CrmPortalRoute
@@ -731,6 +751,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmInsuranceEndorsementRoute: CrmInsuranceEndorsementRoute,
   CrmInsuranceLeadsRoute: CrmInsuranceLeadsRoute,
   CrmLeadsRoute: CrmLeadsRoute,
+  CrmMarketingRoute: CrmMarketingRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
   CrmPortalRoute: CrmPortalRoute,

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import {
   MapPin,
   User,
@@ -603,7 +604,7 @@ function EmployeeProfileModalInner({
 
   return (
     <>
-        <DialogContent className="max-w-5xl h-[92vh] overflow-y-auto p-0 gap-0 bg-background text-foreground">
+        <DialogContent className="max-w-[95vw] w-full md:max-w-4xl lg:max-w-6xl max-h-[95vh] overflow-y-auto p-0 gap-0 border-0 rounded-3xl bg-slate-50 dark:bg-slate-900 shadow-2xl">
           <DialogTitle className="sr-only">Company CRM Employee Profile</DialogTitle>
           <DialogDescription className="sr-only">
             Redesigned modern Company CRM Employee Profile for {employee.name}.
