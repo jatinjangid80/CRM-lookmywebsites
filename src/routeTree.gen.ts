@@ -20,6 +20,7 @@ import { Route as CrmSettingsRouteImport } from './routes/crm.settings'
 import { Route as CrmReportsRouteImport } from './routes/crm.reports'
 import { Route as CrmQuotationsRouteImport } from './routes/crm.quotations'
 import { Route as CrmPortalRouteImport } from './routes/crm.portal'
+import { Route as CrmPersonalExpensesRouteImport } from './routes/crm.personal-expenses'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
 import { Route as CrmMarketingRouteImport } from './routes/crm.marketing'
@@ -98,6 +99,11 @@ const CrmQuotationsRoute = CrmQuotationsRouteImport.update({
 const CrmPortalRoute = CrmPortalRouteImport.update({
   id: '/portal',
   path: '/portal',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmPersonalExpensesRoute = CrmPersonalExpensesRouteImport.update({
+  id: '/personal-expenses',
+  path: '/personal-expenses',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmPackagesRoute = CrmPackagesRouteImport.update({
@@ -242,6 +248,7 @@ export interface FileRoutesByFullPath {
   '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -278,6 +285,7 @@ export interface FileRoutesByTo {
   '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -316,6 +324,7 @@ export interface FileRoutesById {
   '/crm/marketing': typeof CrmMarketingRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
+  '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
   '/crm/portal': typeof CrmPortalRoute
   '/crm/quotations': typeof CrmQuotationsRoute
   '/crm/reports': typeof CrmReportsRoute
@@ -355,6 +364,7 @@ export interface FileRouteTypes {
     | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
+    | '/crm/personal-expenses'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -391,6 +401,7 @@ export interface FileRouteTypes {
     | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
+    | '/crm/personal-expenses'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -428,6 +439,7 @@ export interface FileRouteTypes {
     | '/crm/marketing'
     | '/crm/notifications'
     | '/crm/packages'
+    | '/crm/personal-expenses'
     | '/crm/portal'
     | '/crm/quotations'
     | '/crm/reports'
@@ -530,6 +542,13 @@ declare module '@tanstack/react-router' {
       path: '/portal'
       fullPath: '/crm/portal'
       preLoaderRoute: typeof CrmPortalRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/personal-expenses': {
+      id: '/crm/personal-expenses'
+      path: '/personal-expenses'
+      fullPath: '/crm/personal-expenses'
+      preLoaderRoute: typeof CrmPersonalExpensesRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/packages': {
@@ -719,6 +738,7 @@ interface CrmRouteChildren {
   CrmMarketingRoute: typeof CrmMarketingRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
+  CrmPersonalExpensesRoute: typeof CrmPersonalExpensesRoute
   CrmPortalRoute: typeof CrmPortalRoute
   CrmQuotationsRoute: typeof CrmQuotationsRoute
   CrmReportsRoute: typeof CrmReportsRoute
@@ -754,6 +774,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmMarketingRoute: CrmMarketingRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
+  CrmPersonalExpensesRoute: CrmPersonalExpensesRoute,
   CrmPortalRoute: CrmPortalRoute,
   CrmQuotationsRoute: CrmQuotationsRoute,
   CrmReportsRoute: CrmReportsRoute,

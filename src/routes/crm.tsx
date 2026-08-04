@@ -40,6 +40,7 @@ import {
   ChevronDown,
   ChevronRight,
   Megaphone,
+  Wallet,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -97,6 +98,7 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/vendors", label: "Vendors", icon: Building2 },
 
   { to: "/crm/Accounts", label: "Accounts", icon: CreditCard },
+  { to: "/crm/personal-expenses", label: "Personal Expenses", icon: Wallet },
   { to: "/crm/marketing", label: "Marketing", icon: Megaphone },
   { to: "/crm/settings", label: "Settings", icon: Settings },
 ];
@@ -110,19 +112,19 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors",
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Personal Expenses"
     ].includes(n.label));
   }
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts",
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Personal Expenses"
     ].includes(n.label));
   }
 
   if (name.includes("suman")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents",
+      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Personal Expenses"
     ].includes(n.label));
   }
 
@@ -134,7 +136,7 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("aman")) {
     return FULL_NAV.filter((n) => [
-      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents",
+      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Personal Expenses"
     ].includes(n.label));
   }
 
