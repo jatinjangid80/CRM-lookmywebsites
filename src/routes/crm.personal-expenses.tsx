@@ -496,7 +496,7 @@ function PersonalExpensesPage() {
         <DialogContent className="max-w-md rounded-3xl p-6">
           <DialogHeader>
             <DialogTitle className="text-xl font-display flex items-center gap-2">
-              <Trash2 className="h-5 w-5" /> Delete Expense
+              <Trash2 className="h-5 w-5 text-primary" /> Delete Expense
             </DialogTitle>
             <DialogDescription className="text-base mt-2">
               Are you sure you want to delete <span className="font-semibold text-foreground">{expenseToDelete?.title}</span>? This action cannot be undone.
@@ -507,8 +507,7 @@ function PersonalExpensesPage() {
               Cancel
             </Button>
             <Button
-              variant="destructive"
-              className="rounded-xl h-11 px-6"
+              className="rounded-xl h-11 px-6 bg-primary hover:bg-primary/90 text-primary-foreground"
               onClick={() => expenseToDelete && handleDelete(expenseToDelete)}
             >
               Delete
