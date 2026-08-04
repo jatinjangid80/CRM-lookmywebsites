@@ -980,35 +980,6 @@ function EmployeesPage() {
         </Dialog>
       </div>
 
-      {/* Active Session Card */}
-      <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden mb-6">
-        <div className="px-6 py-4 border-b border-border bg-gray-50/50">
-          <h2 className="text-lg font-bold font-display">Active Session</h2>
-        </div>
-        <div className="p-6">
-          <div className="flex items-center justify-between rounded-xl border border-border p-4 bg-white">
-            <div className="flex items-center gap-4">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-                <Shield className="h-5 w-5" />
-              </div>
-              <div>
-                <h3 className="font-semibold text-gray-900">Current Session</h3>
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground mt-0.5">
-                  <Clock className="h-4 w-4" />
-                  <span>Logged in as <strong>{auth.name}</strong> ({auth.role})</span>
-                </div>
-              </div>
-            </div>
-            <div className="flex items-center gap-1.5 rounded-full bg-emerald-100/80 px-2.5 py-1 text-xs font-medium text-emerald-700">
-              <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-75"></span>
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500"></span>
-              </span>
-              Active
-            </div>
-          </div>
-        </div>
-      </div>
 
       {activeTab === "Employees" ? (
         <>

@@ -1051,26 +1051,7 @@ function SettingsPage() {
               </form>
             </SectionCard>
 
-            <SectionCard title="Active Session">
-              <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/20 px-4 py-3">
-                <div className="flex items-center gap-3">
-                  <div className="h-9 w-9 rounded-full bg-emerald-100 text-emerald-700 grid place-items-center">
-                    <Shield className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold">Current Session</p>
-                    <p className="text-xs text-muted-foreground flex items-center gap-1">
-                      <Clock className="h-3 w-3" />
-                      Logged in as <strong>{auth?.name}</strong> ({auth?.role})
-                    </p>
-                  </div>
-                </div>
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 text-emerald-700 px-2.5 py-1 text-xs font-bold">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  Active
-                </span>
-              </div>
-            </SectionCard>
+
 
 
           </div>

@@ -402,8 +402,8 @@ function Dashboard() {
 
   // User Action Items (Row 4)
   const myPendingTasks = tasksList
-    .filter((t) => t.status !== "Done")
-    .sort((a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime())
+    .filter((t) => t.status !== "Done" && t.status !== "Completed")
+    .sort((a, b) => new Date(a.dueDate || a.due_date || 0).getTime() - new Date(b.dueDate || b.due_date || 0).getTime())
     .slice(0, 5);
 
   const handleToggleTask = (id: string) => {
@@ -929,11 +929,11 @@ function Dashboard() {
                         }`}>
                           {task.priority}
                         </span>
-                        <span>Due: {task.dueDate}</span>
-                        {task.assignee && (
+                        <span>Due: {task.dueDate || task.due_date}</span>
+                        {(task.assignee || task.assigned_to) && (
                           <>
                             <span className="text-muted-foreground/50">•</span>
-                            <span className="font-medium text-foreground/80">For: {task.assignee}</span>
+                            <span className="font-medium text-foreground/80">For: {task.assignee || task.assigned_to}</span>
                           </>
                         )}
                       </p>

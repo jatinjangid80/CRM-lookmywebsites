@@ -1530,7 +1530,7 @@ function QuotationsPage() {
                   <div className="flex justify-between items-start">
                     <div>
                       <h2 className="text-4xl font-black tracking-widest uppercase opacity-90">Invoice</h2>
-                      <p className="text-orange-400 font-bold tracking-wider text-sm mt-1 uppercase">{auth?.name ? `${auth.name}'s Travel` : "HOTEL BLUE HOUSE"}</p>
+                      <p className="text-orange-400 font-bold tracking-wider text-sm mt-1 uppercase">LOOK MY HOLIDAYS</p>
                     </div>
                     <div className="text-right flex flex-col items-end">
                       <img
@@ -1542,9 +1542,9 @@ function QuotationsPage() {
                   </div>
                   <div className="flex justify-between items-end text-xs opacity-80">
                     <div>
-                      <p>27 Leitz Road</p>
-                      <p>Houston, TX 33035</p>
-                      <p>www.bluehousehotel.com</p>
+                      <p>FF-35 1st Floor, Jtm Mall, Jagatpura Fatak,</p>
+                      <p>Model Town, Jagatpura, Jaipur, Rajasthan 302017</p>
+                      <p>lookmyholidays.in</p>
                     </div>
                     <div>
                       <p>Date: {new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}</p>
@@ -1553,28 +1553,26 @@ function QuotationsPage() {
                 </div>
 
                 {/* Customer Name */}
-                <div className="px-8 py-8">
-                  <h3 className="text-lg font-bold text-slate-600 uppercase tracking-widest">{form.customerName || "MR. MARCUS ROCHESTER"}</h3>
+                <div className="px-8 py-8 flex flex-col gap-1">
+                  <h3 className="text-lg font-bold text-slate-600 uppercase tracking-widest">
+                    {form.customerName || "CUSTOMER NAME"} {form.hotels?.[0]?.hotelName ? `- ${form.hotels[0].hotelName}` : ""}
+                  </h3>
                 </div>
 
                 {/* Invoice Bar & Details */}
                 <div className="mx-8">
                   <div className="bg-orange-50 px-6 py-3 rounded-t-md border-b-2 border-orange-200">
-                    <p className="text-orange-500 font-bold uppercase tracking-wider text-sm">INVOICE #{savedQuoteId || "AB-54321"}</p>
+                    <p className="text-orange-500 font-bold uppercase tracking-wider text-sm">INVOICE #{savedQuoteId || "N/A"}</p>
                   </div>
                   <div className="bg-slate-50 px-6 py-5 rounded-b-md flex gap-8 text-xs text-slate-600">
                     <div className="flex-1 space-y-1">
-                      <p><span className="font-semibold text-slate-700">Account:</span> {form.customerPhone || "10001"}</p>
-                      <p><span className="font-semibold text-slate-700">Room:</span> {form.hotels?.[0]?.roomType || "54-A"}</p>
-                      <p><span className="font-semibold text-slate-700">Arrival Date:</span> {form.hotels?.[0]?.checkIn || "May 22, 2022"}</p>
-                      <p><span className="font-semibold text-slate-700">Departure Date:</span> {form.hotels?.[0]?.checkOut || "May 25, 2022"}</p>
+                      <p><span className="font-semibold text-slate-700">Client No.:</span> {form.customerPhone || "N/A"}</p>
+                      <p><span className="font-semibold text-slate-700">Room:</span> {form.hotels?.[0]?.roomType || "N/A"}</p>
                     </div>
                     <div className="w-px bg-slate-300 mx-2"></div>
                     <div className="flex-1 space-y-1">
-                      <p><span className="font-semibold text-slate-700">Check-in time:</span> 2:00 PM</p>
-                      <p><span className="font-semibold text-slate-700">Check-out time:</span> 11:00 AM</p>
-                      <p><span className="font-semibold text-slate-700">Checked in by:</span> {auth?.name || "Cole, N."}</p>
-                      <p><span className="font-semibold text-slate-700">Checked out by:</span> {auth?.name || "Lear, J."}</p>
+                      <p><span className="font-semibold text-slate-700">Arrival Date:</span> {form.hotels?.[0]?.checkIn || "N/A"}</p>
+                      <p><span className="font-semibold text-slate-700">Departure Date:</span> {form.hotels?.[0]?.checkOut || "N/A"}</p>
                     </div>
                   </div>
                 </div>
@@ -1610,6 +1608,63 @@ function QuotationsPage() {
                       )}
                     </tbody>
                   </table>
+                </div>
+
+                {/* Additional Details for Hotel Format */}
+                <div className="px-8 pt-6 pb-2">
+                  {form.flights && form.flights.length > 0 && form.flights.some(f => f.airline || f.flightNo) && (
+                    <div className="mb-6">
+                      <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Flight Details</h4>
+                      <div className="grid grid-cols-2 gap-4">
+                        {form.flights.map((flight) => (
+                          <div key={flight.id} className="text-xs text-slate-600 bg-slate-50 p-3 rounded-md border border-slate-100">
+                            <p className="font-semibold text-slate-700 mb-1">{flight.airline || "Airline"} {flight.flightNo && `- ${flight.flightNo}`}</p>
+                            <p>Sector: {flight.sector}</p>
+                            <p>Date & Time: {flight.dateTime}</p>
+                            {flight.pnr && <p>PNR: {flight.pnr}</p>}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-8 mb-6">
+                    {form.inclusions && (
+                      <div>
+                        <h4 className="font-bold text-emerald-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Inclusions</h4>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 space-y-1">
+                          {form.inclusions.split("\n").filter(inc => inc.trim()).map((inc, i) => (
+                            <li key={i}>{inc}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                    {form.exclusions && (
+                      <div>
+                        <h4 className="font-bold text-rose-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Exclusions</h4>
+                        <ul className="list-disc pl-4 text-xs text-slate-600 space-y-1">
+                          {form.exclusions.split("\n").filter(exc => exc.trim()).map((exc, i) => (
+                            <li key={i}>{exc}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-8">
+                    {form.terms && (
+                      <div>
+                        <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Terms & Policies</h4>
+                        <p className="text-xs text-slate-600 whitespace-pre-wrap">{form.terms}</p>
+                      </div>
+                    )}
+                    {form.bankDetails && (
+                      <div>
+                        <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Bank Details</h4>
+                        <p className="text-xs text-slate-600 whitespace-pre-wrap">{form.bankDetails}</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Footer */}
