@@ -616,6 +616,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 ">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -771,6 +779,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -865,6 +881,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
 
                 <div className="space-y-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -984,6 +1008,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
 
                 <div className="space-y-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -1113,6 +1145,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MUM" /></div>
                       
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="space-y-2 mb-4">
+                          <Label>Lead Passenger Name</Label>
+                          <Input
+                            value={details.passengerName || ""}
+                            onChange={(e) => updateDetail("passengerName", e.target.value)}
+                            placeholder="E.g. Romesh Kumar"
+                          />
+                        </div>
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
@@ -1139,6 +1179,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Sector</Label><Input value={details.sector || ""} onChange={(e) => updateDetail("sector", e.target.value)} placeholder="DEL - MANALI" /></div>
                       
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="space-y-2 mb-4">
+                          <Label>Lead Passenger Name</Label>
+                          <Input
+                            value={details.passengerName || ""}
+                            onChange={(e) => updateDetail("passengerName", e.target.value)}
+                            placeholder="E.g. Romesh Kumar"
+                          />
+                        </div>
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
@@ -1166,6 +1214,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                       <div className="space-y-2"><Label>Application Status</Label><Input value={details.applicationStatus || ""} onChange={(e) => updateDetail("applicationStatus", e.target.value)} placeholder="Submitted" /></div>
                       
                       <div className="space-y-2 col-span-1 md:col-span-2 mt-2">
+                        <div className="space-y-2 mb-4">
+                          <Label>Lead Passenger Name</Label>
+                          <Input
+                            value={details.passengerName || ""}
+                            onChange={(e) => updateDetail("passengerName", e.target.value)}
+                            placeholder="E.g. Romesh Kumar"
+                          />
+                        </div>
                         <div className="flex items-center justify-between">
                           <Label>Additional Passengers</Label>
                           <Button type="button" variant="ghost" size="sm" className="h-6 px-2 text-xs" onClick={() => updateDetail("additionalNames", [...(Array.isArray(details.additionalNames) ? details.additionalNames : []), ""])}>
@@ -1606,6 +1662,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 ">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -1712,6 +1776,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                     />
                   </div>
                   <div className="space-y-2 col-span-1 md:col-span-2">
+                    <div className="space-y-2 mb-4">
+                      <Label>Lead Passenger Name</Label>
+                      <Input
+                        value={details.passengerName || ""}
+                        onChange={(e) => updateDetail("passengerName", e.target.value)}
+                        placeholder="E.g. Romesh Kumar"
+                      />
+                    </div>
                     <div className="flex items-center justify-between">
                       <Label>Additional Passenger Names</Label>
                       <Button
@@ -1796,6 +1868,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 ">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -1872,6 +1952,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -1948,6 +2036,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -2024,6 +2120,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button
@@ -2116,6 +2220,14 @@ export function AddBookingModal({ open, onOpenChange, onSave, defaultCustomer, e
                 </div>
                 
                 <div className="space-y-2 col-span-1 md:col-span-2">
+                  <div className="space-y-2 mb-4">
+                    <Label>Lead Passenger Name</Label>
+                    <Input
+                      value={details.passengerName || ""}
+                      onChange={(e) => updateDetail("passengerName", e.target.value)}
+                      placeholder="E.g. Romesh Kumar"
+                    />
+                  </div>
                   <div className="flex items-center justify-between">
                     <Label>Additional Passenger Names</Label>
                     <Button

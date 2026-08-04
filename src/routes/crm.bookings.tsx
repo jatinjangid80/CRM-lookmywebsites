@@ -863,7 +863,7 @@ function BookingsPage() {
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Lead Passenger Name</p>
-            <p className="font-semibold">{booking.details?.leaderName || booking.details?.passengerName || "—"}</p>
+            <p className="font-semibold">{booking.details?.leaderName || booking.details?.passengerName || booking.customer || "—"}</p>
           </div>
           <div>
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Travel Date</p>
@@ -1566,7 +1566,7 @@ function BookingsPage() {
                     <td className="px-4 py-3 text-sm whitespace-nowrap text-muted-foreground">{b.bookingDate || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.travelDate || "-"}</td>
                     <td className="px-4 py-3 font-semibold whitespace-nowrap">{b.customer || "-"}</td>
-                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.details?.leaderName || b.details?.passengerName || "-"}</td>
+                    <td className="px-4 py-3 text-sm whitespace-nowrap">{b.details?.leaderName || b.details?.passengerName || b.customer || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.mobileNumber || "-"}</td>
                     <td className="px-4 py-3 text-sm font-medium whitespace-nowrap">{b.details?.pnr || "-"}</td>
                     <td className="px-4 py-3 text-sm whitespace-nowrap">{b.bookingType || "-"}</td>
