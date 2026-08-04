@@ -1320,7 +1320,7 @@ function AttendancePage() {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsApplyLeaveOpen(false)}>Cancel</Button>
-            <Button onClick={handleApplyLeave} className="bg-emerald-600 hover:bg-emerald-700 text-white">Submit Application</Button>
+            <Button onClick={handleApplyLeave}>Submit Application</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
