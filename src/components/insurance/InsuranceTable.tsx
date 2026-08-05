@@ -175,7 +175,8 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
         (p.customer_name || "").toLowerCase().includes(q) ||
         (p.mobile_number || "").toLowerCase().includes(q) ||
         (getCompanyName(p) || "").toLowerCase().includes(q) ||
-        (p.vehicle_number || "").toLowerCase().includes(q)
+        (p.vehicle_number || "").toLowerCase().includes(q) ||
+        (p.school_name || "").toLowerCase().includes(q)
       );
     }
     return matchesStatus && matchesSearch;
@@ -281,7 +282,10 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
               ) : (
                 filteredPolicies.map((p, i) => (
                   <tr key={p.id || i} className="hover:bg-muted/30 transition-colors">
-                  <td className="px-4 py-3 font-medium text-blue-600">{p.policy_number || "Draft"}</td>
+                  <td className="px-4 py-3">
+                    <div className="font-medium text-blue-600">{p.policy_number || "Draft"}</div>
+                    {p.school_name && <div className="text-xs text-muted-foreground mt-0.5">{p.school_name}</div>}
+                  </td>
                   <td className="px-4 py-3">
                     <div className="font-semibold text-foreground">{p.customer_name}</div>
                     <div className="text-xs text-muted-foreground">{p.mobile_number}</div>

@@ -205,7 +205,7 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
       ]);
     });
 
-    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\\n");
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

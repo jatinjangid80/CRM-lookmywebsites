@@ -36,7 +36,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
 
   const handleExportVendorStatus = () => {
     const csvData = [
-      ["Vendor Name", "Policies Count", "Vendor Pending Amount", "Payments (Out)", "Total Balance", "Status"]
+      ["Vendor Name", "Policies Count", "Vendor Pending Amount", "Payments (Out)", "Total Balance", "Status", "Associated Policies", "Associated Customers"]
     ];
 
     uniqueVendors.forEach(vendorName => {
@@ -48,17 +48,28 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
       
       const status = totalBalance === 0 ? "Paid" : paymentsOut > 0 ? "Partial" : "Pending";
 
+      const policiesText = vPolicies.map(p => `${p.vehicle_number || "No Vehicle No."} (${p.customer_name || "Unknown"})`).join("; ");
+      
+      const customerSet = new Set<string>();
+      vPolicies.forEach(p => {
+        if (p.customer_name) customerSet.add(p.customer_name);
+      });
+      const vCustomers = Array.from(customerSet);
+      const customersText = vCustomers.map(cust => `${cust} (${vPolicies.filter(p => p.customer_name === cust).length} Policies)`).join("; ");
+
       csvData.push([
         vendorName || "Unknown",
         vPolicies.length.toString(),
         vendorPendingAmount.toString(),
         paymentsOut.toString(),
         totalBalance.toString(),
-        status
+        status,
+        policiesText,
+        customersText
       ]);
     });
 
-    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\\n");
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");

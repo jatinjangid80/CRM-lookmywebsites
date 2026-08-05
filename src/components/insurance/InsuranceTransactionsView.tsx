@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Search, FileText, ArrowUpRight, ArrowDownRight, Edit2, Trash2 } from "lucide-react";
+import { Plus, Search, FileText, ArrowUpRight, ArrowDownRight, Edit2, Trash2, Download } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR } from "@/lib/mock-data";
@@ -9,6 +9,8 @@ import { InsuranceGenTransactionModal } from "./InsuranceGenTransactionModal";
 export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
   const [searchQuery, setSearchQuery] = useState("");
+  const [dateFrom, setDateFrom] = useState("");
+  const [dateTo, setDateTo] = useState("");
   const [isAddTxOpen, setIsAddTxOpen] = useState(false);
 
   const policyIds = new Set(policies.map(p => String(p.id).toLowerCase()));
@@ -28,27 +30,93 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
   }).sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
 
   const filteredTransactions = insuranceTransactions.filter(t => 
-    t.entityName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    (t.entityName?.toLowerCase().includes(searchQuery.toLowerCase()) || 
     t.id?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.invoiceId?.toLowerCase().includes(searchQuery.toLowerCase())
+    t.invoiceId?.toLowerCase().includes(searchQuery.toLowerCase())) &&
+    (() => {
+      if (!dateFrom && !dateTo) return true;
+      const tDate = new Date(t.date || 0).getTime();
+      const fromTime = dateFrom ? new Date(dateFrom).getTime() : 0;
+      
+      if (dateTo) {
+          const toDateObj = new Date(dateTo);
+          toDateObj.setHours(23, 59, 59, 999);
+          return tDate >= fromTime && tDate <= toDateObj.getTime();
+      }
+      
+      return tDate >= fromTime;
+    })()
   );
+
+  const handleExportTransactions = () => {
+    const csvData = [
+      ["Transaction ID", "Date", "Entity Name", "Entity Type", "Linked Policy", "Amount", "Mode", "Status"]
+    ];
+
+    filteredTransactions.forEach(tx => {
+      const typeSign = (tx.type === 'Receipt' || tx.entityType === 'Customer') ? '+' : '-';
+      const linked = policies.find(p => String(p.id).toLowerCase() === String(tx.invoiceId).toLowerCase() || String(p.policy_number).toLowerCase() === String(tx.invoiceId).toLowerCase());
+      const linkedPolicyText = tx.invoiceId ? `${tx.invoiceId}${linked?.customer_name ? ` (${linked.customer_name})` : ''}` : "N/A";
+      
+      csvData.push([
+        tx.id || "N/A",
+        tx.date ? new Date(tx.date).toLocaleDateString() : "N/A",
+        tx.entityName || "Unknown",
+        tx.entityType || "N/A",
+        linkedPolicyText,
+        `${typeSign}${tx.amount}`,
+        tx.paymentMode || "N/A",
+        tx.status || "Completed"
+      ]);
+    });
+
+    const csvContent = csvData.map(row => row.map(cell => `"${cell}"`).join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `General_Insurance_Transactions_${new Date().toISOString().split('T')[0]}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-300">
-      <div className="flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-        <div className="relative max-w-sm w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Search transactions..." 
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            className="pl-9 bg-background border-border"
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-4">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <Input
+            type="date"
+            value={dateFrom}
+            onChange={(e) => setDateFrom(e.target.value)}
+            className="w-full sm:w-[150px]"
+          />
+          <span className="text-muted-foreground">to</span>
+          <Input
+            type="date"
+            value={dateTo}
+            onChange={(e) => setDateTo(e.target.value)}
+            className="w-full sm:w-[150px]"
           />
         </div>
-        <Button onClick={() => setIsAddTxOpen(true)} className="shadow-sm">
-          <Plus className="h-4 w-4 mr-2" />
-          Add Transaction
-        </Button>
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="relative w-full sm:w-64">
+            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search transactions..."
+              className="pl-9 bg-background/50"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+            />
+          </div>
+          <Button variant="outline" onClick={handleExportTransactions} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button onClick={() => setIsAddTxOpen(true)} className="shadow-sm ml-2">
+            <Plus className="h-4 w-4 mr-1" />
+            Add
+          </Button>
+        </div>
       </div>
 
       <div className="bg-card border border-border rounded-2xl shadow-sm overflow-hidden">
@@ -89,9 +157,18 @@ export function InsuranceTransactionsView({ policies }: { policies: any[] }) {
                       <p className="text-xs text-muted-foreground">{tx.entityType}</p>
                     </td>
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <FileText className="h-4 w-4 text-muted-foreground" />
-                        <span className="font-medium text-blue-600 dark:text-blue-400">{tx.invoiceId || "N/A"}</span>
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <FileText className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <span className="font-medium text-blue-600 dark:text-blue-400 truncate max-w-[200px]">{tx.invoiceId || "N/A"}</span>
+                        </div>
+                        {(() => {
+                          const linked = policies.find(p => String(p.id).toLowerCase() === String(tx.invoiceId).toLowerCase() || String(p.policy_number).toLowerCase() === String(tx.invoiceId).toLowerCase());
+                          if (linked && linked.customer_name) {
+                            return <span className="text-xs text-muted-foreground mt-1 ml-6">{linked.customer_name}</span>;
+                          }
+                          return null;
+                        })()}
                       </div>
                     </td>
                     <td className="px-6 py-4">
