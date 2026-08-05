@@ -57,7 +57,20 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
     return <span className="rounded-full bg-emerald-500/100/10 text-emerald-500 border-emerald-500/20 border px-2 py-1 text-[10px] font-bold tracking-wider uppercase">Active</span>;
   };
 
-  const getPaymentBadge = (status: string) => {
+  const getPaymentBadge = (policy: any) => {
+    let status = policy.payment_status || 'Pending';
+    
+    // Auto calculate if customer_paid is present to ensure sync with History Modal
+    const expected = Number(policy.customer_paid) || 0;
+    const actual = Number(policy.amount_paid) || 0;
+    const outstanding = Math.max(expected - actual, 0);
+    
+    if (expected > 0) {
+      if (outstanding === 0) status = 'Full Paid';
+      else if (actual > 0) status = 'Partial';
+      else status = 'Pending';
+    }
+
     if (status === 'Full Paid') return <span className="text-emerald-600 font-semibold text-xs">Full Paid</span>;
     if (status === 'Partial') return <span className="text-blue-600 font-semibold text-xs">Partial</span>;
     return <span className="text-rose-600 font-semibold text-xs">Pending</span>;
@@ -294,7 +307,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                   <td className="px-4 py-3">
                     <div className="flex flex-col gap-1 items-start">
                       {getStatusBadge(p)}
-                      {getPaymentBadge(p.payment_status)}
+                      {getPaymentBadge(p)}
                     </div>
                   </td>
                   <td className="px-4 py-3 text-right">

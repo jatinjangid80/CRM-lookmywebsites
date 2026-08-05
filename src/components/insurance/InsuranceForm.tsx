@@ -123,52 +123,44 @@ export function InsuranceForm({
   }, [initialData]);
 
   // Auto Calculations
-  useEffect(() => {
-    const od = Number(form.od_premium) || 0;
-    const tp = Number(form.tp_premium) || 0;
-    const calculatedNet = od + tp;
-    setForm((f: any) => {
-      // Only auto-update net if it actually equals the sum, so we don't override manual edits
-      if (f.net_premium === calculatedNet) return f;
-      return { ...f, net_premium: calculatedNet };
+  const handleChangeWithCalc = (updates: any) => {
+    setForm((prev: any) => {
+      const next = { ...prev, ...updates };
+      
+      if ('od_premium' in updates || 'tp_premium' in updates) {
+        next.net_premium = (Number(next.od_premium) || 0) + (Number(next.tp_premium) || 0);
+      }
+      
+      if ('od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
+        const net = Number(next.net_premium) || 0;
+        if (!('gst' in updates)) {
+          const gstPct = next.gst_percentage !== undefined && next.gst_percentage !== null ? Number(next.gst_percentage) : 18;
+          next.gst = Math.round(net * (gstPct / 100));
+        }
+        next.total_premium = net + (Number(next.gst) || 0);
+      }
+      
+      if ('customer_paid' in updates || 'vendor_paid' in updates) {
+        next.profit = (Number(next.customer_paid) || 0) - (Number(next.vendor_paid) || 0);
+      }
+      
+      if ('customer_paid' in updates || 'amount_paid' in updates) {
+        const expected = Number(next.customer_paid) || 0;
+        const actual = Number(next.amount_paid) || 0;
+        const outstanding = Math.max(expected - actual, 0);
+        
+        let status = "Pending";
+        if (expected > 0 && outstanding === 0) {
+          status = "Full Paid";
+        } else if (actual > 0) {
+          status = "Partial";
+        }
+        next.payment_status = status;
+      }
+      
+      return next;
     });
-  }, [form.od_premium, form.tp_premium]);
-
-  useEffect(() => {
-    const net = Number(form.net_premium) || 0;
-    const gstPct = Number(form.gst_percentage) || 18;
-    const calculatedGst = Math.round(net * (gstPct / 100));
-    setForm((f: any) => {
-      if (f.gst === calculatedGst && f.total_premium === net + calculatedGst) return f;
-      return { ...f, gst: calculatedGst, total_premium: net + calculatedGst };
-    });
-  }, [form.net_premium, form.gst_percentage]);
-
-  useEffect(() => {
-    const net = Number(form.net_premium) || 0;
-    const gst = Number(form.gst) || 0;
-    setForm((f: any) => {
-      if (f.total_premium === net + gst) return f;
-      return { ...f, total_premium: net + gst };
-    });
-  }, [form.gst]);
-
-  useEffect(() => {
-    const custPaid = Number(form.customer_paid) || 0;
-    const vendPaid = Number(form.vendor_paid) || 0;
-    setForm((f: any) => ({ ...f, profit: custPaid - vendPaid }));
-  }, [form.customer_paid, form.vendor_paid]);
-
-  useEffect(() => {
-    const total = Number(form.total_premium) || 0;
-    const paid = Number(form.customer_paid) || 0;
-    let status = "Pending";
-    if (paid > 0) {
-      if (paid >= total && total > 0) status = "Full Paid";
-      else status = "Partial";
-    }
-    setForm((f: any) => ({ ...f, payment_status: status }));
-  }, [form.customer_paid, form.total_premium]);
+  };
 
   const [customerSearch, setCustomerSearch] = useState("");
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
@@ -763,7 +755,7 @@ export function InsuranceForm({
                 <Input
                   type="number"
                   value={form.od_premium}
-                  onChange={(e) => setForm({ ...form, od_premium: e.target.value })}
+                  onChange={(e) => handleChangeWithCalc({ od_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
@@ -771,7 +763,7 @@ export function InsuranceForm({
                 <Input
                   type="number"
                   value={form.tp_premium}
-                  onChange={(e) => setForm({ ...form, tp_premium: e.target.value })}
+                  onChange={(e) => handleChangeWithCalc({ tp_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
@@ -779,17 +771,18 @@ export function InsuranceForm({
                 <Input
                   type="number"
                   value={form.net_premium}
-                  onChange={(e) => setForm({ ...form, net_premium: e.target.value })}
+                  onChange={(e) => handleChangeWithCalc({ net_premium: e.target.value })}
                 />
               </div>
               <div className="space-y-1">
                 <Label>GST</Label>
                 <select
                   className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={form.gst_percentage || 18}
-                  onChange={(e) => setForm({ ...form, gst_percentage: Number(e.target.value) })}
+                  value={form.gst_percentage !== undefined && form.gst_percentage !== null ? form.gst_percentage : 18}
+                  onChange={(e) => handleChangeWithCalc({ gst_percentage: Number(e.target.value) })}
                 >
                   <option value="18">18%</option>
+                  <option value="0">0%</option>
                 </select>
               </div>
               <div className="space-y-1 bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
@@ -813,7 +806,7 @@ export function InsuranceForm({
                 <Input
                   type="number"
                   value={form.customer_paid}
-                  onChange={(e) => setForm({ ...form, customer_paid: e.target.value })}
+                  onChange={(e) => handleChangeWithCalc({ customer_paid: e.target.value })}
                 />
               </div>
 
@@ -822,7 +815,7 @@ export function InsuranceForm({
                 <Input
                   type="number"
                   value={form.vendor_paid}
-                  onChange={(e) => setForm({ ...form, vendor_paid: e.target.value })}
+                  onChange={(e) => handleChangeWithCalc({ vendor_paid: e.target.value })}
                 />
               </div>
 
