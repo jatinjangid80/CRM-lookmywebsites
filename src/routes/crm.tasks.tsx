@@ -792,7 +792,7 @@ function TasksPage() {
                             <p className="text-xs text-muted-foreground">{empTasks.length} Assigned Tasks</p>
                           </div>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 max-h-[350px] overflow-y-auto pr-2">
                           {empTasks.map(t => (
                             <div key={t.id} className="group flex items-start gap-3 rounded-lg border bg-card p-3 shadow-sm hover:border-brand/50">
                               <div className="mt-0.5">
