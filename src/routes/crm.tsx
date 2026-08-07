@@ -118,7 +118,7 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing"
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
     ].includes(n.label));
   }
 
