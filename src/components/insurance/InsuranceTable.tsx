@@ -176,6 +176,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
         (p.customer_name || "").toLowerCase().includes(q) ||
         (p.mobile_number || "").toLowerCase().includes(q) ||
         (getCompanyName(p) || "").toLowerCase().includes(q) ||
+        (getVendorName(p) || "").toLowerCase().includes(q) ||
         (p.vehicle_number || "").toLowerCase().includes(q) ||
         (p.school_name || "").toLowerCase().includes(q)
       );
@@ -246,7 +247,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <input
             type="text"
-            placeholder="Search by policy, customer, mobile..."
+            placeholder="Search by policy, customer, vendor, mobile..."
             className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
@@ -301,6 +302,7 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                   <tr key={p.id || i} className="hover:bg-muted/30 transition-colors">
                   <td className="px-4 py-3">
                     <div className="font-medium text-blue-600">{p.policy_number || "Draft"}</div>
+                    {p.client_company && <div className="text-xs font-semibold text-muted-foreground mt-0.5">{p.client_company}</div>}
                     {p.school_name && <div className="text-xs text-muted-foreground mt-0.5">{p.school_name}</div>}
                   </td>
                   <td className="px-4 py-3">
@@ -318,6 +320,11 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
                   <td className="px-4 py-3">
                     <div className="text-xs">Iss: {p.issue_date}</div>
                     <div className="text-xs font-semibold text-rose-600">Exp: {p.expiry_date}</div>
+                    {p.created_at && (
+                      <div className="text-[10px] text-muted-foreground mt-1" title="Created Date & Time">
+                        Added: {new Date(p.created_at).toLocaleString('en-IN', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true })}
+                      </div>
+                    )}
                   </td>
                   <td className="px-4 py-3">
                     <div className="font-bold text-foreground">{formatINR(p.total_premium)}</div>

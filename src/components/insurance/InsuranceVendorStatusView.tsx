@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import { formatINR } from "@/lib/mock-data";
 import { Button } from "@/components/ui/button";
 import { Plus, ChevronDown, Search, Download } from "lucide-react";
@@ -14,6 +14,15 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
   const [vendorSearchQuery, setVendorSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
+  const [transactions, setTransactions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      const { data } = await supabase.from('transactions').select('*').eq('entityType', 'Vendor');
+      if (data) setTransactions(data);
+    };
+    fetchTransactions();
+  }, []);
 
   const getVendorName = (p: any) => p.vendor_id === "other" ? (p.custom_vendor || "Other") : (vendors.find(v => v.id === p.vendor_id)?.name || p.vendor_id);
 
@@ -44,9 +53,8 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
       
       const vendorPendingAmount = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
       const paymentsOut = vPolicies.reduce((sum, p) => sum + (Number(p.payments_out) || 0), 0);
-      const totalBalance = Math.max(vendorPendingAmount - paymentsOut, 0);
-      
-      const status = totalBalance === 0 ? "Paid" : paymentsOut > 0 ? "Partial" : "Pending";
+      const rawBalance = vendorPendingAmount - paymentsOut;
+      const status = rawBalance === 0 ? "Paid" : rawBalance < 0 ? "Extra Pay" : paymentsOut > 0 ? "Partial" : "Pending";
 
       const policiesText = vPolicies.map(p => `${p.vehicle_number || "No Vehicle No."} (${p.customer_name || "Unknown"})`).join("; ");
       
@@ -62,7 +70,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
         vPolicies.length.toString(),
         vendorPendingAmount.toString(),
         paymentsOut.toString(),
-        totalBalance.toString(),
+        rawBalance.toString(),
         status,
         policiesText,
         customersText
@@ -83,7 +91,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
   const vendorStats = filteredPolicies.reduce((acc, p) => {
     const vendPaid = Number(p.vendor_paid) || 0; // Vendor Pending Amount
     const paymentsOut = Number(p.payments_out) || 0;
-    const pending = Math.max(vendPaid - paymentsOut, 0);
+    const pending = vendPaid - paymentsOut;
     return {
       totalPaid: acc.totalPaid + paymentsOut,
       totalPending: acc.totalPending + pending
@@ -138,6 +146,21 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
           : p
       ));
     }
+    
+    // Optimistically update transactions
+    setTransactions(prev => [{
+      id: `TXN-${Math.floor(Math.random() * 1000000)}`,
+      date,
+      type: "Payment",
+      entityType: "Vendor",
+      entityName: getVendorName(selectedPolicy),
+      amount,
+      paymentMode: mode,
+      notes: JSON.stringify({
+        _isMeta: true,
+        reference,
+      })
+    }, ...prev]);
   };
 
   // Group policies by vendor
@@ -237,15 +260,17 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                 
                 const vendorPendingAmount = vPolicies.reduce((sum, p) => sum + (Number(p.vendor_paid) || 0), 0);
                 const paymentsOut = vPolicies.reduce((sum, p) => sum + (Number(p.payments_out) || 0), 0);
-                const totalBalance = Math.max(vendorPendingAmount - paymentsOut, 0);
+                const rawBalance = vendorPendingAmount - paymentsOut;
                 
-                const status = totalBalance === 0 ? "Paid" : paymentsOut > 0 ? "Partial" : "Pending";
+                const status = rawBalance === 0 ? "Paid" : rawBalance < 0 ? "Extra Pay" : paymentsOut > 0 ? "Partial" : "Pending";
                 
                 const customerSet = new Set<string>();
                 vPolicies.forEach(p => {
                   if (p.customer_name) customerSet.add(p.customer_name);
                 });
                 const vCustomers = Array.from(customerSet);
+                
+                const vendorTxns = transactions.filter(t => t.entityName === vendorName).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
                 
                 return (
                   <React.Fragment key={vendorId}>
@@ -269,15 +294,15 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                         {formatINR(paymentsOut)}
                       </td>
                       <td className="px-6 py-4 text-right font-medium text-rose-600 dark:text-rose-500">
-                        {formatINR(totalBalance)}
+                        {rawBalance < 0 ? `- ${formatINR(Math.abs(rawBalance))}` : formatINR(rawBalance)}
                       </td>
                       <td className="px-6 py-4">
-                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                        <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : status === 'Extra Pay' ? 'bg-blue-500/10 text-blue-500' : status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
                           {status}
                         </span>
                       </td>
                       <td className="px-6 py-4 text-right" onClick={(e) => e.stopPropagation()}>
-                        {totalBalance > 0 && (
+                        {rawBalance > 0 && (
                           <Button 
                             size="sm" 
                             variant="outline" 
@@ -297,7 +322,7 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                     {isExpanded && (
                       <tr className="bg-secondary/5 border-b border-border">
                         <td colSpan={7} className="p-0">
-                          <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-6 animate-in slide-in-from-top-2 duration-200">
+                          <div className="p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in slide-in-from-top-2 duration-200">
                             {/* Policies List */}
                             <div className="bg-background rounded-xl border border-border p-4 space-y-3">
                               <h4 className="font-semibold flex justify-between items-center text-sm">
@@ -345,6 +370,35 @@ export function InsuranceVendorStatusView({ policies, vendors, setPolicies }: { 
                                     </div>
                                   </div>
                                 )) : <div className="text-xs text-muted-foreground italic">No customers found for this vendor.</div>}
+                              </div>
+                            </div>
+                            
+                            {/* Payment History List */}
+                            <div className="bg-background rounded-xl border border-border p-4 space-y-3">
+                              <h4 className="font-semibold flex justify-between items-center text-sm">
+                                <span>Payment History</span>
+                                <span className="bg-secondary px-2 py-0.5 rounded-full text-[10px]">{vendorTxns.length}</span>
+                              </h4>
+                              <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 custom-scrollbar">
+                                {vendorTxns.length > 0 ? vendorTxns.map((txn, i) => (
+                                  <div key={i} className="text-xs p-2 rounded-lg border border-border/50 bg-secondary/10 flex flex-col gap-1">
+                                    <div className="flex justify-between items-start">
+                                      <span className="font-medium text-emerald-600 dark:text-emerald-500">{formatINR(txn.amount)}</span>
+                                      <span className="text-muted-foreground">{txn.date}</span>
+                                    </div>
+                                    <div className="flex justify-between items-center mt-1">
+                                      <span className="text-muted-foreground">{txn.paymentMode}</span>
+                                      {txn.notes && (() => {
+                                        try {
+                                          const notesObj = JSON.parse(txn.notes);
+                                          return <span className="text-muted-foreground truncate max-w-[100px]">{notesObj.reference || "No Ref"}</span>
+                                        } catch(e) {
+                                          return <span className="text-muted-foreground truncate max-w-[100px]">{txn.notes}</span>
+                                        }
+                                      })()}
+                                    </div>
+                                  </div>
+                                )) : <div className="text-xs text-muted-foreground italic">No payment history found.</div>}
                               </div>
                             </div>
                           </div>

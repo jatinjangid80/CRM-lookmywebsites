@@ -190,8 +190,8 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
     filteredPolicies.forEach(p => {
       const customerPaidAmount = Number(p.customer_paid) || 0;
       const addPayment = Number(p.amount_paid) || 0;
-      const outstanding = Math.max(customerPaidAmount - addPayment, 0);
-      const status = outstanding === 0 ? "Full Paid" : addPayment > 0 ? "Partial" : "Pending";
+      const outstanding = customerPaidAmount - addPayment;
+      const status = outstanding === 0 ? "Paid" : outstanding < 0 ? "Extra Pay" : addPayment > 0 ? "Partial" : "Pending";
 
       csvData.push([
         p.customer_name || "Unknown",
@@ -219,7 +219,8 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
   const customerStats = filteredPolicies.reduce((acc, p) => {
     const customerPaidAmount = Number(p.customer_paid) || 0;
     const addPayment = Number(p.amount_paid) || 0;
-    const outstanding = Math.max(customerPaidAmount - addPayment, 0);
+    const outstanding = customerPaidAmount - addPayment;
+    
     return {
       total: acc.total + customerPaidAmount,
       paid: acc.paid + addPayment,
@@ -257,11 +258,13 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
     const currentAddPayment = Number(selectedPolicy.amount_paid) || 0;
     const newAddPayment = currentAddPayment + amount;
     
-    const outstanding = Math.max(customerPaidAmount - newAddPayment, 0);
+    const outstanding = customerPaidAmount - newAddPayment;
 
     let newStatus = "Pending";
     if (outstanding === 0) {
-      newStatus = "Full Paid";
+      newStatus = "Paid";
+    } else if (outstanding < 0) {
+      newStatus = "Extra Pay";
     } else if (newAddPayment > 0) {
       newStatus = "Partial";
     }
@@ -384,9 +387,8 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                 filteredPolicies.map((p) => {
                     const customerPaidAmount = Number(p.customer_paid) || 0;
                     const addPayment = Number(p.amount_paid) || 0;
-                    const outstanding = Math.max(customerPaidAmount - addPayment, 0);
-
-                    const status = outstanding === 0 ? "Full Paid" : addPayment > 0 ? "Partial" : "Pending";
+                    const outstanding = customerPaidAmount - addPayment;
+                    const status = outstanding === 0 ? "Paid" : outstanding < 0 ? "Extra Pay" : addPayment > 0 ? "Partial" : "Pending";
 
                     return (
                       <tr key={p.id} className="hover:bg-muted/30 transition-colors">
@@ -409,10 +411,10 @@ export function InsuranceCustomerStatusView({ policies, setPolicies }: { policie
                           {formatINR(addPayment)}
                         </td>
                         <td className="px-6 py-4 text-right font-medium text-foreground">
-                          {formatINR(outstanding)}
+                          {outstanding < 0 ? `- ${formatINR(Math.abs(outstanding))}` : formatINR(outstanding)}
                         </td>
                         <td className="px-6 py-4">
-                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Full Paid' ? 'bg-emerald-500/10 text-emerald-500' : status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
+                          <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-semibold ${status === 'Paid' ? 'bg-emerald-500/10 text-emerald-500' : status === 'Extra Pay' ? 'bg-blue-500/10 text-blue-500' : status === 'Partial' ? 'bg-amber-500/10 text-amber-500' : 'bg-rose-500/10 text-rose-500'}`}>
                             {status}
                           </span>
                         </td>
