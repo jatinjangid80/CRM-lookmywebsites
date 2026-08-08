@@ -144,6 +144,7 @@ function GeneralInsurancePage() {
       'issue_date', 'expiry_date', 'vehicle_number', 'vehicle_model', 'seating_capacity', 'chassis_number', 
       'engine_number', 'fuel_type', 'registration_date', 'policy_type', 'idv_value', 'previous_policy_number', 
       'previous_insurer', 'ncb_percentage', 'od_premium', 'tp_premium', 'net_premium', 'gst', 'total_premium', 
+      'customer_discount_type', 'customer_discount_percent', 'customer_discount_amount',
       'customer_paid', 'vendor_paid', 'profit', 'payment_date', 'payment_mode', 'transaction_reference', 
       'payment_status', 'notes', 'status', 'created_at', 'paid_by', 'amount_paid'
     ];

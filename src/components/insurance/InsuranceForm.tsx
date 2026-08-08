@@ -27,7 +27,7 @@ export function InsuranceForm({
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [folders, setFolders] = useSupabaseTable<any[]>("folders", []);
-
+``
   const [newVendor, setNewVendor] = useState({ 
     name: "", contact_person: "", mobile: "", alternate_mobile: "", 
     email: "", office_city: "", website: "", address: "", 
@@ -100,6 +100,9 @@ export function InsuranceForm({
     gst: 0,
     total_premium: 0,
 
+    customer_discount_type: "flat",
+    customer_discount_percent: "",
+    customer_discount_amount: "",
     customer_paid: 0,
     vendor_paid: 0,
     profit: 0,
@@ -138,13 +141,40 @@ export function InsuranceForm({
           next.gst = Math.round(net * (gstPct / 100));
         }
         next.total_premium = net + (Number(next.gst) || 0);
+        
+        // Auto-calculate discount amount if percentage is set
+        if (Number(next.customer_discount_percent) > 0) {
+          next.customer_discount_amount = Math.round(next.total_premium * (Number(next.customer_discount_percent) / 100));
+        }
+        // Auto-adjust customer_paid based on new total and discount
+        next.customer_paid = Math.max(0, next.total_premium - (Number(next.customer_discount_amount) || 0));
       }
       
-      if ('customer_paid' in updates || 'vendor_paid' in updates) {
+      if ('customer_discount_percent' in updates || 'customer_discount_amount' in updates) {
+        const total = Number(next.total_premium) || 0;
+        if ('customer_discount_percent' in updates) {
+          const pct = Number(updates.customer_discount_percent) || 0;
+          next.customer_discount_amount = Math.round(total * (pct / 100));
+        } else if ('customer_discount_amount' in updates) {
+          const amt = Number(updates.customer_discount_amount) || 0;
+          next.customer_discount_percent = total > 0 ? Number(((amt / total) * 100).toFixed(2)) : 0;
+        }
+        
+        // Auto-adjust customer paid
+        next.customer_paid = Math.max(0, total - (Number(next.customer_discount_amount) || 0));
+      } else if ('customer_paid' in updates) {
+        // Auto-adjust discount if customer paid changes manually
+        const total = Number(next.total_premium) || 0;
+        const paid = Number(updates.customer_paid) || 0;
+        next.customer_discount_amount = Math.max(0, total - paid);
+        next.customer_discount_percent = total > 0 ? Number(((next.customer_discount_amount / total) * 100).toFixed(2)) : 0;
+      }
+      
+      if ('customer_paid' in updates || 'vendor_paid' in updates || 'customer_discount_percent' in updates || 'customer_discount_amount' in updates || 'od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         next.profit = (Number(next.customer_paid) || 0) - (Number(next.vendor_paid) || 0);
       }
       
-      if ('customer_paid' in updates || 'amount_paid' in updates) {
+      if ('customer_paid' in updates || 'amount_paid' in updates || 'customer_discount_percent' in updates || 'customer_discount_amount' in updates || 'od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         const expected = Number(next.customer_paid) || 0;
         const actual = Number(next.amount_paid) || 0;
         const outstanding = Math.max(expected - actual, 0);
@@ -248,6 +278,7 @@ export function InsuranceForm({
       "registration_date", "payment_date", "issue_date", "expiry_date",
       "seating_capacity", "idv_value", "ncb_percentage",
       "od_premium", "tp_premium", "net_premium", "gst", "total_premium", 
+      "customer_discount_percent", "customer_discount_amount",
       "customer_paid", "vendor_paid", "profit", "amount_paid"
     ];
     
@@ -800,6 +831,33 @@ export function InsuranceForm({
             </div>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="space-y-1">
+                <Label>Customer Discount</Label>
+                <div className="flex">
+                  <select
+                    className="flex h-9 items-center justify-center rounded-l-md border border-r-0 border-input bg-muted px-2 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none font-medium"
+                    value={form.customer_discount_type || "flat"}
+                    onChange={(e) => setForm({ ...form, customer_discount_type: e.target.value })}
+                  >
+                    <option value="flat">₹ Flat</option>
+                    <option value="percent">% Perc</option>
+                  </select>
+                  <Input
+                    type="number"
+                    className="rounded-l-none pl-3"
+                    value={form.customer_discount_type === 'percent' ? form.customer_discount_percent : form.customer_discount_amount}
+                    onChange={(e) => {
+                      if (form.customer_discount_type === 'percent') {
+                        handleChangeWithCalc({ customer_discount_percent: e.target.value });
+                      } else {
+                        handleChangeWithCalc({ customer_discount_amount: e.target.value });
+                      }
+                    }}
+                    placeholder="0"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-1">
                 <div className="flex items-center justify-between">
                   <Label>Customer Paid Amounts</Label>
                 </div>
@@ -826,11 +884,12 @@ export function InsuranceForm({
                 </p>
               </div>
 
-              <div className="space-y-1">
+              <div className="space-y-1 col-span-2 md:col-span-4">
                 <Label>Transaction Ref.</Label>
                 <Input
                   value={form.transaction_reference}
                   onChange={(e) => setForm({ ...form, transaction_reference: e.target.value })}
+                  placeholder="Enter transaction reference"
                 />
               </div>
 

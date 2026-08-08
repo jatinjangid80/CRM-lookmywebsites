@@ -20,8 +20,9 @@ interface InsuranceTableProps {
 export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplicate, onDelete }: InsuranceTableProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState("All");
-  const [sortColumn, setSortColumn] = useState<string>("Dates");
+  const [sortColumn, setSortColumn] = useState<string>("Created");
   const [sortDirection, setSortDirection] = useState<"asc" | "desc">("desc");
+  const [selectedDate, setSelectedDate] = useState<string>("");
 
   const toggleSort = (column: string) => {
     if (sortColumn === column) {
@@ -179,7 +180,11 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
         (p.school_name || "").toLowerCase().includes(q)
       );
     }
-    return matchesStatus && matchesSearch;
+    let matchesDate = true;
+    if (selectedDate) {
+      matchesDate = p.issue_date === selectedDate;
+    }
+    return matchesStatus && matchesSearch && matchesDate;
   }).sort((a, b) => {
     let aValue: any = "";
     let bValue: any = "";
@@ -214,15 +219,19 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
         aValue = a.status || "";
         bValue = b.status || "";
         break;
+      case "Created":
+        aValue = new Date(a.created_at || 0).getTime();
+        bValue = new Date(b.created_at || 0).getTime();
+        break;
       default:
-        aValue = a.issue_date || "";
-        bValue = b.issue_date || "";
+        aValue = a.created_at ? new Date(a.created_at).getTime() : 0;
+        bValue = b.created_at ? new Date(b.created_at).getTime() : 0;
         break;
     }
 
     if (aValue < bValue) return sortDirection === "asc" ? -1 : 1;
     if (aValue > bValue) return sortDirection === "asc" ? 1 : -1;
-    return 0;
+    return new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime();
   });
 
   const renderSortIcon = (column: string) => {
@@ -241,6 +250,14 @@ export function InsuranceTable({ policies, companies, vendors, onEdit, onDuplica
             className="w-full pl-9 pr-4 py-2 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
+          />
+        </div>
+        <div className="relative">
+          <input
+            type="date"
+            value={selectedDate}
+            onChange={(e) => setSelectedDate(e.target.value)}
+            className="px-3 py-2 bg-card border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 h-full min-w-[140px]"
           />
         </div>
         <div className="flex gap-2">
