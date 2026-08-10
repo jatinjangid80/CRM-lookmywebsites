@@ -416,6 +416,7 @@ function BookingsPage() {
     "ID",
     "Type",
     "Customer",
+    "Passengers",
     "Mobile",
     "Booking Date",
     "Travel Date",
@@ -432,25 +433,35 @@ function BookingsPage() {
     "Status"
   ];
 
-  const getExportRow = (b: ExtBooking) => [
-    b.id || "-",
-    b.bookingType || "-",
-    b.customer || "-",
-    b.mobileNumber || "-",
-    b.bookingDate || "-",
-    b.details?.travelDate || b.travelDate || "-",
-    b.supplier || "-",
-    b.details?.pnr || b.reference || "-",
-    b.package || "-",
-    b.details?.sector || b.details?.destination || b.details?.city || "-",
-    b.bookedBy || "-",
-    b.paymentMode || "-",
-    b.sellingPrice || b.amount || 0,
-    b.purchasePrice || 0,
-    b.profit || 0,
-    b.paid || 0,
-    b.status || "-"
-  ];
+  const getExportRow = (b: ExtBooking) => {
+    let passengers = b.details?.passengerName || "";
+    if (b.details?.additionalNames && Array.isArray(b.details.additionalNames)) {
+      const extra = b.details.additionalNames.filter(Boolean).join(", ");
+      if (extra) {
+        passengers = passengers ? `${passengers}, ${extra}` : extra;
+      }
+    }
+    return [
+      b.id || "-",
+      b.bookingType || "-",
+      b.customer || "-",
+      passengers || "-",
+      b.mobileNumber || "-",
+      b.bookingDate || "-",
+      b.details?.travelDate || b.travelDate || "-",
+      b.supplier || "-",
+      b.details?.pnr || b.reference || "-",
+      b.package || "-",
+      b.details?.sector || b.details?.destination || b.details?.city || "-",
+      b.bookedBy || "-",
+      b.paymentMode || "-",
+      b.sellingPrice || b.amount || 0,
+      b.purchasePrice || 0,
+      b.profit || 0,
+      b.paid || 0,
+      b.status || "-"
+    ];
+  };
 
   // Export: Excel / CSV
   const exportToExcel = () => {
