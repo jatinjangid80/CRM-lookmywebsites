@@ -536,6 +536,11 @@ function VendorsPage() {
               <Download className="mr-2 h-4 w-4" /> Import
             </Button>
           )}
+          {(auth?.role === "admin" || auth?.name?.toLowerCase().includes("aman")) && (
+            <Button variant="outline" className="shadow-sm" onClick={handleExport}>
+              <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
+          )}
           <Button onClick={openAdd} className="shadow">
             <Plus className="mr-2 h-4 w-4" /> Add Vendor
           </Button>
