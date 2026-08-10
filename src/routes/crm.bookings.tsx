@@ -1497,7 +1497,7 @@ function BookingsPage() {
               ))}
             </select>
           </div>
-          {isAdmin && (
+          {(isAdmin || auth?.name?.toLowerCase().includes("aman")) && (
             <Button variant="outline" className="rounded-full" onClick={() => setIsExportOpen(true)}>
               <Download className="w-4 h-4 mr-2" />
               Export
