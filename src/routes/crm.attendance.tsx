@@ -157,9 +157,7 @@ function AttendancePage() {
         date: todayStr,
         checkin: formattedTimeStr,
         checkout: "",
-        status: "Active",
-        location: "Office",
-        note: shiftNote
+        status: "Active"
       };
       setAttendance([...rawAttendance, newRecord]);
       setShiftNote("");
@@ -186,6 +184,27 @@ function AttendancePage() {
     month: "short",
     year: "numeric",
   });
+
+  // Auto-cleanup script to remove duplicate punches caused by the previous bug
+  useEffect(() => {
+    if (rawAttendance.length === 0) return;
+    const seen = new Set();
+    const toKeep: any[] = [];
+    let hasDuplicates = false;
+    for (const a of rawAttendance) {
+      const key = `${a.employeeid}-${a.date}-${a.checkin}-${a.checkout}`;
+      if (seen.has(key)) {
+        hasDuplicates = true;
+      } else {
+        seen.add(key);
+        toKeep.push(a);
+      }
+    }
+    if (hasDuplicates && rawAttendance.length > toKeep.length) {
+      console.log(`Auto-cleaning ${rawAttendance.length - toKeep.length} duplicate attendance records...`);
+      setAttendance(toKeep);
+    }
+  }, [rawAttendance.length]);
 
   return (
     <main className="flex-1 p-4 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -271,7 +290,7 @@ function AttendancePage() {
                         </div>
                         <div className="flex justify-between items-center">
                           <span className="text-muted-foreground">Clocked In:</span>
-                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatTime12Hour(record.checkin)} ({record.location})</span>
+                          <span className="font-semibold text-emerald-600 dark:text-emerald-400">{formatTime12Hour(record.checkin)} ({record.location || "Office"})</span>
                         </div>
                         {record.checkout && (
                           <div className="flex justify-between items-center pt-1 border-t border-border/40">
