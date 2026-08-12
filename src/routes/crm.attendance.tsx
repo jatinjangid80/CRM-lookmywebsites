@@ -535,6 +535,8 @@ function AttendancePage() {
                            const [h, m] = firstIn.split(':').map(Number);
                            if (h > 10 || (h === 10 && m > 15)) isLate = true;
                         }
+                        
+                        const isHalfDay = totalWorkedMins > 0 && totalWorkedMins < 240 && !isActive;
 
                         // For visual timeline (assume 10 AM to 6 PM standard bounds for the bar width)
                         // 10 AM = 10 * 60 = 600
@@ -569,6 +571,7 @@ function AttendancePage() {
                                 </div>
                               </div>
                               <div className="flex items-center gap-2">
+                                {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
                                 {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
                                 {isActive ? (
                                   <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
@@ -959,6 +962,8 @@ function AttendancePage() {
                         const [h, m] = firstIn.split(':').map(Number);
                         if (h > 10 || (h === 10 && m > 15)) isLate = true;
                     }
+                    
+                    const isHalfDay = totalSecs > 0 && totalSecs < 240 * 60 && !isActive;
 
                     const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
                       if (!timeStr) {
@@ -987,6 +992,7 @@ function AttendancePage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
+                            {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
                             {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
                             {isActive ? (
                               <span className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
