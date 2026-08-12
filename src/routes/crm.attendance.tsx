@@ -139,7 +139,7 @@ function AttendancePage() {
   };
 
   const handleDeleteRecord = (id: string) => {
-    setAttendance(attendance.filter(a => a.id !== id));
+    setAttendance(rawAttendance.filter(a => a.id !== id));
     toast.success("Attendance record removed!");
   };
 
@@ -147,7 +147,7 @@ function AttendancePage() {
     const formattedTimeStr = time.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
     if (isClockedIn && myCurrentSession) {
       setAttendance(
-        attendance.map(a => a.id === myCurrentSession.id ? { ...a, checkout: formattedTimeStr, status: "Present" } : a)
+        rawAttendance.map(a => (a.employeeid === myEmpId && a.date === todayStr && !a.checkout) ? { ...a, checkout: formattedTimeStr, status: "Present" } : a)
       );
       toast.success(`Successfully Clocked Out at ${formattedTimeStr}!`);
     } else {
@@ -157,9 +157,11 @@ function AttendancePage() {
         date: todayStr,
         checkin: formattedTimeStr,
         checkout: "",
-        status: "Active"
+        status: "Active",
+        location: "Office",
+        note: shiftNote
       };
-      setAttendance([...attendance, newRecord]);
+      setAttendance([...rawAttendance, newRecord]);
       setShiftNote("");
       toast.success(`Successfully Clocked In at ${formattedTimeStr}!`);
     }
