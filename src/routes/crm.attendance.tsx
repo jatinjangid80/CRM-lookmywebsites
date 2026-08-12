@@ -565,7 +565,7 @@ function AttendancePage() {
                             
                             {/* Card Body */}
                             <div className="p-6">
-                              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
                                 <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">First In</p>
                                   <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
@@ -575,15 +575,21 @@ function AttendancePage() {
                                   <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
                                 </div>
                                 <div>
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
+                                  <p className="font-bold text-foreground">
+                                    {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
+                                  </p>
+                                </div>
+                                <div>
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
-                                  <p className="font-bold text-slate-600 dark:text-slate-400">
+                                  <p className="font-bold text-amber-600 dark:text-amber-400">
                                     {Math.floor(breakMins / 60) > 0 ? `${Math.floor(breakMins / 60)}h ` : ''}{breakMins % 60}m
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
-                                  <p className="font-bold text-foreground">
-                                    {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Time</p>
+                                  <p className="font-bold text-blue-600 dark:text-blue-400">
+                                    {Math.floor((effectiveSecs + breakMins * 60) / 3600)}h {Math.floor(((effectiveSecs + breakMins * 60) % 3600) / 60)}m
                                   </p>
                                 </div>
                               </div>
@@ -976,7 +982,7 @@ function AttendancePage() {
                         </div>
                         
                         <div className="p-6">
-                          <div className="grid grid-cols-2 sm:grid-cols-6 gap-4 mb-6">
+                          <div className="grid grid-cols-2 sm:grid-cols-7 gap-4 mb-6">
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Clock In</p>
                               <p className="font-bold text-primary dark:text-primary">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
@@ -995,6 +1001,12 @@ function AttendancePage() {
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
                               <p className="font-bold text-amber-600 dark:text-amber-400">
                                 {breakH}h {breakM}m
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Time</p>
+                              <p className="font-bold text-blue-600 dark:text-blue-400">
+                                {Math.floor(totalElapsedSecs / 3600)}h {Math.floor((totalElapsedSecs % 3600) / 60)}m
                               </p>
                             </div>
                             <div className="col-span-2">
