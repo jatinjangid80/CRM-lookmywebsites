@@ -52,11 +52,11 @@ function AttendancePage() {
 
   const user = getAuth();
   
-  const meInDb = employeesList.find((e: any) => e.name === user?.name);
-  const myEmpId = user?.empId || (meInDb ? meInDb.id : "EMP001");
+  const meInDb = employeesList.find((e: any) => e.name?.toLowerCase().trim() === user?.name?.toLowerCase().trim());
+  const myEmpId = user?.empId || (meInDb ? meInDb.id : (user?.name ? `EMP-${user.name.replace(/\s+/g, "").toUpperCase()}` : "EMP001"));
   
   const ceoInDb = employeesList.find((e: any) => e.name === "Manvendra Singhal");
-  const ceoId = ceoInDb ? ceoInDb.id : myEmpId;
+  const ceoId = ceoInDb ? ceoInDb.id : "EMP001";
   
   // Get date in local timezone YYYY-MM-DD
   const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
@@ -64,7 +64,7 @@ function AttendancePage() {
   // Normalize EMP001 records to the actual CEO ID to merge history cards
   // Auto-checkout any active shifts from previous days to 10:00 PM (22:00)
   const attendance = rawAttendance.map(a => {
-    let rec = a.employeeid === "EMP001" ? { ...a, employeeid: ceoId } : { ...a };
+    let rec = (a.employeeid === "EMP001" && myEmpId !== "EMP001") ? { ...a, employeeid: ceoId } : { ...a };
     if (!rec.checkout && rec.date < todayStr) {
       rec.checkout = "22:00";
       rec.status = "Present";
@@ -185,26 +185,7 @@ function AttendancePage() {
     year: "numeric",
   });
 
-  // Auto-cleanup script to remove duplicate punches caused by the previous bug
-  useEffect(() => {
-    if (rawAttendance.length === 0) return;
-    const seen = new Set();
-    const toKeep: any[] = [];
-    let hasDuplicates = false;
-    for (const a of rawAttendance) {
-      const key = `${a.employeeid}-${a.date}-${a.checkin}-${a.checkout}`;
-      if (seen.has(key)) {
-        hasDuplicates = true;
-      } else {
-        seen.add(key);
-        toKeep.push(a);
-      }
-    }
-    if (hasDuplicates && rawAttendance.length > toKeep.length) {
-      console.log(`Auto-cleaning ${rawAttendance.length - toKeep.length} duplicate attendance records...`);
-      setAttendance(toKeep);
-    }
-  }, [rawAttendance.length]);
+
 
   return (
     <main className="flex-1 p-4 sm:p-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
