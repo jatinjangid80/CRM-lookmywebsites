@@ -78,6 +78,7 @@ function AttendancePage() {
   const [leaveStartDate, setLeaveStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveEndDate, setLeaveEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveReason, setLeaveReason] = useState("");
+  const [kpiMonth, setKpiMonth] = useState("all");
   const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const myCurrentSession = myTodayRecords.find(a => !a.checkout);
 
@@ -317,9 +318,25 @@ function AttendancePage() {
             </div>
             <div className="lg:col-span-2 space-y-6">
               {/* Top KPI Cards */}
+              <div className="flex items-center justify-between">
+                <h3 className="font-semibold text-lg text-foreground">Attendance Statistics</h3>
+                <select
+                  value={kpiMonth}
+                  onChange={(e) => setKpiMonth(e.target.value)}
+                  className="bg-transparent border border-border text-xs font-semibold rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                >
+                  <option value="all">All Time</option>
+                  {Array.from(new Set(attendance.filter((r) => r.employeeid === myEmpId).map((r: any) => r.date.substring(0, 7)))).sort().reverse().map(m => {
+                    const [year, month] = m.split('-');
+                    const date = new Date(Number(year), Number(month) - 1, 1);
+                    return <option key={m} value={m}>{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</option>
+                  })}
+                </select>
+              </div>
               <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
                 {(() => {
-                  const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
+                  const myAllRecords = attendance.filter((record) => record.employeeid === myEmpId);
+                  const myRecords = kpiMonth === "all" ? myAllRecords : myAllRecords.filter((r: any) => r.date.startsWith(kpiMonth));
                   
                   // Group by date to get daily totals
                   const dailyTotals = Object.values(
