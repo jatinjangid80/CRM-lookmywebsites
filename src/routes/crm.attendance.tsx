@@ -524,7 +524,18 @@ function AttendancePage() {
                           if (elapsedMins < 0) elapsedMins += 24 * 60;
                         }
 
-                        let breakMins = Math.max(0, Math.floor(elapsedMins - totalWorkedMins));
+                        let breakMins = 0;
+                        const sortedRecs = [...records].sort((a, b) => (a.checkin || "").localeCompare(b.checkin || ""));
+                        for (let i = 0; i < sortedRecs.length - 1; i++) {
+                          const prevOut = sortedRecs[i].checkout;
+                          const nextIn = sortedRecs[i + 1].checkin;
+                          if (prevOut && nextIn) {
+                            const [oH, oM] = prevOut.split(':').map(Number);
+                            const [iH, iM] = nextIn.split(':').map(Number);
+                            let diff = (iH * 60 + iM) - (oH * 60 + oM);
+                            if (diff > 0) breakMins += diff;
+                          }
+                        }
                         let effectiveSecs = totalWorkedSecs;
 
                         const workedH = Math.floor(effectiveSecs / 3600);
@@ -951,7 +962,18 @@ function AttendancePage() {
                         }
                     }
                     
-                    const breakSecs = Math.max(0, totalElapsedSecs - totalSecs);
+                    let breakSecs = 0;
+                    const sortedEmpRecs = [...empGroup.records].sort((a, b) => (a.checkin || "").localeCompare(b.checkin || ""));
+                    for (let i = 0; i < sortedEmpRecs.length - 1; i++) {
+                      const prevOut = sortedEmpRecs[i].checkout;
+                      const nextIn = sortedEmpRecs[i + 1].checkin;
+                      if (prevOut && nextIn) {
+                        const [oH, oM] = prevOut.split(':').map(Number);
+                        const [iH, iM] = nextIn.split(':').map(Number);
+                        let diff = (iH * 3600 + iM * 60) - (oH * 3600 + oM * 60);
+                        if (diff > 0) breakSecs += diff;
+                      }
+                    }
                     const breakH = Math.floor(breakSecs / 3600);
                     const breakM = Math.floor((breakSecs % 3600) / 60);
 
