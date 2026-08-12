@@ -435,6 +435,13 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.tier;
     }
 
+    if (tableName === "attendance") {
+      if (newRow.remark !== undefined) {
+        newRow.status = `${newRow.status || ""}---META---${newRow.remark}`;
+        delete newRow.remark;
+      }
+    }
+
     return newRow;
   }
 
@@ -776,6 +783,14 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       if (newRow.assignToOps && typeof newRow.assignToOps === 'string') {
         newRow.assignOpsTo = newRow.assignToOps;
       }
+    }
+
+    if (tableName === "attendance" && typeof newRow.status === "string" && newRow.status.includes("---META---")) {
+      try {
+        const parts = newRow.status.split("---META---");
+        newRow.status = parts[0] || "";
+        if (parts[1]) newRow.remark = parts[1];
+      } catch (e) { }
     }
 
     return newRow;

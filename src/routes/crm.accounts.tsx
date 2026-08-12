@@ -667,14 +667,30 @@ function AccountsPage() {
         let cReceivedAmount = cBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
 
         cTotalRevenue += cPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
-        const policyIds = cPolicies.map(p => p.id);
-        const cPolicyTxs = transactions.filter(tx => {
-          if (tx.type !== "Receipt" || tx.entityType !== "Customer" || !policyIds.includes(tx.invoiceId)) return false;
+        const policyIds = cPolicies.map(p => String(p.id));
+        const bookingIds = cBookings.map(b => String(b.id));
+
+        const cOtherTxs = transactions.filter(tx => {
+          if (tx.type !== "Receipt" || tx.entityType !== "Customer") return false;
+          
+          // Must belong to this customer either by entityId, entityName, or by matching a policy they own
+          const belongsToCustomer = 
+            tx.entityId === customerData.id || 
+            tx.entityName === customerName ||
+            (tx.invoiceId && policyIds.includes(String(tx.invoiceId)));
+            
+          if (!belongsToCustomer) return false;
+
           if (customerStatusDateFrom && tx.date && tx.date < customerStatusDateFrom) return false;
           if (customerStatusDateTo && tx.date && tx.date > customerStatusDateTo) return false;
+
+          // Skip receipts linked to bookings since b.paid already includes them
+          if (tx.invoiceId && bookingIds.includes(String(tx.invoiceId))) return false;
+
           return true;
         });
-        cReceivedAmount += cPolicyTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+        
+        cReceivedAmount += cOtherTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
 
         const cPendingBalance = cTotalRevenue - cReceivedAmount;
 
@@ -1839,8 +1855,28 @@ function AccountsPage() {
                     if (newTx.entityType === "Customer") {
                       const matched = customers.find(c => c.id === v);
                       if (matched) {
-                        const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
-                        pending = customerBookings.reduce((sum, b) => sum + (((Number(b.sellingPrice) || Number(b.amount) || 0)) - (b.paid || 0)), 0);
+                        const customerName = matched.name?.split('---META---')[0];
+                        const customerBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === (customerName || "").trim().toLowerCase());
+                        const customerPolicies = insurancePolicies.filter(p => (p.customerName || "").trim().toLowerCase() === (customerName || "").trim().toLowerCase());
+                        
+                        const bAmount = customerBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                        const bPaid = customerBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                        
+                        const pAmount = customerPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
+                        
+                        const policyIds = customerPolicies.map(p => String(p.id));
+                        const bookingIds = customerBookings.map(b => String(b.id));
+
+                        const cOtherTxs = transactions.filter(tx => {
+                          if (tx.type !== "Receipt" || tx.entityType !== "Customer") return false;
+                          const belongsToCustomer = tx.entityId === matched.id || tx.entityName === customerName || (tx.invoiceId && policyIds.includes(String(tx.invoiceId)));
+                          if (!belongsToCustomer) return false;
+                          if (tx.invoiceId && bookingIds.includes(String(tx.invoiceId))) return false;
+                          return true;
+                        });
+                        const otherPaid = cOtherTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+                        pending = Math.max(0, (bAmount + pAmount) - (bPaid + otherPaid));
                       }
                     } else if (newTx.entityType === "Vendor") {
                       const matched = vendors.find(v2 => v2.id === v);
@@ -1871,10 +1907,30 @@ function AccountsPage() {
               if (newTx.entityType === "Customer") {
                 const matched = customers.find(c => c.id === newTx.entityId);
                 if (matched) {
-                  const customerBookings = bookings.filter(b => b.customer === matched.name?.split('---META---')[0]);
-                  totalAmount = customerBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
-                  totalPaid = customerBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
-                  isMatch = customerBookings.length > 0;
+                  const customerName = matched.name?.split('---META---')[0];
+                  const customerBookings = bookings.filter(b => (b.customer || "").trim().toLowerCase() === (customerName || "").trim().toLowerCase());
+                  const customerPolicies = insurancePolicies.filter(p => (p.customerName || "").trim().toLowerCase() === (customerName || "").trim().toLowerCase());
+                  
+                  const bAmount = customerBookings.reduce((sum, b) => sum + (Number(b.sellingPrice) || Number(b.amount) || 0), 0);
+                  const bPaid = customerBookings.reduce((sum, b) => sum + (Number(b.paid) || 0), 0);
+                  
+                  const pAmount = customerPolicies.reduce((sum, p) => sum + (Number(p.premiumAmount) || 0), 0);
+                  
+                  const policyIds = customerPolicies.map(p => String(p.id));
+                  const bookingIds = customerBookings.map(b => String(b.id));
+
+                  const cOtherTxs = transactions.filter(tx => {
+                    if (tx.type !== "Receipt" || tx.entityType !== "Customer") return false;
+                    const belongsToCustomer = tx.entityId === matched.id || tx.entityName === customerName || (tx.invoiceId && policyIds.includes(String(tx.invoiceId)));
+                    if (!belongsToCustomer) return false;
+                    if (tx.invoiceId && bookingIds.includes(String(tx.invoiceId))) return false;
+                    return true;
+                  });
+                  const otherPaid = cOtherTxs.reduce((sum, tx) => sum + (Number(tx.amount) || 0), 0);
+
+                  totalAmount = bAmount + pAmount;
+                  totalPaid = bPaid + otherPaid;
+                  isMatch = customerBookings.length > 0 || customerPolicies.length > 0 || cOtherTxs.length > 0;
                 }
               } else if (newTx.entityType === "Vendor") {
                 const matched = vendors.find(v => v.id === newTx.entityId);

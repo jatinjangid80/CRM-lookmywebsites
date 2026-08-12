@@ -43,6 +43,10 @@ function AttendancePage() {
   const [selectedDayInfo, setSelectedDayInfo] = useState<any>(null);
   const [isDaySheetOpen, setIsDaySheetOpen] = useState(false);
 
+  const [remarkDialogOpen, setRemarkDialogOpen] = useState(false);
+  const [remarkDraft, setRemarkDraft] = useState("");
+  const [remarkTarget, setRemarkTarget] = useState<{ empId: string, date: string, currentRemark: string } | null>(null);
+
   const [rawAttendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
 
@@ -54,8 +58,19 @@ function AttendancePage() {
   const ceoInDb = employeesList.find((e: any) => e.name === "Manvendra Singhal");
   const ceoId = ceoInDb ? ceoInDb.id : myEmpId;
   
+  // Get date in local timezone YYYY-MM-DD
+  const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
+
   // Normalize EMP001 records to the actual CEO ID to merge history cards
-  const attendance = rawAttendance.map(a => a.employeeid === "EMP001" ? { ...a, employeeid: ceoId } : a);
+  // Auto-checkout any active shifts from previous days to 10:00 PM (22:00)
+  const attendance = rawAttendance.map(a => {
+    let rec = a.employeeid === "EMP001" ? { ...a, employeeid: ceoId } : { ...a };
+    if (!rec.checkout && rec.date < todayStr) {
+      rec.checkout = "22:00";
+      rec.status = "Present";
+    }
+    return rec;
+  });
 
   const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [isApplyLeaveOpen, setIsApplyLeaveOpen] = useState(false);
@@ -63,10 +78,6 @@ function AttendancePage() {
   const [leaveStartDate, setLeaveStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveEndDate, setLeaveEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveReason, setLeaveReason] = useState("");
-
-
-  // Get date in local timezone YYYY-MM-DD
-  const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
   const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const myCurrentSession = myTodayRecords.find(a => !a.checkout);
 
@@ -85,6 +96,21 @@ function AttendancePage() {
 
   const uniqueEmpIds = Array.from(new Set(attendance.map((a: any) => a.employeeid)));
   const displayEmpIds = Array.from(new Set([...employeesList.map((e: any) => e.id), ...uniqueEmpIds]));
+
+  const canEditRemarks = isAdmin || user?.name?.toLowerCase().includes("suman");
+
+  const handleSaveRemark = () => {
+    if (!remarkTarget) return;
+    const updated = rawAttendance.map(a => {
+        if (a.employeeid === remarkTarget.empId && a.date === remarkTarget.date) {
+            return { ...a, remark: remarkDraft };
+        }
+        return a;
+    });
+    setAttendance(updated);
+    toast.success("Remark saved successfully!");
+    setRemarkDialogOpen(false);
+  };
 
   const handleApplyLeave = () => {
     if (!leaveStartDate || !leaveEndDate || !leaveReason) {
@@ -428,8 +454,10 @@ function AttendancePage() {
                         let firstIn = "23:59";
                         let lastOut = "00:00";
                         let isActive = false;
+                        let dayRemark = "";
 
                         records.forEach((r: any) => {
+                          if (r.remark) dayRemark = r.remark;
                           if (r.checkin && r.checkin < firstIn) firstIn = r.checkin;
                           if (r.checkout && r.checkout > lastOut) lastOut = r.checkout;
                           if (!r.checkout) isActive = true;
@@ -574,6 +602,15 @@ function AttendancePage() {
                                 </div>
                               )}
 
+                              {dayRemark && (
+                                <div className="mb-4 pt-4 border-t border-border/30">
+                                  <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-wider">Admin Remark</p>
+                                  <p className="font-medium text-slate-700 dark:text-slate-300 text-sm">
+                                    {dayRemark}
+                                  </p>
+                                </div>
+                              )}
+
                               <div className="mt-4 pt-4 border-t border-border/60">
                                 <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
                                   <span>10:00 AM</span>
@@ -696,7 +733,7 @@ function AttendancePage() {
                             <Tooltip>
                               <TooltipTrigger asChild>
                                 <div 
-                                  onClick={() => { setSelectedDayInfo(dayData || { date: dateStr, isAbsent: true }); setIsDaySheetOpen(true); }} 
+                                  onClick={() => { setSelectedDayInfo(dayData ? { ...dayData, employeeid: myEmpId } : { date: dateStr, isAbsent: true, employeeid: myEmpId }); setIsDaySheetOpen(true); }} 
                                   className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group"
                                 >
                                   <div className="flex justify-between items-start">
@@ -819,7 +856,12 @@ function AttendancePage() {
                           totalSecs: 0,
                           notes: [],
                           locations: [],
+                          remark: record.remark || "",
                         };
+                      } else {
+                        if (!acc[record.employeeid].remark && record.remark) {
+                          acc[record.employeeid].remark = record.remark;
+                        }
                       }
                       
                       const empGroup = acc[record.employeeid];
@@ -959,6 +1001,29 @@ function AttendancePage() {
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Focus Note</p>
                               <p className="font-medium text-slate-600 dark:text-slate-400 italic">"{empGroup.notes.join(" | ") || "No note provided"}"</p>
                             </div>
+                            {(empGroup.remark || canEditRemarks) && (
+                              <div className="col-span-2">
+                                <div className="flex items-center justify-between mb-1">
+                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Admin Remark</p>
+                                  {canEditRemarks && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm" 
+                                      className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRemarkTarget({ empId: empGroup.employeeid, date: teamSelectedDateStr, currentRemark: empGroup.remark || "" });
+                                        setRemarkDraft(empGroup.remark || "");
+                                        setRemarkDialogOpen(true);
+                                      }}
+                                    >
+                                      {empGroup.remark ? "Edit" : "Add"}
+                                    </Button>
+                                  )}
+                                </div>
+                                <p className="font-medium text-slate-600 dark:text-slate-400 text-sm">{empGroup.remark || "--"}</p>
+                              </div>
+                            )}
                           </div>
 
                           {empGroup.records.length > 1 && (
@@ -1030,7 +1095,11 @@ function AttendancePage() {
                     const dailyTotals = Object.values(
                       empRecords.reduce((acc: any, record: any) => {
                         if (!acc[record.date]) {
-                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false };
+                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false, remark: record.remark || "" };
+                        } else {
+                          if (!acc[record.date].remark && record.remark) {
+                            acc[record.date].remark = record.remark;
+                          }
                         }
                         acc[record.date].records.push(record);
                         if (record.checkin && record.checkout) {
@@ -1107,6 +1176,26 @@ function AttendancePage() {
                                       {Math.floor(day.totalSeconds / 3600)}h {Math.floor((day.totalSeconds % 3600) / 60)}m
                                       {day.hasActive && <span className="opacity-70 ml-0.5">{day.totalSeconds % 60}s</span>}
                                     </span>
+                                  )}
+                                  {canEditRemarks && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setRemarkTarget({ empId: empId as string, date: day.date, currentRemark: day.remark || "" });
+                                        setRemarkDraft(day.remark || "");
+                                        setRemarkDialogOpen(true);
+                                      }}
+                                      className="ml-auto text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full font-semibold transition-colors"
+                                    >
+                                      {day.remark ? "Edit Remark" : "Add Remark"}
+                                    </button>
+                                  )}
+                                  {day.remark && (
+                                    <div className="w-full mt-1.5 border-t border-dashed border-border/50 pt-1.5">
+                                      <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium italic">
+                                        <span className="font-semibold text-primary not-italic mr-1">Admin:</span>{day.remark}
+                                      </p>
+                                    </div>
                                   )}
                                 </div>
                               </div>
@@ -1211,13 +1300,30 @@ function AttendancePage() {
                             <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
                             <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
                             <td className="px-6 py-4">
-                              <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-bold">{leave.status}</span>
+                              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                                leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
+                                leave.status === 'Declined' ? 'bg-rose-50 text-rose-700' :
+                                'bg-amber-50 text-amber-700'
+                              }`}>{leave.status}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              <button onClick={() => {
-                                setLeaves(leaves.filter(l => l.id !== leave.id));
-                                toast.success("Leave request removed");
-                              }} className="text-rose-500 hover:underline text-xs font-medium">Remove</button>
+                              {leave.status === 'Pending' ? (
+                                <div className="flex items-center justify-end gap-2">
+                                  <button onClick={() => {
+                                    setLeaves(leaves.map((l: any) => l.id === leave.id ? { ...l, status: 'Approved' } : l));
+                                    toast.success("Leave approved");
+                                  }} className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider">Approve</button>
+                                  <button onClick={() => {
+                                    setLeaves(leaves.map((l: any) => l.id === leave.id ? { ...l, status: 'Declined' } : l));
+                                    toast.success("Leave declined");
+                                  }} className="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider">Decline</button>
+                                </div>
+                              ) : (
+                                <button onClick={() => {
+                                  setLeaves(leaves.filter((l: any) => l.id !== leave.id));
+                                  toast.success("Leave request removed");
+                                }} className="text-muted-foreground hover:text-rose-500 hover:underline text-xs font-medium transition-colors">Remove</button>
+                              )}
                             </td>
                           </tr>
                         )
@@ -1261,7 +1367,11 @@ function AttendancePage() {
                         <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
                         <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
                         <td className="px-6 py-4">
-                          <span className="inline-block rounded-full bg-amber-50 text-amber-700 px-2.5 py-1 text-[11px] font-bold">{leave.status}</span>
+                          <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                            leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
+                            leave.status === 'Declined' ? 'bg-rose-50 text-rose-700' :
+                            'bg-amber-50 text-amber-700'
+                          }`}>{leave.status}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => {
@@ -1384,6 +1494,30 @@ function AttendancePage() {
                   )}
                 </p>
               </div>
+
+              {(selectedDayInfo?.remark || canEditRemarks) && !selectedDayInfo?.isAbsent && (
+                <div className="col-span-2 space-y-2 mt-4 pt-4 border-t border-border/50">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Admin Remark</span>
+                    {canEditRemarks && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setRemarkTarget({ empId: selectedDayInfo.employeeid || myEmpId, date: selectedDayInfo.date, currentRemark: selectedDayInfo.remark || "" });
+                          setRemarkDraft(selectedDayInfo.remark || "");
+                          setRemarkDialogOpen(true);
+                        }}
+                        className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold transition-colors"
+                      >
+                        {selectedDayInfo.remark ? "Edit" : "Add"}
+                      </button>
+                    )}
+                  </div>
+                  <p className="font-medium text-slate-600 dark:text-slate-400">
+                    {selectedDayInfo?.remark || "--"}
+                  </p>
+                </div>
+              )}
             </div>
             
             {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "10:15" && (
@@ -1421,6 +1555,32 @@ function AttendancePage() {
               </div>
             )}
           </div>
+        </DialogContent>
+      </Dialog>
+      <Dialog open={remarkDialogOpen} onOpenChange={setRemarkDialogOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Admin Remark</DialogTitle>
+            <DialogDescription>
+              Add or edit a remark for this attendance record. Only visible to Admins and HR.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid gap-2">
+              <Label htmlFor="remark">Remark</Label>
+              <Input
+                id="remark"
+                value={remarkDraft}
+                onChange={(e) => setRemarkDraft(e.target.value)}
+                placeholder="Enter a remark or note..."
+                autoFocus
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRemarkDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveRemark}>Save Remark</Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
     </main>

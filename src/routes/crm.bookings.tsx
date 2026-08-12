@@ -33,8 +33,24 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
-  Filter
+  Filter,
+  Check,
+  ChevronsUpDown
 } from "lucide-react";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { cn } from "@/lib/utils";
 import {
   BarChart,
   Bar,
@@ -406,6 +422,50 @@ function BookingsPage() {
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportScope, setExportScope] = useState<string>("All");
 
+  // Refund state
+  const [isRefundOpen, setIsRefundOpen] = useState(false);
+  const [refundBookingId, setRefundBookingId] = useState("");
+  const [refundAmount, setRefundAmount] = useState<number | "">("");
+  const [isRefundComboboxOpen, setIsRefundComboboxOpen] = useState(false);
+
+  const handleRefundSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!refundBookingId || refundAmount === "") return;
+
+    const targetBooking = allBookings.find((b) => b.id === refundBookingId);
+    if (!targetBooking) {
+      toast.error("Booking not found.");
+      return;
+    }
+
+    try {
+      updateBookingStatus(refundBookingId, "Refunded");
+
+      if (targetBooking.customer) {
+        const { data: customerMatch } = await supabase
+          .from("customers")
+          .select("id")
+          .ilike("name", `%${targetBooking.customer}%`)
+          .limit(1);
+
+        if (customerMatch && customerMatch.length > 0) {
+          await supabase
+            .from("customers")
+            .update({ status: "Refunded" })
+            .eq("id", customerMatch[0].id);
+        }
+      }
+
+      toast.success(`Refund of ${formatINR(Number(refundAmount))} processed for ${targetBooking.customer}`);
+      setIsRefundOpen(false);
+      setRefundBookingId("");
+      setRefundAmount("");
+    } catch (error) {
+      console.error(error);
+      toast.error("Error processing refund.");
+    }
+  };
+
   const getBookingsToExport = () => {
     if (exportScope === "All") return filteredBookings;
     return filteredBookings.filter(b => b.bookingType === exportScope);
@@ -516,7 +576,7 @@ function BookingsPage() {
       .join("");
     const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#f43f5e;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:10px}th,td{border:1px solid #ddd;padding:6px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
     const docHtml = `<!DOCTYPE html><html><head><title>Bookings PDF</title><style>${css}</style></head><body>`;
-    
+
     const titleEl = printWindow.document.createElement("title");
     titleEl.textContent = "Bookings Export PDF";
     printWindow.document.head.appendChild(titleEl);
@@ -652,11 +712,11 @@ function BookingsPage() {
   const handleDeleteBooking = async () => {
     if (!deleteTarget) return;
     const targetId = deleteTarget.id;
-    
+
     // Optimistic UI update
     setBookingList((prev) => prev.filter((b) => b.id !== targetId));
     setDeleteTarget(null);
-    
+
     // Delete from Supabase
     try {
       const { error } = await supabase.from("bookings").delete().eq("id", targetId);
@@ -759,7 +819,7 @@ function BookingsPage() {
   const handleAddBookingSave = async (booking: Booking) => {
     try {
       const isEdit = bookingList.some((b) => b.id === booking.id);
-      
+
       if (!isEdit) {
         // Allow multiple tickets/bookings for the same user on the same date by removing the strict isDuplicate check.
       }
@@ -774,7 +834,7 @@ function BookingsPage() {
         const nextId = `BK-${String(currentMaxId + 1).padStart(3, "0")}`;
         finalBooking.id = nextId;
         finalBooking.status = "Pending";
-        
+
         // Remove paymentStatus as it does not exist in the database schema
         delete (finalBooking as any).paymentStatus;
 
@@ -787,7 +847,7 @@ function BookingsPage() {
               .select("id")
               .ilike("name", `%${finalBooking.customer}%`)
               .limit(1);
-            
+
             if (customerMatch && customerMatch.length > 0) {
               await supabase
                 .from("customers")
@@ -834,7 +894,7 @@ function BookingsPage() {
 
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
-      const matchesSearch = 
+      const matchesSearch =
         (b.customer?.toLowerCase() || "").includes(query) ||
         (b.id?.toLowerCase() || "").includes(query) ||
         (b.mobileNumber || "").includes(query) ||
@@ -860,7 +920,7 @@ function BookingsPage() {
     else if (sortField === "purchasePrice") cmp = (a.purchasePrice || 0) - (b.purchasePrice || 0);
     else if (sortField === "profit") cmp = (a.profit || 0) - (b.profit || 0);
     else if (sortField === "bookedBy") cmp = (a.bookedBy || "").localeCompare(b.bookedBy || "");
-    
+
     return sortOrder === "asc" ? cmp : -cmp;
   });
 
@@ -884,6 +944,13 @@ function BookingsPage() {
             <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Booking Type</p>
             <p className="font-semibold">{booking.bookingType}</p>
           </div>
+          {booking.details?.pnr && (
+            <div>
+              <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">PNR</p>
+              <p className="font-semibold">{booking.details.pnr}</p>
+            </div>
+          )}
+
           {booking.bookingType === "Taxi" && (
             <>
               <div><p className="text-xs text-muted-foreground uppercase mb-1">Pickup Time</p><p className="font-semibold">{booking.details?.pickupTime || "—"}</p></div>
@@ -1040,6 +1107,7 @@ function BookingsPage() {
             </>
           )}
         </div>
+
       </div>
     );
   };
@@ -1217,7 +1285,7 @@ function BookingsPage() {
     const headers = ["Booking ID", "Booking Date", "Travel Date", "Customer", "Mobile No", "PNR", "Type", "Selling Price", "Purchase Price", "Profit", "Booked By", "Status"];
     const csvContent = [
       headers.join(","),
-      ...filteredBookings.map(b => 
+      ...filteredBookings.map(b =>
         [
           b.id,
           b.bookingDate || "",
@@ -1257,6 +1325,9 @@ function BookingsPage() {
 
         <div className="flex gap-2">
 
+          <Button className="btn-hero" onClick={() => setIsRefundOpen(true)}>
+            <Undo2 className="mr-2 h-4 w-4" /> Refund
+          </Button>
           <Button className="btn-hero" onClick={() => {
             setAddBookingCustomer(undefined);
             setEditingAddBooking(undefined);
@@ -1277,6 +1348,146 @@ function BookingsPage() {
             defaultCustomer={addBookingCustomer}
             editingBooking={editingAddBooking}
           />
+
+          <Dialog open={isRefundOpen} onOpenChange={setIsRefundOpen}>
+            <DialogContent className="sm:max-w-[425px]">
+              <DialogHeader>
+                <DialogTitle>Process Refund</DialogTitle>
+                <DialogDescription>
+                  Select a booking to process a refund.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={handleRefundSubmit} className="space-y-4 pt-4">
+                <div className="space-y-2">
+                  <Label>Select Booking</Label>
+                  <Popover open={isRefundComboboxOpen} onOpenChange={setIsRefundComboboxOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={isRefundComboboxOpen}
+                        className="w-full justify-between font-normal"
+                      >
+                        {refundBookingId
+                          ? (() => {
+                              const b = allBookings.find((bk) => bk.id === refundBookingId);
+                              return b ? `${b.id} ${b.details?.pnr ? `- PNR: ${b.details.pnr}` : ''} - ${b.customer}` : "Select booking...";
+                            })()
+                          : "Select booking..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[400px] p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search by ID, PNR or Customer..." />
+                        <CommandList>
+                          <CommandEmpty>No booking found.</CommandEmpty>
+                          <CommandGroup>
+                            {allBookings.map((b) => (
+                              <CommandItem
+                                key={b.id}
+                                value={`${b.id} ${b.details?.pnr || ''} ${b.customer}`}
+                                onSelect={() => {
+                                  setRefundBookingId(b.id || "");
+                                  setIsRefundComboboxOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    refundBookingId === b.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                {b.id} {b.details?.pnr ? `- PNR: ${b.details.pnr} ` : ''}- {b.customer} ({formatINR(b.sellingPrice || b.amount || 0)})
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                
+                {refundBookingId && (() => {
+                  const b = allBookings.find((bk) => bk.id === refundBookingId);
+                  if (!b) return null;
+                  return (
+                    <div className="space-y-4">
+                      <div className="max-h-[35vh] overflow-y-auto border p-3 rounded-lg bg-secondary/10 mb-4 text-sm">
+                        {renderManageDetails(b)}
+                        
+                        <div className="mt-4 pt-4 border-t border-border/50">
+                          <h4 className="text-sm font-semibold flex items-center gap-2 mb-3"><div className="w-1 h-3.5 bg-red-500 rounded-full"></div> Financial Details</h4>
+                          <div className="grid grid-cols-2 gap-4 mb-3">
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Selling Price (₹)</p>
+                              <p className="font-semibold">{formatINR(b.sellingPrice || b.amount || 0)}</p>
+                            </div>
+                            <div>
+                              <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Purchase Price (₹)</p>
+                              <p className="font-semibold">{formatINR(b.purchasePrice || 0)}</p>
+                            </div>
+                          </div>
+                          {(() => {
+                            const sp = b.sellingPrice || b.amount || 0;
+                            const pp = b.purchasePrice || 0;
+                            const paid = b.paid || 0;
+                            const profit = sp - pp;
+                            const margin = sp > 0 ? Number(((profit / sp) * 100).toFixed(2)) : 0;
+                            const pendingAmount = sp - paid;
+
+                            return (
+                              <div className="flex items-center justify-between w-full h-full rounded-xl bg-background p-3 border border-border shadow-sm">
+                                <div className="space-y-1">
+                                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Profit</p>
+                                  <p className={`font-mono text-sm font-bold ${profit > 0 ? "text-emerald-600" : profit < 0 ? "text-red-500" : "text-gray-700"}`}>
+                                    {formatINR(profit)}
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Margin %</p>
+                                  <p className={`font-mono text-sm font-bold ${margin > 0 ? "text-emerald-600" : margin < 0 ? "text-red-500" : "text-gray-700"}`}>
+                                    {margin}%
+                                  </p>
+                                </div>
+                                <div className="space-y-1">
+                                  <p className="text-[10px] uppercase text-muted-foreground font-bold">Pending Amount</p>
+                                  <p className="font-mono text-sm font-bold text-orange-600">
+                                    {formatINR(pendingAmount)}
+                                  </p>
+                                </div>
+                              </div>
+                            );
+                          })()}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Refund Amount (₹)</Label>
+                        <Input
+                          type="number"
+                          required
+                          placeholder="Enter refund amount"
+                          value={refundAmount}
+                          onChange={(e) => setRefundAmount(e.target.value ? Number(e.target.value) : "")}
+                          max={b.paid || b.sellingPrice || b.amount || 0}
+                        />
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                <DialogFooter>
+                  <Button type="button" variant="outline" onClick={() => setIsRefundOpen(false)}>
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={!refundBookingId || refundAmount === ""}>
+                    Process Refund
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -1475,7 +1686,7 @@ function BookingsPage() {
             />
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-muted-foreground font-medium whitespace-nowrap"><Filter className="inline w-4 h-4 mr-1"/>Status:</span>
+            <span className="text-muted-foreground font-medium whitespace-nowrap"><Filter className="inline w-4 h-4 mr-1" />Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
@@ -1523,43 +1734,43 @@ function BookingsPage() {
             <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
               <tr>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("date")}>
-                  <div className="flex items-center gap-1">Booking Date {sortField === "date" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Booking Date {sortField === "date" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("travelDate")}>
-                  <div className="flex items-center gap-1">Travel Date {sortField === "travelDate" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Travel Date {sortField === "travelDate" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("customer")}>
-                  <div className="flex items-center gap-1">Customer {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Customer {sortField === "customer" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-left">
                   <div className="flex items-center gap-1">Lead Passenger</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("mobileNumber")}>
-                  <div className="flex items-center gap-1">Mobile No {sortField === "mobileNumber" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Mobile No {sortField === "mobileNumber" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("pnr")}>
-                  <div className="flex items-center gap-1">PNR {sortField === "pnr" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">PNR {sortField === "pnr" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("bookingType")}>
-                  <div className="flex items-center gap-1">Type {sortField === "bookingType" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Type {sortField === "bookingType" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap text-left">
                   <div className="flex items-center gap-1">Sector</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("amount")}>
-                  <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Selling Price (₹) {sortField === "amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("purchasePrice")}>
-                  <div className="flex items-center gap-1">Purchase Price (₹) {sortField === "purchasePrice" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Purchase Price (₹) {sortField === "purchasePrice" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("profit")}>
-                  <div className="flex items-center gap-1">Profit (₹) {sortField === "profit" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Profit (₹) {sortField === "profit" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("bookedBy")}>
-                  <div className="flex items-center gap-1">Booked By {sortField === "bookedBy" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Booked By {sortField === "bookedBy" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => handleSort("status")}>
-                  <div className="flex items-center gap-1">Status {sortField === "status" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3"/> : <ArrowDown className="w-3 h-3"/>) : <ArrowUpDown className="w-3 h-3 opacity-30"/>}</div>
+                  <div className="flex items-center gap-1">Status {sortField === "status" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
                 </th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -1606,28 +1817,28 @@ function BookingsPage() {
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-32 rounded-xl">
                               <>{auth?.role === "admin" && (
-<DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setEditingAddBooking(b);
-                                  setIsAddOpen(true);
-                                }}
-                                className="cursor-pointer gap-2 py-2"
-                              >
-                                <Pencil className="h-4 w-4" /> Edit
-                              </DropdownMenuItem>
-)}</>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setEditingAddBooking(b);
+                                    setIsAddOpen(true);
+                                  }}
+                                  className="cursor-pointer gap-2 py-2"
+                                >
+                                  <Pencil className="h-4 w-4" /> Edit
+                                </DropdownMenuItem>
+                              )}</>
                               <>{auth?.role === "admin" && (
-<DropdownMenuItem
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setDeleteTarget(b);
-                                }}
-                                className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700"
-                              >
-                                <Trash2 className="h-4 w-4" /> Delete
-                              </DropdownMenuItem>
-)}</>
+                                <DropdownMenuItem
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setDeleteTarget(b);
+                                  }}
+                                  className="cursor-pointer gap-2 py-2 text-rose-600 focus:text-rose-700"
+                                >
+                                  <Trash2 className="h-4 w-4" /> Delete
+                                </DropdownMenuItem>
+                              )}</>
                             </DropdownMenuContent>
                           </DropdownMenu>
                         )}
