@@ -1436,15 +1436,17 @@ function AttendancePage() {
       </Dialog>
       <Dialog open={isDaySheetOpen} onOpenChange={setIsDaySheetOpen}>
         <DialogContent className="sm:max-w-md overflow-y-auto max-h-[90vh] rounded-3xl p-6">
-          <DialogHeader className="border-b border-border pb-4 mb-4">
-            <DialogTitle className="text-2xl font-bold">
-              {selectedDayInfo?.date ? format(new Date(selectedDayInfo.date), "EEEE, dd MMM yyyy") : "Date Details"}
-            </DialogTitle>
-            <DialogDescription>
-              Attendance records and shift details for this day.
-            </DialogDescription>
-          </DialogHeader>
-          
+          {selectedDayInfo && (
+            <>
+              <DialogHeader className="border-b border-border pb-4 mb-4">
+                <DialogTitle className="text-2xl font-bold">
+                  {selectedDayInfo?.date ? format(new Date(selectedDayInfo.date), "EEEE, dd MMM yyyy") : "Date Details"}
+                </DialogTitle>
+                <DialogDescription>
+                  Attendance records and shift details for this day.
+                </DialogDescription>
+              </DialogHeader>
+              
           <div className="space-y-6">
             <div className="grid grid-cols-2 gap-y-6 gap-x-4">
               <div className="space-y-1.5">
@@ -1555,6 +1557,8 @@ function AttendancePage() {
               </div>
             )}
           </div>
+            </>
+          )}
         </DialogContent>
       </Dialog>
       <Dialog open={remarkDialogOpen} onOpenChange={setRemarkDialogOpen}>
