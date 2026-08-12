@@ -621,7 +621,7 @@ function AttendancePage() {
                                 <div className="mb-4 pt-4 border-t border-border/30">
                                   <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({records.length})</p>
                                   <div className="flex flex-wrap gap-2">
-                                    {records.map((r: any, i: number) => (
+                                    {[...records].sort((a: any, b: any) => (a.checkin || "").localeCompare(b.checkin || "")).map((r: any, i: number) => (
                                       <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
                                         {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
                                       </span>
@@ -1067,7 +1067,7 @@ function AttendancePage() {
                             <div className="mb-4 pt-4 border-t border-border/30">
                               <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({empGroup.records.length})</p>
                               <div className="flex flex-wrap gap-2">
-                                {empGroup.records.map((r: any, i: number) => (
+                                {([...empGroup.records] as any[]).sort((a: any, b: any) => (a.checkin || "").localeCompare(b.checkin || "")).map((r: any, i: number) => (
                                   <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
                                     {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
                                   </span>
