@@ -112,13 +112,13 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("pushplata")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Marketing"
+      "Leads", "Quotations", "Tasks", "Customers", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Marketing"
     ].includes(n.label));
   }
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
     ].includes(n.label));
   }
 
