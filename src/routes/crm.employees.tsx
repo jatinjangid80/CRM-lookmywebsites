@@ -379,6 +379,7 @@ function EmployeesPage() {
     "employees",
     []
   );
+
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingEmployeeNoteId, setEditingEmployeeNoteId] = useState<string | null>(null);
   const [employeeEditNoteText, setEmployeeEditNoteText] = useState("");
@@ -495,6 +496,8 @@ function EmployeesPage() {
   const isAdmin = auth?.role === "admin";
   const [leaves, setLeaves] = useSupabaseTable<any[]>("leaves", []);
   const [attendance, setAttendance] = useSupabaseTable<any[]>("attendance", []);
+  const todayStr = new Date(new Date().getTime() - new Date().getTimezoneOffset() * 60000).toISOString().split("T")[0];
+  const teamTodayRecords = attendance ? attendance.filter((a) => a.date === todayStr) : [];
   const [feeds, setFeeds] = useSupabaseTable<any[]>("feeds", []);
   const [timeLogs, setTimeLogs] = useSupabaseTable<any[]>("timelogs", []);
   const [hrFiles, setHrFiles] = useSupabaseTable<any[]>("hr_files", []);
@@ -993,21 +996,21 @@ function EmployeesPage() {
                 color: "bg-blue-100 text-blue-600",
               },
               {
-                label: "Active",
-                value: employees.filter((e) => e.status === "Active").length,
+                label: "Present Today",
+                value: `${teamTodayRecords.length} / ${employees.length}`,
                 icon: <UserCheck className="h-4 w-4" />,
                 color: "bg-emerald-100 text-emerald-600",
               },
               {
-                label: "Total Bookings",
-                value: totalBookings,
-                icon: <CalendarCheck className="h-4 w-4" />,
-                color: "bg-violet-100 text-violet-600",
+                label: "Attendance Rate",
+                value: `${Math.round((teamTodayRecords.length / (employees.length || 1)) * 100) || 0}%`,
+                icon: <TrendingUp className="h-4 w-4" />,
+                color: "bg-purple-100 text-purple-600",
               },
               {
-                label: "Team Revenue",
-                value: formatINR(totalRevenue),
-                icon: <TrendingUp className="h-4 w-4" />,
+                label: "Active Shifts",
+                value: teamTodayRecords.filter((r) => !r.checkout).length,
+                icon: <Clock className="h-4 w-4" />,
                 color: "bg-amber-100 text-amber-600",
               },
             ].map((s) => (

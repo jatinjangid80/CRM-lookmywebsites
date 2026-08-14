@@ -150,7 +150,7 @@ function getNavForUser(auth: AuthUser): NavItem[] {
   }
 
   // Default for other employees
-  return FULL_NAV.filter((n) => !["Employees", "Settings", "Payments"].includes(n.label));
+  return FULL_NAV.filter((n) => !["Dashboard", "Employees", "Settings", "Payments", "Personal Expenses"].includes(n.label));
 }
 
 function CrmLayout() {

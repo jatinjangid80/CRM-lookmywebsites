@@ -371,7 +371,7 @@ function AirTicketFields({ form, set, setForm }: { form: typeof EMPTY_FORM; set:
       </div>
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Childrens</label>
-        <Input type="number" min="0" value={form.children} onChange={set("childrens")} className="rounded-xl" />
+        <Input type="number" min="0" value={form.children} onChange={set("children")} className="rounded-xl" />
       </div>
       <div>
         <label className="mb-1.5 block text-xs font-semibold text-muted-foreground uppercase tracking-wide">Infants</label>

@@ -837,7 +837,7 @@ function AttendancePage() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present Today</span>
                     <Users className="h-4 w-4 text-emerald-500" />
                   </div>
-                  <div className="text-2xl font-bold">{teamTodayRecords.length}<span className="text-muted-foreground text-lg"> / 7</span></div>
+                  <div className="text-2xl font-bold">{teamTodayRecords.length}<span className="text-muted-foreground text-lg"> / {employeesList.length}</span></div>
                   <p className="text-xs text-muted-foreground">Checked-in staff</p>
                 </div>
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
@@ -845,7 +845,7 @@ function AttendancePage() {
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Rate</span>
                     <TrendingUp className="h-4 w-4 text-purple-500" />
                   </div>
-                  <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / 7) * 100) || 0}%</div>
+                  <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / (employeesList.length || 1)) * 100) || 0}%</div>
                   <p className="text-xs text-muted-foreground">Active ratio</p>
                 </div>
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
