@@ -835,7 +835,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             const unsanitized = data2.map(unSanitizeRow);
             setData((prev: any) => {
               const updated = prev.map((item: any) => {
-                const saved = unsanitized.find((u: any) => u.name === item.name || u.id === item.id);
+                const saved = unsanitized.find((u: any) => (u.name && item.name && u.name === item.name) || u.id === item.id);
                 return saved ? { ...item, ...saved } : item;
               });
               lastSyncedData.current = updated;
@@ -848,7 +848,7 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const unsanitized = data.map(unSanitizeRow);
         setData((prev: any) => {
           const updated = prev.map((item: any) => {
-            const saved = unsanitized.find((u: any) => u.name === item.name || u.id === item.id);
+            const saved = unsanitized.find((u: any) => (u.name && item.name && u.name === item.name) || u.id === item.id);
             return saved ? { ...item, ...saved } : item;
           });
           lastSyncedData.current = updated;

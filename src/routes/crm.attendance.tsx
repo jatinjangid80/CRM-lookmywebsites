@@ -62,12 +62,19 @@ function AttendancePage() {
   const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
   // Normalize EMP001 records to the actual CEO ID to merge history cards
-  // Auto-checkout any active shifts from previous days to 10:00 PM (22:00)
+  // Auto-checkout any active shifts from previous days, or today if past 7:30 PM
   const attendance = rawAttendance.map(a => {
     let rec = (a.employeeid === "EMP001" && myEmpId !== "EMP001") ? { ...a, employeeid: ceoId } : { ...a };
-    if (!rec.checkout && rec.date < todayStr) {
-      rec.checkout = "22:00";
-      rec.status = "Present";
+    
+    if (!rec.checkout) {
+      const isPastDay = rec.date < todayStr;
+      const isTodayPastCheckoutTime = rec.date === todayStr && 
+        (time.getHours() > 19 || (time.getHours() === 19 && time.getMinutes() >= 30));
+        
+      if (isPastDay || isTodayPastCheckoutTime) {
+        rec.checkout = "19:30";
+        rec.status = "Present";
+      }
     }
     return rec;
   });

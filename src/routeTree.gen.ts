@@ -15,6 +15,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CrmIndexRouteImport } from './routes/crm.index'
 import { Route as CrmVisaRouteImport } from './routes/crm.visa'
 import { Route as CrmVendorsRouteImport } from './routes/crm.vendors'
+import { Route as CrmTaxiBookingRouteImport } from './routes/crm.taxi-booking'
 import { Route as CrmTasksRouteImport } from './routes/crm.tasks'
 import { Route as CrmSettingsRouteImport } from './routes/crm.settings'
 import { Route as CrmReportsRouteImport } from './routes/crm.reports'
@@ -74,6 +75,11 @@ const CrmVisaRoute = CrmVisaRouteImport.update({
 const CrmVendorsRoute = CrmVendorsRouteImport.update({
   id: '/vendors',
   path: '/vendors',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmTaxiBookingRoute = CrmTaxiBookingRouteImport.update({
+  id: '/taxi-booking',
+  path: '/taxi-booking',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmTasksRoute = CrmTasksRouteImport.update({
@@ -254,6 +260,7 @@ export interface FileRoutesByFullPath {
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
+  '/crm/taxi-booking': typeof CrmTaxiBookingRoute
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm/': typeof CrmIndexRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
+  '/crm/taxi-booking': typeof CrmTaxiBookingRoute
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm': typeof CrmIndexRoute
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/crm/reports': typeof CrmReportsRoute
   '/crm/settings': typeof CrmSettingsRoute
   '/crm/tasks': typeof CrmTasksRoute
+  '/crm/taxi-booking': typeof CrmTaxiBookingRoute
   '/crm/vendors': typeof CrmVendorsRoute
   '/crm/visa': typeof CrmVisaRoute
   '/crm/': typeof CrmIndexRoute
@@ -370,6 +379,7 @@ export interface FileRouteTypes {
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
+    | '/crm/taxi-booking'
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm/'
@@ -407,6 +417,7 @@ export interface FileRouteTypes {
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
+    | '/crm/taxi-booking'
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm'
@@ -445,6 +456,7 @@ export interface FileRouteTypes {
     | '/crm/reports'
     | '/crm/settings'
     | '/crm/tasks'
+    | '/crm/taxi-booking'
     | '/crm/vendors'
     | '/crm/visa'
     | '/crm/'
@@ -507,6 +519,13 @@ declare module '@tanstack/react-router' {
       path: '/vendors'
       fullPath: '/crm/vendors'
       preLoaderRoute: typeof CrmVendorsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/taxi-booking': {
+      id: '/crm/taxi-booking'
+      path: '/taxi-booking'
+      fullPath: '/crm/taxi-booking'
+      preLoaderRoute: typeof CrmTaxiBookingRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/tasks': {
@@ -744,6 +763,7 @@ interface CrmRouteChildren {
   CrmReportsRoute: typeof CrmReportsRoute
   CrmSettingsRoute: typeof CrmSettingsRoute
   CrmTasksRoute: typeof CrmTasksRoute
+  CrmTaxiBookingRoute: typeof CrmTaxiBookingRoute
   CrmVendorsRoute: typeof CrmVendorsRoute
   CrmVisaRoute: typeof CrmVisaRoute
   CrmIndexRoute: typeof CrmIndexRoute
@@ -780,6 +800,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmReportsRoute: CrmReportsRoute,
   CrmSettingsRoute: CrmSettingsRoute,
   CrmTasksRoute: CrmTasksRoute,
+  CrmTaxiBookingRoute: CrmTaxiBookingRoute,
   CrmVendorsRoute: CrmVendorsRoute,
   CrmVisaRoute: CrmVisaRoute,
   CrmIndexRoute: CrmIndexRoute,

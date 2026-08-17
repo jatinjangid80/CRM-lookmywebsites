@@ -199,8 +199,8 @@ const STATUSES: LeadStatus[] = [
   "in process",
   "Confirmed",
   "Payment Pending",
-  "Postponed",
   "Completed",
+  "Postponed",
   "Lost",
 ];
 

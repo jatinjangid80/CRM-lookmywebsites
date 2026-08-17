@@ -37,6 +37,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Command,
   CommandEmpty,
@@ -548,7 +549,7 @@ function VisaPage() {
     "visa_requirements",
     []
   );
-  const [activeSubTab, setActiveSubTab] = useState<"applications" | "requirements">("applications");
+  const [activeSubTab, setActiveSubTab] = useState<"applications" | "booking">("applications");
 
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<VisaStatus | "All">("All");
@@ -1503,15 +1504,21 @@ function VisaPage() {
                 </Button>
               ) : (
                 <Button
-                  onClick={handleOpenAddReq}
                   className="gap-2 rounded-xl"
                   style={{ background: "var(--gradient-brand)" }}
                 >
-                  <Plus className="h-4 w-4" /> New Visa Setup
+                  <Plus className="h-4 w-4" /> New Booking
                 </Button>
               )}
             </div>
           </div>
+
+          <Tabs value={activeSubTab} onValueChange={(val: any) => setActiveSubTab(val)} className="w-full mt-4 mb-2">
+            <TabsList className="grid w-full overflow-x-auto sm:overflow-visible flex-nowrap sm:w-auto grid-cols-2 bg-secondary/50 rounded-xl p-1 shadow-sm gap-1 min-w-max">
+              <TabsTrigger value="applications" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Visa Applications</TabsTrigger>
+              <TabsTrigger value="booking" className="rounded-lg data-[state=active]:bg-background data-[state=active]:shadow-sm">Visa Booking</TabsTrigger>
+            </TabsList>
+          </Tabs>
 
           {activeSubTab === "applications" ? (
             <>
@@ -1793,211 +1800,10 @@ function VisaPage() {
               })()}
             </>
           ) : (
-            <>
-              {/* Visa Requirements Setup Tab */}
-              <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-card">
-                <div className="relative max-w-xs flex-1">
-                  <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                  <Input
-                    value={reqQ}
-                    onChange={(e) => setReqQ(e.target.value)}
-                    placeholder="Search country or visa type..."
-                    className="pl-9 rounded-xl"
-                  />
-                </div>
-                <span className="text-xs text-muted-foreground ml-auto">
-                  {filteredReqs.length} configurations setup
-                </span>
-              </div>
-
-              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="bg-secondary/60 text-xs uppercase tracking-wider text-muted-foreground border-b border-border">
-                      <tr>
-                        <th className="px-5 py-3.5">Country</th>
-                        <th className="px-5 py-3.5">Visa Type</th>
-                        <th className="px-5 py-3.5">Required Documents</th>
-                        <th className="px-5 py-3.5">Form Links</th>
-                        <th className="px-5 py-3.5">Basic Visa Fee</th>
-                        <th className="px-5 py-3.5">Time Required</th>
-                        <th className="px-5 py-3.5 text-right">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {filteredReqs.length === 0 ? (
-                        <tr>
-                          <td colSpan={7} className="px-5 py-12 text-center text-muted-foreground">
-                            No visa requirements setup. Click "New Visa Setup" to create one.
-                          </td>
-                        </tr>
-                      ) : (
-                        filteredReqs.map((req) => (
-                          <tr key={req.id} className="hover:bg-secondary/20 transition-colors">
-                            <td className="px-5 py-4 font-semibold text-foreground flex items-center gap-2">
-                              <Globe className="h-4 w-4 text-primary shrink-0" />
-                              {req.country}
-                            </td>
-                            <td className="px-5 py-4 font-medium text-muted-foreground">
-                              {req.visaType}
-                            </td>
-                            <td className="px-5 py-4">
-                              <span className="inline-flex items-center gap-1 bg-blue-50 text-blue-700 px-2 py-0.5 rounded-md text-xs font-semibold border border-blue-100">
-                                {(req.docs || []).length} Documents
-                              </span>
-                            </td>
-                            <td className="px-5 py-4">
-                              {(() => {
-                                const totalForms =
-                                  (req.formUrls || []).length + (req.supportFiles?.length || 0);
-                                if (totalForms === 0)
-                                  return <span className="text-muted-foreground/60">—</span>;
-
-                                if (totalForms === 1) {
-                                  if ((req.formUrls || []).length === 1) {
-                                    const url = req.formUrls[0];
-                                    const formattedUrl = url.startsWith("http")
-                                      ? url
-                                      : `https://${url}`;
-                                    return (
-                                      <a
-                                        href={formattedUrl}
-                                        target="_blank"
-                                        rel="noreferrer"
-                                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs"
-                                      >
-                                        <Download className="h-3 w-3" /> Download Form (1)
-                                      </a>
-                                    );
-                                  } else {
-                                    const file = req.supportFiles![0];
-                                    return (
-                                      <button
-                                        type="button"
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          const link = document.createElement("a");
-                                          link.href = file.data;
-                                          link.download = file.name;
-                                          document.body.appendChild(link);
-                                          link.click();
-                                          document.body.removeChild(link);
-                                        }}
-                                        className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs cursor-pointer bg-transparent border-none p-0"
-                                      >
-                                        <Download className="h-3 w-3" /> Download Form (1)
-                                      </button>
-                                    );
-                                  }
-                                }
-
-                                return (
-                                  <Popover>
-                                    <PopoverTrigger asChild>
-                                      <button className="inline-flex items-center gap-1 text-primary hover:underline font-medium text-xs">
-                                        <Download className="h-3 w-3" /> Download Forms (
-                                        {totalForms})
-                                      </button>
-                                    </PopoverTrigger>
-                                    <PopoverContent className="w-64 p-3 text-sm" align="start">
-                                      <div className="space-y-3">
-                                        {(req.formUrls || []).length > 0 && (
-                                          <div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                                              Web Links
-                                            </div>
-                                            <div className="space-y-1">
-                                              {(req.formUrls || []).map((url, i) => {
-                                                const formattedUrl = url.startsWith("http")
-                                                  ? url
-                                                  : `https://${url}`;
-                                                return (
-                                                  <a
-                                                    key={i}
-                                                    href={formattedUrl}
-                                                    target="_blank"
-                                                    rel="noreferrer"
-                                                    className="block text-primary hover:underline truncate"
-                                                  >
-                                                    {url}
-                                                  </a>
-                                                );
-                                              })}
-                                            </div>
-                                          </div>
-                                        )}
-                                        {req.supportFiles && req.supportFiles.length > 0 && (
-                                          <div>
-                                            <div className="text-xs font-semibold text-muted-foreground mb-1.5 uppercase tracking-wider">
-                                              Files
-                                            </div>
-                                            <div className="space-y-1">
-                                              {req.supportFiles.map((file, i) => (
-                                                <button
-                                                  key={`file-${i}`}
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    const link = document.createElement("a");
-                                                    link.href = file.data;
-                                                    link.download = file.name;
-                                                    document.body.appendChild(link);
-                                                    link.click();
-                                                    document.body.removeChild(link);
-                                                  }}
-                                                  className="block text-primary hover:underline truncate w-full text-left bg-transparent border-none p-0 cursor-pointer text-sm"
-                                                >
-                                                  {file.name}
-                                                </button>
-                                              ))}
-                                            </div>
-                                          </div>
-                                        )}
-                                      </div>
-                                    </PopoverContent>
-                                  </Popover>
-                                );
-                              })()}
-                            </td>
-                            <td className="px-5 py-4 font-semibold text-primary">
-                              {req.visaFees > 0 ? `${req.currency} ${req.visaFees}` : "N/A"}
-                            </td>
-                            <td className="px-5 py-4 font-medium text-muted-foreground">
-                              {req.timeRequired || "—"}
-                            </td>
-                            <td className="px-5 py-4 text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button size="icon" variant="ghost" className="h-8 w-8 rounded-lg">
-                                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                    <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => handleOpenEditReq(req)} className="cursor-pointer gap-2 py-2">
-                                      <Edit className="h-4 w-4" /> Edit
-                                    </DropdownMenuItem>
-)}</>
-                                    {isAdmin && (
-                                      <>{auth?.role === "admin" && (
-<DropdownMenuItem onClick={() => handleDeleteReq(req.id)} className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50">
-                                        <Trash2 className="h-4 w-4" /> Delete
-                                      </DropdownMenuItem>
-)}</>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </div>
-                            </td>
-                          </tr>
-                        ))
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </div>
-            </>
+            <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-2 border-dashed rounded-xl">
+              <h2 className="text-xl font-bold mb-2">Module Coming Soon</h2>
+              <p className="text-muted-foreground">This module is part of the upcoming ERP Transformation.</p>
+            </div>
           )}
         </>
       )}
