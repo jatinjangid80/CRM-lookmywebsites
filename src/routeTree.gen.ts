@@ -24,6 +24,7 @@ import { Route as CrmPortalRouteImport } from './routes/crm.portal'
 import { Route as CrmPersonalExpensesRouteImport } from './routes/crm.personal-expenses'
 import { Route as CrmPackagesRouteImport } from './routes/crm.packages'
 import { Route as CrmNotificationsRouteImport } from './routes/crm.notifications'
+import { Route as CrmMetaIntegrationRouteImport } from './routes/crm.meta-integration'
 import { Route as CrmMarketingRouteImport } from './routes/crm.marketing'
 import { Route as CrmLeadsRouteImport } from './routes/crm.leads'
 import { Route as CrmInsuranceLeadsRouteImport } from './routes/crm.insurance-leads'
@@ -120,6 +121,11 @@ const CrmPackagesRoute = CrmPackagesRouteImport.update({
 const CrmNotificationsRoute = CrmNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => CrmRoute,
+} as any)
+const CrmMetaIntegrationRoute = CrmMetaIntegrationRouteImport.update({
+  id: '/meta-integration',
+  path: '/meta-integration',
   getParentRoute: () => CrmRoute,
 } as any)
 const CrmMarketingRoute = CrmMarketingRouteImport.update({
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/marketing': typeof CrmMarketingRoute
+  '/crm/meta-integration': typeof CrmMetaIntegrationRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
@@ -290,6 +297,7 @@ export interface FileRoutesByTo {
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/marketing': typeof CrmMarketingRoute
+  '/crm/meta-integration': typeof CrmMetaIntegrationRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
@@ -330,6 +338,7 @@ export interface FileRoutesById {
   '/crm/insurance-leads': typeof CrmInsuranceLeadsRoute
   '/crm/leads': typeof CrmLeadsRoute
   '/crm/marketing': typeof CrmMarketingRoute
+  '/crm/meta-integration': typeof CrmMetaIntegrationRoute
   '/crm/notifications': typeof CrmNotificationsRoute
   '/crm/packages': typeof CrmPackagesRoute
   '/crm/personal-expenses': typeof CrmPersonalExpensesRoute
@@ -371,6 +380,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/marketing'
+    | '/crm/meta-integration'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/personal-expenses'
@@ -409,6 +419,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/marketing'
+    | '/crm/meta-integration'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/personal-expenses'
@@ -448,6 +459,7 @@ export interface FileRouteTypes {
     | '/crm/insurance-leads'
     | '/crm/leads'
     | '/crm/marketing'
+    | '/crm/meta-integration'
     | '/crm/notifications'
     | '/crm/packages'
     | '/crm/personal-expenses'
@@ -582,6 +594,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/crm/notifications'
       preLoaderRoute: typeof CrmNotificationsRouteImport
+      parentRoute: typeof CrmRoute
+    }
+    '/crm/meta-integration': {
+      id: '/crm/meta-integration'
+      path: '/meta-integration'
+      fullPath: '/crm/meta-integration'
+      preLoaderRoute: typeof CrmMetaIntegrationRouteImport
       parentRoute: typeof CrmRoute
     }
     '/crm/marketing': {
@@ -755,6 +774,7 @@ interface CrmRouteChildren {
   CrmInsuranceLeadsRoute: typeof CrmInsuranceLeadsRoute
   CrmLeadsRoute: typeof CrmLeadsRoute
   CrmMarketingRoute: typeof CrmMarketingRoute
+  CrmMetaIntegrationRoute: typeof CrmMetaIntegrationRoute
   CrmNotificationsRoute: typeof CrmNotificationsRoute
   CrmPackagesRoute: typeof CrmPackagesRoute
   CrmPersonalExpensesRoute: typeof CrmPersonalExpensesRoute
@@ -792,6 +812,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmInsuranceLeadsRoute: CrmInsuranceLeadsRoute,
   CrmLeadsRoute: CrmLeadsRoute,
   CrmMarketingRoute: CrmMarketingRoute,
+  CrmMetaIntegrationRoute: CrmMetaIntegrationRoute,
   CrmNotificationsRoute: CrmNotificationsRoute,
   CrmPackagesRoute: CrmPackagesRoute,
   CrmPersonalExpensesRoute: CrmPersonalExpensesRoute,

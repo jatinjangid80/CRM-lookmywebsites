@@ -224,7 +224,23 @@ export function InsuranceForm({
 
     if (filesToUpload.length > 0) {
       const passengerName = payload.customer_name || payload.client_company || payload.reference_name || "Unknown Insurance Customer";
-      let targetFolder = folders.find((f: any) => f.name === passengerName);
+      
+      let rootFolder = folders.find((f: any) => f.name === "General Insurance");
+      let newRootFolder = null;
+      if (!rootFolder) {
+        rootFolder = {
+          id: `F-INS-${Date.now().toString(36)}`,
+          name: "General Insurance",
+          color: "bg-emerald-100 text-emerald-600 border-emerald-200",
+          iconColor: "#10b981",
+          createdAt: new Date().toISOString(),
+          description: "All General Insurance Documents",
+          files: [],
+        };
+        newRootFolder = rootFolder;
+      }
+
+      let targetFolder = folders.find((f: any) => f.name === passengerName && f.parentId === rootFolder.id);
       let isNewFolder = false;
       if (!targetFolder) {
         targetFolder = {
@@ -235,6 +251,7 @@ export function InsuranceForm({
           createdAt: new Date().toISOString(),
           description: `Insurance for ${passengerName}`,
           files: [],
+          parentId: rootFolder.id,
         };
         isNewFolder = true;
       }
@@ -261,7 +278,9 @@ export function InsuranceForm({
         files: [...(targetFolder.files || []), ...newFiles],
       };
 
-      if (isNewFolder) {
+      if (newRootFolder && isNewFolder) {
+        setFolders((prev: any) => [...prev, newRootFolder, updatedFolder]);
+      } else if (isNewFolder) {
         setFolders((prev: any) => [...prev, updatedFolder]);
       } else {
         setFolders((prev: any) => prev.map((f: any) => f.id === updatedFolder.id ? updatedFolder : f));

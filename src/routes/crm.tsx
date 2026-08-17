@@ -42,6 +42,7 @@ import {
   Megaphone,
   Wallet,
   Car,
+  Share2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -75,7 +76,15 @@ type NavItem = {
 
 const FULL_NAV: NavItem[] = [
   { to: "/crm", label: "Dashboard", icon: LayoutDashboard, exact: true },
-  { to: "/crm/leads", label: "Leads", icon: Users },
+  { 
+    to: "/crm/leads", 
+    label: "Leads", 
+    icon: Users,
+    subItems: [
+      { label: "All Leads", to: "/crm/leads", icon: Users },
+      { label: "Meta Integration", to: "/crm/meta-integration", icon: Share2 }
+    ]
+  },
   { to: "/crm/quotations", label: "Quotations", icon: FileText },
   { to: "/crm/tasks", label: "Tasks", icon: ListChecks },
   { to: "/crm/visa", label: "Visa", icon: Plane },

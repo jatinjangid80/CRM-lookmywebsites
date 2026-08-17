@@ -1519,6 +1519,11 @@ function QuotationsPage() {
           </DialogHeader>
 
           <div className="p-8 bg-muted/30 print:p-0 print:bg-card text-card-foreground">
+            {/* Cover Page */}
+            <div className="bg-white max-w-3xl mx-auto mb-8 shadow-md print:shadow-none print:w-full print:max-w-none print:mb-0 break-after-page print:break-after-page overflow-hidden" style={{ aspectRatio: '1 / 1.414' }}>
+              <img src="/quotation-cover-page.png" className="w-full h-full object-cover" alt="Quotation Cover" />
+            </div>
+
             {form.packageName === "Hotel Quote" ? (
               <div className="rounded-none bg-white max-w-3xl mx-auto shadow-md text-slate-800 print:shadow-none print:w-full print:max-w-none relative overflow-hidden font-sans">
                 {/* Header Background */}
@@ -1889,6 +1894,11 @@ function QuotationsPage() {
               </div>
             </div>
             )}
+
+            {/* Back Page */}
+            <div className="bg-white max-w-3xl mx-auto mt-8 shadow-md print:shadow-none print:w-full print:max-w-none print:mt-0 break-before-page print:break-before-page overflow-hidden" style={{ aspectRatio: '1 / 1.414' }}>
+              <img src="/quotation-back-page.png" className="w-full h-full object-cover" alt="Quotation Back" />
+            </div>
           </div>
         </DialogContent>
       </Dialog>

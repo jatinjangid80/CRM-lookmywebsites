@@ -891,8 +891,8 @@ function Dashboard() {
         </div>
       </div>
 
-      {/* Row 4: My Pending Tasks & Upcoming Follow-ups */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* Row 4: Tasks, Follow-ups, Celebrations, Top Clients */}
+      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
         {/* My Pending Tasks */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
@@ -1029,10 +1029,7 @@ function Dashboard() {
             </Button>
           )}
         </div>
-      </div>
-
-      {/* Row 5: Upcoming Birthdays & Anniversaries */}
-      <div className="grid gap-6 lg:grid-cols-2">
+        {/* Upcoming Birthdays & Anniversaries */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
             <div className="flex items-center justify-between mb-4">

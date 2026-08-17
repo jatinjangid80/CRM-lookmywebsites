@@ -62,6 +62,7 @@ interface FolderItem {
   description: string;
   files: UploadedFile[];
   manager?: string;
+  parentId?: string | null;
 }
 
 /* ─── Persistence key ─── */
@@ -354,11 +355,13 @@ function RenameInput({
 /* ─── Folder Card ─── */
 function FolderCard({
   folder,
+  subfolderCount,
   onRename,
   onDelete,
   onOpen,
 }: {
   folder: FolderItem;
+  subfolderCount?: number;
   onRename: (id: string, name: string) => void;
   onDelete: (id: string) => void;
   onOpen: (folder: FolderItem) => void;
@@ -460,6 +463,7 @@ function FolderCard({
       <div className="mt-auto flex items-center justify-between pt-3 border-t border-border">
         <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
           <File className="h-3 w-3" />
+          {subfolderCount ? `${subfolderCount} folder${subfolderCount !== 1 ? "s" : ""} · ` : ""}
           {folder.files.length} file{folder.files.length !== 1 ? "s" : ""}
           {totalSize > 0 && <span className="ml-1 opacity-60">· {fmtSize(totalSize)}</span>}
         </span>
@@ -666,13 +670,21 @@ function FileRow({
 /* ─── Folder Detail View ─── */
 function FolderDetail({
   folder,
+  allFolders,
   onBack,
+  onOpenFolder,
+  onRenameFolder,
+  onDeleteFolder,
   onUpload,
   onDeleteFile,
   isZoho,
 }: {
   folder: FolderItem;
+  allFolders: FolderItem[];
   onBack: () => void;
+  onOpenFolder: (folder: FolderItem) => void;
+  onRenameFolder: (id: string, name: string) => void;
+  onDeleteFolder: (id: string) => void;
   onUpload: (folderId: string, files: File[]) => Promise<void>;
   onDeleteFile: (folderId: string, fileId: string) => void;
   isZoho: boolean;
@@ -747,6 +759,28 @@ function FolderDetail({
         </div>
       )}
 
+      {/* Subfolders */}
+      {allFolders.filter(f => f.parentId === folder.id).length > 0 && (
+        <div>
+          <h3 className="mb-4 text-lg font-bold">Folders</h3>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 mb-8">
+            {allFolders
+              .filter((f) => f.parentId === folder.id)
+              .map((f) => (
+                <FolderCard
+                  key={f.id}
+                  folder={f}
+                  subfolderCount={allFolders.filter(sub => sub.parentId === f.id).length}
+                  onRename={onRenameFolder}
+                  onDelete={onDeleteFolder}
+                  onOpen={onOpenFolder}
+                />
+              ))}
+          </div>
+        </div>
+      )}
+
+      <h3 className="text-lg font-bold">Upload Files</h3>
       {/* Drop Zone */}
       <DropZone onFiles={handleDrop} uploading={uploading} isZoho={isZoho} />
 
@@ -928,10 +962,58 @@ function FoldersPage() {
 
   const openFolder = folders.find((f) => f.id === openFolderId) ?? null;
 
+  useEffect(() => {
+    let generalInsuranceFolder = folders.find((f) => f.name === "General Insurance");
+    let migrated = false;
+    let newFolders = [...folders];
+
+    const legacyFolders = folders.filter(
+      (f) =>
+        !f.parentId &&
+        f.name !== "General Insurance" &&
+        f.name !== "Insurance" &&
+        f.name !== "Travel Insurance" &&
+        (f.description?.startsWith("Insurance for") ||
+          f.name === "Dipesh" ||
+          f.name === "Rahul ji" ||
+          f.name === "Kdrs Public School Gangapur" ||
+          f.name === "Om Prakash Vishnoi")
+    );
+
+    if (legacyFolders.length > 0) {
+      if (!generalInsuranceFolder) {
+        generalInsuranceFolder = {
+          id: `F-INS-${Date.now().toString(36)}`,
+          name: "General Insurance",
+          color: "bg-emerald-100 text-emerald-600 border-emerald-200",
+          iconColor: "#10b981",
+          createdAt: new Date().toISOString().slice(0, 10),
+          description: "All General Insurance Documents",
+          files: [],
+        };
+        newFolders.push(generalInsuranceFolder);
+        migrated = true;
+      }
+
+      newFolders = newFolders.map((f) => {
+        if (legacyFolders.some((lf) => lf.id === f.id)) {
+          migrated = true;
+          return { ...f, parentId: generalInsuranceFolder!.id };
+        }
+        return f;
+      });
+    }
+
+    if (migrated) {
+      setFolders(newFolders);
+    }
+  }, [folders, setFolders]);
+
   const filtered = folders.filter(
     (f) =>
-      f?.name?.toLowerCase().includes(search.toLowerCase()) ||
-      f?.description?.toLowerCase().includes(search.toLowerCase()),
+      (!f.parentId || f.parentId === openFolderId) &&
+      (f?.name?.toLowerCase().includes(search.toLowerCase()) ||
+        f?.description?.toLowerCase().includes(search.toLowerCase()))
   );
 
   /* ── CRUD ── */
@@ -949,6 +1031,7 @@ function FoldersPage() {
       createdAt: new Date().toISOString().slice(0, 10),
       description: newDesc.trim() || "No description",
       manager: "Pushplata Kriplani",
+      parentId: openFolderId || null,
     };
     setFolders((p) => [folder, ...p]);
     setNewName("");
@@ -1062,13 +1145,19 @@ function FoldersPage() {
   /* ── Folder detail ── */
   if (openFolder) {
     return (
-      <FolderDetail
-        folder={openFolder}
-        onBack={() => setOpenFolderId(null)}
-        onUpload={handleUpload}
-        onDeleteFile={handleDeleteFile}
-        isZoho={isZohoConnected}
-      />
+      <div className="mx-auto max-w-5xl space-y-6">
+        <FolderDetail
+          folder={openFolder}
+          allFolders={folders}
+          onBack={() => setOpenFolderId(openFolder.parentId || null)}
+          onOpenFolder={(f) => setOpenFolderId(f.id)}
+          onRenameFolder={handleRename}
+          onDeleteFolder={handleDelete}
+          onUpload={handleUpload}
+          onDeleteFile={handleDeleteFile}
+          isZoho={isZohoConnected}
+        />
+      </div>
     );
   }
 
@@ -1176,17 +1265,18 @@ function FoldersPage() {
           </div>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((folder) => (
-            <FolderCard
-              key={folder.id}
-              folder={folder}
-              onRename={handleRename}
-              onDelete={(id) => setDeleteTarget(folders.find((f) => f.id === id) ?? null)}
-              onOpen={(f) => setOpenFolderId(f.id)}
-            />
-          ))}
-        </div>
+        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {filtered.filter(f => !f.parentId).map((folder) => (
+              <FolderCard
+                key={folder.id}
+                folder={folder}
+                subfolderCount={folders.filter(sub => sub.parentId === folder.id).length}
+                onRename={handleRename}
+                onDelete={(id) => setDeleteTarget(folder)}
+                onOpen={(f) => setOpenFolderId(f.id)}
+              />
+            ))}
+          </div>
       )}
 
       {/* Create Modal */}

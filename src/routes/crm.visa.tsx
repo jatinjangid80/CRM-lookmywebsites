@@ -48,6 +48,7 @@ import {
 } from "@/components/ui/command";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { VisaBookingForm } from "@/components/visa/VisaBookingForm";
 
 const BRAND_STYLE = { background: "var(--gradient-brand)" };
 
@@ -130,7 +131,7 @@ const ALL_STATUSES: VisaStatus[] = [
   "Rejected",
 ];
 
-const COUNTRY_CODES: Record<string, string> = {
+export const COUNTRY_CODES: Record<string, string> = {
   Afghanistan: "af",
   Albania: "al",
   Algeria: "dz",
@@ -328,7 +329,7 @@ const COUNTRY_CODES: Record<string, string> = {
   Zimbabwe: "zw",
 };
 
-const COUNTRIES_LIST = [
+export const COUNTRIES_LIST = [
   "Afghanistan",
   "Albania",
   "Algeria",
@@ -549,13 +550,17 @@ function VisaPage() {
     "visa_requirements",
     []
   );
-  const [activeSubTab, setActiveSubTab] = useState<"applications" | "booking">("applications");
+  const [activeSubTab, setActiveSubTab] = useState<"applications" | "booking" | "requirements">("applications");
 
   const [q, setQ] = useState("");
   const [filter, setFilter] = useState<VisaStatus | "All">("All");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteAppTargetId, setDeleteAppTargetId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
+
+  const [visaBookings, setVisaBookings] = useSupabaseTable<any[]>("crm_visa_bookings", []);
+  const [isVisaBookingModalOpen, setIsVisaBookingModalOpen] = useState(false);
+  const [selectedVisaBooking, setSelectedVisaBooking] = useState<any>(null);
 
   // Visa Application Form state
   const [appModalOpen, setAppModalOpen] = useState(false);
@@ -1504,6 +1509,7 @@ function VisaPage() {
                 </Button>
               ) : (
                 <Button
+                  onClick={() => { setSelectedVisaBooking(null); setIsVisaBookingModalOpen(true); }}
                   className="gap-2 rounded-xl"
                   style={{ background: "var(--gradient-brand)" }}
                 >
@@ -1800,9 +1806,84 @@ function VisaPage() {
               })()}
             </>
           ) : (
-            <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-2 border-dashed rounded-xl">
-              <h2 className="text-xl font-bold mb-2">Module Coming Soon</h2>
-              <p className="text-muted-foreground">This module is part of the upcoming ERP Transformation.</p>
+            <div className="space-y-4">
+              {visaBookings.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-2 border-dashed rounded-xl">
+                  <h2 className="text-xl font-bold mb-2">No Visa Bookings</h2>
+                  <p className="text-muted-foreground">Click "New Booking" to create your first visa booking.</p>
+                </div>
+              ) : (
+                <div className="rounded-xl border border-border bg-card shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                      <thead className="bg-muted/50 text-muted-foreground">
+                        <tr>
+                          <th className="px-4 py-3 font-semibold">Customer</th>
+                          <th className="px-4 py-3 font-semibold">Country</th>
+                          <th className="px-4 py-3 font-semibold">Visa Type</th>
+                          <th className="px-4 py-3 font-semibold">Supplier</th>
+                          <th className="px-4 py-3 font-semibold">Status</th>
+                          <th className="px-4 py-3 font-semibold text-right">Selling Price</th>
+                          <th className="px-4 py-3 font-semibold text-right">Profit</th>
+                          <th className="px-4 py-3 text-right">Actions</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-border">
+                        {visaBookings.map((booking: any) => (
+                          <tr key={booking.id} className="hover:bg-muted/30 transition-colors">
+                            <td className="px-4 py-3">
+                              <div className="font-medium text-foreground">{booking.customer_name}</div>
+                              <div className="text-xs text-muted-foreground">{booking.mobile_number}</div>
+                            </td>
+                            <td className="px-4 py-3">{booking.country}</td>
+                            <td className="px-4 py-3">{booking.visa_type}</td>
+                            <td className="px-4 py-3">{booking.supplier}</td>
+                            <td className="px-4 py-3">
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
+                                booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
+                                booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
+                                booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
+                                "bg-amber-100 text-amber-700"
+                              }`}>
+                                {booking.application_status}
+                              </span>
+                            </td>
+                            <td className="px-4 py-3 text-right">₹{Number(booking.selling_price).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right text-green-600 font-medium">₹{Number(booking.profit).toLocaleString()}</td>
+                            <td className="px-4 py-3 text-right">
+                              <div className="flex items-center justify-end gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                  onClick={() => {
+                                    setSelectedVisaBooking(booking);
+                                    setIsVisaBookingModalOpen(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
+                                  onClick={() => {
+                                    if (confirm("Are you sure you want to delete this booking?")) {
+                                      setVisaBookings(prev => prev.filter(b => b.id !== booking.id));
+                                    }
+                                  }}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
             </div>
           )}
         </>
@@ -1821,6 +1902,21 @@ function VisaPage() {
         title="Delete Visa Application"
         description="Are you sure you want to delete this customer's visa application? All checklist progress will be lost."
       />
+
+      {isVisaBookingModalOpen && (
+        <VisaBookingForm
+          initialData={selectedVisaBooking}
+          onClose={() => setIsVisaBookingModalOpen(false)}
+          onSave={(data) => {
+            if (selectedVisaBooking) {
+              setVisaBookings(prev => prev.map(b => b.id === data.id ? data : b));
+            } else {
+              setVisaBookings(prev => [data, ...prev]);
+            }
+            setIsVisaBookingModalOpen(false);
+          }}
+        />
+      )}
 
       <Dialog open={appModalOpen} onOpenChange={setAppModalOpen}>
         <DialogContent className="sm:max-w-md max-h-[90vh] overflow-y-auto rounded-2xl border border-border bg-card p-6 shadow-2xl">
