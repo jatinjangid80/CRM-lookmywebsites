@@ -556,6 +556,7 @@ function VisaPage() {
   const [filter, setFilter] = useState<VisaStatus | "All">("All");
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
   const [deleteAppTargetId, setDeleteAppTargetId] = useState<string | null>(null);
+  const [deleteBookingTargetId, setDeleteBookingTargetId] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<string | null>(null);
 
   const [visaBookings, setVisaBookings] = useSupabaseTable<any[]>("crm_visa_bookings", []);
@@ -1851,30 +1852,31 @@ function VisaPage() {
                             <td className="px-4 py-3 text-right">₹{Number(booking.selling_price).toLocaleString()}</td>
                             <td className="px-4 py-3 text-right text-green-600 font-medium">₹{Number(booking.profit).toLocaleString()}</td>
                             <td className="px-4 py-3 text-right">
-                              <div className="flex items-center justify-end gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                  onClick={() => {
-                                    setSelectedVisaBooking(booking);
-                                    setIsVisaBookingModalOpen(true);
-                                  }}
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-red-600 hover:text-red-700 hover:bg-red-50"
-                                  onClick={() => {
-                                    if (confirm("Are you sure you want to delete this booking?")) {
-                                      setVisaBookings(prev => prev.filter(b => b.id !== booking.id));
-                                    }
-                                  }}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
+                              <div className="flex items-center justify-end">
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" className="h-8 w-8 p-0">
+                                      <span className="sr-only">Open menu</span>
+                                      <MoreVertical className="h-4 w-4 text-slate-500" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setSelectedVisaBooking(booking);
+                                        setIsVisaBookingModalOpen(true);
+                                      }}
+                                    >
+                                      <Edit className="mr-2 h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      className="text-red-600 focus:text-red-600"
+                                      onClick={() => setDeleteBookingTargetId(booking.id)}
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </td>
                           </tr>
@@ -1901,6 +1903,19 @@ function VisaPage() {
         onConfirm={confirmDeleteApp}
         title="Delete Visa Application"
         description="Are you sure you want to delete this customer's visa application? All checklist progress will be lost."
+      />
+      <DeleteConfirmModal
+        isOpen={deleteBookingTargetId !== null}
+        onClose={() => setDeleteBookingTargetId(null)}
+        onConfirm={() => {
+          if (deleteBookingTargetId) {
+            setVisaBookings(prev => prev.filter(b => b.id !== deleteBookingTargetId));
+            setDeleteBookingTargetId(null);
+            toast.success("Booking deleted successfully");
+          }
+        }}
+        title="Delete Visa Booking"
+        description="Are you sure you want to delete this visa booking? This action cannot be undone."
       />
 
       {isVisaBookingModalOpen && (
@@ -2030,7 +2045,24 @@ function VisaPage() {
                       aria-expanded={appCountryOpen}
                       className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 h-auto text-sm focus:outline-none focus:ring-2 focus:ring-primary font-normal text-left"
                     >
-                      {appCountry || "Select Country"}
+                      <span className="flex items-center truncate">
+                        {appCountry ? (
+                          <>
+                            <img
+                              alt={appCountry}
+                              title={COUNTRY_CODES[appCountry] || "un"}
+                              src={`https://react-circle-flags.pages.dev/${(COUNTRY_CODES[appCountry] || "un").toLowerCase()}.svg`}
+                              className="mr-2 h-4 w-4 rounded-full object-cover"
+                              onError={(e) => {
+                                e.currentTarget.style.display = 'none';
+                              }}
+                            />
+                            {appCountry}
+                          </>
+                        ) : (
+                          "Select Country"
+                        )}
+                      </span>
                       <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                     </Button>
                   </PopoverTrigger>
@@ -2050,13 +2082,25 @@ function VisaPage() {
                                 setAppCountry(actualCountry);
                                 setAppCountryOpen(false);
                               }}
+                              className="flex items-center w-full gap-2 px-2 py-1.5 text-sm"
                             >
                               <Check
-                                className={`mr-2 h-4 w-4 ${
-                                  appCountry === c ? "opacity-100" : "opacity-0"
-                                }`}
+                                className={`mr-2 h-4 w-4 shrink-0 ${appCountry === c ? "opacity-100" : "opacity-0"}`}
                               />
-                              {c}
+                              <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full bg-secondary">
+                                <img
+                                  height="20"
+                                  width="20"
+                                  alt={c}
+                                  title={COUNTRY_CODES[c] || "un"}
+                                  src={`https://react-circle-flags.pages.dev/${(COUNTRY_CODES[c] || "un").toLowerCase()}.svg`}
+                                  className="w-full h-full object-cover"
+                                  onError={(e) => {
+                                    e.currentTarget.style.display = 'none';
+                                  }}
+                                />
+                              </div>
+                              <span className="overflow-hidden text-ellipsis whitespace-nowrap">{c}</span>
                             </CommandItem>
                           ))}
                         </CommandGroup>

@@ -34,6 +34,7 @@ export function VisaBookingForm({
     booking_date: new Date().toISOString().split('T')[0],
     customer_name: "",
     mobile_number: "",
+    email_address: "",
     booked_by: "",
     reference: "",
     
@@ -47,6 +48,7 @@ export function VisaBookingForm({
     
     selling_price: 0,
     purchase_price: 0,
+    visa_fees: 0,
     profit: 0,
     margin: 0,
     pending_amount: 0,
@@ -57,11 +59,30 @@ export function VisaBookingForm({
 
   useEffect(() => {
     if (initialData) {
+      let remarksText = initialData.attachments_and_remarks || "";
+      let attachName = "";
+      
+      try {
+        const parsed = JSON.parse(remarksText);
+        if (parsed && typeof parsed === "object" && parsed._isMeta) {
+          remarksText = parsed.text || "";
+          attachName = parsed.attachment_name || "";
+        }
+      } catch (e) {
+        // It's just a plain string from before this feature
+      }
+      
       setForm({
         ...form,
         ...initialData,
+        attachments_and_remarks: remarksText,
         additional_passenger_names: initialData.additional_passenger_names || []
       });
+      
+      if (attachName) {
+        // We only need the name for the UI display when editing
+        setAttachedFile(new File([], attachName));
+      }
     }
   }, [initialData]);
 
@@ -87,6 +108,7 @@ export function VisaBookingForm({
       handleChangeWithCalc({
         customer_name: selected.name,
         mobile_number: selected.phone || selected.mobile || "",
+        email_address: selected.email || "",
       });
     } else {
       handleChangeWithCalc({ customer_name: customerName });
@@ -138,11 +160,16 @@ export function VisaBookingForm({
         additional_passenger_names: form.additional_passenger_names,
         selling_price: Number(form.selling_price) || 0,
         purchase_price: Number(form.purchase_price) || 0,
+        visa_fees: Number(form.visa_fees) || 0,
         profit: Number(form.profit) || 0,
         margin: Number(form.margin) || 0,
         pending_amount: Number(form.pending_amount) || 0,
         bank_details: form.bank_details,
-        attachments_and_remarks: form.attachments_and_remarks,
+        attachments_and_remarks: JSON.stringify({
+          _isMeta: true,
+          text: form.attachments_and_remarks,
+          attachment_name: attachedFile ? attachedFile.name : ""
+        }),
         created_at: form.created_at || new Date().toISOString()
       };
 
@@ -151,6 +178,54 @@ export function VisaBookingForm({
       if (error) throw error;
 
       toast.success(initialData ? "Visa Booking updated successfully" : "Visa Booking created successfully");
+      
+      // Auto-save to Documents ONLY if it's a real, newly selected file
+      if (attachedFile && attachedFile.size > 0) {
+        const reader = new FileReader();
+        reader.onload = async () => {
+          try {
+            const { data: remoteData } = await supabase.from("folders").select("*");
+            const folders = remoteData || [];
+            
+            let visaFolder = folders.find((f: any) => f.name.trim().toLowerCase() === "visa booking");
+            
+            if (!visaFolder) {
+              visaFolder = {
+                id: "F-" + Math.random().toString(36).substring(2, 9),
+                name: "Visa booking",
+                color: "bg-blue-100 text-blue-600 border-blue-200",
+                iconColor: "#3b82f6",
+                createdAt: new Date().toISOString(),
+                description: "Auto-generated from Visa Booking Form",
+                files: [],
+              };
+            }
+
+            let currentFiles = Array.isArray(visaFolder.files) ? visaFolder.files : (typeof visaFolder.files === "string" ? JSON.parse(visaFolder.files) : []);
+            
+            const newFile = {
+              id: "U-" + Math.random().toString(36).substring(2, 9),
+              name: form.customer_name ? `[${form.customer_name}] ${attachedFile.name}` : attachedFile.name,
+              size: attachedFile.size,
+              type: attachedFile.type || "application/octet-stream",
+              uploadedAt: new Date().toISOString(),
+              dataUrl: reader.result as string,
+            };
+            
+            currentFiles.push(newFile);
+            visaFolder.files = currentFiles;
+            
+            const { error: folderError } = await supabase.from("folders").upsert([visaFolder]);
+            if (folderError) throw folderError;
+
+            toast.success("Document also saved to Documents > Visa booking");
+          } catch (err) {
+            console.error("Failed to auto-save document", err);
+          }
+        };
+        reader.readAsDataURL(attachedFile);
+      }
+
       onSave(payload);
     } catch (err: any) {
       toast.error("Failed to save booking: " + err.message);
@@ -320,6 +395,14 @@ export function VisaBookingForm({
                   />
                 </div>
                 <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <Input 
+                    placeholder="Enter email address" 
+                    value={form.email_address}
+                    onChange={(e) => handleChangeWithCalc({ email_address: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Booked By</Label>
                   <Input 
                     placeholder="Enter booking agent" 
@@ -387,15 +470,23 @@ export function VisaBookingForm({
                                   handleChangeWithCalc({ country: country })
                                   setCountryOpen(false)
                                 }}
+                                className="flex items-center w-full gap-2 px-2 py-1.5 text-sm"
                               >
-                                <Check className={cn("mr-2 h-4 w-4", form.country === country ? "opacity-100" : "opacity-0")} />
-                                <img
-                                  alt={COUNTRY_CODES[country]}
-                                  title={COUNTRY_CODES[country]}
-                                  src={`https://react-circle-flags.pages.dev/${COUNTRY_CODES[country] || "un"}.svg`}
-                                  className="mr-2 h-4 w-4 rounded-full"
-                                />
-                                <span>{country}</span>
+                                <Check className={cn("mr-2 h-4 w-4 shrink-0", form.country === country ? "opacity-100" : "opacity-0")} />
+                                <div className="inline-flex items-center justify-center w-5 h-5 shrink-0 overflow-hidden rounded-full bg-secondary">
+                                  <img
+                                    height="20"
+                                    width="20"
+                                    alt={country}
+                                    title={COUNTRY_CODES[country] || "un"}
+                                    src={`https://react-circle-flags.pages.dev/${(COUNTRY_CODES[country] || "un").toLowerCase()}.svg`}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                      e.currentTarget.style.display = 'none';
+                                    }}
+                                  />
+                                </div>
+                                <span className="overflow-hidden text-ellipsis whitespace-nowrap">{country}</span>
                               </CommandItem>
                             ))}
                           </CommandGroup>
@@ -490,7 +581,7 @@ export function VisaBookingForm({
                 <h3 className="text-lg font-semibold">Financial Details</h3>
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
                   <Label>Selling Price (₹)</Label>
                   <Input 
@@ -507,6 +598,15 @@ export function VisaBookingForm({
                     min="0"
                     value={form.purchase_price}
                     onChange={(e) => handleChangeWithCalc({ purchase_price: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Visa Fees (₹)</Label>
+                  <Input 
+                    type="number" 
+                    min="0"
+                    value={form.visa_fees}
+                    onChange={(e) => handleChangeWithCalc({ visa_fees: e.target.value })}
                   />
                 </div>
               </div>
@@ -565,9 +665,10 @@ export function VisaBookingForm({
                       id="document-upload" 
                       className="hidden" 
                       onChange={(e) => {
-                        if (e.target.files?.[0]) {
-                          setAttachedFile(e.target.files[0]);
-                          toast.success(`Attached: ${e.target.files[0].name}`);
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setAttachedFile(file);
+                          toast.success(`Attached: ${file.name}`);
                         }
                       }}
                     />
@@ -575,22 +676,22 @@ export function VisaBookingForm({
                       <Button 
                         type="button" 
                         variant="outline" 
-                        className="w-full justify-start text-muted-foreground font-normal border-dashed"
+                        className="w-full justify-start font-normal rounded-full bg-orange-100 text-orange-900 hover:bg-orange-200 border-orange-200 border-dashed"
                         onClick={() => document.getElementById("document-upload")?.click()}
                       >
-                        <Paperclip className="mr-2 h-4 w-4" />
+                        <Paperclip className="mr-2 h-4 w-4 text-orange-700" />
                         Attach Document...
                       </Button>
                     ) : (
-                      <div className="flex items-center justify-between p-2 px-3 border border-border rounded-md bg-secondary/30 text-sm">
+                      <div className="flex items-center justify-between p-2 px-3 border border-border rounded-full bg-orange-50 text-sm">
                         <div className="flex items-center gap-2 overflow-hidden">
-                          <Paperclip className="h-4 w-4 text-primary shrink-0" />
-                          <span className="truncate">{attachedFile.name}</span>
+                          <Paperclip className="h-4 w-4 text-orange-600 shrink-0" />
+                          <span className="truncate text-orange-900 font-medium">{attachedFile.name}</span>
                         </div>
                         <Button 
                           variant="ghost" 
                           size="icon" 
-                          className="h-6 w-6 text-red-500 hover:text-red-700 shrink-0 ml-2" 
+                          className="h-6 w-6 text-red-500 hover:text-red-700 hover:bg-red-100 rounded-full shrink-0 ml-2" 
                           onClick={() => setAttachedFile(null)}
                         >
                           <X className="h-3 w-3" />

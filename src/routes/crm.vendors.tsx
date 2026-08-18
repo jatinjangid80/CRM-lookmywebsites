@@ -559,27 +559,27 @@ function VendorsPage() {
             />
           </div>
           <div className="flex-shrink-0 sm:ml-auto">
-            <select
-              className="appearance-none h-10 w-full sm:w-[240px] rounded-full border border-border bg-white dark:bg-background px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-secondary/20 transition-colors"
-              style={{ backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", backgroundSize: "16px" }}
-              value={filterType}
-              onChange={(e) => { setFilterType(e.target.value); setPage(1); }}
-            >
-              <option value="All">All Types ({stats.total})</option>
-              {VENDOR_TYPES.map(t => <option key={t} value={t}>{t}</option>)}
-            </select>
+            <Select value={filterType} onValueChange={(v) => { setFilterType(v); setPage(1); }}>
+              <SelectTrigger className="w-full sm:w-[240px] rounded-full h-10 font-semibold bg-white dark:bg-background">
+                <SelectValue placeholder="All Types" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="All">All Types ({stats.total})</SelectItem>
+                {VENDOR_TYPES.map(t => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+              </SelectContent>
+            </Select>
           </div>
           {uniqueCities.length > 0 && (
             <div className="flex-shrink-0">
-              <select
-                className="appearance-none h-10 w-full sm:w-[240px] rounded-full border border-border bg-white dark:bg-background px-5 py-2 text-sm font-semibold focus:outline-none focus:ring-1 focus:ring-primary/20 cursor-pointer hover:bg-secondary/20 transition-colors"
-                style={{ backgroundImage: "url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E\")", backgroundRepeat: "no-repeat", backgroundPosition: "right 16px center", backgroundSize: "16px" }}
-                value={filterCity}
-                onChange={(e) => { setFilterCity(e.target.value); setPage(1); }}
-              >
-                <option value="All">All Cities ({uniqueCities.length})</option>
-                {uniqueCities.map(c => <option key={c} value={c}>{c}</option>)}
-              </select>
+              <Select value={filterCity} onValueChange={(v) => { setFilterCity(v); setPage(1); }}>
+                <SelectTrigger className="w-full sm:w-[240px] rounded-full h-10 font-semibold bg-white dark:bg-background">
+                  <SelectValue placeholder="All Cities" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="All">All Cities ({uniqueCities.length})</SelectItem>
+                  {uniqueCities.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
           )}
           <div className="text-sm text-muted-foreground whitespace-nowrap font-medium px-2 ml-auto">
