@@ -244,6 +244,8 @@ function CrmLayout() {
 
   const nav = getNavForUser(auth);
   const isAdmin = auth.role === "admin" || auth.role === "manager";
+  const currentEmployee = employees.find((e: any) => e.id === auth.empId || e.name.toLowerCase() === auth.name.toLowerCase());
+  const displayAvatar = currentEmployee?.avatar || auth.avatar;
 
   return (
     <div className="flex min-h-screen bg-secondary/30">
@@ -383,9 +385,9 @@ function CrmLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 border-l border-border pl-4 outline-none hover:opacity-85 transition-opacity text-left cursor-pointer">
-                  {auth.avatar ? (
+                  {displayAvatar ? (
                     <img
-                      src={auth.avatar}
+                      src={displayAvatar}
                       alt={auth.name}
                       className="h-9 w-9 rounded-full object-cover border border-border shrink-0"
                     />
@@ -415,9 +417,9 @@ function CrmLayout() {
               <DropdownMenuContent align="end" className="w-[400px] mt-2 rounded-xl p-3 shadow-lg">
                 <DropdownMenuLabel className="font-normal border-b border-border pb-3 mb-2">
                   <div className="flex items-center gap-3">
-                    {auth.avatar ? (
+                    {displayAvatar ? (
                       <img
-                        src={auth.avatar}
+                        src={displayAvatar}
                         alt={auth.name}
                         className="h-10 w-10 rounded-full object-cover border border-border shrink-0"
                       />

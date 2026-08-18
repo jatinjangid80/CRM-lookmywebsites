@@ -2195,6 +2195,8 @@ function LeadsPage() {
   const [isImportOpen, setIsImportOpen] = useState(false);
   const [selected, setSelected] = useState<ExtLead | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
   const [editingTableNoteId, setEditingTableNoteId] = useState<string | null>(null);
   const [tableEditNoteText, setTableEditNoteText] = useState("");
 
@@ -2228,9 +2230,17 @@ function LeadsPage() {
       "Section",
       "Created At",
     ];
+
+    const exportableLeads = sortedLeads.filter(l => {
+      const d = l.createdAt ? l.createdAt.split("T")[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
     const csvRows = [
       headers.join(","),
-      ...sortedLeads.map((l) =>
+      ...exportableLeads.map((l) =>
         [
           `"${l.id}"`,
           `"${l.name.replace(/"/g, '""')}"`,
@@ -2265,7 +2275,15 @@ function LeadsPage() {
   const exportToWord = () => {
     const tableHeader =
       "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
-    const tableRows = sortedLeads
+
+    const exportableLeads = sortedLeads.filter(l => {
+      const d = l.createdAt ? l.createdAt.split("T")[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableLeads
       .map(
         (l) =>
           `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination}</td><td>₹${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td></tr>`,
@@ -2292,7 +2310,15 @@ function LeadsPage() {
     if (!printWindow) return;
     const tableHeader =
       "<tr><th>ID</th><th>Name</th><th>Phone</th><th>Destination</th><th>Budget</th><th>Travel Date</th><th>Status</th><th>Priority</th><th>Section</th></tr>";
-    const tableRows = sortedLeads
+
+    const exportableLeads = sortedLeads.filter(l => {
+      const d = l.createdAt ? l.createdAt.split("T")[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableLeads
       .map(
         (l) =>
           `<tr><td>${l.id}</td><td>${l.name}</td><td>${l.phone}</td><td>${l.destination || ""}</td><td>${l.budget}</td><td>${l.travelDate}</td><td>${l.status}</td><td>${l.priority}</td><td>${l.leadSection || ""}</td></tr>`,
@@ -2461,13 +2487,6 @@ function LeadsPage() {
                   onClick={() => setIsExportOpen(true)}
                 >
                   <Download className="h-4 w-4" /> Export Leads
-                </Button>
-                <Button
-                  variant="outline"
-                  className="gap-2 rounded-xl"
-                  onClick={() => setIsImportOpen(true)}
-                >
-                  <Upload className="h-4 w-4" /> Import Leads
                 </Button>
               </>
             )}
@@ -2954,9 +2973,30 @@ function LeadsPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Leads</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {filtered.length} leads in your preferred file format.
+              Filter leads by creation date before exporting.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="grid grid-cols-3 gap-3 py-6">
             <button

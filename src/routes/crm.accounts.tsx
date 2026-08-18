@@ -16,7 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectGroup, SelectItem, SelectLabel, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download, Clock, Eye } from "lucide-react";
+import { Plus, Search, Calendar, PhoneCall, AlertCircle, TrendingDown, Wallet, Trash2, Check, ChevronsUpDown, Pencil, ChevronDown, MoreVertical, CheckCircle2, Building2, ArrowUpDown, Download, Clock, Eye, FileText, Table2, Briefcase } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { formatINR, type Expense, type PaymentFollowUp, type PaymentRequest, initialPaymentRequests } from "@/lib/mock-data";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -225,6 +225,9 @@ function AccountsPage() {
   const [expenseSearchQuery, setExpenseSearchQuery] = useState("");
   const [expenseDateFrom, setExpenseDateFrom] = useState("");
   const [expenseDateTo, setExpenseDateTo] = useState("");
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   // Transactions State
   const [transactions, setTransactions] = useSupabaseTable<any[]>("transactions", []);
@@ -694,6 +697,20 @@ function AccountsPage() {
 
         const cPendingBalance = cTotalRevenue - cReceivedAmount;
 
+        let latestActivity = new Date(customerData.createdAt || customerData.created_at || 0).getTime();
+        cBookings.forEach(b => {
+          const t = new Date(b.bookingDate || b.created_at || 0).getTime();
+          if (t > latestActivity) latestActivity = t;
+        });
+        cPolicies.forEach(p => {
+          const t = new Date(p.issueDate || p.created_at || 0).getTime();
+          if (t > latestActivity) latestActivity = t;
+        });
+        cOtherTxs.forEach(tx => {
+          const t = new Date(tx.date || tx.auditLog?.[0]?.timestamp || 0).getTime();
+          if (t > latestActivity) latestActivity = t;
+        });
+
         return {
           customerName,
           customerData,
@@ -701,11 +718,12 @@ function AccountsPage() {
           cPolicies,
           cTotalRevenue,
           cReceivedAmount,
-          cPendingBalance
+          cPendingBalance,
+          latestActivity
         };
       })
       .filter(data => data.cPendingBalance !== 0 || data.cTotalRevenue !== 0)
-      .sort((a, b) => a.customerName.localeCompare(b.customerName));
+      .sort((a, b) => b.latestActivity - a.latestActivity || a.customerName.localeCompare(b.customerName));
   }, [customers, leads, allBookings, tasks, transactions, followUpsList, insurancePolicies, customerSearchQuery, customerStatusDateFrom, customerStatusDateTo]);
 
   const vendorDataList = useMemo(() => {
@@ -744,17 +762,28 @@ function AccountsPage() {
         const vPending = vBookings.reduce((sum, b) => sum + (Number(b.purchasePrice) || 0), 0);
         const vTotalBilled = vPending - vSpend;
 
+        let latestActivity = new Date(vendorData.createdAt || vendorData.created_at || 0).getTime();
+        vBookings.forEach(b => {
+          const t = new Date(b.bookingDate || b.created_at || 0).getTime();
+          if (t > latestActivity) latestActivity = t;
+        });
+        vSpendTxs.forEach(tx => {
+          const t = new Date(tx.date || tx.auditLog?.[0]?.timestamp || 0).getTime();
+          if (t > latestActivity) latestActivity = t;
+        });
+
         return {
           vendorName: name,
           vendorData,
           vBookings,
           vSpend,
           vTotalBilled,
-          vPending
+          vPending,
+          latestActivity
         };
       })
       .filter(data => data.vBookings.length > 0 || data.vSpend > 0)
-      .sort((a, b) => a.vendorName.localeCompare(b.vendorName));
+      .sort((a, b) => b.latestActivity - a.latestActivity || a.vendorName.localeCompare(b.vendorName));
   }, [vendors, allBookings, transactions, vendorSearchQuery, vendorStatusDateFrom, vendorStatusDateTo]);
 
   const handleExportTransactions = () => {
@@ -785,12 +814,19 @@ function AccountsPage() {
     document.body.removeChild(link);
   };
 
-  const handleExportExpenses = () => {
+  const exportToExcel = () => {
     const csvRows = [
       ["Date", "Category", "Description", "Payment Mode", "Amount", "Status"]
     ];
 
-    filteredExpenseList.forEach(exp => {
+    const exportableExpenses = expenseList.filter(exp => {
+      const d = exp.date || "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    exportableExpenses.forEach(exp => {
       csvRows.push([
         exp.date || "-",
         exp.category || "-",
@@ -809,6 +845,78 @@ function AccountsPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const exportToWord = () => {
+    const tableHeader =
+      "<tr><th>Date</th><th>Category</th><th>Description</th><th>Payment Mode</th><th>Amount</th><th>Status</th></tr>";
+
+    const exportableExpenses = expenseList.filter(exp => {
+      const d = exp.date || "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableExpenses
+      .map(
+        (exp) =>
+          `<tr><td>${exp.date || ""}</td><td>${exp.category || ""}</td><td>${exp.description || ""}</td><td>${exp.paymentMode || ""}</td><td>₹${exp.amount || 0}</td><td>${exp.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Expenses Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Expenses Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `Expenses_${new Date().toISOString().split('T')[0]}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const exportableExpenses = expenseList.filter(exp => {
+      const d = exp.date || "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableHeader =
+      "<tr><th>Date</th><th>Category</th><th>Description</th><th>Payment Mode</th><th>Amount</th><th>Status</th></tr>";
+
+    const tableRows = exportableExpenses
+      .map(
+        (exp) =>
+          `<tr><td>${exp.date || ""}</td><td>${exp.category || ""}</td><td>${exp.description || ""}</td><td>${exp.paymentMode || ""}</td><td>₹${exp.amount || 0}</td><td>${exp.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Expenses Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Expenses Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Expenses: ${exportableExpenses.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
   };
 
   const handleExportCustomerStatus = () => {
@@ -911,27 +1019,7 @@ function AccountsPage() {
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
-              <div className="flex items-center gap-2">
-                <div className="flex items-center gap-2 mr-2">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">From:</span>
-                  <Input
-                    type="date"
-                    value={expenseDateFrom}
-                    onChange={(e) => setExpenseDateFrom(e.target.value)}
-                    className="h-9 w-[130px] rounded-lg shadow-sm"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="text-sm font-medium text-muted-foreground whitespace-nowrap">To:</span>
-                  <Input
-                    type="date"
-                    value={expenseDateTo}
-                    onChange={(e) => setExpenseDateTo(e.target.value)}
-                    className="h-9 w-[130px] rounded-lg shadow-sm"
-                  />
-                </div>
-              </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 ml-auto">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
@@ -942,7 +1030,7 @@ function AccountsPage() {
                   />
                 </div>
                 {isAdmin && (
-                  <Button variant="outline" size="sm" onClick={handleExportExpenses} className="h-9 shadow-sm">
+                  <Button variant="outline" size="sm" onClick={() => setIsExportOpen(true)} className="h-9 shadow-sm">
                     <Download className="mr-2 h-4 w-4" /> Export
                   </Button>
                 )}
@@ -1309,9 +1397,13 @@ function AccountsPage() {
             </TabsList>
 
             {["unpaid", "paid"].map(tabValue => {
-              const filteredRequests = paymentRequests.filter(req =>
+              const filteredRequests = [...paymentRequests].filter(req =>
                 tabValue === "paid" ? req.status === "Paid" : req.status !== "Paid"
-              );
+              ).sort((a, b) => {
+                const timeA = new Date(a.auditLog?.[0]?.timestamp || a.date || 0).getTime();
+                const timeB = new Date(b.auditLog?.[0]?.timestamp || b.date || 0).getTime();
+                return timeB - timeA;
+              });
 
               return (
                 <TabsContent key={tabValue} value={tabValue} className="mt-0">
@@ -1416,13 +1508,7 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="customer-status" className="space-y-6 mt-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">From:</span>
-              <input type="date" value={customerStatusDateFrom} onChange={(e) => setCustomerStatusDateFrom(e.target.value)} className="h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-              <span className="text-sm font-medium text-muted-foreground ml-2">To:</span>
-              <input type="date" value={customerStatusDateTo} onChange={(e) => setCustomerStatusDateTo(e.target.value)} className="h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-            </div>
+          <div className="flex flex-wrap items-center justify-end gap-4 animate-in fade-in duration-300">
             <div className="flex items-center gap-2">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -1566,13 +1652,7 @@ function AccountsPage() {
         </TabsContent>
 
         <TabsContent value="vendor-status" className="space-y-6 mt-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
-            <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-muted-foreground">From:</span>
-              <input type="date" value={vendorStatusDateFrom} onChange={(e) => setVendorStatusDateFrom(e.target.value)} className="h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-              <span className="text-sm font-medium text-muted-foreground ml-2">To:</span>
-              <input type="date" value={vendorStatusDateTo} onChange={(e) => setVendorStatusDateTo(e.target.value)} className="h-9 rounded-md border border-border bg-background px-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
-            </div>
+          <div className="flex flex-wrap items-center justify-end gap-4 animate-in fade-in duration-300">
             <div className="flex items-center gap-2">
               <div className="relative w-full sm:w-64">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -2690,6 +2770,94 @@ function AccountsPage() {
           <DialogFooter>
             <Button onClick={() => window.print()} variant="outline" className="mr-auto">Print</Button>
             <Button onClick={() => setIsReceiptViewerOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Expenses</DialogTitle>
+            <DialogDescription>
+              Filter expenses by date before exporting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-6">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

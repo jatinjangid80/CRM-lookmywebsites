@@ -21,7 +21,9 @@ import {
   Phone,
   Gift,
   MessageCircle,
+  Info,
 } from "lucide-react";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import {
   LineChart,
   Line,
@@ -452,6 +454,34 @@ function Dashboard() {
     return events.sort((a, b) => a.daysUntil - b.daysUntil);
   }, [customersList]);
 
+  // Details calculations for KPI HoverCards
+  const todayLeadsList = leadsList.filter((l) => l.createdAt && l.createdAt.slice(0, 10) === todayStr);
+  const recentLeadsList = leadsList.slice(0, 4);
+
+  const todaySalesList = bookingsList.filter((b) => b.bookingDate && b.bookingDate.slice(0, 10) === todayStr);
+  const recentSalesList = bookingsList.filter((b) => (b.amount || 0) > 0).slice(0, 4);
+
+  const activeBookingsList = bookingsList.filter(
+    (b) => b.status === "Confirmed" || b.status === "Pending" || b.status === "In Progress"
+  ).slice(0, 4);
+
+  const pendingPaymentsList = bookingsList.filter((b) => (b.amount || 0) > (b.paid || 0)).slice(0, 4);
+
+  const followupsTodayList = leadsList.filter(
+    (l) => l.nextFollowUp && l.nextFollowUp.slice(0, 10) === todayStr
+  );
+  const upcomingFollowupsList = leadsList.filter((l) => l.nextFollowUp).slice(0, 4);
+  const followupsForCard = followupsTodayList.length > 0 ? followupsTodayList : upcomingFollowupsList;
+
+  const upcomingDeparturesList = bookingsList.filter((b) => {
+    if (!b.travelDate) return false;
+    const diff = (new Date(b.travelDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24);
+    return diff >= 0 && diff <= 7;
+  }).slice(0, 4);
+
+  const recentConvertedLeads = convertedLeadsList.slice(0, 4);
+  const recentPaidBookings = bookingsList.filter((b) => (b.paid || 0) > 0).slice(0, 4);
+
   const kpis = [
     {
       label: "Today's Leads",
@@ -462,6 +492,43 @@ function Dashboard() {
       border: "border-blue-500/20",
       color: "text-blue-600",
       link: "/crm/leads",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Today's Leads Details</span>
+            <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+              {todayLeadsCount} Today
+            </span>
+          </div>
+          {todayLeadsList.length > 0 ? (
+            <div className="space-y-2">
+              {todayLeadsList.slice(0, 4).map((l: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{l.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{l.destination || l.service || "General Inquiry"}</p>
+                  </div>
+                  <span className="text-[10px] bg-secondary px-2 py-0.5 rounded font-medium">{l.status || "New"}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] text-muted-foreground italic">No leads created today yet. Recent leads:</p>
+              {recentLeadsList.slice(0, 3).map((l: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{l.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{l.destination || l.service || "Inquiry"}</p>
+                  </div>
+                  <span className="text-[10px] bg-secondary px-2 py-0.5 rounded font-medium">{l.status || "New"}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-blue-600 font-medium pt-1 text-right">Click to view all leads →</p>
+        </div>
+      ),
     },
     {
       label: "Today's Sales",
@@ -472,6 +539,43 @@ function Dashboard() {
       border: "border-emerald-500/20",
       color: "text-emerald-600",
       link: "/crm/bookings",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Today's Sales Breakdown</span>
+            <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+              {formatINR(todaySalesAmount)}
+            </span>
+          </div>
+          {todaySalesList.length > 0 ? (
+            <div className="space-y-2">
+              {todaySalesList.slice(0, 4).map((b: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Package"}</p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600">{formatINR(b.amount || 0)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-2">
+              <p className="text-[11px] text-muted-foreground italic">No sales confirmed today yet. Recent sales:</p>
+              {recentSalesList.slice(0, 3).map((b: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Package"}</p>
+                  </div>
+                  <span className="text-xs font-bold text-emerald-600">{formatINR(b.amount || 0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-emerald-600 font-medium pt-1 text-right">Click to view all bookings →</p>
+        </div>
+      ),
     },
     {
       label: "Active Bookings",
@@ -482,6 +586,32 @@ function Dashboard() {
       border: "border-violet-500/20",
       color: "text-violet-600",
       link: "/crm/bookings",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Active Bookings Details</span>
+            <span className="text-[10px] font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+              {activeBookingsCount} Total
+            </span>
+          </div>
+          {activeBookingsList.length > 0 ? (
+            <div className="space-y-2">
+              {activeBookingsList.map((b: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Tour"} • {b.travelDate || "Upcoming"}</p>
+                  </div>
+                  <span className="text-xs font-semibold text-foreground">{formatINR(b.amount || 0)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">No active bookings found.</p>
+          )}
+          <p className="text-[10px] text-violet-600 font-medium pt-1 text-right">Click to manage bookings →</p>
+        </div>
+      ),
     },
     {
       label: "Pending Payments",
@@ -492,6 +622,38 @@ function Dashboard() {
       border: "border-rose-500/20",
       color: "text-rose-600",
       link: "/crm/accounts",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Pending Payments List</span>
+            <span className="text-[10px] font-semibold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">
+              {formatINR(pendingPaymentsAmount)}
+            </span>
+          </div>
+          {pendingPaymentsList.length > 0 ? (
+            <div className="space-y-2">
+              {pendingPaymentsList.map((b: any, i: number) => {
+                const pending = (b.amount || 0) - (b.paid || 0);
+                return (
+                  <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                    <div>
+                      <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                      <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Trip"}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-rose-600">{formatINR(pending)}</p>
+                      <p className="text-[9px] text-muted-foreground">Paid: {formatINR(b.paid || 0)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          ) : (
+            <p className="text-xs text-emerald-600 font-medium">All payments are fully cleared! 🎉</p>
+          )}
+          <p className="text-[10px] text-rose-600 font-medium pt-1 text-right">Click to view accounts →</p>
+        </div>
+      ),
     },
     {
       label: "Follow-ups Today",
@@ -502,6 +664,34 @@ function Dashboard() {
       border: "border-amber-500/20",
       color: "text-amber-600",
       link: "/crm/leads",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Scheduled Follow-Ups</span>
+            <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+              {followupsTodayCount} Today
+            </span>
+          </div>
+          {followupsForCard.length > 0 ? (
+            <div className="space-y-2">
+              {followupsForCard.map((l: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{l.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{l.phone || l.assignedTo || "Lead"}</p>
+                  </div>
+                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                    {l.nextFollowUp || "Today"}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">No follow-ups scheduled for today.</p>
+          )}
+          <p className="text-[10px] text-amber-600 font-medium pt-1 text-right">Click to view lead calls →</p>
+        </div>
+      ),
     },
     {
       label: "Upcoming Departures",
@@ -512,6 +702,34 @@ function Dashboard() {
       border: "border-cyan-500/20",
       color: "text-cyan-600",
       link: "/crm/bookings",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Upcoming Departures</span>
+            <span className="text-[10px] font-semibold bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full">
+              Next 7 Days ({upcomingDeparturesCount})
+            </span>
+          </div>
+          {upcomingDeparturesList.length > 0 ? (
+            <div className="space-y-2">
+              {upcomingDeparturesList.map((b: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Destination"}</p>
+                  </div>
+                  <span className="text-[10px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                    {b.travelDate}
+                  </span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">No departures scheduled in the next 7 days.</p>
+          )}
+          <p className="text-[10px] text-cyan-600 font-medium pt-1 text-right">Click to view all departures →</p>
+        </div>
+      ),
     },
     {
       label: "Conversion Rate",
@@ -521,8 +739,39 @@ function Dashboard() {
       bg: "bg-pink-500/10",
       border: "border-pink-500/20",
       color: "text-pink-600",
-      tooltip: convertedNames,
       link: "/crm/reports",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Lead Conversion Info</span>
+            <span className="text-[10px] font-semibold bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full">
+              {conversionRate}% Rate
+            </span>
+          </div>
+          <div className="grid grid-cols-2 gap-2 text-center text-xs py-1 bg-secondary/50 rounded-xl p-2">
+            <div>
+              <p className="text-[10px] text-muted-foreground font-semibold">TOTAL LEADS</p>
+              <p className="font-bold text-foreground text-sm">{leadsList.length}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-muted-foreground font-semibold">CONVERTED</p>
+              <p className="font-bold text-emerald-600 text-sm">{convertedLeadsList.length}</p>
+            </div>
+          </div>
+          {recentConvertedLeads.length > 0 && (
+            <div className="space-y-1.5 pt-1">
+              <p className="text-[10px] font-semibold text-muted-foreground">Recent Converted Clients:</p>
+              {recentConvertedLeads.map((l: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs">
+                  <span className="font-medium text-foreground">{l.name}</span>
+                  <span className="text-[10px] text-emerald-600 font-semibold">{formatINR(l.budget || 0)}</span>
+                </div>
+              ))}
+            </div>
+          )}
+          <p className="text-[10px] text-pink-600 font-medium pt-1 text-right">Click to view conversion reports →</p>
+        </div>
+      ),
     },
     {
       label: "Monthly Revenue",
@@ -533,6 +782,32 @@ function Dashboard() {
       border: "border-orange-500/20",
       color: "text-orange-600",
       link: "/crm/reports",
+      renderHover: () => (
+        <div className="space-y-3">
+          <div className="flex items-center justify-between border-b border-border pb-2">
+            <span className="text-xs font-bold text-foreground">Monthly Revenue Details</span>
+            <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+              {formatINR(monthlyRevenueTotal)}
+            </span>
+          </div>
+          {recentPaidBookings.length > 0 ? (
+            <div className="space-y-2">
+              {recentPaidBookings.map((b: any, i: number) => (
+                <div key={i} className="flex items-center justify-between text-xs py-1 border-b border-border/50 last:border-0">
+                  <div>
+                    <p className="font-semibold text-foreground">{b.customer || b.name}</p>
+                    <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Trip"}</p>
+                  </div>
+                  <span className="text-xs font-bold text-orange-600">{formatINR(b.paid || 0)}</span>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-muted-foreground italic">No revenue recorded yet this month.</p>
+          )}
+          <p className="text-[10px] text-orange-600 font-medium pt-1 text-right">Click to view revenue reports →</p>
+        </div>
+      ),
     },
   ];
 
@@ -541,28 +816,34 @@ function Dashboard() {
       {/* 8 KPI Cards Grid */}
       <div className="grid gap-4 grid-cols-2 lg:grid-cols-4">
         {kpis.map((s) => (
-          <div
-            key={s.label}
-            title={s.tooltip}
-            onClick={() => s.link && navigate({ to: s.link as any })}
-            className={`group relative overflow-hidden rounded-2xl border ${s.border} bg-card p-5 shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 ${s.link ? 'cursor-pointer' : ''}`}
-          >
-            <div className="flex items-center justify-between">
-              <span className={`grid h-10 w-10 place-items-center rounded-xl ${s.bg} ${s.color}`}>
-                <s.icon className="h-5 w-5" />
-              </span>
-              <span className="text-[10px] font-bold text-muted-foreground capitalize bg-secondary/80 px-2 py-0.5 rounded-md">
-                {s.trend}
-              </span>
-            </div>
-            <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
-              {s.label}
-            </p>
-            <p className="mt-1 font-display text-2xl font-black tracking-tight truncate">
-              {s.value}
-            </p>
-            <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-          </div>
+          <HoverCard key={s.label} openDelay={100} closeDelay={150}>
+            <HoverCardTrigger asChild>
+              <div
+                onClick={() => s.link && navigate({ to: s.link as any })}
+                className={`group relative overflow-hidden rounded-2xl border ${s.border} bg-card p-5 shadow-card hover:shadow-premium hover:-translate-y-0.5 transition-all duration-300 ${s.link ? 'cursor-pointer' : ''}`}
+              >
+                <div className="flex items-center justify-between">
+                  <span className={`grid h-10 w-10 place-items-center rounded-xl ${s.bg} ${s.color}`}>
+                    <s.icon className="h-5 w-5" />
+                  </span>
+                  <span className="text-[10px] font-bold text-muted-foreground capitalize bg-secondary/80 px-2 py-0.5 rounded-md flex items-center gap-1">
+                    {s.trend}
+                    <Info className="h-3 w-3 text-muted-foreground/60 group-hover:text-foreground transition-colors" />
+                  </span>
+                </div>
+                <p className="mt-4 text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </p>
+                <p className="mt-1 font-display text-2xl font-black tracking-tight truncate">
+                  {s.value}
+                </p>
+                <div className="absolute inset-x-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-primary/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent align="start" side="bottom" sideOffset={8} className="w-80 rounded-2xl p-4 shadow-2xl border border-border bg-card z-50">
+              {s.renderHover()}
+            </HoverCardContent>
+          </HoverCard>
         ))}
       </div>
 

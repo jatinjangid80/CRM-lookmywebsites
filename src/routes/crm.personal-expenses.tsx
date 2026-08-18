@@ -5,7 +5,7 @@ import {
   MoreVertical, Trash2, Tag, CalendarDays, IndianRupee,
   ShoppingCart, Utensils, Car, Plane, Home, Briefcase,
   HeartPulse, BookOpen, Music, Coffee, Gift, MoreHorizontal,
-  Lock, Delete, Eye, EyeOff, ShieldCheck,
+  Lock, Delete, Eye, EyeOff, ShieldCheck, Download,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -14,6 +14,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem,
   DropdownMenuTrigger, DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { toast } from "sonner";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 
@@ -168,6 +169,11 @@ function PersonalExpensesPage() {
   const [expenseToDelete, setExpenseToDelete] = useState<Expense | null>(null);
   const [form, setForm] = useState({ ...EMPTY_FORM });
 
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+  const [exportCategory, setExportCategory] = useState("All Categories");
+
   const [dbExpenses, setDbExpenses] = useSupabaseTable<Expense[]>("personal_expenses", []);
 
   const expenses: Expense[] = Array.isArray(dbExpenses) ? dbExpenses : [];
@@ -233,6 +239,40 @@ function PersonalExpensesPage() {
   const fmt = (n: number) =>
     "₹" + n.toLocaleString("en-IN", { maximumFractionDigits: 2 });
 
+  const handleExportCSV = () => {
+    const csvRows = [
+      ["Title", "Category", "Payment Mode", "Date", "Amount", "Notes"]
+    ];
+
+    expenses.forEach(e => {
+      const matchStart = exportStartDate ? e.expense_date >= exportStartDate : true;
+      const matchEnd = exportEndDate ? e.expense_date <= exportEndDate : true;
+      const matchCategory = exportCategory === "All Categories" ? true : e.category === exportCategory;
+
+      if (matchStart && matchEnd && matchCategory) {
+        csvRows.push([
+          (e.title || "").replace(/,/g, " "),
+          e.category || "-",
+          e.payment_mode || "-",
+          e.expense_date || "-",
+          String(e.amount || 0),
+          (e.notes || "").replace(/,/g, " ")
+        ]);
+      }
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `personal-expenses-${new Date().toISOString().split("T")[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsExportOpen(false);
+  };
+
   if (!unlocked) return <PinLockScreen onUnlock={() => setUnlocked(true)} />;
 
   return (
@@ -243,9 +283,14 @@ function PersonalExpensesPage() {
           <h1 className="font-display text-3xl font-bold tracking-tight">Personal Expenses</h1>
           <p className="text-muted-foreground mt-1">Track and manage your personal spending.</p>
         </div>
-        <Button className="rounded-xl h-10 px-5" onClick={() => { setForm({ ...EMPTY_FORM }); setIsAddOpen(true); }}>
-          <Plus className="mr-2 h-4 w-4" /> Add Expense
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="rounded-xl h-10 px-5 shadow-sm" onClick={() => setIsExportOpen(true)}>
+            <Download className="mr-2 h-4 w-4" /> Export
+          </Button>
+          <Button className="rounded-xl h-10 px-5 shadow-sm" onClick={() => { setForm({ ...EMPTY_FORM }); setIsAddOpen(true); }}>
+            <Plus className="mr-2 h-4 w-4" /> Add Expense
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -511,6 +556,62 @@ function PersonalExpensesPage() {
               onClick={() => expenseToDelete && handleDelete(expenseToDelete)}
             >
               Delete
+            </Button>
+          </div>
+          </DialogContent>
+        </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:rounded-3xl">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Personal Expenses</DialogTitle>
+            <DialogDescription>
+              Filter expenses by date or category before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+            <div className="col-span-2 space-y-2 mt-2">
+              <label className="text-sm font-medium">Category</label>
+              <Select value={exportCategory} onValueChange={setExportCategory}>
+                <SelectTrigger className="rounded-xl">
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl">
+                  <SelectItem value="All Categories">All Categories</SelectItem>
+                  {CATEGORIES.map(c => (
+                    <SelectItem key={c.label} value={c.label}>{c.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => setIsExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExportCSV} className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Download className="h-4 w-4 mr-2" /> Download CSV
             </Button>
           </div>
         </DialogContent>

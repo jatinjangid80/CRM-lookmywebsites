@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
-import { Plus, Download, Shield } from "lucide-react";
+import { Plus, Download, Shield, FileText, Table2, Briefcase } from "lucide-react";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { DeleteConfirmModal } from "@/components/ui/delete-confirm-modal";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
@@ -199,7 +199,7 @@ function GeneralInsurancePage() {
     return Array.from(customers).sort();
   }, [policies]);
 
-  const handleExport = () => {
+  const getFilteredExportPolicies = () => {
     let filtered = [...policies];
     if (exportStartDate) {
       filtered = filtered.filter(p => p.issue_date >= exportStartDate);
@@ -210,7 +210,11 @@ function GeneralInsurancePage() {
     if (exportCustomer !== "all") {
       filtered = filtered.filter(p => p.customer_name === exportCustomer);
     }
+    return filtered;
+  };
 
+  const exportToExcel = () => {
+    const filtered = getFilteredExportPolicies();
     if (filtered.length === 0) {
       alert("No policies match the selected filters.");
       return;
@@ -278,8 +282,76 @@ function GeneralInsurancePage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    
-    setIsExportOpen(false);
+  };
+
+  const exportToWord = () => {
+    const filtered = getFilteredExportPolicies();
+    if (filtered.length === 0) {
+      alert("No policies match the selected filters.");
+      return;
+    }
+
+    const tableHeader =
+      "<tr><th>Policy No</th><th>Customer</th><th>Mobile</th><th>Vehicle No</th><th>Total Premium</th><th>Profit</th><th>Issue Date</th><th>Expiry Date</th><th>Status</th></tr>";
+
+    const tableRows = filtered
+      .map(
+        (p) =>
+          `<tr><td>${p.policy_number || ""}</td><td>${p.customer_name || ""}</td><td>${p.mobile_number || ""}</td><td>${p.vehicle_number || ""}</td><td>₹${p.total_premium || 0}</td><td>₹${p.profit || 0}</td><td>${p.issue_date || ""}</td><td>${p.expiry_date || ""}</td><td>${p.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Insurance Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Insurance Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `insurance_export_${new Date().toISOString().slice(0, 10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const filtered = getFilteredExportPolicies();
+    if (filtered.length === 0) {
+      alert("No policies match the selected filters.");
+      return;
+    }
+
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableHeader =
+      "<tr><th>Policy No</th><th>Customer</th><th>Mobile</th><th>Vehicle No</th><th>Total Premium</th><th>Profit</th><th>Issue Date</th><th>Expiry Date</th><th>Status</th></tr>";
+
+    const tableRows = filtered
+      .map(
+        (p) =>
+          `<tr><td>${p.policy_number || ""}</td><td>${p.customer_name || ""}</td><td>${p.mobile_number || ""}</td><td>${p.vehicle_number || ""}</td><td>₹${p.total_premium || 0}</td><td>₹${p.profit || 0}</td><td>${p.issue_date || ""}</td><td>${p.expiry_date || ""}</td><td>${p.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Insurance Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Insurance Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Policies: ${filtered.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
   };
 
   return (
@@ -436,19 +508,21 @@ function GeneralInsurancePage() {
       />
 
       <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
-        <DialogContent className="sm:max-w-[425px]">
+        <DialogContent className="rounded-3xl sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>Export Insurance Data</DialogTitle>
+            <DialogTitle className="font-display text-2xl">Export Insurance Data</DialogTitle>
             <DialogDescription>
-              Filter policies by issue date or customer before downloading as CSV.
+              Filter policies by issue date or customer before exporting.
             </DialogDescription>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+
+          <div className="grid gap-4 py-2">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>Start Date</Label>
                 <Input 
                   type="date" 
+                  className="rounded-xl"
                   value={exportStartDate}
                   onChange={(e) => setExportStartDate(e.target.value)}
                 />
@@ -457,6 +531,7 @@ function GeneralInsurancePage() {
                 <Label>End Date</Label>
                 <Input 
                   type="date" 
+                  className="rounded-xl"
                   value={exportEndDate}
                   onChange={(e) => setExportEndDate(e.target.value)}
                 />
@@ -465,7 +540,7 @@ function GeneralInsurancePage() {
             <div className="space-y-2">
               <Label>Customer</Label>
               <Select value={exportCustomer} onValueChange={setExportCustomer}>
-                <SelectTrigger>
+                <SelectTrigger className="rounded-xl">
                   <SelectValue placeholder="All Customers" />
                 </SelectTrigger>
                 <SelectContent>
@@ -477,10 +552,59 @@ function GeneralInsurancePage() {
               </Select>
             </div>
           </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsExportOpen(false)}>Cancel</Button>
-            <Button onClick={handleExport}>
-              <Download className="w-4 h-4 mr-2" /> Download CSV
+
+          <div className="grid grid-cols-3 gap-3 py-4">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -26,6 +26,8 @@ import {
   Unlink,
   Share2,
   Eye,
+  Table2,
+  Briefcase,
 } from "lucide-react";
 import { getAuth } from "@/lib/auth";
 import { useLocalStorage } from "@/lib/use-local-storage";
@@ -40,6 +42,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/crm/documents")({ component: FoldersPage });
 
@@ -925,6 +928,11 @@ function FoldersPage() {
   const [deleteTarget, setDeleteTarget] = useState<FolderItem | null>(null);
   const globalFolderInputRef = useRef<HTMLInputElement>(null);
 
+  // Export state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+
   // Google Drive State
   const [googleAccessToken, setGoogleAccessToken] = useLocalStorage("crm_gdrive_token", "");
   const isZohoConnected = !!googleAccessToken;
@@ -1161,6 +1169,108 @@ function FoldersPage() {
     );
   }
 
+  const exportToExcel = () => {
+    const csvRows = [
+      ["Folder ID", "Folder Name", "Created At", "Description", "Manager", "Number of Files"]
+    ];
+
+    folders.forEach(f => {
+      const matchStart = exportStartDate ? f.createdAt >= exportStartDate : true;
+      const matchEnd = exportEndDate ? f.createdAt <= exportEndDate : true;
+
+      if (matchStart && matchEnd) {
+        csvRows.push([
+          f.id,
+          `"${f.name}"`,
+          f.createdAt,
+          `"${f.description || ""}"`,
+          `"${f.manager || ""}"`,
+          String(f.files.length)
+        ]);
+      }
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `folders_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToWord = () => {
+    const tableHeader =
+      "<tr><th>Folder ID</th><th>Folder Name</th><th>Manager</th><th>Description</th><th>Files Count</th><th>Created Date</th></tr>";
+
+    const exportableFolders = folders.filter(f => {
+      const matchStart = exportStartDate ? f.createdAt >= exportStartDate : true;
+      const matchEnd = exportEndDate ? f.createdAt <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableFolders
+      .map(
+        (f) =>
+          `<tr><td>${f.id}</td><td>${f.name}</td><td>${f.manager || ""}</td><td>${f.description || ""}</td><td>${f.files.length}</td><td>${f.createdAt}</td></tr>`,
+      )
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Folders Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Folders Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `folders_export_${new Date().toISOString().slice(0, 10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const exportableFolders = folders.filter(f => {
+      const matchStart = exportStartDate ? f.createdAt >= exportStartDate : true;
+      const matchEnd = exportEndDate ? f.createdAt <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableHeader =
+      "<tr><th>Folder ID</th><th>Folder Name</th><th>Manager</th><th>Description</th><th>Files Count</th><th>Created Date</th></tr>";
+
+    const tableRows = exportableFolders
+      .map(
+        (f) =>
+          `<tr><td>${f.id}</td><td>${f.name}</td><td>${f.manager || ""}</td><td>${f.description || ""}</td><td>${f.files.length}</td><td>${f.createdAt}</td></tr>`,
+      )
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Folders Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Folders Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Folders: ${exportableFolders.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
+  };
+
   /* ── Folder grid ── */
   return (
     <div className="space-y-6">
@@ -1173,6 +1283,13 @@ function FoldersPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button
+            onClick={() => setIsExportOpen(true)}
+            variant="outline"
+            className="gap-2 rounded-xl text-xs font-semibold h-9 border-border hover:bg-secondary/50 transition-colors"
+          >
+            <Download className="h-4 w-4" /> Export
+          </Button>
           <Button
             onClick={() => setCreateOpen(true)}
             className="gap-2 rounded-xl text-white text-xs font-semibold h-9 hover:opacity-90 transition-opacity"
@@ -1425,6 +1542,94 @@ function FoldersPage() {
           </div>
         </div>
       </Modal>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Folders</DialogTitle>
+            <DialogDescription>
+              Filter folders by created date before exporting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-6">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

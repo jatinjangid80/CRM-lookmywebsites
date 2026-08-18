@@ -89,6 +89,46 @@ function AttendancePage() {
   const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const myCurrentSession = myTodayRecords.find(a => !a.checkout);
 
+  // Export State
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+
+  const handleExportCSV = () => {
+    const exportableRecords = rawAttendance.filter(a => {
+      const d = a.date || "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const csvRows = [
+      ["Employee ID", "Date", "Check-in", "Check-out", "Status", "Remark"]
+    ];
+
+    exportableRecords.forEach(a => {
+      csvRows.push([
+        `"${a.employeeid}"`,
+        `"${a.date}"`,
+        `"${a.checkin}"`,
+        `"${a.checkout || ""}"`,
+        `"${a.status}"`,
+        `"${a.remark || ""}"`
+      ]);
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `attendance_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsExportOpen(false);
+  };
+
   const [teamSelectedDate, setTeamSelectedDate] = useState<Date>(new Date());
   const teamSelectedDateStr = new Date(teamSelectedDate.getTime() - teamSelectedDate.getTimezoneOffset() * 60000).toISOString().split("T")[0];
   const teamTodayRecords = [...attendance.filter(a => a.date === teamSelectedDateStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
@@ -202,16 +242,21 @@ function AttendancePage() {
             <h1 className="font-display text-3xl font-bold tracking-tight">Attendance</h1>
             <p className="mt-1 text-sm text-muted-foreground">Punch clock, real-time check-ins, and shift management.</p>
           </div>
-          <TabsList className="flex bg-muted p-1 rounded-xl w-fit border border-border/80 h-auto">
-            <TabsTrigger value="my-attendance" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">My Attendance</TabsTrigger>
-            {isAdmin && (
-              <>
-                <TabsTrigger value="team" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Team Check-ins</TabsTrigger>
-                <TabsTrigger value="history" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Employee History</TabsTrigger>
-              </>
-            )}
-            <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
-          </TabsList>
+          <div className="flex items-center gap-2">
+            <Button variant="outline" onClick={() => setIsExportOpen(true)} className="gap-2 rounded-xl">
+              <Download className="h-4 w-4" /> Export
+            </Button>
+            <TabsList className="flex bg-muted p-1 rounded-xl w-fit border border-border/80 h-auto">
+              <TabsTrigger value="my-attendance" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">My Attendance</TabsTrigger>
+              {isAdmin && (
+                <>
+                  <TabsTrigger value="team" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Team Check-ins</TabsTrigger>
+                  <TabsTrigger value="history" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Employee History</TabsTrigger>
+                </>
+              )}
+              <TabsTrigger value="leave" className="px-4 py-2 text-xs font-semibold rounded-lg transition-all cursor-pointer data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm text-muted-foreground hover:text-foreground">Leave Applications</TabsTrigger>
+            </TabsList>
+          </div>
         </div>
 
         <TabsContent value="my-attendance" className="m-0 border-none p-0 outline-none">
@@ -1651,6 +1696,48 @@ function AttendancePage() {
             <Button variant="outline" onClick={() => setRemarkDialogOpen(false)}>Cancel</Button>
             <Button onClick={handleSaveRemark}>Save Remark</Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Attendance</DialogTitle>
+            <DialogDescription>
+              Filter attendance by date before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => setIsExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExportCSV} className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Download className="h-4 w-4 mr-2" /> Download CSV
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </main>

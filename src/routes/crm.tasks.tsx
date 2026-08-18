@@ -6,13 +6,13 @@ import {
   Plus, CheckCircle2, Circle, Clock, AlertCircle, Phone, Mail,
   CreditCard, FileText, CalendarDays, Trash2, X, Filter, Sparkles,
   ListChecks, Calendar, Users, User, Edit, Eye, Paperclip, MessageSquare,
-  MoreVertical, CheckSquare, List, CheckCircle, Copy
+  MoreVertical, CheckSquare, List, CheckCircle, Copy, Download, Table2, Briefcase
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -97,6 +97,11 @@ function TasksPage() {
   const [calendarDate, setCalendarDate] = useState(new Date());
   const [statusFilter, setStatusFilter] = useState<string>("All");
   const [priorityFilter, setPriorityFilter] = useState<string>("All");
+
+  // Export state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   const baseTasks = useMemo(() => {
     return isAdmin
@@ -385,7 +390,121 @@ function TasksPage() {
     }
 
     setTableEditNoteText("");
+    setTableEditNoteText("");
     setEditingTableNoteId(null);
+  };
+
+  const exportToExcel = () => {
+    const csvRows = [
+      ["ID", "Title", "Assigned To", "Customer/Lead", "Priority", "Status", "Due Date", "Progress"]
+    ];
+
+    visibleTasks.forEach(t => {
+      const d = t.due_date || (t as any).dueDate ? String(t.due_date || (t as any).dueDate).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+
+      if (matchStart && matchEnd) {
+        csvRows.push([
+          `"${t.id}"`,
+          `"${(t.title || "").replace(/"/g, '""')}"`,
+          `"${(t.assigned_to || (t as any).assignee || "").replace(/"/g, '""')}"`,
+          `"${(t.customer_id || (t as any).lead || "").replace(/"/g, '""')}"`,
+          `"${t.priority}"`,
+          `"${t.status}"`,
+          `"${d}"`,
+          `"${t.progress || 0}%"`
+        ]);
+      }
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `tasks_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToWord = () => {
+    const tableHeader =
+      "<tr><th>ID</th><th>Title</th><th>Assigned To</th><th>Customer/Lead</th><th>Priority</th><th>Status</th><th>Due Date</th><th>Progress</th></tr>";
+
+    const exportableTasks: Task[] = [];
+    visibleTasks.forEach(t => {
+      const d = t.due_date || (t as any).dueDate ? String(t.due_date || (t as any).dueDate).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      if (matchStart && matchEnd) {
+        exportableTasks.push(t);
+      }
+    });
+
+    const tableRows = exportableTasks
+      .map((t) => {
+        const d = t.due_date || (t as any).dueDate ? String(t.due_date || (t as any).dueDate).split('T')[0] : "";
+        return `<tr><td>${t.id}</td><td>${t.title || ""}</td><td>${t.assigned_to || (t as any).assignee || ""}</td><td>${t.customer_id || (t as any).lead || ""}</td><td>${t.priority}</td><td>${t.status}</td><td>${d}</td><td>${t.progress || 0}%</td></tr>`;
+      })
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Tasks Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Tasks Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `tasks_export_${new Date().toISOString().slice(0, 10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableHeader =
+      "<tr><th>ID</th><th>Title</th><th>Assigned To</th><th>Customer/Lead</th><th>Priority</th><th>Status</th><th>Due Date</th><th>Progress</th></tr>";
+
+    const exportableTasks: Task[] = [];
+    visibleTasks.forEach(t => {
+      const d = t.due_date || (t as any).dueDate ? String(t.due_date || (t as any).dueDate).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      if (matchStart && matchEnd) {
+        exportableTasks.push(t);
+      }
+    });
+
+    const tableRows = exportableTasks
+      .map((t) => {
+        const d = t.due_date || (t as any).dueDate ? String(t.due_date || (t as any).dueDate).split('T')[0] : "";
+        return `<tr><td>${t.id}</td><td>${t.title || ""}</td><td>${t.assigned_to || (t as any).assignee || ""}</td><td>${t.customer_id || (t as any).lead || ""}</td><td>${t.priority}</td><td>${t.status}</td><td>${d}</td><td>${t.progress || 0}%</td></tr>`;
+      })
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Tasks Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Tasks Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Tasks: ${exportableTasks.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
   };
 
   return (
@@ -396,10 +515,16 @@ function TasksPage() {
           <h1 className="text-2xl font-bold tracking-tight text-foreground">Task Management</h1>
           <p className="text-sm text-muted-foreground">Track and manage your team's workflow</p>
         </div>
-        <Button onClick={() => { setIsEditing(null); setShowCreateModal(true); }} className="gap-2">
-          <Plus className="h-4 w-4" />
-          Create Task
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsExportOpen(true)} className="gap-2">
+            <Download className="h-4 w-4" />
+            Export
+          </Button>
+          <Button onClick={() => { setIsEditing(null); setShowCreateModal(true); }} className="gap-2">
+            <Plus className="h-4 w-4" />
+            Create Task
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-5 mb-6">
@@ -1303,6 +1428,94 @@ function TasksPage() {
               </div>
             </>
           )}
+        </DialogContent>
+      </Dialog>
+      
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Tasks</DialogTitle>
+            <DialogDescription>
+              Filter tasks by due date before exporting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-6">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
       

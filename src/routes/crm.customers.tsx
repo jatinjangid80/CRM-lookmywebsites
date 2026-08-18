@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useMemo } from "react";
-import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, MessageCircle, History, Copy, Phone, Mail, MapPin, CheckSquare, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Plus, Trash2, Wallet, Search, Filter, Download, User, MoreVertical, FileText, IndianRupee, MessageSquare, MessageCircle, History, Copy, Phone, Mail, MapPin, CheckSquare, ArrowUp, ArrowDown, ArrowUpDown, Table2, Briefcase } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -72,6 +72,9 @@ function CustomersPage() {
 
   const [isAddOpen, setIsAddOpen] = useState(false);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
   
   const [newCustomer, setNewCustomer] = useState<Partial<ExtCustomer>>({ 
     name: "", phone: "", email: "", status: "Active", source: "Website", assignedTo: "Unassigned", company: "", city: "", reference: "", dob: "", dateOfAnniversary: "", gst: ""
@@ -187,7 +190,7 @@ function CustomersPage() {
     setCustomerList([...newCustomers, ...customerList]);
   };
 
-  const exportToCSV = () => {
+  const exportToExcel = () => {
     const headers = [
       "Customer ID",
       "Customer Name",
@@ -204,7 +207,14 @@ function CustomersPage() {
       "Created Date",
     ].join(",");
 
-    const rows = filtered.map((c) =>
+    const exportableCustomers = filtered.filter(c => {
+      const d = c.createdAt ? String(c.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const rows = exportableCustomers.map((c) =>
       [
         c.id,
         `"${c.name}"`,
@@ -231,6 +241,78 @@ function CustomersPage() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const exportToWord = () => {
+    const tableHeader =
+      "<tr><th>Customer ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>City</th><th>Company</th><th>Status</th></tr>";
+
+    const exportableCustomers = filtered.filter(c => {
+      const d = c.createdAt ? String(c.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableCustomers
+      .map(
+        (c) =>
+          `<tr><td>${c.id}</td><td>${c.name || ""}</td><td>${c.phone || ""}</td><td>${c.email || ""}</td><td>${c.city || ""}</td><td>${c.company || ""}</td><td>${c.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Customers Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Customers Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `customers_export_${new Date().toISOString().slice(0, 10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableHeader =
+      "<tr><th>Customer ID</th><th>Name</th><th>Mobile</th><th>Email</th><th>City</th><th>Company</th><th>Status</th></tr>";
+
+    const exportableCustomers = filtered.filter(c => {
+      const d = c.createdAt ? String(c.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableCustomers
+      .map(
+        (c) =>
+          `<tr><td>${c.id}</td><td>${c.name || ""}</td><td>${c.phone || ""}</td><td>${c.email || ""}</td><td>${c.city || ""}</td><td>${c.company || ""}</td><td>${c.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Customers Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Customers Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Customers: ${exportableCustomers.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
   };
 
   const { travelPhones, insurancePhones } = useMemo(() => {
@@ -314,14 +396,9 @@ function CustomersPage() {
         </div>
         <div className="flex gap-2 w-full sm:w-auto overflow-x-auto pb-2 sm:pb-0">
           {isAdmin && (
-            <>
-              <Button variant="outline" onClick={exportToCSV}>
-                <Download className="mr-2 h-4 w-4" /> Export
-              </Button>
-              <Button variant="outline" onClick={() => setIsImportOpen(true)}>
-                <Download className="mr-2 h-4 w-4 rotate-180" /> Import
-              </Button>
-            </>
+            <Button variant="outline" onClick={() => setIsExportOpen(true)}>
+              <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
           )}
           <Button onClick={() => setIsAddOpen(true)} style={{ background: "var(--gradient-brand)" }} className="text-white shadow-md">
             <Plus className="mr-2 h-4 w-4" /> Add Customer
@@ -913,6 +990,94 @@ function CustomersPage() {
               setDialogType(null);
             }}>
               Yes, delete customer
+            </Button>
+          </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Customers</DialogTitle>
+            <DialogDescription>
+              Filter customers by created date before exporting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-6">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
             </Button>
           </DialogFooter>
         </DialogContent>

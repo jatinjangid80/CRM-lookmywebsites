@@ -421,6 +421,8 @@ function BookingsPage() {
   // Export state
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportScope, setExportScope] = useState<string>("All");
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   // Refund state
   const [isRefundOpen, setIsRefundOpen] = useState(false);
@@ -467,8 +469,17 @@ function BookingsPage() {
   };
 
   const getBookingsToExport = () => {
-    if (exportScope === "All") return filteredBookings;
-    return filteredBookings.filter(b => b.bookingType === exportScope);
+    let toExport = exportScope === "All" ? filteredBookings : filteredBookings.filter(b => b.bookingType === exportScope);
+    
+    if (exportStartDate || exportEndDate) {
+      toExport = toExport.filter(b => {
+        const d = b.bookingDate || "";
+        const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+        const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+        return matchStart && matchEnd;
+      });
+    }
+    return toExport;
   };
 
   // Shared export mapping
@@ -1282,10 +1293,17 @@ function BookingsPage() {
   };
 
   const handleExportCSV = () => {
+    const exportableBookings = filteredBookings.filter(b => {
+      const d = b.bookingDate || "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
     const headers = ["Booking ID", "Booking Date", "Travel Date", "Customer", "Mobile No", "PNR", "Type", "Selling Price", "Purchase Price", "Profit", "Booked By", "Status"];
     const csvContent = [
       headers.join(","),
-      ...filteredBookings.map(b =>
+      ...exportableBookings.map(b =>
         [
           b.id,
           b.bookingDate || "",
@@ -1951,6 +1969,27 @@ function BookingsPage() {
                 </option>
               ))}
             </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
           </div>
 
           <div className="grid grid-cols-3 gap-3 py-4">

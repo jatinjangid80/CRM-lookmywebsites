@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { Plus, Mail, MessageCircle, Send, Search, Filter, Copy, Edit2, LayoutTemplate, MoreVertical, Trash2, MessageSquare } from "lucide-react";
+import { Plus, Mail, MessageCircle, Send, Search, Filter, Copy, Edit2, LayoutTemplate, MoreVertical, Trash2, MessageSquare, Download } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import {
@@ -11,6 +11,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/crm/marketing")({
   component: MarketingPage,
@@ -56,6 +57,11 @@ function MarketingPage() {
   });
   const [templateToDelete, setTemplateToDelete] = useState<Template | null>(null);
 
+  // Export State
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+
   const [dbTemplates, setDbTemplates] = useSupabaseTable<any[]>("marketing_campaigns", []);
 
   const templates: Template[] = dbTemplates.map(c => ({
@@ -84,6 +90,42 @@ function MarketingPage() {
     return true;
   });
 
+  const handleExportCSV = () => {
+    const exportableTemplates = templates.filter(t => {
+      const d = t.lastUpdated || "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const csvRows = [
+      ["ID", "Name", "Category", "Channel", "Last Updated", "Status", "Content"]
+    ];
+
+    exportableTemplates.forEach(t => {
+      csvRows.push([
+        `"${t.id}"`,
+        `"${(t.name || "").replace(/"/g, '""')}"`,
+        `"${t.category}"`,
+        `"${t.channel}"`,
+        `"${t.lastUpdated || ""}"`,
+        `"${t.status}"`,
+        `"${(t.content || "").replace(/"/g, '""')}"`
+      ]);
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `marketing_templates_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsExportOpen(false);
+  };
+
   return (
     <div className="space-y-8 print:p-0 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 print:hidden">
@@ -96,6 +138,9 @@ function MarketingPage() {
           </p>
         </div>
         <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsExportOpen(true)} className="rounded-xl shadow-lg h-10 px-4">
+            <Download className="h-4 w-4 mr-2" /> Export
+          </Button>
           <Button 
             onClick={() => {
               setEditingTemplateId(null);
@@ -503,6 +548,48 @@ function MarketingPage() {
               }}
             >
               Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Templates</DialogTitle>
+            <DialogDescription>
+              Filter templates by date before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => setIsExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExportCSV} className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Download className="h-4 w-4 mr-2" /> Download CSV
             </Button>
           </div>
         </DialogContent>

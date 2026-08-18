@@ -58,6 +58,7 @@ interface Package {
   id: string;
   title: string;
   nights: string;
+  createdAt?: string;
   img: string;
   price: string;
   priceNum: number;
@@ -275,6 +276,8 @@ function PackagesPage() {
   const [editingPkg, setEditingPkg] = useState<Package | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Package | null>(null);
   const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
   const [inclInput, setInclInput] = useState("");
 
   const [localForm, setLocalForm] = useState<Omit<Package, "id">>(EMPTY);
@@ -436,6 +439,7 @@ function PackagesPage() {
       const newPkg: Package = {
         id: `PKG-${(packages.length + 1).toString().padStart(3, "0")}`,
         ...form,
+        createdAt: new Date().toISOString().slice(0, 10),
         incl: inclArr,
         priceNum,
         price: formatted,
@@ -461,10 +465,17 @@ function PackagesPage() {
 
   // ── Exports ──────────────────────────────────────────────────────────────
   const exportToExcel = () => {
+    const exportablePackages = filtered.filter(p => {
+      const d = p.createdAt ? String(p.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
     const headers = ["ID", "Title", "Destination", "Nights", "Price", "Tag", "Includes", "Active"];
     const rows = [
       headers.join(","),
-      ...filtered.map((p) =>
+      ...exportablePackages.map((p) =>
         [
           `"${p.id}"`,
           `"${p.title.replace(/"/g, '""')}"`,
@@ -488,9 +499,16 @@ function PackagesPage() {
   };
 
   const exportToWord = () => {
+    const exportablePackages = filtered.filter(p => {
+      const d = p.createdAt ? String(p.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
     const th =
       "<tr><th>ID</th><th>Title</th><th>Destination</th><th>Nights</th><th>Price</th><th>Tag</th><th>Includes</th></tr>";
-    const rows = filtered
+    const rows = exportablePackages
       .map(
         (p) =>
           `<tr><td>${p.id}</td><td>${p.title}</td><td>${p.destination}</td><td>${p.nights}</td><td>${p.price}</td><td>${p.tag}</td><td>${p.incl.join(", ")}</td></tr>`,
@@ -509,9 +527,17 @@ function PackagesPage() {
   const exportToPDF = () => {
     const win = window.open("", "_blank");
     if (!win) return;
+    
+    const exportablePackages = filtered.filter(p => {
+      const d = p.createdAt ? String(p.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
     const th =
       "<tr><th>ID</th><th>Title</th><th>Destination</th><th>Duration</th><th>Price</th><th>Tag</th><th>Includes</th></tr>";
-    const rows = filtered
+    const rows = exportablePackages
       .map(
         (p) =>
           `<tr><td>${p.id}</td><td>${p.title}</td><td>${p.destination}</td><td>${p.nights}</td><td>${p.price}</td><td>${p.tag}</td><td>${p.incl.join(", ")}</td></tr>`,
@@ -982,9 +1008,30 @@ function PackagesPage() {
           <DialogHeader>
             <DialogTitle className="font-display text-lg font-bold">Export Packages</DialogTitle>
             <DialogDescription className="text-xs text-muted-foreground mt-1">
-              Export the current list of {filtered.length} packages in your preferred file format.
+              Filter packages by created date before downloading.
             </DialogDescription>
           </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
 
           <div className="grid grid-cols-3 gap-3 py-6">
             <button

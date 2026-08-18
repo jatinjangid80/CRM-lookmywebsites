@@ -383,6 +383,12 @@ function EmployeesPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [editingEmployeeNoteId, setEditingEmployeeNoteId] = useState<string | null>(null);
   const [employeeEditNoteText, setEmployeeEditNoteText] = useState("");
+  
+  // Export state
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
+
   const employees = localEmployees?.length ? localEmployees : INITIAL_EMPLOYEES;
   const employeesDetails = useMemo(() => {
     const map: Record<string, EmployeeDetails> = {};
@@ -825,6 +831,42 @@ function EmployeesPage() {
     setIsAddOpen(false);
   };
 
+  const handleExportCSV = () => {
+    const exportableEmployees = employees.filter(e => {
+      const d = e.joinDate ? String(e.joinDate).split('T')[0] : "";
+      const matchStart = exportStartDate && d ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate && d ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const csvRows = [
+      ["ID", "Name", "Role", "Email", "Phone", "Join Date", "Status"]
+    ];
+
+    exportableEmployees.forEach(e => {
+      csvRows.push([
+        `"${e.id}"`,
+        `"${(e.name || "").replace(/"/g, '""')}"`,
+        `"${e.role}"`,
+        `"${e.email}"`,
+        `"${e.phone}"`,
+        `"${e.joinDate || ""}"`,
+        `"${e.status}"`
+      ]);
+    });
+
+    const csvContent = csvRows.map(row => row.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", `employees_export_${new Date().toISOString().slice(0, 10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    setIsExportOpen(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -836,12 +878,16 @@ function EmployeesPage() {
           </p>
         </div>
 
-        <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 rounded-xl" style={{ background: "var(--gradient-brand)" }}>
-              <Plus className="h-4 w-4" /> Add Employee
-            </Button>
-          </DialogTrigger>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setIsExportOpen(true)} className="gap-2">
+            <Download className="h-4 w-4" /> Export
+          </Button>
+          <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 rounded-xl" style={{ background: "var(--gradient-brand)" }}>
+                <Plus className="h-4 w-4" /> Add Employee
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Add New Employee</DialogTitle>
@@ -980,8 +1026,51 @@ function EmployeesPage() {
               </DialogFooter>
             </form>
           </DialogContent>
-        </Dialog>
-      </div>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Employees</DialogTitle>
+            <DialogDescription>
+              Filter employees by join date before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => setIsExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExportCSV} className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Download className="h-4 w-4 mr-2" /> Download CSV
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+    </div>
+    </div>
 
 
       {activeTab === "Employees" ? (
@@ -4531,6 +4620,48 @@ function EmployeesPage() {
           </div>
         </div>
       )}
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Employees</DialogTitle>
+            <DialogDescription>
+              Filter employees by join date before downloading as CSV.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2 mb-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 mt-6">
+            <Button variant="outline" className="rounded-xl px-6" onClick={() => setIsExportOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleExportCSV} className="rounded-xl px-6 bg-emerald-600 hover:bg-emerald-700 text-white">
+              <Download className="h-4 w-4 mr-2" /> Download CSV
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

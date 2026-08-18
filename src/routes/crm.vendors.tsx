@@ -25,6 +25,9 @@ import {
   ArrowUp,
   ArrowDown,
   ArrowUpDown,
+  FileText,
+  Table2,
+  Briefcase,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -210,6 +213,9 @@ function VendorsPage() {
   const [formContacts, setFormContacts] = useState<VendorContact[]>([{ ...EMPTY_CONTACT }]);
   const [formError, setFormError] = useState<string | null>(null);
   const [isImportOpen, setIsImportOpen] = useState(false);
+  const [isExportOpen, setIsExportOpen] = useState(false);
+  const [exportStartDate, setExportStartDate] = useState("");
+  const [exportEndDate, setExportEndDate] = useState("");
 
   // Contact helpers
   const addContact = () => setFormContacts((prev) => [...prev, { ...EMPTY_CONTACT }]);
@@ -478,9 +484,17 @@ function VendorsPage() {
     }
   };
 
-  const handleExport = () => {
+  const exportToExcel = () => {
     const headers = ["Vendor ID", "Place", "Vendor Name", "Contact Person", "Mobile", "Email", "Website", "Office City", "Vendor Type", "Status", "Created Date"];
-    const rows = filtered.map((v) => [
+    
+    const exportableVendors = filtered.filter((v) => {
+      const d = v.createdAt ? String(v.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const rows = exportableVendors.map((v) => [
       v.id,
       v.place,
       v.name,
@@ -498,6 +512,78 @@ function VendorsPage() {
     ws["!cols"] = headers.map(() => ({ wch: 20 }));
     XLSX.utils.book_append_sheet(wb, ws, "Vendors");
     XLSX.writeFile(wb, `Vendors_Export_${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
+
+  const exportToWord = () => {
+    const tableHeader =
+      "<tr><th>Vendor ID</th><th>Place</th><th>Vendor Name</th><th>Contact Person</th><th>Mobile</th><th>Email</th><th>Vendor Type</th><th>Status</th></tr>";
+
+    const exportableVendors = filtered.filter((v) => {
+      const d = v.createdAt ? String(v.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableVendors
+      .map(
+        (v) =>
+          `<tr><td>${v.id}</td><td>${v.place || ""}</td><td>${v.name || ""}</td><td>${v.contactPerson || ""}</td><td>${v.mobile || ""}</td><td>${v.email || ""}</td><td>${v.vendorType || ""}</td><td>${v.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const htmlString = `
+      <html xmlns:o='urn:schemas-microsoft-com:office:office' xmlns:w='urn:schemas-microsoft-com:office:word' xmlns='http://www.w3.org/TR/REC-html40'>
+      <head><title>Vendors Export</title><style>table { border-collapse: collapse; width: 100%; font-family: Arial, sans-serif; } th, td { border: 1px solid #dddddd; padding: 8px; text-align: left; } th { background-color: #f2f2f2; }</style></head>
+      <body><h2>Grand Journeys CRM - Vendors Export</h2><table>${tableHeader}${tableRows}</table></body>
+      </html>
+    `;
+    const blob = new Blob([htmlString], { type: "application/msword" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.setAttribute("href", url);
+    link.setAttribute("download", `vendors_export_${new Date().toISOString().slice(0, 10)}.doc`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const exportToPDF = () => {
+    const printWindow = window.open("", "_blank");
+    if (!printWindow) return;
+
+    const tableHeader =
+      "<tr><th>Vendor ID</th><th>Place</th><th>Vendor Name</th><th>Contact Person</th><th>Mobile</th><th>Email</th><th>Vendor Type</th><th>Status</th></tr>";
+
+    const exportableVendors = filtered.filter((v) => {
+      const d = v.createdAt ? String(v.createdAt).split('T')[0] : "";
+      const matchStart = exportStartDate ? d >= exportStartDate : true;
+      const matchEnd = exportEndDate ? d <= exportEndDate : true;
+      return matchStart && matchEnd;
+    });
+
+    const tableRows = exportableVendors
+      .map(
+        (v) =>
+          `<tr><td>${v.id}</td><td>${v.place || ""}</td><td>${v.name || ""}</td><td>${v.contactPerson || ""}</td><td>${v.mobile || ""}</td><td>${v.email || ""}</td><td>${v.vendorType || ""}</td><td>${v.status || ""}</td></tr>`,
+      )
+      .join("");
+
+    const css = `body{font-family:sans-serif;padding:20px;color:#333}h2{color:#059669;margin-bottom:5px}p{font-size:12px;color:#666;margin-bottom:20px}table{border-collapse:collapse;width:100%;font-size:12px}th,td{border:1px solid #ddd;padding:8px;text-align:left}th{background:#f9fafb;font-weight:bold}tr:nth-child(even){background:#f3f4f6}`;
+    const styleEl = printWindow.document.createElement("style");
+    styleEl.textContent = css;
+    printWindow.document.head.appendChild(styleEl);
+    const titleEl = printWindow.document.createElement("title");
+    titleEl.textContent = "Vendors Export PDF";
+    printWindow.document.head.appendChild(titleEl);
+    const bodyHtml = `<h2>Grand Journeys CRM - Vendors Export</h2><p>Generated on ${new Date().toLocaleDateString("en-IN")} | Total Vendors: ${exportableVendors.length}</p><table><thead>${tableHeader}</thead><tbody>${tableRows}</tbody></table>`;
+    const wrapper = printWindow.document.createElement("div");
+    wrapper.innerHTML = bodyHtml;
+    printWindow.document.body.appendChild(wrapper);
+    const script = printWindow.document.createElement("script");
+    script.textContent =
+      "window.onload=function(){window.print();window.onafterprint=function(){window.close();}}";
+    printWindow.document.body.appendChild(script);
   };
 
   // ── Helpers ──
@@ -531,13 +617,8 @@ function VendorsPage() {
           <p className="mt-1 text-sm text-muted-foreground">Manage service providers, DMCs, and suppliers.</p>
         </div>
         <div className="flex gap-2">
-          {isAdmin && (
-            <Button variant="outline" className="shadow-sm" onClick={() => setIsImportOpen(true)}>
-              <Download className="mr-2 h-4 w-4" /> Import
-            </Button>
-          )}
           {(auth?.role === "admin" || auth?.name?.toLowerCase().includes("aman")) && (
-            <Button variant="outline" className="shadow-sm" onClick={handleExport}>
+            <Button variant="outline" className="shadow-sm" onClick={() => setIsExportOpen(true)}>
               <Download className="mr-2 h-4 w-4" /> Export
             </Button>
           )}
@@ -1016,6 +1097,94 @@ function VendorsPage() {
           <DialogFooter className="mt-4 gap-2">
             <Button variant="outline" onClick={() => setDialogType(null)}>Cancel</Button>
             <Button variant="default" onClick={handleDelete}>Yes, Delete Vendor</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Export Modal */}
+      <Dialog open={isExportOpen} onOpenChange={setIsExportOpen}>
+        <DialogContent className="rounded-3xl sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="font-display text-2xl">Export Vendors</DialogTitle>
+            <DialogDescription>
+              Filter vendors by created date before exporting.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 mt-2">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Start Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportStartDate}
+                onChange={(e) => setExportStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">End Date</label>
+              <Input
+                type="date"
+                className="rounded-xl"
+                value={exportEndDate}
+                onChange={(e) => setExportEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3 py-6">
+            <button
+              type="button"
+              onClick={() => {
+                exportToPDF();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+                <FileText className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">PDF Report</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToExcel();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+                <Table2 className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Excel (CSV)</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                exportToWord();
+                setIsExportOpen(false);
+              }}
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+            >
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+                <Briefcase className="h-5 w-5" />
+              </div>
+              <span className="text-xs font-semibold">Word (.doc)</span>
+            </button>
+          </div>
+
+          <DialogFooter className="border-t border-border pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              className="rounded-xl"
+              onClick={() => setIsExportOpen(false)}
+            >
+              Cancel
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
