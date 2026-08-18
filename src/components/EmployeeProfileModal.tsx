@@ -622,9 +622,9 @@ function EmployeeProfileModalInner({
               <div className="flex flex-col md:flex-row items-center gap-5 w-full md:w-auto">
                 {/* Profile photo — clickable upload when editing */}
                 <div className="relative shrink-0 group">
-                  {editAvatar ? (
+                  {editAvatar || employee.avatar ? (
                     <img
-                      src={editAvatar}
+                      src={editAvatar || employee.avatar}
                       alt={employee.name || "Employee"}
                       className="h-20 w-20 rounded-2xl object-cover border border-border ring-4 ring-primary/10"
                     />

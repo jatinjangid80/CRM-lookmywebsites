@@ -383,9 +383,17 @@ function CrmLayout() {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center gap-3 border-l border-border pl-4 outline-none hover:opacity-85 transition-opacity text-left cursor-pointer">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20 shrink-0">
-                    {auth.name.charAt(0).toUpperCase()}
-                  </div>
+                  {auth.avatar ? (
+                    <img
+                      src={auth.avatar}
+                      alt={auth.name}
+                      className="h-9 w-9 rounded-full object-cover border border-border shrink-0"
+                    />
+                  ) : (
+                    <div className="flex h-9 w-9 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20 shrink-0">
+                      {auth.name.charAt(0).toUpperCase()}
+                    </div>
+                  )}
                   <div className="hidden sm:block">
                     <p className="text-sm font-semibold leading-tight text-foreground">
                       {auth.name}
@@ -407,9 +415,17 @@ function CrmLayout() {
               <DropdownMenuContent align="end" className="w-[400px] mt-2 rounded-xl p-3 shadow-lg">
                 <DropdownMenuLabel className="font-normal border-b border-border pb-3 mb-2">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20 shrink-0 text-lg">
-                      {auth.name.charAt(0).toUpperCase()}
-                    </div>
+                    {auth.avatar ? (
+                      <img
+                        src={auth.avatar}
+                        alt={auth.name}
+                        className="h-10 w-10 rounded-full object-cover border border-border shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 text-primary font-bold border border-primary/20 shrink-0 text-lg">
+                        {auth.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
                     <div className="flex flex-col space-y-0.5">
                       <p className="text-[15px] font-bold leading-none text-foreground">{auth.name}</p>
                       <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">
