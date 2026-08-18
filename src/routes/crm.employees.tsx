@@ -132,14 +132,14 @@ type Role =
   | "Insurance Sales"
   | "Web Design Internship"
   | "Other";
-type Status = "Active" | "On Leave" | "Inactive" | "Terminate";
+type Status = "Active" | "On Leave" | "Inactive" | "Terminated";
 type AccessRole = "Admin" | "Manager" | "Employee";
 
 const STATUS_COLOR: Record<Status, string> = {
   Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
   "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
   Inactive: "bg-slate-100 text-slate-800 border-slate-200",
-  Terminate: "bg-rose-100 text-rose-800 border-rose-200",
+  Terminated: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
 const ROLE_COLOR: Record<string, string> = {
@@ -957,7 +957,7 @@ function EmployeesPage() {
                     <option value="Active">Active</option>
                     <option value="On Leave">On Leave</option>
                     <option value="Inactive">Inactive</option>
-                    <option value="Terminate">Terminate</option>
+                    <option value="Terminated">Terminated</option>
                   </select>
                 </div>
                 <div className="space-y-2 col-span-2">
@@ -1064,7 +1064,11 @@ function EmployeesPage() {
             {filtered.map((emp) => (
               <div
                 key={emp.id}
-                className="group relative rounded-2xl border border-border bg-card p-5 shadow-card transition-all hover:shadow-md hover:-translate-y-0.5"
+                className={`group relative rounded-2xl border bg-card p-5 shadow-card transition-all ${
+                  emp.status === "Terminated"
+                    ? "opacity-60 grayscale hover:opacity-100 hover:grayscale-0 border-border/50"
+                    : "border-border hover:shadow-md hover:-translate-y-0.5"
+                }`}
               >
                 {/* Top section */}
                 <div className="flex items-start justify-between gap-3">

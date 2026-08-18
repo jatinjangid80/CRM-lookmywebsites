@@ -135,7 +135,11 @@ function AddTaxiBookingForm({ onCancel }: { onCancel: () => void }) {
     vehicle_no: "",
     rate: 0,
     total_quantity: 0,
-    extra_charges: 0,
+    extra_hrs_charge: 0,
+    nights_charge: 0,
+    driver_charge: 0,
+    parking_charge: 0,
+    other_charges: 0,
     selling_price: 0,
     purchase_price: 0,
     bank_details: "",
@@ -170,7 +174,16 @@ function AddTaxiBookingForm({ onCancel }: { onCancel: () => void }) {
     }
   };
 
+  const baseRate = (Number(form.rate) || 0) * (Number(form.total_quantity) || 0);
+  const totalCost = baseRate + 
+    (Number(form.extra_hrs_charge) || 0) + 
+    (Number(form.nights_charge) || 0) + 
+    (Number(form.driver_charge) || 0) + 
+    (Number(form.parking_charge) || 0) + 
+    (Number(form.other_charges) || 0);
+
   const profit = (Number(form.selling_price) || 0) - (Number(form.purchase_price) || 0);
+  const marginPercentage = form.selling_price ? ((profit / Number(form.selling_price)) * 100).toFixed(1) : "0.0";
 
   return (
     <div className="p-6 max-w-6xl mx-auto animate-in fade-in slide-in-from-right-8 duration-500">
@@ -302,13 +315,56 @@ function AddTaxiBookingForm({ onCancel }: { onCancel: () => void }) {
                     <Input placeholder="DL 1C AA 1111" value={form.vehicle_no} onChange={(e) => handleChange({ vehicle_no: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Rate</Label>
+                    <Label>{form.pricing_type === 'day-wise' ? 'Rate per Day' : 'Rate per KM'} <span className="text-destructive">*</span></Label>
                     <Input type="number" value={form.rate} onChange={(e) => handleChange({ rate: e.target.value })} />
                   </div>
                   <div className="space-y-2">
-                    <Label>Total (Days/KMs)</Label>
+                    <Label>{form.pricing_type === 'day-wise' ? 'No. of Days' : 'No. of KMs'} <span className="text-destructive">*</span></Label>
                     <Input type="number" value={form.total_quantity} onChange={(e) => handleChange({ total_quantity: e.target.value })} />
                   </div>
+                  <div className="space-y-2">
+                    <Label>Extra Hrs Charge</Label>
+                    <Input type="number" value={form.extra_hrs_charge} onChange={(e) => handleChange({ extra_hrs_charge: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nights Charge</Label>
+                    <Input type="number" value={form.nights_charge} onChange={(e) => handleChange({ nights_charge: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Driver Charge</Label>
+                    <Input type="number" value={form.driver_charge} onChange={(e) => handleChange({ driver_charge: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Parking Charge</Label>
+                    <Input type="number" value={form.parking_charge} onChange={(e) => handleChange({ parking_charge: e.target.value })} />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Other Charges</Label>
+                    <Input type="number" value={form.other_charges} onChange={(e) => handleChange({ other_charges: e.target.value })} />
+                  </div>
+                </div>
+
+                {/* Pricing Estimate */}
+                <div className="mt-6 bg-[#faf9f8] p-4 rounded-xl border">
+                  <h4 className="font-semibold mb-3">Pricing Estimate</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Base Rate ({form.rate || 0} × {form.total_quantity || 0} {form.pricing_type === 'day-wise' ? 'days' : 'KMs'}):</span>
+                      <span className="font-medium">₹ {baseRate}</span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2 font-bold">
+                      <span>Total Cost:</span>
+                      <span className="text-[#E12D39] text-lg">₹ {totalCost}</span>
+                    </div>
+                  </div>
+                  <Button 
+                    type="button"
+                    variant="outline" 
+                    className="w-full mt-4" 
+                    onClick={() => handleChange({ selling_price: totalCost, purchase_price: totalCost })}
+                  >
+                    Apply to Total Amount
+                  </Button>
                 </div>
               </Tabs>
             </CardContent>
@@ -332,11 +388,64 @@ function AddTaxiBookingForm({ onCancel }: { onCancel: () => void }) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 p-4 mt-2 rounded-xl border bg-[#faf9f8]">
+              <div className="grid grid-cols-3 gap-4 p-4 mt-2 rounded-xl border bg-[#faf9f8]">
                 <div>
                   <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Profit</p>
                   <p className="font-bold text-[#059669] text-xl">₹{profit}</p>
                 </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Margin %</p>
+                  <p className="font-bold text-foreground text-xl">{marginPercentage}%</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase font-semibold tracking-wider mb-1">Pending Amount</p>
+                  <p className="font-bold text-[#f97316] text-xl">₹{form.selling_price || 0}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Bank Details</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-2">
+                <Textarea 
+                  placeholder="Account Number, IFSC Code, Bank Name, etc." 
+                  value={form.bank_details}
+                  onChange={(e) => handleChange({ bank_details: e.target.value })}
+                  className="min-h-[100px]"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Attachments & Remarks</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-4">
+                <Label className="text-base font-semibold">Attachments</Label>
+                {["Ticket / Voucher", "Passport / ID Copy", "Other Document"].map((docName, idx) => (
+                  <div key={idx} className="space-y-2">
+                    <Label className="text-sm font-medium">{idx + 1}. {docName}</Label>
+                    <div className="flex items-center gap-2">
+                      <Input type="file" className="flex-1" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              <div className="space-y-2 pt-4 border-t">
+                <Label className="text-base font-semibold">Remark</Label>
+                <Textarea 
+                  placeholder="Add any additional notes or remarks here..." 
+                  value={form.remarks}
+                  onChange={(e) => handleChange({ remarks: e.target.value })}
+                  className="min-h-[100px]"
+                />
               </div>
             </CardContent>
           </Card>

@@ -13,6 +13,7 @@ const STATUS_COLOR = {
   Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
   "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
   Inactive: "bg-slate-100 text-slate-800 border-slate-200",
+  Terminated: "bg-rose-100 text-rose-800 border-rose-200",
 };
 
 export function EmployeeProfileCard({ employeeName, compact = false }: { employeeName: string; compact?: boolean }) {
@@ -69,7 +70,11 @@ export function EmployeeProfileCard({ employeeName, compact = false }: { employe
     );
 
   return (
-    <div className={`bg-card rounded-2xl border border-border ${compact ? 'p-3 gap-3' : 'p-4 gap-4'} shadow-sm flex flex-col sm:flex-row items-center sm:justify-start`}>
+    <div className={`bg-card rounded-2xl border ${compact ? 'p-3 gap-3' : 'p-4 gap-4'} shadow-sm flex flex-col sm:flex-row items-center sm:justify-start transition-all ${
+      employee.status === "Terminated" 
+        ? "opacity-60 grayscale hover:opacity-100 hover:grayscale-0 border-border/50" 
+        : "border-border"
+    }`}>
       {imgError || !employee.avatar ? (
         <div className={`${compact ? 'h-10 w-10 text-lg rounded-xl ring-2' : 'h-16 w-16 text-2xl rounded-2xl ring-4'} bg-primary/10 border border-primary/20 ring-primary/10 flex items-center justify-center shrink-0`}>
           <span className="font-bold text-primary">

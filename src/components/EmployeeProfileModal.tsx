@@ -400,7 +400,7 @@ function EmployeeProfileModalInner({
 
     // Sync to Supabase directly so realtime catches it
     try {
-      const supabasePayload = {
+      const supabasePayload: any = {
         name: editCore.name,
         role: editCore.role,
         email: editCore.email,
@@ -412,6 +412,10 @@ function EmployeeProfileModalInner({
           profile_details: editDetails
         })
       };
+      if (editAvatar) {
+        supabasePayload.avatar = editAvatar;
+      }
+      
       supabase.from("employees").update(supabasePayload).eq("id", employee.id).then(({ error }) => {
         if (error) console.error("Error updating employee profile in Supabase:", error);
         else if (onEmployeeUpdated) onEmployeeUpdated();
@@ -547,6 +551,7 @@ function EmployeeProfileModalInner({
     Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
     "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
     Inactive: "bg-slate-100 text-slate-800 border-slate-200",
+    Terminated: "bg-rose-100 text-rose-800 border-rose-200",
   };
 
   // Calculate dynamic stats
@@ -703,6 +708,7 @@ function EmployeeProfileModalInner({
                           <option value="Active">Active</option>
                           <option value="On Leave">On Leave</option>
                           <option value="Inactive">Inactive</option>
+                          <option value="Terminated">Terminated</option>
                         </select>
                       </div>
                     </div>
@@ -1382,7 +1388,7 @@ function EmployeeProfileModalInner({
                           label="Status"
                           value={editCore.status}
                           onChange={(v) => setEditCore({ ...editCore, status: v })}
-                          options={["Active", "On Leave", "Inactive"]}
+                          options={["Active", "On Leave", "Inactive", "Terminated"]}
                         />
                         <EditSelect
                           label="Access Role"
