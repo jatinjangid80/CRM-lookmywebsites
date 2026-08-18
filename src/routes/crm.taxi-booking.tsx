@@ -103,8 +103,8 @@ function TaxiBookingPage() {
       </Card>
 
       <Dialog open={isAdding} onOpenChange={setIsAdding}>
-        <DialogContent className="max-w-7xl max-h-[90vh] overflow-y-auto p-0 border-0 [&>button]:hidden">
-          <div className="bg-background">
+        <DialogContent className="max-w-7xl h-[90vh] p-0 flex flex-col border-0 [&>button]:hidden">
+          <div className="flex-1 overflow-y-auto bg-background rounded-xl">
             <AddTaxiBookingForm onCancel={() => setIsAdding(false)} />
           </div>
         </DialogContent>
