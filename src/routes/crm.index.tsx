@@ -526,7 +526,7 @@ function Dashboard() {
               ))}
             </div>
           )}
-          <p className="text-[10px] text-blue-600 font-medium pt-1 text-right">Click to view all leads →</p>
+          <Link to="/crm/leads" className="text-[10px] text-blue-600 font-medium pt-1 text-right block hover:underline">Click to view all leads →</Link>
         </div>
       ),
     },
@@ -573,7 +573,7 @@ function Dashboard() {
               ))}
             </div>
           )}
-          <p className="text-[10px] text-emerald-600 font-medium pt-1 text-right">Click to view all bookings →</p>
+          <Link to="/crm/bookings" className="text-[10px] text-emerald-600 font-medium pt-1 text-right block hover:underline">Click to view all bookings →</Link>
         </div>
       ),
     },
@@ -609,7 +609,7 @@ function Dashboard() {
           ) : (
             <p className="text-xs text-muted-foreground italic">No active bookings found.</p>
           )}
-          <p className="text-[10px] text-violet-600 font-medium pt-1 text-right">Click to manage bookings →</p>
+          <Link to="/crm/bookings" className="text-[10px] text-violet-600 font-medium pt-1 text-right block hover:underline">Click to manage bookings →</Link>
         </div>
       ),
     },
@@ -651,7 +651,7 @@ function Dashboard() {
           ) : (
             <p className="text-xs text-emerald-600 font-medium">All payments are fully cleared! 🎉</p>
           )}
-          <p className="text-[10px] text-rose-600 font-medium pt-1 text-right">Click to view accounts →</p>
+          <Link to="/crm/accounts" className="text-[10px] text-rose-600 font-medium pt-1 text-right block hover:underline">Click to view accounts →</Link>
         </div>
       ),
     },
@@ -689,7 +689,7 @@ function Dashboard() {
           ) : (
             <p className="text-xs text-muted-foreground italic">No follow-ups scheduled for today.</p>
           )}
-          <p className="text-[10px] text-amber-600 font-medium pt-1 text-right">Click to view lead calls →</p>
+          <Link to="/crm/leads" className="text-[10px] text-amber-600 font-medium pt-1 text-right block hover:underline">Click to view lead calls →</Link>
         </div>
       ),
     },
@@ -727,7 +727,7 @@ function Dashboard() {
           ) : (
             <p className="text-xs text-muted-foreground italic">No departures scheduled in the next 7 days.</p>
           )}
-          <p className="text-[10px] text-cyan-600 font-medium pt-1 text-right">Click to view all departures →</p>
+          <Link to="/crm/bookings" className="text-[10px] text-cyan-600 font-medium pt-1 text-right block hover:underline">Click to view all departures →</Link>
         </div>
       ),
     },
@@ -769,7 +769,7 @@ function Dashboard() {
               ))}
             </div>
           )}
-          <p className="text-[10px] text-pink-600 font-medium pt-1 text-right">Click to view conversion reports →</p>
+          <Link to="/crm/reports" className="text-[10px] text-pink-600 font-medium pt-1 text-right block hover:underline">Click to view conversion reports →</Link>
         </div>
       ),
     },
@@ -805,7 +805,7 @@ function Dashboard() {
           ) : (
             <p className="text-xs text-muted-foreground italic">No revenue recorded yet this month.</p>
           )}
-          <p className="text-[10px] text-orange-600 font-medium pt-1 text-right">Click to view revenue reports →</p>
+          <Link to="/crm/reports" className="text-[10px] text-orange-600 font-medium pt-1 text-right block hover:underline">Click to view revenue reports →</Link>
         </div>
       ),
     },

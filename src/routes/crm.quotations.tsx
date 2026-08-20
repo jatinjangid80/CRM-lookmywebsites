@@ -217,7 +217,7 @@ function QuotationsPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [dateFrom, setDateFrom] = useState("");
   const [dateTo, setDateTo] = useState("");
-  
+
   // Export State
   const [isExportOpen, setIsExportOpen] = useState(false);
   const [exportStartDate, setExportStartDate] = useState("");
@@ -639,36 +639,13 @@ function QuotationsPage() {
         <div>
           <h1 className="font-display text-3xl font-bold flex items-center gap-2">
             <FileText className="h-8 w-8 text-primary" />
-            {activeView === "dashboard" ? "Quotation Dashboard" : 
-              (form.packageName === "Hotel Quote" ? "Hotel Quotation Builder" : 
-               form.packageName === "Package Quote" ? "Package Quotation Builder" : 
-               "Quotation Builder")}
+            Quotation Dashboard
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            {activeView === "dashboard"
-              ? "Manage, view, and share all generated quotations."
-              : "Create, style, and share customized travel itineraries and payment estimates."}
+            Manage, view, and share all generated quotations.
           </p>
         </div>
         <div className="flex gap-2">
-          {activeView === "builder" ? (
-            <>
-              <Button
-                variant="outline"
-                className="rounded-xl"
-                onClick={() => {
-                  setForm({ ...DEFAULT_FORM });
-                  setEditingQuoteId(null);
-                  setActiveView("dashboard");
-                }}
-              >
-                Cancel
-              </Button>
-              <Button onClick={handleSaveQuotation} className="btn-hero rounded-xl shadow-lg">
-                Generate Quote
-              </Button>
-            </>
-          ) : (
             <div className="flex items-center gap-2">
               <Button
                 onClick={() => {
@@ -701,12 +678,10 @@ function QuotationsPage() {
                 <Plus className="h-4 w-4" /> Create New Quote
               </Button>
             </div>
-          )}
         </div>
       </div>
 
-      {activeView === "dashboard" && (
-        <div className="space-y-6 print:hidden">
+      <div className="space-y-6 print:hidden">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
               <div className="flex items-center gap-3">
@@ -905,10 +880,29 @@ function QuotationsPage() {
             ))}
           </Tabs>
         </div>
-      )}
 
-      {activeView === "builder" && (
-        <div className="grid gap-6 lg:grid-cols-3 print:hidden">
+      <Dialog open={activeView === "builder"} onOpenChange={(open) => {
+        if (!open) {
+          setForm({ ...DEFAULT_FORM });
+          setEditingQuoteId(null);
+          setActiveView("dashboard");
+        }
+      }}>
+        <DialogContent className="sm:max-w-[1200px] max-h-[90vh] overflow-hidden flex flex-col rounded-3xl p-0 bg-background">
+          <DialogHeader className="p-6 border-b shrink-0 bg-background/95 backdrop-blur z-10">
+            <div>
+              <DialogTitle className="font-display text-2xl font-bold">
+                {form.packageName === "Hotel Quote" ? "Hotel Quotation Builder" : 
+                 form.packageName === "Package Quote" ? "Package Quotation Builder" : 
+                 "Quotation Builder"}
+              </DialogTitle>
+              <DialogDescription className="text-muted-foreground mt-1 text-sm text-left">
+                Create, style, and share customized travel itineraries and payment estimates.
+              </DialogDescription>
+            </div>
+          </DialogHeader>
+          <div className="flex-1 overflow-y-auto p-6 pt-6 relative">
+            <div className="grid gap-6 lg:grid-cols-3 print:hidden">
           {/* Left Side: Builder Form */}
           <div className="lg:col-span-2 space-y-6">
             {/* Customer & Package Auto-fill hooks */}
@@ -1550,9 +1544,30 @@ function QuotationsPage() {
                 </div>
               )}
             </div>
+            </div>
           </div>
         </div>
-      )}
+        <DialogFooter className="p-4 bg-card border-t border-border shrink-0 flex justify-end gap-3 z-10">
+            <Button
+              variant="outline"
+              onClick={() => {
+                setForm({ ...DEFAULT_FORM });
+                setEditingQuoteId(null);
+                setActiveView("dashboard");
+              }}
+            >
+              Cancel
+            </Button>
+            <Button 
+              onClick={handleSaveQuotation} 
+              className="shadow-md border-0 text-white"
+              style={{ background: "var(--gradient-brand, var(--color-brand, #0f172a))" }}
+            >
+              Generate Quote
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Branded A4 PDF & Share Preview Panel */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
@@ -1717,7 +1732,7 @@ function QuotationsPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div className="grid grid-cols-2 gap-8">
                     {form.terms && (
                       <div>
@@ -1739,7 +1754,7 @@ function QuotationsPage() {
                   <div className="w-1/2 flex flex-col justify-end">
                     <p className="text-[10px] text-slate-500 max-w-[200px] mb-4">*Your qualifying points will be automatically added to your premium account.</p>
                     <div className="bg-[#f0855d] text-white px-4 py-3 w-fit font-bold tracking-widest text-[10px] uppercase shadow-sm">
-                      We hope you had<br/>a great stay!
+                      We hope you had<br />a great stay!
                     </div>
                   </div>
                   <div className="w-1/2">
@@ -1765,196 +1780,196 @@ function QuotationsPage() {
                 </div>
               </div>
             ) : (
-            <div className="border border-border/80 rounded-2xl bg-card text-card-foreground p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
-              {/* Printable branded A4 block */}
-              {/* Branded Header */}
-              <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
-                <div className="flex items-center gap-3">
-                  <img
-                    src={logoImg}
-                    alt="Look My Holidays Logo"
-                    className="h-16 w-auto mix-blend-multiply"
-                  />
-                </div>
-                <div className="text-right">
-                  <p className="font-mono text-xs font-semibold uppercase px-2.5 py-1 rounded-md bg-secondary text-primary border border-primary/20 inline-block mb-1">
-                    {savedQuoteId || "QT-1002"}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Date: {new Date().toLocaleDateString("en-IN")}
-                  </p>
-                  <p className="text-[10px] text-muted-foreground">
-                    Agent: {auth?.name || "Nikita Bairwa"}
-                  </p>
-                </div>
-              </div>
-
-              {/* Client info */}
-              <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
-                <div className="bg-secondary/20 p-4 rounded-xl border border-border/40">
-                  <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
-                    Prepared For
-                  </p>
-                  <p className="font-semibold text-sm">{form.customerName || "Valued Customer"}</p>
-                  <p className="text-muted-foreground mt-0.5">{form.customerPhone}</p>
-                  <p className="text-muted-foreground">{form.customerEmail}</p>
-                </div>
-                <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-right">
-                  <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
-                    Package Summary
-                  </p>
-                  <p className="font-semibold text-sm">{form.packageName}</p>
-                  <p className="text-muted-foreground mt-0.5">
-                    Destination: {form.destination || "Multiple"}
-                  </p>
-                  <p className="text-muted-foreground">
-                    Duration: {form.durationNights} Nights / {form.durationDays} Days
-                  </p>
-                </div>
-              </div>
-
-              {/* Flight & Hotel configuration details */}
-              <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
-                {form.hotels?.map((hotel) => (
-                  <div key={hotel.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
-                    <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
-                        Stay Option
-                      </p>
-                      <p className="font-semibold mt-0.5">
-                        {hotel.hotelName || "Hotel"} {hotel.rating && `(${hotel.rating})`}
-                      </p>
-                      <p className="text-muted-foreground text-[11px]">
-                        {hotel.nights} Nights at {hotel.location} with {hotel.mealPlan}
-                      </p>
-                    </div>
+              <div className="border border-border/80 rounded-2xl bg-card text-card-foreground p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
+                {/* Printable branded A4 block */}
+                {/* Branded Header */}
+                <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
+                  <div className="flex items-center gap-3 bg-slate-950 px-4 py-2.5 rounded-xl shadow-inner">
+                    <img
+                      src={logoImg}
+                      alt="Look My Holidays Logo"
+                      className="h-12 w-auto"
+                    />
                   </div>
-                ))}
-                {form.flights?.map((flight) => (
-                  <div key={flight.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
-                    <Plane className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                    <div>
-                      <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
-                        Flight details
-                      </p>
-                      <p className="font-semibold mt-0.5">
-                        {flight.airline || "Airline"} {flight.flightNo && `- ${flight.flightNo}`}
-                      </p>
-                      <p className="text-muted-foreground text-[11px]">{flight.sector} | {flight.dateTime}</p>
-                    </div>
+                  <div className="text-right">
+                    <p className="font-mono text-xs font-semibold uppercase px-2.5 py-1 rounded-md bg-secondary text-primary border border-primary/20 inline-block mb-1">
+                      {savedQuoteId || "QT-1002"}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Date: {new Date().toLocaleDateString("en-IN")}
+                    </p>
+                    <p className="text-[10px] text-muted-foreground">
+                      Agent: {auth?.name || "Nikita Bairwa"}
+                    </p>
                   </div>
-                ))}
-              </div>
+                </div>
 
-              {/* Day Wise Itinerary */}
-              <div className="pt-8 text-xs">
-                <h3 className="font-display font-extrabold text-sm border-b border-border pb-2 text-primary uppercase tracking-wider">
-                  Day-Wise Program
-                </h3>
-                <div className="mt-4 space-y-4">
-                  {form.itinerary.map((day, idx) => (
-                    <div key={idx} className="flex gap-4 items-start">
-                      <div className="h-8 w-14 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 font-bold">
-                        Day {day.day}
-                      </div>
+                {/* Client info */}
+                <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
+                  <div className="bg-secondary/20 p-4 rounded-xl border border-border/40">
+                    <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
+                      Prepared For
+                    </p>
+                    <p className="font-semibold text-sm">{form.customerName || "Valued Customer"}</p>
+                    <p className="text-muted-foreground mt-0.5">{form.customerPhone}</p>
+                    <p className="text-muted-foreground">{form.customerEmail}</p>
+                  </div>
+                  <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-right">
+                    <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
+                      Package Summary
+                    </p>
+                    <p className="font-semibold text-sm">{form.packageName}</p>
+                    <p className="text-muted-foreground mt-0.5">
+                      Destination: {form.destination || "Multiple"}
+                    </p>
+                    <p className="text-muted-foreground">
+                      Duration: {form.durationNights} Nights / {form.durationDays} Days
+                    </p>
+                  </div>
+                </div>
+
+                {/* Flight & Hotel configuration details */}
+                <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
+                  {form.hotels?.map((hotel) => (
+                    <div key={hotel.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
+                      <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                       <div>
-                        <p className="font-semibold text-sm">{day.title}</p>
-                        <p className="text-muted-foreground mt-1 leading-relaxed text-xs">
-                          {day.description}
+                        <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
+                          Stay Option
+                        </p>
+                        <p className="font-semibold mt-0.5">
+                          {hotel.hotelName || "Hotel"} {hotel.rating && `(${hotel.rating})`}
+                        </p>
+                        <p className="text-muted-foreground text-[11px]">
+                          {hotel.nights} Nights at {hotel.location} with {hotel.mealPlan}
                         </p>
                       </div>
                     </div>
                   ))}
-                </div>
-              </div>
-
-              {/* Inclusions & Exclusions details grid */}
-              <div className="grid grid-cols-2 gap-6 pt-8 text-xs border-t border-border mt-8">
-                <div>
-                  <h4 className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] mb-2">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Inclusions
-                  </h4>
-                  <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
-                    {form.inclusions.split("\n").map((inc, i) => (
-                      <li key={i}>{inc}</li>
-                    ))}
-                  </ul>
-                </div>
-                <div>
-                  <h4 className="flex items-center gap-1.5 font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider text-[10px] mb-2">
-                    <XCircle className="h-3.5 w-3.5" /> Exclusions
-                  </h4>
-                  <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
-                    {form.exclusions.split("\n").map((exc, i) => (
-                      <li key={i}>{exc}</li>
-                    ))}
-                  </ul>
-                </div>
-              </div>
-
-              {/* Ledger breakdown & UPI QR */}
-              <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border mt-8 items-center bg-secondary/10 p-5 rounded-2xl">
-                <div className="col-span-2 text-xs space-y-1.5">
-                  <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground">
-                    Estimate Summary
-                  </p>
-                  <div className="flex justify-between pr-8 text-muted-foreground">
-                    <span>Base Price:</span>
-                    <span>{formatINR(form.basePrice)}</span>
-                  </div>
-                  <div className="flex justify-between pr-8 text-muted-foreground">
-                    <span>GST ({form.gstRate}%):</span>
-                    <span>{formatINR(gstAmount)}</span>
-                  </div>
-                  {form.tcsRate > 0 && (
-                    <div className="flex justify-between pr-8 text-muted-foreground">
-                      <span>TCS ({form.tcsRate}%):</span>
-                      <span>{formatINR(tcsAmount)}</span>
+                  {form.flights?.map((flight) => (
+                    <div key={flight.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
+                      <Plane className="h-5 w-5 text-primary shrink-0 mt-0.5" />
+                      <div>
+                        <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
+                          Flight details
+                        </p>
+                        <p className="font-semibold mt-0.5">
+                          {flight.airline || "Airline"} {flight.flightNo && `- ${flight.flightNo}`}
+                        </p>
+                        <p className="text-muted-foreground text-[11px]">{flight.sector} | {flight.dateTime}</p>
+                      </div>
                     </div>
-                  )}
-                  {form.discount > 0 && (
-                    <div className="flex justify-between pr-8 text-emerald-600">
-                      <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
-                      <span>- {formatINR(discountAmount)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between pr-8 pt-2 border-t border-border/80 font-display font-black text-base text-primary">
-                    <span>Total Amount:</span>
-                    <span>{formatINR(totalAmount)}</span>
+                  ))}
+                </div>
+
+                {/* Day Wise Itinerary */}
+                <div className="pt-8 text-xs">
+                  <h3 className="font-display font-extrabold text-sm border-b border-border pb-2 text-primary uppercase tracking-wider">
+                    Day-Wise Program
+                  </h3>
+                  <div className="mt-4 space-y-4">
+                    {form.itinerary.map((day, idx) => (
+                      <div key={idx} className="flex gap-4 items-start">
+                        <div className="h-8 w-14 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 font-bold">
+                          Day {day.day}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{day.title}</p>
+                          <p className="text-muted-foreground mt-1 leading-relaxed text-xs">
+                            {day.description}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* UPI Payment Code */}
-                <div className="flex flex-col items-center justify-center p-3 border border-border bg-card rounded-xl text-center overflow-hidden">
-                  <img src="/upi-qr.png" alt="UPI QR Code" className="w-full max-w-[160px] object-contain rounded-md" />
-                  <p className="text-[9px] text-muted-foreground mt-2 font-medium">
-                    Scan to pay with any UPI App
-                  </p>
+                {/* Inclusions & Exclusions details grid */}
+                <div className="grid grid-cols-2 gap-6 pt-8 text-xs border-t border-border mt-8">
+                  <div>
+                    <h4 className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] mb-2">
+                      <CheckCircle2 className="h-3.5 w-3.5" /> Inclusions
+                    </h4>
+                    <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
+                      {form.inclusions.split("\n").map((inc, i) => (
+                        <li key={i}>{inc}</li>
+                      ))}
+                    </ul>
+                  </div>
+                  <div>
+                    <h4 className="flex items-center gap-1.5 font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider text-[10px] mb-2">
+                      <XCircle className="h-3.5 w-3.5" /> Exclusions
+                    </h4>
+                    <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
+                      {form.exclusions.split("\n").map((exc, i) => (
+                        <li key={i}>{exc}</li>
+                      ))}
+                    </ul>
+                  </div>
                 </div>
-              </div>
 
-              {/* Terms and conditions */}
-              <div className="pt-6 text-[10px] text-muted-foreground border-t border-border mt-6">
-                <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
-                  Terms & Conditions
-                </p>
-                <p className="whitespace-pre-line leading-relaxed">{form.terms}</p>
-                
-                {form.bankDetails && (
-                  <div className="mt-4 pt-4 border-t border-border/40">
-                    <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
-                      Bank Details
+                {/* Ledger breakdown & UPI QR */}
+                <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border mt-8 items-center bg-secondary/10 p-5 rounded-2xl">
+                  <div className="col-span-2 text-xs space-y-1.5">
+                    <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground">
+                      Estimate Summary
                     </p>
-                    <p className="whitespace-pre-line leading-relaxed">{form.bankDetails}</p>
+                    <div className="flex justify-between pr-8 text-muted-foreground">
+                      <span>Base Price:</span>
+                      <span>{formatINR(form.basePrice)}</span>
+                    </div>
+                    <div className="flex justify-between pr-8 text-muted-foreground">
+                      <span>GST ({form.gstRate}%):</span>
+                      <span>{formatINR(gstAmount)}</span>
+                    </div>
+                    {form.tcsRate > 0 && (
+                      <div className="flex justify-between pr-8 text-muted-foreground">
+                        <span>TCS ({form.tcsRate}%):</span>
+                        <span>{formatINR(tcsAmount)}</span>
+                      </div>
+                    )}
+                    {form.discount > 0 && (
+                      <div className="flex justify-between pr-8 text-emerald-600">
+                        <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
+                        <span>- {formatINR(discountAmount)}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pr-8 pt-2 border-t border-border/80 font-display font-black text-base text-primary">
+                      <span>Total Amount:</span>
+                      <span>{formatINR(totalAmount)}</span>
+                    </div>
                   </div>
-                )}
-                
-                <p className="mt-4 text-center font-display font-semibold text-slate-400">
-                  Thank you for letting us plan your holidays! ✈️
-                </p>
+
+                  {/* UPI Payment Code */}
+                  <div className="flex flex-col items-center justify-center p-3 border border-border bg-card rounded-xl text-center overflow-hidden">
+                    <img src="/upi-qr.png" alt="UPI QR Code" className="w-full max-w-[160px] object-contain rounded-md" />
+                    <p className="text-[9px] text-muted-foreground mt-2 font-medium">
+                      Scan to pay with any UPI App
+                    </p>
+                  </div>
+                </div>
+
+                {/* Terms and conditions */}
+                <div className="pt-6 text-[10px] text-muted-foreground border-t border-border mt-6">
+                  <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
+                    Terms & Conditions
+                  </p>
+                  <p className="whitespace-pre-line leading-relaxed">{form.terms}</p>
+
+                  {form.bankDetails && (
+                    <div className="mt-4 pt-4 border-t border-border/40">
+                      <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
+                        Bank Details
+                      </p>
+                      <p className="whitespace-pre-line leading-relaxed">{form.bankDetails}</p>
+                    </div>
+                  )}
+
+                  <p className="mt-4 text-center font-display font-semibold text-slate-400">
+                    Thank you for letting us plan your holidays! ✈️
+                  </p>
+                </div>
               </div>
-            </div>
             )}
 
             {/* Back Page */}
