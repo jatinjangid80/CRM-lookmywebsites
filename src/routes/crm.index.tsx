@@ -22,6 +22,10 @@ import {
   Gift,
   MessageCircle,
   Info,
+  Car,
+  MapPin,
+  ArrowRight,
+  Globe,
 } from "lucide-react";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import {
@@ -152,6 +156,8 @@ function Dashboard() {
   const [transactions] = useSupabaseTable<any[]>("transactions", []);
   const [followUpsList] = useSupabaseTable<any[]>("payment_followups", []);
   const [insuranceList] = useSupabaseTable<any[]>("insurance_policies", []);
+  const [taxiBookingsList] = useSupabaseTable<any[]>("crm_taxi_bookings", []);
+  const [visaBookingsList] = useSupabaseTable<any[]>("crm_visa_bookings", []);
 
   const [topClientType, setTopClientType] = useState<"Travel" | "Insurance">("Travel");
 
@@ -1474,6 +1480,110 @@ function Dashboard() {
             >
               <Link to="/crm/customers" className="flex items-center justify-center gap-1">
                 View all customers <ChevronRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Recent Taxi Bookings */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Car className="h-5 w-5 text-primary" /> Recent Taxi Bookings
+                </h3>
+                <p className="text-xs text-muted-foreground">Latest taxi reservations</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {taxiBookingsList.slice(0, 5).map((booking) => (
+                <div key={booking.id} className="rounded-[1.25rem] border border-[#E5E5E5] bg-[#FAF5F0]/50 p-4 shadow-sm relative">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="font-bold text-gray-900 truncate">{booking.customer_name}</span>
+                    <span className="text-yellow-300 font-black px-1 shrink-0">—</span>
+                    <span className="text-sm font-medium text-gray-700 truncate">{booking.vehicle_type || ""}</span>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm text-gray-600">
+                    <MapPin className="h-4 w-4 shrink-0" />
+                    {booking.from_location && booking.to_location ? (
+                      <>
+                        <span className="truncate">{booking.from_location}</span>
+                        <ArrowRight className="h-3 w-3 shrink-0" />
+                        <span className="truncate">{booking.to_location}</span>
+                      </>
+                    ) : (
+                      <span className="truncate">{booking.route || booking.from_location || "No route specified"}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              
+              {taxiBookingsList.length === 0 && (
+                <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
+                  <Car className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">No taxi bookings yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {taxiBookingsList.length > 0 && (
+            <Button variant="ghost" size="sm" className="w-full mt-4 text-xs font-semibold rounded-xl text-primary" asChild>
+              <Link to="/crm/taxi-booking" className="flex items-center justify-center gap-1">
+                View all taxi bookings <ChevronRight className="h-3 w-3" />
+              </Link>
+            </Button>
+          )}
+        </div>
+
+        {/* Recent Visa Bookings */}
+        <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
+          <div>
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="font-display text-lg font-bold flex items-center gap-2">
+                  <Globe className="h-5 w-5 text-primary" /> Recent Visa Bookings
+                </h3>
+                <p className="text-xs text-muted-foreground">Latest visa applications</p>
+              </div>
+            </div>
+            
+            <div className="space-y-3">
+              {visaBookingsList.slice(0, 5).map((booking) => (
+                <div key={booking.id} className="flex items-start justify-between p-3 rounded-xl border border-border bg-secondary/20 hover:bg-secondary/40 transition-colors group">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-semibold text-foreground truncate">{booking.customer_name}</p>
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                        booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
+                        booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
+                        booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
+                        "bg-amber-100 text-amber-700"
+                      }`}>
+                        {booking.application_status}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 mt-1 text-xs text-muted-foreground">
+                      <Globe className="h-3 w-3" />
+                      <span className="truncate">{booking.country} - {booking.visa_type}</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              
+              {visaBookingsList.length === 0 && (
+                <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
+                  <Globe className="h-8 w-8 text-muted-foreground mx-auto mb-2 opacity-50" />
+                  <p className="text-sm font-semibold text-foreground">No visa bookings yet</p>
+                </div>
+              )}
+            </div>
+          </div>
+          {visaBookingsList.length > 0 && (
+            <Button variant="ghost" size="sm" className="w-full mt-4 text-xs font-semibold rounded-xl text-primary" asChild>
+              <Link to="/crm/visa" className="flex items-center justify-center gap-1">
+                View all visa bookings <ChevronRight className="h-3 w-3" />
               </Link>
             </Button>
           )}

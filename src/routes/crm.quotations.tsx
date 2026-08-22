@@ -683,41 +683,42 @@ function QuotationsPage() {
 
       <div className="space-y-6 print:hidden">
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-primary/10 p-3">
-                  <FileText className="h-6 w-6 text-primary" />
+            {[
+              {
+                label: "Total Quotes",
+                value: quotations.length,
+                icon: <FileText className="h-4 w-4" />,
+                color: "bg-blue-100 text-blue-600",
+                sub: "All generated quotes",
+              },
+              {
+                label: "Hotel Quotes",
+                value: quotations.filter(q => q.package_name?.toLowerCase().includes("hotel")).length,
+                icon: <Building2 className="h-4 w-4" />,
+                color: "bg-emerald-100 text-emerald-600",
+                sub: "Hotel only quotes",
+              },
+              {
+                label: "Package Quotes",
+                value: quotations.filter(q => q.package_name?.toLowerCase().includes("package")).length,
+                icon: <Plane className="h-4 w-4" />,
+                color: "bg-violet-100 text-violet-600",
+                sub: "Holiday packages",
+              },
+            ].map((s) => (
+              <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    {s.label}
+                  </p>
+                  <span className={`grid h-9 w-9 place-items-center rounded-xl ${s.color}`}>
+                    {s.icon}
+                  </span>
                 </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Total Quotes</p>
-                  <p className="text-2xl font-bold">{quotations.length}</p>
-                </div>
+                <p className="mt-3 font-display text-2xl font-bold truncate">{s.value}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
               </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-blue-500/10 p-3">
-                  <Building2 className="h-6 w-6 text-blue-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Hotel Quotes</p>
-                  <p className="text-2xl font-bold">{quotations.filter(q => q.package_name?.toLowerCase().includes("hotel")).length}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div className="flex items-center gap-3">
-                <div className="rounded-xl bg-emerald-500/10 p-3">
-                  <Plane className="h-6 w-6 text-emerald-500" />
-                </div>
-                <div>
-                  <p className="text-sm font-medium text-muted-foreground">Package Quotes</p>
-                  <p className="text-2xl font-bold">{quotations.filter(q => q.package_name?.toLowerCase().includes("package")).length}</p>
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
           <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">

@@ -764,11 +764,11 @@ function VisaPage() {
     const initialDocs = match
       ? (match.docs || []).map((d) => ({ name: d.name, received: false }))
       : [
-          { name: "Passport copy (front & back)", received: false },
-          { name: "Passport-size photo", received: false },
-          { name: "Flight tickets", received: false },
-          { name: "Hotel bookings", received: false },
-        ];
+        { name: "Passport copy (front & back)", received: false },
+        { name: "Passport-size photo", received: false },
+        { name: "Flight tickets", received: false },
+        { name: "Hotel bookings", received: false },
+      ];
 
     const nextNumber = (apps?.length || 0) + 1;
     const newIdStr = String(nextNumber).padStart(3, '0');
@@ -1052,16 +1052,16 @@ function VisaPage() {
           const newDocs = (app.docs || []).map((doc) =>
             doc.name === docName ? { name: doc.name, received: !doc.received } : doc,
           );
-          
+
           const allDocsReceived = newDocs.every((d) => d.received);
           let newStatus = app.status;
-          
+
           if (allDocsReceived && app.status === "Pending Documents") {
             newStatus = "Documents Complete";
           } else if (!allDocsReceived && app.status === "Documents Complete") {
             newStatus = "Pending Documents";
           }
-          
+
           return {
             ...app,
             docs: newDocs,
@@ -1658,56 +1658,77 @@ function VisaPage() {
 
           {activeSubTab === "applications" ? (
             <>
-              {/* Stat strip */}
-              <div className="grid gap-3 grid-cols-2 sm:grid-cols-6">
+              {/* Stat strip and Pipeline dashboard */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {[
                   {
-                    label: "Pending Docs",
-                    count: counts["Pending Documents"],
-                    color: "text-amber-600",
-                    bg: "bg-amber-50",
-                  },
-                  {
-                    label: "Docs Complete",
-                    count: counts["Documents Complete"],
-                    color: "text-cyan-600",
-                    bg: "bg-cyan-50",
-                  },
-                  {
-                    label: "Submitted",
-                    count: counts["Submitted"],
-                    color: "text-blue-600",
-                    bg: "bg-blue-50",
-                  },
-                  {
-                    label: "Under Review",
-                    count: counts["Under Review"],
-                    color: "text-violet-600",
-                    bg: "bg-violet-50",
+                    label: "Total Applications",
+                    value: apps.length,
+                    icon: <FileText className="h-4 w-4" />,
+                    color: "bg-blue-100 text-blue-600",
+                    sub: "All applications",
                   },
                   {
                     label: "Approved",
-                    count: counts["Approved"],
-                    color: "text-emerald-600",
-                    bg: "bg-emerald-50",
+                    value: counts["Approved"] || 0,
+                    icon: <CheckCircle2 className="h-4 w-4" />,
+                    color: "bg-emerald-100 text-emerald-600",
+                    sub: "Successfully processed",
                   },
                   {
-                    label: "Rejected",
-                    count: counts["Rejected"],
-                    color: "text-red-600",
-                    bg: "bg-red-50",
+                    label: "Pending Action",
+                    value: (counts["Pending Documents"] || 0) + (counts["Under Review"] || 0),
+                    icon: <Clock className="h-4 w-4" />,
+                    color: "bg-amber-100 text-amber-600",
+                    sub: "Awaiting documents/review",
                   },
                 ].map((s) => (
-                  <div
-                    key={s.label}
-                    className={`rounded-2xl border border-border bg-card p-4 shadow-card hover:shadow-md transition-shadow`}
-                  >
-                    <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                      {s.label}
-                    </p>
-                    <p className={`mt-1 font-display text-3xl font-bold ${s.color}`}>{s.count}</p>
+                  <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {s.label}
+                      </p>
+                      <span className={`grid h-9 w-9 place-items-center rounded-xl ${s.color}`}>
+                        {s.icon}
+                      </span>
+                    </div>
+                    <p className="mt-3 font-display text-2xl font-bold truncate">{s.value}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
                   </div>
                 ))}
+              </div>
+
+              {/* ── Pipeline funnel strip ── */}
+              <div className="flex w-full overflow-x-auto rounded-2xl border border-border bg-card shadow-card custom-scrollbar">
+                {ALL_STATUSES.map((s) => {
+                  const count = counts[s] || 0;
+                  const pct = apps.length ? (count / apps.length) * 100 : 0;
+                  const colorClass =
+                    s === "Approved" ? "bg-emerald-500" :
+                      s === "Rejected" ? "bg-red-500" :
+                        s === "Submitted" ? "bg-blue-500" :
+                          s === "Under Review" ? "bg-violet-500" :
+                            s === "Documents Complete" ? "bg-cyan-500" : "bg-amber-500";
+
+                  return (
+                    <button
+                      key={s}
+                      onClick={() => setFilter(filter === s ? "All" : s)}
+                      className={`flex flex-1 min-w-[120px] flex-col items-center gap-1 border-r border-border px-4 py-4 text-center transition-colors last:border-r-0 hover:bg-secondary/50 ${filter === s ? "bg-secondary" : ""}`}
+                    >
+                      <span className={`text-xl font-display font-bold ${filter === s ? "text-primary" : ""}`}>
+                        {count}
+                      </span>
+                      <div className="h-1 w-full overflow-hidden rounded-full bg-border">
+                        <div
+                          className={`h-full rounded-full ${colorClass}`}
+                          style={{ width: `${pct}%` }}
+                        />
+                      </div>
+                      <span className="text-xs font-medium text-muted-foreground">{s}</span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Filter bar */}
@@ -1937,6 +1958,52 @@ function VisaPage() {
             </>
           ) : (
             <div className="space-y-4">
+              {/* Dashboard cards for Bookings */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  {
+                    label: "Total Bookings",
+                    value: filteredVisaBookings.length,
+                    icon: <Briefcase className="h-4 w-4" />,
+                    color: "bg-blue-100 text-blue-600",
+                    sub: "Total visa bookings",
+                  },
+                  {
+                    label: "Total Sales",
+                    value: `₹${filteredVisaBookings.reduce((sum: number, b: any) => {
+                      const val = Number(b.selling_price);
+                      return sum + (isNaN(val) ? 0 : val);
+                    }, 0).toLocaleString()}`,
+                    icon: <Globe className="h-4 w-4" />,
+                    color: "bg-emerald-100 text-emerald-600",
+                    sub: "Overall revenue",
+                  },
+                  ...(isAdmin ? [{
+                    label: "Total Profit",
+                    value: `₹${filteredVisaBookings.reduce((sum: number, b: any) => {
+                      const val = Number(b.profit);
+                      return sum + (isNaN(val) ? 0 : val);
+                    }, 0).toLocaleString()}`,
+                    icon: <CheckCircle2 className="h-4 w-4" />,
+                    color: "bg-violet-100 text-violet-600",
+                    sub: "Overall profit margin",
+                  }] : []),
+                ].map((s) => (
+                  <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                        {s.label}
+                      </p>
+                      <span className={`grid h-9 w-9 place-items-center rounded-xl ${s.color}`}>
+                        {s.icon}
+                      </span>
+                    </div>
+                    <p className="mt-3 font-display text-2xl font-bold truncate">{s.value}</p>
+                    <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
+                  </div>
+                ))}
+              </div>
+
               {filteredVisaBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-12 mt-8 text-center border-2 border-dashed rounded-xl">
                   <h2 className="text-xl font-bold mb-2">No Visa Bookings</h2>
@@ -1954,7 +2021,6 @@ function VisaPage() {
                           <th className="px-4 py-3 font-semibold">Supplier</th>
                           <th className="px-4 py-3 font-semibold">Status</th>
                           <th className="px-4 py-3 font-semibold text-right">Selling Price</th>
-                          <th className="px-4 py-3 font-semibold text-right">Profit</th>
                           <th className="px-4 py-3 text-right">Actions</th>
                         </tr>
                       </thead>
@@ -1969,17 +2035,15 @@ function VisaPage() {
                             <td className="px-4 py-3">{booking.visa_type}</td>
                             <td className="px-4 py-3">{booking.supplier}</td>
                             <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${
-                                booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
-                                booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
-                                booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
-                                "bg-amber-100 text-amber-700"
-                              }`}>
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
+                                  booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
+                                    booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
+                                      "bg-amber-100 text-amber-700"
+                                }`}>
                                 {booking.application_status}
                               </span>
                             </td>
                             <td className="px-4 py-3 text-right">₹{Number(booking.selling_price).toLocaleString()}</td>
-                            <td className="px-4 py-3 text-right text-green-600 font-medium">₹{Number(booking.profit).toLocaleString()}</td>
                             <td className="px-4 py-3 text-right">
                               <div className="flex items-center justify-end">
                                 <DropdownMenu>
@@ -2118,9 +2182,8 @@ function VisaPage() {
                             }}
                           >
                             <Check
-                              className={`mr-2 h-4 w-4 ${
-                                appCustomer === c.name ? "opacity-100" : "opacity-0"
-                              }`}
+                              className={`mr-2 h-4 w-4 ${appCustomer === c.name ? "opacity-100" : "opacity-0"
+                                }`}
                             />
                             <div className="flex flex-col">
                               <span>{c.name}</span>
@@ -2273,9 +2336,8 @@ function VisaPage() {
                               }}
                             >
                               <Check
-                                className={`mr-2 h-4 w-4 ${
-                                  appVisaType === t ? "opacity-100" : "opacity-0"
-                                }`}
+                                className={`mr-2 h-4 w-4 ${appVisaType === t ? "opacity-100" : "opacity-0"
+                                  }`}
                               />
                               {t}
                             </CommandItem>

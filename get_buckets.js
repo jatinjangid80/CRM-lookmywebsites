@@ -3,21 +3,12 @@ const supabaseUrl = "https://ukulozcniyiaheuvnptl.supabase.co";
 const supabaseAnonKey = "sb_publishable_1NH9AknLm-Fz9MIpcpPunw_nLsT9crV";
 const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
-async function checkSchema() {
-  const { data, error } = await supabase
-    .from('crm_taxi_bookings')
-    .select('*')
-    .limit(1);
-    
+async function checkBuckets() {
+  const { data, error } = await supabase.storage.listBuckets();
   if (error) {
     console.error(error);
   } else {
-    if (data && data.length > 0) {
-      console.log(Object.keys(data[0]));
-    } else {
-      console.log("No rows found, can't infer schema.");
-    }
+    console.log("Buckets:", data.map(b => b.name));
   }
 }
-
-checkSchema();
+checkBuckets();
