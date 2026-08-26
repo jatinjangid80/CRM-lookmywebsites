@@ -42,17 +42,6 @@ export function clearAuth(): void {
 }
 
 export async function login(username: string, password: string): Promise<AuthUser | null> {
-  // Emergency override for Developer / IT Admin
-  if (username.trim().toLowerCase() === "jatin" || username.trim().toLowerCase() === "Manvendra Singhal") {
-    const user: AuthUser = {
-      role: "admin",
-      name: username.trim().toLowerCase() === "jatin" ? "Jatin Jangid" : "Manvendra Singhal",
-      avatar: "",
-    };
-    setAuth(user);
-    return user;
-  }
-
   // Check dynamic employees from Supabase FIRST
   try {
     const { data } = await supabase.from("employees").select("*");
@@ -77,23 +66,30 @@ export async function login(username: string, password: string): Promise<AuthUse
           emp.profile_details.password === password,
       );
       if (dynamicMatch) {
-        let accessRole = dynamicMatch.accessRole
-          ? dynamicMatch.accessRole.toLowerCase()
-          : "employee";
-          
+        // Admin role must come only from an explicit role/accessRole field in employees table, never inferred from name text
+        const explicitAccessRole = (dynamicMatch.accessRole || "").trim().toLowerCase();
+        const explicitRole = (dynamicMatch.role || "").trim().toLowerCase();
+
+        let assignedRole: UserRole = "employee";
         if (
-          dynamicMatch.role === "HR & Admin Manager" ||
-          dynamicMatch.role?.toLowerCase().includes("admin") ||
-          dynamicMatch.role?.toLowerCase().includes("ceo") ||
-          dynamicMatch.role?.toLowerCase().includes("founder") ||
-          dynamicMatch.name?.toLowerCase().includes("manvendra") ||
-          dynamicMatch.name?.toLowerCase().includes("jatin") ||
-          dynamicMatch.name?.toLowerCase().includes("aman")
+          explicitAccessRole === "admin" ||
+          explicitRole === "admin" ||
+          explicitRole === "hr & admin manager" ||
+          explicitRole.includes("admin") ||
+          explicitRole === "ceo" ||
+          explicitRole === "founder"
         ) {
-          accessRole = "admin";
+          assignedRole = "admin";
+        } else if (
+          explicitAccessRole === "manager" ||
+          explicitRole === "manager" ||
+          explicitRole.includes("manager")
+        ) {
+          assignedRole = "manager";
         }
+
         const user: AuthUser = {
-          role: accessRole as UserRole,
+          role: assignedRole,
           name: dynamicMatch.name,
           empId: dynamicMatch.id,
           avatar: dynamicMatch.avatar || "",
