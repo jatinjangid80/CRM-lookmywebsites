@@ -2,7 +2,6 @@ import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
 import { Eye, EyeOff, Plane, Lock, User, Shield, UserCheck, AlertCircle } from "lucide-react";
 import { login, getAuth } from "@/lib/auth";
-import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import logoImg from "../assets/Logo.svg";
@@ -19,49 +18,6 @@ function LoginPage() {
   const [showPass, setShowPass] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
-  const [dynamicHints, setDynamicHints] = useState<
-    { label: string; username: string; password: string; accessRole?: string }[]
-  >([]);
-
-  const loadDynamicHints = async () => {
-    try {
-      const { data } = await supabase.from("employees").select("*");
-      if (data) {
-        const parsedData = data.map((emp: any) => {
-          if (typeof emp.description === "string" && emp.description.includes("_isMeta")) {
-            try {
-              const parsed = JSON.parse(emp.description);
-              if (parsed._isMeta) {
-                return { ...emp, profile_details: parsed.profile_details };
-              }
-            } catch (e) {}
-          }
-          return emp;
-        });
-
-        const hints = parsedData
-          .filter((emp: any) => emp.profile_details?.username && emp.profile_details?.password)
-          .map((emp: any) => ({
-            label: emp.name,
-            username: emp.profile_details.username,
-            password: emp.profile_details.password,
-            accessRole: emp.accessRole,
-          }));
-        setDynamicHints(hints);
-      }
-    } catch (e) {
-      console.error(e);
-    }
-  };
-
-  useEffect(() => {
-    loadDynamicHints();
-  }, []);
-
-  // Reload hints whenever the role tab switches
-  useEffect(() => {
-    loadDynamicHints();
-  }, [role]);
 
   // Already logged in → go to CRM
   useEffect(() => {
@@ -92,9 +48,6 @@ function LoginPage() {
     navigate({ to: "/crm" });
   }
 
-  const hintUsers = role === "admin"
-    ? dynamicHints.filter(h => h.accessRole === "Admin" || h.username === "admin")
-    : dynamicHints.filter(h => h.accessRole !== "Admin" && h.username !== "admin");
   return (
     <div className="relative flex min-h-screen w-full items-center justify-center lg:justify-between px-6 lg:px-32 overflow-hidden bg-background">
       {/* Full-screen Background Image */}

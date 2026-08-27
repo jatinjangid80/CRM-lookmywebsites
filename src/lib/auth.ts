@@ -9,14 +9,6 @@ export interface AuthUser {
   avatar?: string;
   email?: string;
   phone?: string;
-  password?: string;
-}
-
-/* ─── Mock credentials ─── */
-export interface MockCredential {
-  username: string;
-  password: string;
-  user: AuthUser;
 }
 
 /* ─── Storage key ─── */
@@ -42,67 +34,58 @@ export function clearAuth(): void {
 }
 
 export async function login(username: string, password: string): Promise<AuthUser | null> {
-  // Check dynamic employees from Supabase FIRST
+  // Credential check now happens entirely server-side via the
+  // login_employee() RPC (see supabase/migrations/001_secure_login_rpc.sql). 
+  // The client never sees password hashes or anyone else's employee data.
   try {
-    const { data } = await supabase.from("employees").select("*");
-    if (data) {
-      const parsedData = data.map((emp: any) => {
-        let profile_details = emp.profile_details || null;
-        if (!profile_details && typeof emp.description === "string" && emp.description.includes("_isMeta")) {
-          try {
-            const parsed = JSON.parse(emp.description);
-            if (parsed._isMeta && parsed.profile_details) {
-              profile_details = parsed.profile_details;
-            }
-          } catch (e) { }
-        }
-        return { ...emp, profile_details };
-      });
+    const { data, error } = await supabase.rpc("login_employee", {
+      p_username: username.trim(),
+      p_password: password,
+    });
 
-      const dynamicMatch = parsedData.find(
-        (emp: any) =>
-          emp.profile_details?.username &&
-          emp.profile_details.username.toLowerCase() === username.trim().toLowerCase() &&
-          emp.profile_details.password === password,
-      );
-      if (dynamicMatch) {
-        // Admin role must come only from an explicit role/accessRole field in employees table, never inferred from name text
-        const explicitAccessRole = (dynamicMatch.accessRole || "").trim().toLowerCase();
-        const explicitRole = (dynamicMatch.role || "").trim().toLowerCase();
-
-        let assignedRole: UserRole = "employee";
-        if (
-          explicitAccessRole === "admin" ||
-          explicitRole === "admin" ||
-          explicitRole === "hr & admin manager" ||
-          explicitRole.includes("admin") ||
-          explicitRole === "ceo" ||
-          explicitRole === "founder"
-        ) {
-          assignedRole = "admin";
-        } else if (
-          explicitAccessRole === "manager" ||
-          explicitRole === "manager" ||
-          explicitRole.includes("manager")
-        ) {
-          assignedRole = "manager";
-        }
-
-        const user: AuthUser = {
-          role: assignedRole,
-          name: dynamicMatch.name,
-          empId: dynamicMatch.id,
-          avatar: dynamicMatch.avatar || "",
-          email: dynamicMatch.email,
-          phone: dynamicMatch.phone,
-        };
-        setAuth(user);
-        return user;
-      }
+    if (error) {
+      console.error("Login RPC error", error);
+      return null;
     }
-  } catch (e) {
-    console.error("Error reading employees from Supabase for login", e);
-  }
 
-  return null;
+    const match = data?.[0];
+    if (!match) return null;
+
+    // Admin role must come only from an explicit role/accessRole field,
+    // never inferred from name text.
+    const explicitAccessRole = (match.access_role || "").trim().toLowerCase();
+    const explicitRole = (match.role || "").trim().toLowerCase();
+
+    let assignedRole: UserRole = "employee";
+    if (
+      explicitAccessRole === "admin" ||
+      explicitRole === "admin" ||
+      explicitRole === "hr & admin manager" ||
+      explicitRole.includes("admin") ||
+      explicitRole === "ceo" ||
+      explicitRole === "founder"
+    ) {
+      assignedRole = "admin";
+    } else if (
+      explicitAccessRole === "manager" ||
+      explicitRole === "manager" ||
+      explicitRole.includes("manager")
+    ) {
+      assignedRole = "manager";
+    }
+
+    const user: AuthUser = {
+      role: assignedRole,
+      name: match.name,
+      empId: match.emp_id,
+      avatar: match.avatar || "",
+      email: match.email,
+      phone: match.phone,
+    };
+    setAuth(user);
+    return user;
+  } catch (e) {
+    console.error("Error during login", e);
+    return null;
+  }
 }
