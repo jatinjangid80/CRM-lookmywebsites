@@ -121,7 +121,19 @@ export function InsuranceForm({
 
   useEffect(() => {
     if (initialData) {
-      setForm({ ...form, ...initialData });
+      const net = Number(initialData.net_premium) || 0;
+      const gstAmt = Number(initialData.gst) || 0;
+      let calculatedGstPct = initialData.gst_percentage;
+      if (calculatedGstPct === undefined || calculatedGstPct === null) {
+        if (net > 0 && gstAmt > 0) {
+          calculatedGstPct = Math.round((gstAmt / net) * 100);
+        } else if (gstAmt === 0 && net > 0) {
+          calculatedGstPct = 0;
+        } else {
+          calculatedGstPct = 18;
+        }
+      }
+      setForm({ ...form, ...initialData, gst_percentage: calculatedGstPct });
     }
   }, [initialData]);
 
@@ -137,8 +149,11 @@ export function InsuranceForm({
       if ('od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         const net = Number(next.net_premium) || 0;
         if (!('gst' in updates)) {
-          const gstPct = next.gst_percentage !== undefined && next.gst_percentage !== null ? Number(next.gst_percentage) : 18;
+          const gstPct = next.gst_percentage !== undefined && next.gst_percentage !== null && next.gst_percentage !== "" ? Number(next.gst_percentage) : 0;
           next.gst = Math.round(net * (gstPct / 100));
+        } else if ('gst' in updates && net > 0) {
+          const gstAmt = Number(updates.gst) || 0;
+          next.gst_percentage = Number(((gstAmt / net) * 100).toFixed(2));
         }
         next.total_premium = net + (Number(next.gst) || 0);
         
@@ -825,15 +840,55 @@ export function InsuranceForm({
                 />
               </div>
               <div className="space-y-1">
-                <Label>GST</Label>
-                <select
-                  className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
-                  value={form.gst_percentage !== undefined && form.gst_percentage !== null ? form.gst_percentage : 18}
-                  onChange={(e) => handleChangeWithCalc({ gst_percentage: Number(e.target.value) })}
-                >
-                  <option value="18">18%</option>
-                  <option value="0">0%</option>
-                </select>
+                <div className="flex items-center justify-between">
+                  <Label>GST (%)</Label>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleChangeWithCalc({ gst_percentage: 18 })}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${
+                        Number(form.gst_percentage) === 18
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      18%
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleChangeWithCalc({ gst_percentage: 0 })}
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${
+                        Number(form.gst_percentage) === 0
+                          ? "bg-primary text-primary-foreground border-primary"
+                          : "bg-muted text-muted-foreground hover:bg-secondary"
+                      }`}
+                    >
+                      0%
+                    </button>
+                  </div>
+                </div>
+                <div className="relative flex items-center">
+                  <Input
+                    type="number"
+                    step="any"
+                    min="0"
+                    placeholder="e.g. 18"
+                    className="pr-8"
+                    value={form.gst_percentage !== undefined && form.gst_percentage !== null ? form.gst_percentage : ""}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      handleChangeWithCalc({ gst_percentage: val === "" ? "" : Number(val) });
+                    }}
+                  />
+                  <span className="absolute right-2.5 text-xs text-muted-foreground font-semibold pointer-events-none">
+                    %
+                  </span>
+                </div>
+                {Number(form.net_premium) > 0 && (
+                  <p className="text-[10px] text-muted-foreground text-right">
+                    GST Amt: ₹{form.gst || 0}
+                  </p>
+                )}
               </div>
               <div className="space-y-1 bg-blue-500/10 p-2 rounded-lg border border-blue-500/20">
                 <Label className="text-blue-500">Total Premium</Label>

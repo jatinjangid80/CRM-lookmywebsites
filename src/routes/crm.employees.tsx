@@ -1,6 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useMemo } from "react";
 import { toast } from "sonner";
+import { getUpcomingHolidays } from "@/lib/holidays";
 import {
   UserCog,
   Phone,
@@ -3607,40 +3608,9 @@ function EmployeesPage() {
                     <div className="space-y-4">
                       <h3 className="font-semibold text-lg">Upcoming Holidays</h3>
                       <div className="bg-card rounded-xl border border-border shadow-sm p-4 divide-y divide-border">
-                        {[
-                          {
-                            name: "Raksha Bandhan",
-                            date: "2026-08-28",
-                            day: "Friday",
-                            color: "bg-red-500",
-                          },
-                          {
-                            name: "Independence Day",
-                            date: "2026-08-15",
-                            day: "Saturday",
-                            color: "bg-primary/100",
-                          },
-                          {
-                            name: "Dussehra",
-                            date: "2026-10-20",
-                            day: "Tuesday",
-                            color: "bg-amber-500",
-                          },
-                          {
-                            name: "Diwali",
-                            date: "2026-11-09",
-                            day: "Monday",
-                            color: "bg-yellow-500",
-                          },
-                          {
-                            name: "Christmas",
-                            date: "2026-12-25",
-                            day: "Friday",
-                            color: "bg-emerald-500",
-                          },
-                        ].map((h) => (
+                        {getUpcomingHolidays(5).map((h) => (
                           <div
-                            key={h.name}
+                            key={h.name + h.isoDate}
                             className="py-3 first:pt-0 last:pb-0 flex items-center justify-between"
                           >
                             <div>
@@ -3648,13 +3618,16 @@ function EmployeesPage() {
                               <p className="text-xs text-muted-foreground">{h.day}</p>
                             </div>
                             <span className="text-xs font-semibold bg-secondary px-2.5 py-1 rounded-lg text-muted-foreground">
-                              {new Date(h.date).toLocaleDateString("en-GB", {
+                              {new Date(h.isoDate + "T00:00:00").toLocaleDateString("en-GB", {
                                 day: "numeric",
                                 month: "short",
                               })}
                             </span>
                           </div>
                         ))}
+                        {getUpcomingHolidays(5).length === 0 && (
+                          <div className="text-center py-4 text-xs text-muted-foreground">No upcoming holidays</div>
+                        )}
                       </div>
                     </div>
                   </div>

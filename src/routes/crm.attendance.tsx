@@ -1,5 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
+import { getUpcomingHolidays } from "@/lib/holidays";
 import { Clock, Play, Building2, Square, Users, TrendingUp, Download, Calendar as CalendarIcon, Activity, PlusCircle, Search, FileText, Smartphone, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -36,6 +37,7 @@ function AttendancePage() {
   const isAdmin = auth?.role === "admin" || auth?.role === "manager";
 
   const [time, setTime] = useState(new Date());
+  const upcomingHolidays = useMemo(() => getUpcomingHolidays(4, time), [time]);
   const [shiftNote, setShiftNote] = useState("");
   const [selectedHistoryEmpId, setSelectedHistoryEmpId] = useState<string>("");
   const [myViewMode, setMyViewMode] = useState<"table" | "calendar">("table");
@@ -351,13 +353,8 @@ function AttendancePage() {
                   </div>
                 </div>
                 <div className="space-y-3">
-                  {[
-                    { name: "Independence Day", date: "Aug 15, 2026", day: "Saturday", type: "National" },
-                    { name: "Raksha Bandhan", date: "Aug 28, 2026", day: "Friday", type: "Restricted" },
-                    { name: "Gandhi Jayanti", date: "Oct 2, 2026", day: "Friday", type: "National" },
-                    { name: "Diwali", date: "Nov 8, 2026", day: "Sunday", type: "National" },
-                  ].map((holiday, i) => (
-                    <div key={i} className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-colors">
+                  {upcomingHolidays.map((holiday, i) => (
+                    <div key={holiday.name + holiday.isoDate} className="flex items-center justify-between p-3 rounded-xl border border-border/50 bg-secondary/20 hover:bg-secondary/40 transition-colors">
                       <div>
                         <p className="text-sm font-bold">{holiday.name}</p>
                         <p className="text-xs text-muted-foreground">{holiday.date} • {holiday.day}</p>
@@ -367,6 +364,9 @@ function AttendancePage() {
                       </span>
                     </div>
                   ))}
+                  {upcomingHolidays.length === 0 && (
+                    <div className="text-center py-4 text-xs text-muted-foreground">No upcoming holidays</div>
+                  )}
                 </div>
               </div>
             </div>

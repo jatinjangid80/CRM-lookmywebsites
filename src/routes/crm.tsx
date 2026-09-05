@@ -129,7 +129,7 @@ function getNavForUser(auth: AuthUser): NavItem[] {
 
   if (name.includes("deepak")) {
     return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
     ].includes(n.label));
   }
 
@@ -190,6 +190,24 @@ function CrmLayout() {
     }
     setAuth(user);
 
+    // If employee is found in DB and marked as Terminated, revoke access immediately
+    if (employees && employees.length > 0) {
+      const currentEmp = employees.find(
+        (e: any) =>
+          (e.id && user.empId && e.id === user.empId) ||
+          (e.name && user.name && e.name.toLowerCase().trim() === user.name.toLowerCase().trim())
+      );
+      if (currentEmp) {
+        const empStatus = (currentEmp.status || "").trim().toLowerCase();
+        if (empStatus === "terminated") {
+          clearAuth();
+          toast.error("Your account has been terminated. Access revoked.");
+          navigate({ to: "/login" });
+          return;
+        }
+      }
+    }
+
     const userNav = getNavForUser(user);
     const hasDashboard = userNav.some((n) => n.to === "/crm");
 
@@ -202,7 +220,7 @@ function CrmLayout() {
     if (user.role === "employee" && !pathname.startsWith("/crm")) {
       navigate({ to: userNav.length > 0 ? userNav[0].to : "/crm", replace: true });
     }
-  }, [pathname, navigate]);
+  }, [pathname, navigate, employees]);
 
   function handleLogout() {
     clearAuth();
