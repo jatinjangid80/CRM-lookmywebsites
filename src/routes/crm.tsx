@@ -151,6 +151,12 @@ function getNavForUser(auth: AuthUser): NavItem[] {
     ].includes(n.label));
   }
 
+  if (name.includes("bhumika")) {
+    return FULL_NAV.filter((n) => [
+      "Leads", "Customers", "Tasks", "Bookings", "Attendance", "Vendors", "Quotations"
+    ].includes(n.label));
+  }
+
   if (name.includes("jatin")) {
     return FULL_NAV;
   }

@@ -27,11 +27,11 @@ export function InsuranceForm({
 }) {
   const [customers] = useSupabaseTable<any[]>("customers", []);
   const [folders, setFolders] = useSupabaseTable<any[]>("folders", []);
-``
-  const [newVendor, setNewVendor] = useState({ 
-    name: "", contact_person: "", mobile: "", alternate_mobile: "", 
-    email: "", office_city: "", website: "", address: "", 
-    gst_number: "", pan_number: "", category: "" 
+  ``
+  const [newVendor, setNewVendor] = useState({
+    name: "", contact_person: "", mobile: "", alternate_mobile: "",
+    email: "", office_city: "", website: "", address: "",
+    gst_number: "", pan_number: "", category: ""
   });
   const [isAddingVendor, setIsAddingVendor] = useState(false);
   const [localAddedVendors, setLocalAddedVendors] = useState<any[]>([]);
@@ -50,10 +50,10 @@ export function InsuranceForm({
       toast.success("Vendor added successfully");
       setLocalAddedVendors([...localAddedVendors, vendorPayload]);
       setForm({ ...form, vendor_id: newId });
-      setNewVendor({ 
-        name: "", contact_person: "", mobile: "", alternate_mobile: "", 
-        email: "", office_city: "", website: "", address: "", 
-        gst_number: "", pan_number: "", category: "" 
+      setNewVendor({
+        name: "", contact_person: "", mobile: "", alternate_mobile: "",
+        email: "", office_city: "", website: "", address: "",
+        gst_number: "", pan_number: "", category: ""
       });
       setIsVendorModalOpen(false);
     }
@@ -141,22 +141,24 @@ export function InsuranceForm({
   const handleChangeWithCalc = (updates: any) => {
     setForm((prev: any) => {
       const next = { ...prev, ...updates };
-      
+
       if ('od_premium' in updates || 'tp_premium' in updates) {
         next.net_premium = (Number(next.od_premium) || 0) + (Number(next.tp_premium) || 0);
       }
-      
+
       if ('od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         const net = Number(next.net_premium) || 0;
         if (!('gst' in updates)) {
-          const gstPct = next.gst_percentage !== undefined && next.gst_percentage !== null && next.gst_percentage !== "" ? Number(next.gst_percentage) : 0;
+          const gstPct = next.gst_percentage !== undefined && next.gst_percentage !== null && next.gst_percentage !== ""
+            ? Math.max(0, Number(next.gst_percentage) || 0)
+            : 0;
           next.gst = Math.round(net * (gstPct / 100));
         } else if ('gst' in updates && net > 0) {
           const gstAmt = Number(updates.gst) || 0;
           next.gst_percentage = Number(((gstAmt / net) * 100).toFixed(2));
         }
         next.total_premium = net + (Number(next.gst) || 0);
-        
+
         // Auto-calculate discount amount if percentage is set
         if (Number(next.customer_discount_percent) > 0) {
           next.customer_discount_amount = Math.round(next.total_premium * (Number(next.customer_discount_percent) / 100));
@@ -164,7 +166,7 @@ export function InsuranceForm({
         // Auto-adjust customer_paid based on new total and discount
         next.customer_paid = Math.max(0, next.total_premium - (Number(next.customer_discount_amount) || 0));
       }
-      
+
       if ('customer_discount_percent' in updates || 'customer_discount_amount' in updates) {
         const total = Number(next.total_premium) || 0;
         if ('customer_discount_percent' in updates) {
@@ -174,7 +176,7 @@ export function InsuranceForm({
           const amt = Number(updates.customer_discount_amount) || 0;
           next.customer_discount_percent = total > 0 ? Number(((amt / total) * 100).toFixed(2)) : 0;
         }
-        
+
         // Auto-adjust customer paid
         next.customer_paid = Math.max(0, total - (Number(next.customer_discount_amount) || 0));
       } else if ('customer_paid' in updates) {
@@ -184,16 +186,16 @@ export function InsuranceForm({
         next.customer_discount_amount = Math.max(0, total - paid);
         next.customer_discount_percent = total > 0 ? Number(((next.customer_discount_amount / total) * 100).toFixed(2)) : 0;
       }
-      
+
       if ('customer_paid' in updates || 'vendor_paid' in updates || 'customer_discount_percent' in updates || 'customer_discount_amount' in updates || 'od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         next.profit = (Number(next.customer_paid) || 0) - (Number(next.vendor_paid) || 0);
       }
-      
+
       if ('customer_paid' in updates || 'amount_paid' in updates || 'customer_discount_percent' in updates || 'customer_discount_amount' in updates || 'od_premium' in updates || 'tp_premium' in updates || 'net_premium' in updates || 'gst_percentage' in updates || 'gst' in updates) {
         const expected = Number(next.customer_paid) || 0;
         const actual = Number(next.amount_paid) || 0;
         const outstanding = Math.max(expected - actual, 0);
-        
+
         let status = "Pending";
         if (expected > 0 && outstanding === 0) {
           status = "Full Paid";
@@ -202,7 +204,7 @@ export function InsuranceForm({
         }
         next.payment_status = status;
       }
-      
+
       return next;
     });
   };
@@ -230,7 +232,7 @@ export function InsuranceForm({
 
   const handleSave = async () => {
     const payload = { ...form };
-    
+
     // Auto-save attachments to Documents
     const filesToUpload: { file: File, type: string }[] = [];
     if (form.policy_copy instanceof File) filesToUpload.push({ file: form.policy_copy, type: "Policy Copy" });
@@ -239,7 +241,7 @@ export function InsuranceForm({
 
     if (filesToUpload.length > 0) {
       const passengerName = payload.customer_name || payload.client_company || payload.reference_name || "Unknown Insurance Customer";
-      
+
       let rootFolder = folders.find((f: any) => f.name === "General Insurance");
       let newRootFolder = null;
       if (!rootFolder) {
@@ -308,14 +310,14 @@ export function InsuranceForm({
 
     // Scrub empty strings to null for UUIDs, dates, and numbers
     const fieldsToScrub = [
-      "customer_id", "company_id", "vendor_id", 
+      "customer_id", "company_id", "vendor_id",
       "registration_date", "payment_date", "issue_date", "expiry_date",
       "seating_capacity", "idv_value", "ncb_percentage",
-      "od_premium", "tp_premium", "net_premium", "gst", "total_premium", 
+      "od_premium", "tp_premium", "net_premium", "gst", "total_premium",
       "customer_discount_percent", "customer_discount_amount",
       "customer_paid", "vendor_paid", "profit", "amount_paid"
     ];
-    
+
     fieldsToScrub.forEach(field => {
       if (payload[field] === "") {
         payload[field] = null;
@@ -344,7 +346,7 @@ export function InsuranceForm({
         payload.notes = (payload.notes ? payload.notes + "\n" : "") + `Custom Company: ${payload.custom_company}`;
       }
     }
-    
+
     if (payload.vendor_id === "other") {
       payload.vendor_id = null;
       if (payload.custom_vendor) {
@@ -355,7 +357,7 @@ export function InsuranceForm({
     delete payload.custom_company;
     delete payload.custom_vendor;
     delete payload.gst_percentage;
-    
+
     onSave(payload);
   };
 
@@ -382,7 +384,7 @@ export function InsuranceForm({
   }, [isVendorModalOpen, isAddingVendor, onClose]);
 
   return (
-    <div 
+    <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm animate-in fade-in duration-200 p-4 sm:p-6"
       onClick={handleBackdropClick}
     >
@@ -623,35 +625,35 @@ export function InsuranceForm({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
                         <div className="space-y-1">
                           <Label>Vendor Name *</Label>
-                          <Input value={newVendor.name} onChange={e => setNewVendor({...newVendor, name: e.target.value})} placeholder="e.g. PolicyBazaar" />
+                          <Input value={newVendor.name} onChange={e => setNewVendor({ ...newVendor, name: e.target.value })} placeholder="e.g. PolicyBazaar" />
                         </div>
                         <div className="space-y-1">
                           <Label>Contact Person</Label>
-                          <Input value={newVendor.contact_person} onChange={e => setNewVendor({...newVendor, contact_person: e.target.value})} placeholder="e.g. John Doe" />
+                          <Input value={newVendor.contact_person} onChange={e => setNewVendor({ ...newVendor, contact_person: e.target.value })} placeholder="e.g. John Doe" />
                         </div>
                         <div className="space-y-1">
                           <Label>Mobile *</Label>
-                          <Input value={newVendor.mobile} onChange={e => setNewVendor({...newVendor, mobile: e.target.value})} placeholder="e.g. +91 9876543210" />
+                          <Input value={newVendor.mobile} onChange={e => setNewVendor({ ...newVendor, mobile: e.target.value })} placeholder="e.g. +91 9876543210" />
                         </div>
                         <div className="space-y-1">
                           <Label>Alternate Mobile</Label>
-                          <Input value={newVendor.alternate_mobile} onChange={e => setNewVendor({...newVendor, alternate_mobile: e.target.value})} placeholder="e.g. +91 9876543211" />
+                          <Input value={newVendor.alternate_mobile} onChange={e => setNewVendor({ ...newVendor, alternate_mobile: e.target.value })} placeholder="e.g. +91 9876543211" />
                         </div>
                         <div className="space-y-1">
                           <Label>Email</Label>
-                          <Input type="email" value={newVendor.email} onChange={e => setNewVendor({...newVendor, email: e.target.value})} placeholder="e.g. contact@vendor.com" />
+                          <Input type="email" value={newVendor.email} onChange={e => setNewVendor({ ...newVendor, email: e.target.value })} placeholder="e.g. contact@vendor.com" />
                         </div>
                         <div className="space-y-1">
                           <Label>Website</Label>
-                          <Input value={newVendor.website} onChange={e => setNewVendor({...newVendor, website: e.target.value})} placeholder="e.g. www.vendor.com" />
+                          <Input value={newVendor.website} onChange={e => setNewVendor({ ...newVendor, website: e.target.value })} placeholder="e.g. www.vendor.com" />
                         </div>
                         <div className="space-y-1">
                           <Label>Office City</Label>
-                          <Input value={newVendor.office_city} onChange={e => setNewVendor({...newVendor, office_city: e.target.value})} placeholder="e.g. Mumbai" />
+                          <Input value={newVendor.office_city} onChange={e => setNewVendor({ ...newVendor, office_city: e.target.value })} placeholder="e.g. Mumbai" />
                         </div>
                         <div className="space-y-1">
                           <Label>Category</Label>
-                          <Select value={newVendor.category} onValueChange={(val) => setNewVendor({...newVendor, category: val})}>
+                          <Select value={newVendor.category} onValueChange={(val) => setNewVendor({ ...newVendor, category: val })}>
                             <SelectTrigger>
                               <SelectValue placeholder="Select Category" />
                             </SelectTrigger>
@@ -664,17 +666,17 @@ export function InsuranceForm({
                         </div>
                         <div className="space-y-1">
                           <Label>GST Number</Label>
-                          <Input value={newVendor.gst_number} onChange={e => setNewVendor({...newVendor, gst_number: e.target.value})} placeholder="e.g. 22AAAAA0000A1Z5" />
+                          <Input value={newVendor.gst_number} onChange={e => setNewVendor({ ...newVendor, gst_number: e.target.value })} placeholder="e.g. 22AAAAA0000A1Z5" />
                         </div>
                         <div className="space-y-1">
                           <Label>PAN Number</Label>
-                          <Input value={newVendor.pan_number} onChange={e => setNewVendor({...newVendor, pan_number: e.target.value})} placeholder="e.g. ABCDE1234F" />
+                          <Input value={newVendor.pan_number} onChange={e => setNewVendor({ ...newVendor, pan_number: e.target.value })} placeholder="e.g. ABCDE1234F" />
                         </div>
                       </div>
                       <div className="flex justify-end gap-3 mt-4">
-                        <Button 
-                          type="button" 
-                          onClick={handleAddVendor} 
+                        <Button
+                          type="button"
+                          onClick={handleAddVendor}
                           disabled={!newVendor.name.trim() || !newVendor.mobile.trim() || isAddingVendor}
                           className="rounded-full px-6"
                         >
@@ -846,22 +848,20 @@ export function InsuranceForm({
                     <button
                       type="button"
                       onClick={() => handleChangeWithCalc({ gst_percentage: 18 })}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${
-                        Number(form.gst_percentage) === 18
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${Number(form.gst_percentage) === 18
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted text-muted-foreground hover:bg-secondary"
-                      }`}
+                        }`}
                     >
                       18%
                     </button>
                     <button
                       type="button"
                       onClick={() => handleChangeWithCalc({ gst_percentage: 0 })}
-                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${
-                        Number(form.gst_percentage) === 0
+                      className={`text-[10px] px-1.5 py-0.5 rounded border font-medium transition-colors ${Number(form.gst_percentage) === 0
                           ? "bg-primary text-primary-foreground border-primary"
                           : "bg-muted text-muted-foreground hover:bg-secondary"
-                      }`}
+                        }`}
                     >
                       0%
                     </button>
@@ -976,7 +976,7 @@ export function InsuranceForm({
               <Paperclip className="h-4 w-4 text-indigo-500" />
               <h3 className="font-semibold text-sm">6. Attachments & Remarks</h3>
             </div>
-            
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-4">
                 <Label>Attachments</Label>
@@ -991,11 +991,11 @@ export function InsuranceForm({
                       <Paperclip className="h-3 w-3 mr-2" />
                       {form.policy_copy ? "Change File" : "Upload File"}
                     </Button>
-                    <input 
-                      type="file" 
-                      id="upload-policy-copy" 
-                      className="hidden" 
-                      onChange={(e) => setForm({...form, policy_copy: e.target.files?.[0] || null})}
+                    <input
+                      type="file"
+                      id="upload-policy-copy"
+                      className="hidden"
+                      onChange={(e) => setForm({ ...form, policy_copy: e.target.files?.[0] || null })}
                     />
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
@@ -1008,11 +1008,11 @@ export function InsuranceForm({
                       <Paperclip className="h-3 w-3 mr-2" />
                       {form.RC_copy ? "Change File" : "Upload File"}
                     </Button>
-                    <input 
-                      type="file" 
-                      id="upload-rc-copy" 
-                      className="hidden" 
-                      onChange={(e) => setForm({...form, RC_copy: e.target.files?.[0] || null})}
+                    <input
+                      type="file"
+                      id="upload-rc-copy"
+                      className="hidden"
+                      onChange={(e) => setForm({ ...form, RC_copy: e.target.files?.[0] || null })}
                     />
                   </div>
                   <div className="flex items-center justify-between p-3 border rounded-lg bg-card">
@@ -1025,11 +1025,11 @@ export function InsuranceForm({
                       <Paperclip className="h-3 w-3 mr-2" />
                       {form.PAN_card_copy ? "Change File" : "Upload File"}
                     </Button>
-                    <input 
-                      type="file" 
-                      id="upload-pan-copy" 
-                      className="hidden" 
-                      onChange={(e) => setForm({...form, PAN_card_copy: e.target.files?.[0] || null})}
+                    <input
+                      type="file"
+                      id="upload-pan-copy"
+                      className="hidden"
+                      onChange={(e) => setForm({ ...form, PAN_card_copy: e.target.files?.[0] || null })}
                     />
                   </div>
                 </div>
