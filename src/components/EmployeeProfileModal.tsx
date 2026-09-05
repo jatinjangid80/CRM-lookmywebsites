@@ -382,12 +382,20 @@ function EmployeeProfileModalInner({
 
       const { error } = await supabase
         .from("employees")
-        .update({ profile_details: newProfileDetails })
+        .update({
+          profile_details: newProfileDetails,
+          description: JSON.stringify({
+            _isMeta: true,
+            text: employee.description || "",
+            profile_details: newProfileDetails,
+          }),
+        })
         .eq("id", employee.id);
 
       if (error) throw error;
       
       setCredSaved(true);
+      if (onEmployeeUpdated) onEmployeeUpdated();
       setTimeout(() => setCredSaved(false), 3000);
     } catch (err) {
       console.error(err);
@@ -398,6 +406,12 @@ function EmployeeProfileModalInner({
   const handleSave = () => {
     if (!editDetails) return;
 
+    const updatedDetails = {
+      ...editDetails,
+      username: credUsername.trim() || employee.profile_details?.username || (employee.name || "").trim().split(" ")[0].toLowerCase(),
+      password: credPassword || employee.profile_details?.password || (employee.name || "").trim().split(" ")[0].toLowerCase(),
+    };
+
     // Sync to Supabase directly so realtime catches it
     try {
       const supabasePayload: any = {
@@ -406,11 +420,12 @@ function EmployeeProfileModalInner({
         email: editCore.email,
         phone: editCore.phone,
         status: editCore.status,
+        profile_details: updatedDetails,
         description: JSON.stringify({
           _isMeta: true,
           text: editDetails.bio || "",
-          profile_details: editDetails
-        })
+          profile_details: updatedDetails,
+        }),
       };
       if (editAvatar) {
         supabasePayload.avatar = editAvatar;

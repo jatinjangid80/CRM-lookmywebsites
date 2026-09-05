@@ -43,14 +43,36 @@ function LoginPage() {
           .filter((emp: any) => {
             const status = (emp.status || "").trim().toLowerCase();
             const isTerminatedOrInactive = status === "terminated" || status === "inactive";
-            return emp.profile_details?.username && emp.profile_details?.password && !isTerminatedOrInactive;
+            return !isTerminatedOrInactive && emp.name;
           })
-          .map((emp: any) => ({
-            label: emp.name,
-            username: emp.profile_details.username,
-            password: emp.profile_details.password,
-            accessRole: emp.accessRole,
-          }));
+          .map((emp: any) => {
+            const firstName = (emp.name || "").trim().split(" ")[0].toLowerCase();
+            const empIdClean = (emp.id || "").trim().toLowerCase();
+            const emailUser = (emp.email || "").split("@")[0].trim().toLowerCase();
+
+            const username = (
+              emp.profile_details?.username ||
+              emp.username ||
+              firstName ||
+              emailUser ||
+              empIdClean
+            ).trim();
+
+            const password = (
+              emp.profile_details?.password ||
+              emp.password ||
+              firstName ||
+              empIdClean ||
+              "123456"
+            );
+
+            return {
+              label: emp.name,
+              username,
+              password,
+              accessRole: emp.accessRole,
+            };
+          });
         setDynamicHints(hints);
       }
     } catch (e) {

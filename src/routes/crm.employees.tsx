@@ -821,7 +821,11 @@ function EmployeesPage() {
       revenue: 0,
       rating: 0,
       recentActivity: "Newly added to the team",
-      description: newEmployee.description || "No description provided.",
+      description: JSON.stringify({
+        _isMeta: true,
+        text: newEmployee.description || "No description provided.",
+        profile_details: employeeDetails,
+      }),
       accessRole: (newEmployee as any).accessRole || "employee",
       username: newEmployee.username,
       password: newEmployee.password,
@@ -830,6 +834,7 @@ function EmployeesPage() {
 
     setEmployees([employee, ...employees]);
     setIsAddOpen(false);
+    toast.success(`Employee ${newEmployee.name} added successfully with username: ${newEmployee.username}`);
   };
 
   const handleExportCSV = () => {

@@ -82,16 +82,25 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
         const existingDetails = newRow.profile_details || {};
         newRow.profile_details = {
           ...existingDetails,
-          username: newRow.username,
-          password: newRow.password,
+          username: newRow.username || existingDetails.username,
+          password: newRow.password || existingDetails.password,
         };
-        delete newRow.username;
-        delete newRow.password;
       }
 
-      // profile_details is a real JSONB column — store it directly
-      // (do NOT pack it into description)
-      // allNotes, dob, relationship are not real columns — skip below
+      if (newRow.profile_details) {
+        let currentDescText = typeof newRow.description === "string" ? newRow.description : "";
+        if (currentDescText.includes("_isMeta")) {
+          try {
+            const parsed = JSON.parse(currentDescText);
+            currentDescText = parsed.text || "";
+          } catch (e) {}
+        }
+        newRow.description = JSON.stringify({
+          _isMeta: true,
+          text: currentDescText,
+          profile_details: newRow.profile_details,
+        });
+      }
     }
 
     if (tableName === "vendors") {
@@ -681,17 +690,27 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       } catch (e) { }
     }
 
-    if (tableName === "employees" && typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
-      try {
-        const parsed = JSON.parse(newRow.description);
-        if (parsed._isMeta) {
-          newRow.description = parsed.text;
-          if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
-          if (parsed.dob !== undefined) newRow.dob = parsed.dob;
-          if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
-          if (parsed.profile_details !== undefined) newRow.profile_details = parsed.profile_details;
-        }
-      } catch (e) { }
+    if (tableName === "employees") {
+      if (typeof newRow.description === "string" && newRow.description.includes("_isMeta")) {
+        try {
+          const parsed = JSON.parse(newRow.description);
+          if (parsed._isMeta) {
+            newRow.description = parsed.text;
+            if (parsed.allNotes !== undefined) newRow.allNotes = parsed.allNotes;
+            if (parsed.dob !== undefined) newRow.dob = parsed.dob;
+            if (parsed.relationship !== undefined) newRow.relationship = parsed.relationship;
+            if (parsed.profile_details !== undefined && !newRow.profile_details) {
+              newRow.profile_details = parsed.profile_details;
+            }
+          }
+        } catch (e) { }
+      }
+      if (newRow.profile_details?.username) {
+        newRow.username = newRow.profile_details.username;
+      }
+      if (newRow.profile_details?.password) {
+        newRow.password = newRow.profile_details.password;
+      }
     }
 
     if (tableName === "vendors") {
