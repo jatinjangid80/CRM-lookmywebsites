@@ -151,6 +151,10 @@ function getNavForUser(auth: AuthUser): NavItem[] {
     ].includes(n.label));
   }
 
+  if (name.includes("jatin")) {
+    return FULL_NAV;
+  }
+
   // After name checks, if they are a pure Admin, give them full access to everything.
   if (auth.role === "admin") {
     return FULL_NAV;
