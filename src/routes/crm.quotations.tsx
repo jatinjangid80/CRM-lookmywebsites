@@ -873,35 +873,17 @@ function QuotationsPage() {
                                 >
                                   <Edit2 className="h-3.5 w-3.5" /> Edit
                                 </Button>
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                    <DropdownMenuItem
-                                      onClick={() => handleViewQuote(quote)}
-                                      className="cursor-pointer gap-2"
-                                    >
-                                      <Eye className="h-4 w-4" /> View / Share
-                                    </DropdownMenuItem>
-                                    <DropdownMenuItem
-                                      onClick={() => handleEditQuote(quote)}
-                                      className="cursor-pointer gap-2"
-                                    >
-                                      <Edit2 className="h-4 w-4" /> Edit
-                                    </DropdownMenuItem>
-                                    {isAdmin && (
-                                      <DropdownMenuItem
-                                        onClick={() => setDeleteQuoteId(quote.id)}
-                                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
-                                      >
-                                        <Trash2 className="h-4 w-4" /> Delete
-                                      </DropdownMenuItem>
-                                    )}
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
+                                {isAdmin && (
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setDeleteQuoteId(quote.id)}
+                                    className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10 transition-colors"
+                                    title="Delete"
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                )}
                               </div>
                             </td>
                           </tr>
