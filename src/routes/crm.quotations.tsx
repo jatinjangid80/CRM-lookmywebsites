@@ -873,17 +873,48 @@ function QuotationsPage() {
                                 >
                                   <Edit2 className="h-3.5 w-3.5" /> Edit
                                 </Button>
-                                {isAdmin && (
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => setDeleteQuoteId(quote.id)}
-                                    className="h-8 w-8 rounded-full text-destructive hover:bg-destructive/10 transition-colors"
-                                    title="Delete"
-                                  >
-                                    <Trash2 className="h-4 w-4" />
-                                  </Button>
-                                )}
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        handleViewQuote(quote);
+                                        setTimeout(() => handlePrint(), 300);
+                                      }}
+                                      className="cursor-pointer gap-2"
+                                    >
+                                      <Printer className="h-4 w-4" /> Print / PDF
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        const portalUrl = window.location.origin + `/crm/portal?quoteId=${quote.id}`;
+                                        const msg = whatsappTemplates.quotation(
+                                          quote.customer_name || "Customer",
+                                          quote.package_name || "Quotation",
+                                          formatINR(quote.total_amount),
+                                          portalUrl
+                                        );
+                                        const link = generateWhatsAppLink(quote.customer_phone || "919876543210", msg);
+                                        window.open(link, "_blank");
+                                      }}
+                                      className="cursor-pointer gap-2"
+                                    >
+                                      <Share2 className="h-4 w-4" /> Share WhatsApp
+                                    </DropdownMenuItem>
+                                    {isAdmin && (
+                                      <DropdownMenuItem
+                                        onClick={() => setDeleteQuoteId(quote.id)}
+                                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="h-4 w-4" /> Delete
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
                               </div>
                             </td>
                           </tr>
