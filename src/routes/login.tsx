@@ -167,8 +167,8 @@ function LoginPage() {
               setPassword("");
             }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-300 ${role === "admin"
-                ? "bg-white text-gray-900 shadow-md scale-100"
-                : "text-white/70 hover:text-white scale-95"
+              ? "bg-white text-gray-900 shadow-md scale-100"
+              : "text-white/70 hover:text-white scale-95"
               }`}
           >
             <Shield className={`h-3.5 w-3.5 ${role === "admin" ? "text-gray-900" : "opacity-70"}`} />
@@ -183,8 +183,8 @@ function LoginPage() {
               setPassword("");
             }}
             className={`flex flex-1 items-center justify-center gap-2 rounded-xl py-2.5 text-xs font-bold transition-all duration-300 ${role === "employee"
-                ? "bg-white text-gray-900 shadow-md scale-100"
-                : "text-white/70 hover:text-white scale-95"
+              ? "bg-white text-gray-900 shadow-md scale-100"
+              : "text-white/70 hover:text-white scale-95"
               }`}
           >
             <UserCheck className={`h-3.5 w-3.5 ${role === "employee" ? "text-gray-900" : "opacity-70"}`} />

@@ -646,241 +646,241 @@ function QuotationsPage() {
           </p>
         </div>
         <div className="flex gap-2">
-            <div className="flex items-center gap-2">
-              <Button
-                onClick={() => {
-                  setForm({ ...DEFAULT_FORM, packageName: "Hotel Quote" });
-                  setEditingQuoteId(null);
-                  setActiveView("builder");
-                }}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" /> Hotel Quote
-              </Button>
-              <Button
-                onClick={() => {
-                  setForm({ ...DEFAULT_FORM, packageName: "Package Quote" });
-                  setEditingQuoteId(null);
-                  setActiveView("builder");
-                }}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" /> Package Quote
-              </Button>
-              <Button
-                onClick={() => {
-                  setForm({ ...DEFAULT_FORM });
-                  setEditingQuoteId(null);
-                  setActiveView("builder");
-                }}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
-              >
-                <Plus className="h-4 w-4" /> Create New Quote
-              </Button>
-            </div>
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => {
+                setForm({ ...DEFAULT_FORM, packageName: "Hotel Quote" });
+                setEditingQuoteId(null);
+                setActiveView("builder");
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Hotel Quote
+            </Button>
+            <Button
+              onClick={() => {
+                setForm({ ...DEFAULT_FORM, packageName: "Package Quote" });
+                setEditingQuoteId(null);
+                setActiveView("builder");
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Package Quote
+            </Button>
+            <Button
+              onClick={() => {
+                setForm({ ...DEFAULT_FORM });
+                setEditingQuoteId(null);
+                setActiveView("builder");
+              }}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full px-6 py-5 shadow flex items-center gap-2"
+            >
+              <Plus className="h-4 w-4" /> Create New Quote
+            </Button>
+          </div>
         </div>
       </div>
 
       <div className="space-y-6 print:hidden">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {[
-              {
-                label: "Total Quotes",
-                value: quotations.length,
-                icon: <FileText className="h-4 w-4" />,
-                color: "bg-blue-100 text-blue-600",
-                sub: "All generated quotes",
-              },
-              {
-                label: "Hotel Quotes",
-                value: quotations.filter(q => q.package_name?.toLowerCase().includes("hotel")).length,
-                icon: <Building2 className="h-4 w-4" />,
-                color: "bg-emerald-100 text-emerald-600",
-                sub: "Hotel only quotes",
-              },
-              {
-                label: "Package Quotes",
-                value: quotations.filter(q => q.package_name?.toLowerCase().includes("package")).length,
-                icon: <Plane className="h-4 w-4" />,
-                color: "bg-violet-100 text-violet-600",
-                sub: "Holiday packages",
-              },
-            ].map((s) => (
-              <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
-                <div className="flex items-center justify-between">
-                  <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    {s.label}
-                  </p>
-                  <span className={`grid h-9 w-9 place-items-center rounded-xl ${s.color}`}>
-                    {s.icon}
-                  </span>
-                </div>
-                <p className="mt-3 font-display text-2xl font-bold truncate">{s.value}</p>
-                <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[
+            {
+              label: "Total Quotes",
+              value: quotations.length,
+              icon: <FileText className="h-4 w-4" />,
+              color: "bg-blue-100 text-blue-600",
+              sub: "All generated quotes",
+            },
+            {
+              label: "Hotel Quotes",
+              value: quotations.filter(q => q.package_name?.toLowerCase().includes("hotel")).length,
+              icon: <Building2 className="h-4 w-4" />,
+              color: "bg-emerald-100 text-emerald-600",
+              sub: "Hotel only quotes",
+            },
+            {
+              label: "Package Quotes",
+              value: quotations.filter(q => q.package_name?.toLowerCase().includes("package")).length,
+              icon: <Plane className="h-4 w-4" />,
+              color: "bg-violet-100 text-violet-600",
+              sub: "Holiday packages",
+            },
+          ].map((s) => (
+            <div key={s.label} className="rounded-2xl border border-border bg-card p-5 shadow-card">
+              <div className="flex items-center justify-between">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  {s.label}
+                </p>
+                <span className={`grid h-9 w-9 place-items-center rounded-xl ${s.color}`}>
+                  {s.icon}
+                </span>
               </div>
-            ))}
-          </div>
-
-          <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
-            <div className="flex flex-wrap items-center gap-2 ml-auto">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search quotations..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
-                />
-              </div>
-              <div className="flex items-center gap-2 bg-background border border-input rounded-lg px-3 h-9 shadow-sm">
-                <Filter className="h-4 w-4 text-muted-foreground" />
-                <select
-                  value={agentFilter}
-                  onChange={(e) => setAgentFilter(e.target.value)}
-                  className="bg-transparent border-none text-sm focus:outline-none focus:ring-0 cursor-pointer text-foreground appearance-none pr-4"
-                >
-                  <option value="All">All Agents</option>
-                  {Array.from(new Set(quotations.map(q => q.agent_name).filter(Boolean))).map(agent => (
-                    <option key={agent} value={agent}>{agent}</option>
-                  ))}
-                </select>
-              </div>
-              <Button variant="outline" size="sm" onClick={() => setIsExportOpen(true)} className="h-9 shadow-sm">
-                <Download className="mr-2 h-4 w-4" /> Export
-              </Button>
+              <p className="mt-3 font-display text-2xl font-bold truncate">{s.value}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{s.sub}</p>
             </div>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap items-center justify-between gap-4 animate-in fade-in duration-300">
+          <div className="flex flex-wrap items-center gap-2 ml-auto">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search quotations..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-9 h-9 w-[200px] md:w-[250px] rounded-lg shadow-sm"
+              />
+            </div>
+            <div className="flex items-center gap-2 bg-background border border-input rounded-lg px-3 h-9 shadow-sm">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <select
+                value={agentFilter}
+                onChange={(e) => setAgentFilter(e.target.value)}
+                className="bg-transparent border-none text-sm focus:outline-none focus:ring-0 cursor-pointer text-foreground appearance-none pr-4"
+              >
+                <option value="All">All Agents</option>
+                {Array.from(new Set(quotations.map(q => q.agent_name).filter(Boolean))).map(agent => (
+                  <option key={agent} value={agent}>{agent}</option>
+                ))}
+              </select>
+            </div>
+            <Button variant="outline" size="sm" onClick={() => setIsExportOpen(true)} className="h-9 shadow-sm">
+              <Download className="mr-2 h-4 w-4" /> Export
+            </Button>
           </div>
+        </div>
 
-          <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
-            <TabsList className="mb-4">
-              <TabsTrigger value="all">All Quotes</TabsTrigger>
-              <TabsTrigger value="hotel">Hotel Quotes</TabsTrigger>
-              <TabsTrigger value="package">Package Quotes</TabsTrigger>
-            </TabsList>
+        <Tabs defaultValue="all" value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-4">
+            <TabsTrigger value="all">All Quotes</TabsTrigger>
+            <TabsTrigger value="hotel">Hotel Quotes</TabsTrigger>
+            <TabsTrigger value="package">Package Quotes</TabsTrigger>
+          </TabsList>
 
-            {["all", "hotel", "package"].map((tabValue) => (
-              <TabsContent key={tabValue} value={tabValue} className="mt-0">
-                <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                      <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
-                        <tr>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "id" && sortOrder === "asc" ? "desc" : "asc"); setSortField("id"); }}>
-                            <div className="flex items-center gap-1">Quote ID {sortField === "id" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "created_at" && sortOrder === "asc" ? "desc" : "asc"); setSortField("created_at"); }}>
-                            <div className="flex items-center gap-1">Date {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "customer_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("customer_name"); }}>
-                            <div className="flex items-center gap-1">Customer Name {sortField === "customer_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "package_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("package_name"); }}>
-                            <div className="flex items-center gap-1">Package / Dest {sortField === "package_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "total_amount" && sortOrder === "asc" ? "desc" : "asc"); setSortField("total_amount"); }}>
-                            <div className="flex items-center gap-1">Amount (₹) {sortField === "total_amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "agent_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("agent_name"); }}>
-                            <div className="flex items-center gap-1">Generated By {sortField === "agent_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
-                          </th>
-                          <th className="px-4 py-3 text-right">Actions</th>
-                        </tr>
-                      </thead>
-                      <tbody className="divide-y divide-border">
-                        {filteredQuotationsList
-                          .sort((a, b) => {
-                            const valA = a[sortField];
-                            const valB = b[sortField];
-                            if (!valA && valB) return sortOrder === "asc" ? -1 : 1;
-                            if (valA && !valB) return sortOrder === "asc" ? 1 : -1;
-                            if (!valA && !valB) return 0;
+          {["all", "hotel", "package"].map((tabValue) => (
+            <TabsContent key={tabValue} value={tabValue} className="mt-0">
+              <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="bg-secondary/60 text-left text-xs uppercase tracking-wider text-muted-foreground select-none">
+                      <tr>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "id" && sortOrder === "asc" ? "desc" : "asc"); setSortField("id"); }}>
+                          <div className="flex items-center gap-1">Quote ID {sortField === "id" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "created_at" && sortOrder === "asc" ? "desc" : "asc"); setSortField("created_at"); }}>
+                          <div className="flex items-center gap-1">Date {sortField === "created_at" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "customer_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("customer_name"); }}>
+                          <div className="flex items-center gap-1">Customer Name {sortField === "customer_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "package_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("package_name"); }}>
+                          <div className="flex items-center gap-1">Package / Dest {sortField === "package_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "total_amount" && sortOrder === "asc" ? "desc" : "asc"); setSortField("total_amount"); }}>
+                          <div className="flex items-center gap-1">Amount (₹) {sortField === "total_amount" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 whitespace-nowrap cursor-pointer hover:bg-secondary/80 transition-colors" onClick={() => { setSortOrder(sortField === "agent_name" && sortOrder === "asc" ? "desc" : "asc"); setSortField("agent_name"); }}>
+                          <div className="flex items-center gap-1">Generated By {sortField === "agent_name" ? (sortOrder === "asc" ? <ArrowUp className="w-3 h-3" /> : <ArrowDown className="w-3 h-3" />) : <ArrowUpDown className="w-3 h-3 opacity-30" />}</div>
+                        </th>
+                        <th className="px-4 py-3 text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredQuotationsList
+                        .sort((a, b) => {
+                          const valA = a[sortField];
+                          const valB = b[sortField];
+                          if (!valA && valB) return sortOrder === "asc" ? -1 : 1;
+                          if (valA && !valB) return sortOrder === "asc" ? 1 : -1;
+                          if (!valA && !valB) return 0;
 
-                            if (sortField === "total_amount") {
-                              return sortOrder === "asc" ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
-                            }
-                            if (sortField === "created_at") {
-                              return sortOrder === "asc"
-                                ? new Date(valA).getTime() - new Date(valB).getTime()
-                                : new Date(valB).getTime() - new Date(valA).getTime();
-                            }
+                          if (sortField === "total_amount") {
+                            return sortOrder === "asc" ? Number(valA) - Number(valB) : Number(valB) - Number(valA);
+                          }
+                          if (sortField === "created_at") {
+                            return sortOrder === "asc"
+                              ? new Date(valA).getTime() - new Date(valB).getTime()
+                              : new Date(valB).getTime() - new Date(valA).getTime();
+                          }
 
-                            const strA = String(valA).toLowerCase();
-                            const strB = String(valB).toLowerCase();
-                            if (strA < strB) return sortOrder === "asc" ? -1 : 1;
-                            if (strA > strB) return sortOrder === "asc" ? 1 : -1;
-                            return 0;
-                          })
-                          .map((quote) => (
-                            <tr key={quote.id} className="hover:bg-muted/50 transition-colors">
-                              <td className="px-4 py-4 whitespace-nowrap font-medium text-primary">{quote.id}</td>
-                              <td className="px-4 py-4 whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</td>
-                              <td className="px-4 py-4 whitespace-nowrap font-medium">{quote.customer_name}</td>
-                              <td className="px-4 py-4 whitespace-nowrap">
-                                <p className="text-foreground">{quote.package_name}</p>
-                                <p className="text-xs text-muted-foreground">{quote.destination}</p>
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap font-bold text-amber-600 dark:text-amber-500">
-                                {formatINR(quote.total_amount)}
-                              </td>
-                              <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
-                              <td className="px-4 py-4 whitespace-nowrap text-right">
-                                <DropdownMenu>
-                                  <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8">
-                                      <MoreVertical className="h-4 w-4" />
-                                    </Button>
-                                  </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                          const strA = String(valA).toLowerCase();
+                          const strB = String(valB).toLowerCase();
+                          if (strA < strB) return sortOrder === "asc" ? -1 : 1;
+                          if (strA > strB) return sortOrder === "asc" ? 1 : -1;
+                          return 0;
+                        })
+                        .map((quote) => (
+                          <tr key={quote.id} className="hover:bg-muted/50 transition-colors">
+                            <td className="px-4 py-4 whitespace-nowrap font-medium text-primary">{quote.id}</td>
+                            <td className="px-4 py-4 whitespace-nowrap">{new Date(quote.created_at).toLocaleDateString()}</td>
+                            <td className="px-4 py-4 whitespace-nowrap font-medium">{quote.customer_name}</td>
+                            <td className="px-4 py-4 whitespace-nowrap">
+                              <p className="text-foreground">{quote.package_name}</p>
+                              <p className="text-xs text-muted-foreground">{quote.destination}</p>
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap font-bold text-amber-600 dark:text-amber-500">
+                              {formatINR(quote.total_amount)}
+                            </td>
+                            <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
+                            <td className="px-4 py-4 whitespace-nowrap text-right">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-8 w-8">
+                                    <MoreVertical className="h-4 w-4" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40 rounded-xl">
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSavedQuoteId(quote.id);
+                                      setForm(quote.details || { ...DEFAULT_FORM });
+                                      setPreviewOpen(true);
+                                    }}
+                                    className="cursor-pointer"
+                                  >
+                                    <Eye className="mr-2 h-4 w-4" /> View / Share
+                                  </DropdownMenuItem>
+                                  <>{auth?.role === "admin" && (
                                     <DropdownMenuItem
                                       onClick={() => {
-                                        setSavedQuoteId(quote.id);
+                                        setEditingQuoteId(quote.id);
                                         setForm(quote.details || { ...DEFAULT_FORM });
-                                        setPreviewOpen(true);
+                                        setActiveView("builder");
                                       }}
                                       className="cursor-pointer"
                                     >
-                                      <Eye className="mr-2 h-4 w-4" /> View / Share
+                                      <Edit2 className="mr-2 h-4 w-4" /> Edit
                                     </DropdownMenuItem>
-                                    <>{auth?.role === "admin" && (
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          setEditingQuoteId(quote.id);
-                                          setForm(quote.details || { ...DEFAULT_FORM });
-                                          setActiveView("builder");
-                                        }}
-                                        className="cursor-pointer"
-                                      >
-                                        <Edit2 className="mr-2 h-4 w-4" /> Edit
-                                      </DropdownMenuItem>
-                                    )}</>
-                                    <>{auth?.role === "admin" && (
-                                      <DropdownMenuItem
-                                        onClick={() => setDeleteQuoteId(quote.id)}
-                                        className="cursor-pointer text-destructive focus:text-destructive"
-                                      >
-                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
-                                      </DropdownMenuItem>
-                                    )}</>
-                                  </DropdownMenuContent>
-                                </DropdownMenu>
-                              </td>
-                            </tr>
-                          ))}
-                        {filteredQuotationsList.length === 0 && (
-                          <tr>
-                            <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
-                              No quotations found. Click "Create New Quote" to build one!
+                                  )}</>
+                                  <>{auth?.role === "admin" && (
+                                    <DropdownMenuItem
+                                      onClick={() => setDeleteQuoteId(quote.id)}
+                                      className="cursor-pointer text-destructive focus:text-destructive"
+                                    >
+                                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </DropdownMenuItem>
+                                  )}</>
+                                </DropdownMenuContent>
+                              </DropdownMenu>
                             </td>
                           </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                        ))}
+                      {filteredQuotationsList.length === 0 && (
+                        <tr>
+                          <td colSpan={7} className="px-4 py-12 text-center text-muted-foreground">
+                            No quotations found. Click "Create New Quote" to build one!
+                          </td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              </TabsContent>
-            ))}
-          </Tabs>
-        </div>
+              </div>
+            </TabsContent>
+          ))}
+        </Tabs>
+      </div>
 
       <Dialog open={activeView === "builder"} onOpenChange={(open) => {
         if (!open) {
@@ -893,9 +893,9 @@ function QuotationsPage() {
           <DialogHeader className="p-6 border-b shrink-0 bg-background/95 backdrop-blur z-10">
             <div>
               <DialogTitle className="font-display text-2xl font-bold">
-                {form.packageName === "Hotel Quote" ? "Hotel Quotation Builder" : 
-                 form.packageName === "Package Quote" ? "Package Quotation Builder" : 
-                 "Quotation Builder"}
+                {form.packageName === "Hotel Quote" ? "Hotel Quotation Builder" :
+                  form.packageName === "Package Quote" ? "Package Quotation Builder" :
+                    "Quotation Builder"}
               </DialogTitle>
               <DialogDescription className="text-muted-foreground mt-1 text-sm text-left">
                 Create, style, and share customized travel itineraries and payment estimates.
@@ -904,651 +904,651 @@ function QuotationsPage() {
           </DialogHeader>
           <div className="flex-1 overflow-y-auto p-6 pt-6 relative">
             <div className="grid gap-6 lg:grid-cols-3 print:hidden">
-          {/* Left Side: Builder Form */}
-          <div className="lg:col-span-2 space-y-6">
-            {/* Customer & Package Auto-fill hooks */}
-            <div className="grid gap-4 sm:grid-cols-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <div>
-                <Label
-                  htmlFor="cust-select"
-                  className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
-                >
-                  Auto-fill Customer Profile
-                </Label>
-                <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={customerOpen}
-                      className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+              {/* Left Side: Builder Form */}
+              <div className="lg:col-span-2 space-y-6">
+                {/* Customer & Package Auto-fill hooks */}
+                <div className="grid gap-4 sm:grid-cols-2 rounded-2xl border border-border bg-card p-6 shadow-sm">
+                  <div>
+                    <Label
+                      htmlFor="cust-select"
+                      className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
                     >
-                      <span className="truncate">
-                        {form.customerName
-                          ? customers.find((c) => c.name === form.customerName)?.name ||
-                          "-- Select Existing Client --"
-                          : "-- Select Existing Client --"}
-                      </span>
-                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[300px] p-0" align="start">
-                    <Command>
-                      <CommandInput placeholder="Search client..." className="h-9" />
-                      <CommandList>
-                        <CommandEmpty>No client found.</CommandEmpty>
-                        <CommandGroup>
-                          {customers.map((c) => (
-                            <CommandItem
-                              key={c.id}
-                              value={c.name}
-                              onSelect={() => {
-                                handleCustomerSelect(c.id);
-                                setCustomerOpen(false);
-                              }}
-                            >
-                              {c.name} ({c.phone})
-                              <Check
-                                className={cn(
-                                  "ml-auto h-4 w-4",
-                                  form.customerName === c.name ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
-              {form.packageName !== "Hotel Quote" && (
-                <div>
-                  <Label
-                    htmlFor="pkg-select"
-                    className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
-                  >
-                    Auto-fill Package Template
-                  </Label>
-                  <Popover open={packageOpen} onOpenChange={setPackageOpen}>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        role="combobox"
-                        aria-expanded={packageOpen}
-                        className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+                      Auto-fill Customer Profile
+                    </Label>
+                    <Popover open={customerOpen} onOpenChange={setCustomerOpen}>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          role="combobox"
+                          aria-expanded={customerOpen}
+                          className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
+                        >
+                          <span className="truncate">
+                            {form.customerName
+                              ? customers.find((c) => c.name === form.customerName)?.name ||
+                              "-- Select Existing Client --"
+                              : "-- Select Existing Client --"}
+                          </span>
+                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[300px] p-0" align="start">
+                        <Command>
+                          <CommandInput placeholder="Search client..." className="h-9" />
+                          <CommandList>
+                            <CommandEmpty>No client found.</CommandEmpty>
+                            <CommandGroup>
+                              {customers.map((c) => (
+                                <CommandItem
+                                  key={c.id}
+                                  value={c.name}
+                                  onSelect={() => {
+                                    handleCustomerSelect(c.id);
+                                    setCustomerOpen(false);
+                                  }}
+                                >
+                                  {c.name} ({c.phone})
+                                  <Check
+                                    className={cn(
+                                      "ml-auto h-4 w-4",
+                                      form.customerName === c.name ? "opacity-100" : "opacity-0"
+                                    )}
+                                  />
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                  {form.packageName !== "Hotel Quote" && (
+                    <div>
+                      <Label
+                        htmlFor="pkg-select"
+                        className="mb-2 block font-semibold text-xs uppercase tracking-wider text-muted-foreground"
                       >
-                        <span className="truncate">
-                          {form.packageName && form.packageName !== "Custom Holiday Package"
-                            ? packages.find((p) => p.title === form.packageName)?.title ||
-                            "-- Select Package --"
-                            : "-- Select Package --"}
-                        </span>
-                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-[300px] p-0" align="start">
-                      <Command>
-                        <CommandInput placeholder="Search package..." className="h-9" />
-                        <CommandList>
-                          <CommandEmpty>No package found.</CommandEmpty>
-                          <CommandGroup>
-                            {packages.map((p) => (
-                              <CommandItem
-                                key={p.id}
-                                value={p.title}
-                                onSelect={() => {
-                                  handlePackageSelect(p.id);
-                                  setPackageOpen(false);
-                                }}
-                              >
-                                {p.title}
-                                <Check
-                                  className={cn(
-                                    "ml-auto h-4 w-4",
-                                    form.packageName === p.title ? "opacity-100" : "opacity-0"
-                                  )}
-                                />
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              )}
-            </div>
-
-            {/* Customer Inputs */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                1. Client Details
-              </h3>
-              <div className="grid gap-4 sm:grid-cols-3">
-                <div>
-                  <Label htmlFor="cname">Client Name</Label>
-                  <Input
-                    id="cname"
-                    placeholder="Priya Sharma"
-                    value={form.customerName}
-                    onChange={(e) => setForm({ ...form, customerName: e.target.value })}
-                    className="rounded-xl mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cphone">Client Mobile</Label>
-                  <Input
-                    id="cphone"
-                    placeholder="9876543210"
-                    value={form.customerPhone}
-                    onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
-                    className="rounded-xl mt-1.5"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="cemail">Client Email</Label>
-                  <Input
-                    id="cemail"
-                    placeholder="priya@example.com"
-                    value={form.customerEmail}
-                    onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
-                    className="rounded-xl mt-1.5"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Package Details */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                  2. {form.packageName === "Hotel Quote" ? "Hotel Configuration" : "Trip & Package Configuration"}
-                </h3>
-                {form.packageName !== "Hotel Quote" && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={handleGenerateAIItinerary}
-                    className="rounded-full text-xs gap-1 border-primary/30 hover:bg-primary/5 text-primary"
-                  >
-                    <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Generate Itinerary
-                  </Button>
-                )}
-              </div>
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div className="sm:col-span-2">
-                  <Label htmlFor="pkgname" className="font-semibold text-sm mb-1.5 block">Trip Title</Label>
-                  <Input
-                    id="pkgname"
-                    placeholder="e.g. Dubai Marina & Desert Retreat"
-                    value={form.packageName}
-                    onChange={(e) => setForm({ ...form, packageName: e.target.value })}
-                    className="rounded-xl h-10"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="dest" className="font-semibold text-sm mb-1.5 block">Destination</Label>
-                  <Input
-                    id="dest"
-                    placeholder="e.g. Dubai"
-                    value={form.destination}
-                    onChange={(e) => setForm({ ...form, destination: e.target.value })}
-                    className="rounded-xl h-10"
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-2">
-                  <div>
-                    <Label htmlFor="days" className="font-semibold text-sm mb-1.5 block">Days</Label>
-                    <Input
-                      id="days"
-                      type="number"
-                      min="2"
-                      value={form.durationDays}
-                      onChange={(e) => setForm({ ...form, durationDays: Math.max(2, Number(e.target.value)) })}
-                      className="rounded-xl h-10"
-                    />
-                  </div>
-                  <div>
-                    <Label htmlFor="nights" className="font-semibold text-sm mb-1.5 block">Nights</Label>
-                    <Input
-                      id="nights"
-                      type="number"
-                      value={form.durationNights}
-                      onChange={(e) => setForm({ ...form, durationNights: Number(e.target.value) })}
-                      className="rounded-xl h-10"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-6 mt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-sm">Hotel Options</h4>
-                  <Button type="button" onClick={handleAddHotel} variant="outline" size="sm" className="rounded-full h-8 px-3 text-xs border-border/80 text-foreground">
-                    <Plus className="h-3 w-3 mr-1" /> Add Hotel
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {form.hotels?.map((hotel) => (
-                    <div key={hotel.id} className="rounded-2xl border border-border/80 p-5 space-y-5 relative group">
-                      <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveHotel(hotel.id)}>
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-
-                      <div className="grid gap-4 sm:grid-cols-12">
-                        <div className="sm:col-span-5">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Hotel Name</Label>
-                          <Input placeholder="e.g. Hotel Shompen" className="rounded-xl h-10 bg-background" value={hotel.hotelName} onChange={(e) => handleUpdateHotel(hotel.id, 'hotelName', e.target.value)} />
-                        </div>
-                        <div className="sm:col-span-3">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rating</Label>
-                          <select className="w-full h-10 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" value={hotel.rating} onChange={(e) => handleUpdateHotel(hotel.id, 'rating', e.target.value)}>
-                            <option>3 Star</option>
-                            <option>4 Star</option>
-                            <option>5 Star</option>
-                          </select>
-                        </div>
-                        <div className="sm:col-span-4">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Location</Label>
-                          <Input placeholder="e.g. Port Blair" className="rounded-xl h-10 bg-background" value={hotel.location} onChange={(e) => handleUpdateHotel(hotel.id, 'location', e.target.value)} />
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-5">
-                        <div>
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-in</Label>
-                          <div className="relative">
-                            <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkIn} onChange={(e) => handleUpdateHotel(hotel.id, 'checkIn', e.target.value)} />
-                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-out</Label>
-                          <div className="relative">
-                            <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkOut} onChange={(e) => handleUpdateHotel(hotel.id, 'checkOut', e.target.value)} />
-                            <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                          </div>
-                        </div>
-                        <div>
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rooms</Label>
-                          <Input placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.rooms} onChange={(e) => handleUpdateHotel(hotel.id, 'rooms', e.target.value)} />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Adults</Label>
-                          <Input placeholder="2" className="rounded-xl h-10 bg-background" value={hotel.adults} onChange={(e) => handleUpdateHotel(hotel.id, 'adults', e.target.value)} />
-                        </div>
-                        <div>
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Children</Label>
-                          <Input placeholder="0" className="rounded-xl h-10 bg-background" value={hotel.children} onChange={(e) => handleUpdateHotel(hotel.id, 'children', e.target.value)} />
-                        </div>
-                      </div>
-
-                      <div className="grid gap-4 sm:grid-cols-12">
-                        <div className="sm:col-span-3">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Room Type</Label>
-                          <Input placeholder="Deluxe" className="rounded-xl h-10 bg-background" value={hotel.roomType} onChange={(e) => handleUpdateHotel(hotel.id, 'roomType', e.target.value)} />
-                        </div>
-                        <div className="sm:col-span-2">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Nights</Label>
-                          <Input type="number" placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.nights} onChange={(e) => handleUpdateHotel(hotel.id, 'nights', Number(e.target.value))} />
-                        </div>
-                        <div className="sm:col-span-3">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Meal Type</Label>
-                          <Input placeholder="Half Board" className="rounded-xl h-10 bg-background" value={hotel.mealPlan} onChange={(e) => handleUpdateHotel(hotel.id, 'mealPlan', e.target.value)} />
-                        </div>
-                        <div className="sm:col-span-4">
-                          <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Confirmation No.</Label>
-                          <Input placeholder="e.g. HTL-12345" className="rounded-xl h-10 bg-background" value={hotel.confirmationNo || ''} onChange={(e) => handleUpdateHotel(hotel.id, 'confirmationNo', e.target.value)} />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              <div className="border-t border-border pt-6 mt-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h4 className="font-semibold text-sm">Flight Options</h4>
-                  <Button type="button" onClick={handleAddFlight} variant="outline" size="sm" className="rounded-full h-8 px-3 text-xs border-border/80 text-foreground">
-                    <Plus className="h-3 w-3 mr-1" /> Add Flight
-                  </Button>
-                </div>
-
-                <div className="space-y-4">
-                  {form.flights?.map((flight) => (
-                    <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-4 rounded-2xl border border-border/50">
-                      <div>
-                        <Input placeholder="Airline (e.g. Emirates)" className="rounded-xl h-10 bg-background" value={flight.airline} onChange={(e) => handleUpdateFlight(flight.id, 'airline', e.target.value)} />
-                      </div>
-                      <div>
-                        <Input placeholder="Flight No." className="rounded-xl h-10 bg-background" value={flight.flightNo} onChange={(e) => handleUpdateFlight(flight.id, 'flightNo', e.target.value)} />
-                      </div>
-                      <div>
-                        <Input placeholder="Sector (e.g. DEL-DXB)" className="rounded-xl h-10 bg-background" value={flight.sector} onChange={(e) => handleUpdateFlight(flight.id, 'sector', e.target.value)} />
-                      </div>
-                      <div>
-                        <Input placeholder="Date & Time" className="rounded-xl h-10 bg-background" value={flight.dateTime} onChange={(e) => handleUpdateFlight(flight.id, 'dateTime', e.target.value)} />
-                      </div>
-                      <div>
-                        <Input placeholder="PNR" className="rounded-xl h-10 bg-background" value={flight.pnr || ''} onChange={(e) => handleUpdateFlight(flight.id, 'pnr', e.target.value)} />
-                      </div>
-                      <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveFlight(flight.id)}>
-                        <XCircle className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-
-            {/* Day Wise Itinerary */}
-            {form.packageName !== "Hotel Quote" && (
-              <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-                <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                  3. Day-Wise Program
-                </h3>
-                <div className="space-y-4">
-                  {form.itinerary.map((day, idx) => (
-                    <div
-                      key={idx}
-                      className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2 relative group"
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
-                          Day {day.day}
-                        </span>
-                        <Input
-                          placeholder="Day Title"
-                          value={day.title}
-                          onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
-                          className="rounded-xl h-8 text-xs bg-background"
-                        />
-                        {idx >= 2 && (
+                        Auto-fill Package Template
+                      </Label>
+                      <Popover open={packageOpen} onOpenChange={setPackageOpen}>
+                        <PopoverTrigger asChild>
                           <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={() => {
-                              setForm(f => {
-                                const newItin = [...f.itinerary];
-                                newItin.splice(idx, 1);
-                                newItin.forEach((d, i) => d.day = i + 1);
-                                return { ...f, itinerary: newItin, durationDays: newItin.length };
-                              });
-                            }}
+                            variant="outline"
+                            role="combobox"
+                            aria-expanded={packageOpen}
+                            className="w-full justify-between rounded-xl border border-border bg-background px-3 py-2 text-sm font-normal h-10"
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <span className="truncate">
+                              {form.packageName && form.packageName !== "Custom Holiday Package"
+                                ? packages.find((p) => p.title === form.packageName)?.title ||
+                                "-- Select Package --"
+                                : "-- Select Package --"}
+                            </span>
+                            <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                           </Button>
-                        )}
-                      </div>
-                      <Textarea
-                        placeholder="Day details and highlights"
-                        value={day.description}
-                        onChange={(e) => handleItineraryChange(idx, "description", e.target.value)}
-                        className="rounded-xl text-xs bg-background"
-                        rows={2}
-                      />
-                    </div>
-                  ))}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="w-full rounded-xl border-dashed border-2 mt-2"
-                    onClick={() => setForm(f => ({ ...f, durationDays: Number(f.durationDays) + 1 }))}
-                  >
-                    <Plus className="h-4 w-4 mr-2" /> Add Another Day
-                  </Button>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Right Side Column: Pricing & Share */}
-          <div className="space-y-6">
-            {/* Pricing & GST Ledger */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                {form.packageName === "Hotel Quote" ? "3. Pricing Estimate" : "4. Pricing Estimate"}
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="basep">Base Package Price (₹)</Label>
-                  <Input
-                    id="basep"
-                    type="number"
-                    value={form.basePrice}
-                    onChange={(e) => setForm({ ...form, basePrice: Math.max(0, Number(e.target.value)) })}
-                    className="rounded-xl mt-1.5 font-bold"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="gstrate">GST Rate</Label>
-                  <select
-                    id="gstrate"
-                    value={form.gstRate}
-                    onChange={(e) => setForm({ ...form, gstRate: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
-                  >
-                    <option value="0">None</option>
-                    <option value="5">5% GST (Standard Tour)</option>
-                    <option value="18">18% GST (Hotel/Flights)</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="tcsrate">TCS Rate (International Pack)</Label>
-                  <select
-                    id="tcsrate"
-                    value={form.tcsRate}
-                    onChange={(e) => setForm({ ...form, tcsRate: Number(e.target.value) })}
-                    className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
-                  >
-                    <option value="0">None</option>
-                    <option value="5">5% TCS (With PAN)</option>
-                    <option value="20">20% TCS (Without PAN)</option>
-                  </select>
-                </div>
-                <div>
-                  <Label htmlFor="disc">Special Discount</Label>
-                  <div className="flex items-center gap-2 mt-1.5">
-                    <select
-                      value={form.discountType}
-                      onChange={(e) => setForm({ ...form, discountType: e.target.value as "amount" | "percentage" })}
-                      className="rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-28 shrink-0"
-                    >
-                      <option value="amount">₹ Flat</option>
-                      <option value="percentage">% Perc</option>
-                    </select>
-                    <Input
-                      id="disc"
-                      type="number"
-                      value={form.discount}
-                      onChange={(e) => setForm({ ...form, discount: Math.max(0, Number(e.target.value)) })}
-                      className="rounded-xl flex-1"
-                      placeholder={form.discountType === "percentage" ? "e.g. 5" : "e.g. 1000"}
-                    />
-                  </div>
-                </div>
-
-                <div className="border-t border-border pt-4 mt-2 space-y-2">
-                  <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                    <span>Base Price:</span>
-                    <span>{formatINR(form.basePrice)}</span>
-                  </div>
-                  <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                    <span>GST Amount ({form.gstRate}%):</span>
-                    <span>{formatINR(gstAmount)}</span>
-                  </div>
-                  {form.tcsRate > 0 && (
-                    <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                      <span>TCS Amount ({form.tcsRate}%):</span>
-                      <span>{formatINR(tcsAmount)}</span>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-[300px] p-0" align="start">
+                          <Command>
+                            <CommandInput placeholder="Search package..." className="h-9" />
+                            <CommandList>
+                              <CommandEmpty>No package found.</CommandEmpty>
+                              <CommandGroup>
+                                {packages.map((p) => (
+                                  <CommandItem
+                                    key={p.id}
+                                    value={p.title}
+                                    onSelect={() => {
+                                      handlePackageSelect(p.id);
+                                      setPackageOpen(false);
+                                    }}
+                                  >
+                                    {p.title}
+                                    <Check
+                                      className={cn(
+                                        "ml-auto h-4 w-4",
+                                        form.packageName === p.title ? "opacity-100" : "opacity-0"
+                                      )}
+                                    />
+                                  </CommandItem>
+                                ))}
+                              </CommandGroup>
+                            </CommandList>
+                          </Command>
+                        </PopoverContent>
+                      </Popover>
                     </div>
                   )}
-                  <div className="flex justify-between text-xs text-muted-foreground font-semibold">
-                    <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
-                    <span className="text-emerald-600">- {formatINR(discountAmount)}</span>
-                  </div>
-                  <div className="flex justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
-                    <span>Total Cost:</span>
-                    <span>{formatINR(totalAmount)}</span>
-                  </div>
                 </div>
-              </div>
-            </div>
 
-            {/* Inclusions & Exclusions */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
-                {form.packageName === "Hotel Quote" ? "4. Inclusions & Exclusions" : "5. Inclusions & Exclusions"}
-              </h3>
-              <div className="space-y-3">
-                <div>
-                  <Label htmlFor="incls">Inclusions</Label>
-                  <Textarea
-                    id="incls"
-                    value={form.inclusions}
-                    onChange={(e) => setForm({ ...form, inclusions: e.target.value })}
-                    className="rounded-xl text-xs mt-1.5"
-                    rows={3}
-                  />
+                {/* Customer Inputs */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                    1. Client Details
+                  </h3>
+                  <div className="grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <Label htmlFor="cname">Client Name</Label>
+                      <Input
+                        id="cname"
+                        placeholder="Priya Sharma"
+                        value={form.customerName}
+                        onChange={(e) => setForm({ ...form, customerName: e.target.value })}
+                        className="rounded-xl mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cphone">Client Mobile</Label>
+                      <Input
+                        id="cphone"
+                        placeholder="9876543210"
+                        value={form.customerPhone}
+                        onChange={(e) => setForm({ ...form, customerPhone: e.target.value })}
+                        className="rounded-xl mt-1.5"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="cemail">Client Email</Label>
+                      <Input
+                        id="cemail"
+                        placeholder="priya@example.com"
+                        value={form.customerEmail}
+                        onChange={(e) => setForm({ ...form, customerEmail: e.target.value })}
+                        className="rounded-xl mt-1.5"
+                      />
+                    </div>
+                  </div>
                 </div>
-                <div>
-                  <Label htmlFor="excls">Exclusions</Label>
-                  <Textarea
-                    id="excls"
-                    value={form.exclusions}
-                    onChange={(e) => setForm({ ...form, exclusions: e.target.value })}
-                    className="rounded-xl text-xs mt-1.5"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="terms">Terms & Policies</Label>
-                  <Textarea
-                    id="terms"
-                    value={form.terms}
-                    onChange={(e) => setForm({ ...form, terms: e.target.value })}
-                    className="rounded-xl text-xs mt-1.5"
-                    rows={3}
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="bankDetails">Bank Details</Label>
-                  <Textarea
-                    id="bankDetails"
-                    value={form.bankDetails}
-                    onChange={(e) => setForm({ ...form, bankDetails: e.target.value })}
-                    className="rounded-xl text-xs mt-1.5"
-                    rows={3}
-                  />
-                </div>
-              </div>
-            </div>
 
-            {/* Recent Quotations */}
-            <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
-              <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider flex items-center gap-2">
-                <History className="h-4 w-4" /> Recent Quotes
-              </h3>
-              {!quotations || quotations.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">No recent quotes</p>
-              ) : (
-                <div className="space-y-3">
-                  {quotations.slice(0, 5).map((q: any) => (
-                    <div key={q.id} className="flex flex-col gap-1.5 p-3 rounded-xl border border-border bg-muted/30">
-                      <div className="flex items-center justify-between">
-                        <span className="font-semibold text-xs">{q.id} - {q.customer_name}</span>
-                        <span className="font-bold text-primary text-xs">{formatINR(q.total_amount)}</span>
+                {/* Package Details */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <div className="flex items-center justify-between">
+                    <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                      2. {form.packageName === "Hotel Quote" ? "Hotel Configuration" : "Trip & Package Configuration"}
+                    </h3>
+                    {form.packageName !== "Hotel Quote" && (
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={handleGenerateAIItinerary}
+                        className="rounded-full text-xs gap-1 border-primary/30 hover:bg-primary/5 text-primary"
+                      >
+                        <Sparkles className="h-3.5 w-3.5 animate-pulse" /> AI Generate Itinerary
+                      </Button>
+                    )}
+                  </div>
+                  <div className="grid gap-4 sm:grid-cols-4">
+                    <div className="sm:col-span-2">
+                      <Label htmlFor="pkgname" className="font-semibold text-sm mb-1.5 block">Trip Title</Label>
+                      <Input
+                        id="pkgname"
+                        placeholder="e.g. Dubai Marina & Desert Retreat"
+                        value={form.packageName}
+                        onChange={(e) => setForm({ ...form, packageName: e.target.value })}
+                        className="rounded-xl h-10"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="dest" className="font-semibold text-sm mb-1.5 block">Destination</Label>
+                      <Input
+                        id="dest"
+                        placeholder="e.g. Dubai"
+                        value={form.destination}
+                        onChange={(e) => setForm({ ...form, destination: e.target.value })}
+                        className="rounded-xl h-10"
+                      />
+                    </div>
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <Label htmlFor="days" className="font-semibold text-sm mb-1.5 block">Days</Label>
+                        <Input
+                          id="days"
+                          type="number"
+                          min="2"
+                          value={form.durationDays}
+                          onChange={(e) => setForm({ ...form, durationDays: Math.max(2, Number(e.target.value)) })}
+                          className="rounded-xl h-10"
+                        />
                       </div>
-                      <div className="flex items-center justify-between text-[11px] text-muted-foreground">
-                        <span className="truncate max-w-[150px]">{q.package_name}</span>
-                        <div className="flex gap-2">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="h-7 w-7">
-                                <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                              <DropdownMenuItem
+                      <div>
+                        <Label htmlFor="nights" className="font-semibold text-sm mb-1.5 block">Nights</Label>
+                        <Input
+                          id="nights"
+                          type="number"
+                          value={form.durationNights}
+                          onChange={(e) => setForm({ ...form, durationNights: Number(e.target.value) })}
+                          className="rounded-xl h-10"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-6 mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-sm">Hotel Options</h4>
+                      <Button type="button" onClick={handleAddHotel} variant="outline" size="sm" className="rounded-full h-8 px-3 text-xs border-border/80 text-foreground">
+                        <Plus className="h-3 w-3 mr-1" /> Add Hotel
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {form.hotels?.map((hotel) => (
+                        <div key={hotel.id} className="rounded-2xl border border-border/80 p-5 space-y-5 relative group">
+                          <Button type="button" variant="ghost" size="icon" className="absolute right-2 top-2 h-6 w-6 text-muted-foreground hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveHotel(hotel.id)}>
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+
+                          <div className="grid gap-4 sm:grid-cols-12">
+                            <div className="sm:col-span-5">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Hotel Name</Label>
+                              <Input placeholder="e.g. Hotel Shompen" className="rounded-xl h-10 bg-background" value={hotel.hotelName} onChange={(e) => handleUpdateHotel(hotel.id, 'hotelName', e.target.value)} />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rating</Label>
+                              <select className="w-full h-10 rounded-xl border border-input bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-ring" value={hotel.rating} onChange={(e) => handleUpdateHotel(hotel.id, 'rating', e.target.value)}>
+                                <option>3 Star</option>
+                                <option>4 Star</option>
+                                <option>5 Star</option>
+                              </select>
+                            </div>
+                            <div className="sm:col-span-4">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Location</Label>
+                              <Input placeholder="e.g. Port Blair" className="rounded-xl h-10 bg-background" value={hotel.location} onChange={(e) => handleUpdateHotel(hotel.id, 'location', e.target.value)} />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 sm:grid-cols-5">
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-in</Label>
+                              <div className="relative">
+                                <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkIn} onChange={(e) => handleUpdateHotel(hotel.id, 'checkIn', e.target.value)} />
+                                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Check-out</Label>
+                              <div className="relative">
+                                <Input placeholder="dd/mm/yyyy" className="rounded-xl h-10 pl-3 pr-10 bg-background" value={hotel.checkOut} onChange={(e) => handleUpdateHotel(hotel.id, 'checkOut', e.target.value)} />
+                                <Calendar className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                              </div>
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Rooms</Label>
+                              <Input placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.rooms} onChange={(e) => handleUpdateHotel(hotel.id, 'rooms', e.target.value)} />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Adults</Label>
+                              <Input placeholder="2" className="rounded-xl h-10 bg-background" value={hotel.adults} onChange={(e) => handleUpdateHotel(hotel.id, 'adults', e.target.value)} />
+                            </div>
+                            <div>
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Children</Label>
+                              <Input placeholder="0" className="rounded-xl h-10 bg-background" value={hotel.children} onChange={(e) => handleUpdateHotel(hotel.id, 'children', e.target.value)} />
+                            </div>
+                          </div>
+
+                          <div className="grid gap-4 sm:grid-cols-12">
+                            <div className="sm:col-span-3">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Room Type</Label>
+                              <Input placeholder="Deluxe" className="rounded-xl h-10 bg-background" value={hotel.roomType} onChange={(e) => handleUpdateHotel(hotel.id, 'roomType', e.target.value)} />
+                            </div>
+                            <div className="sm:col-span-2">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Nights</Label>
+                              <Input type="number" placeholder="1" className="rounded-xl h-10 bg-background" value={hotel.nights} onChange={(e) => handleUpdateHotel(hotel.id, 'nights', Number(e.target.value))} />
+                            </div>
+                            <div className="sm:col-span-3">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Meal Type</Label>
+                              <Input placeholder="Half Board" className="rounded-xl h-10 bg-background" value={hotel.mealPlan} onChange={(e) => handleUpdateHotel(hotel.id, 'mealPlan', e.target.value)} />
+                            </div>
+                            <div className="sm:col-span-4">
+                              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground mb-1.5 block">Confirmation No.</Label>
+                              <Input placeholder="e.g. HTL-12345" className="rounded-xl h-10 bg-background" value={hotel.confirmationNo || ''} onChange={(e) => handleUpdateHotel(hotel.id, 'confirmationNo', e.target.value)} />
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-border pt-6 mt-6">
+                    <div className="flex items-center justify-between mb-4">
+                      <h4 className="font-semibold text-sm">Flight Options</h4>
+                      <Button type="button" onClick={handleAddFlight} variant="outline" size="sm" className="rounded-full h-8 px-3 text-xs border-border/80 text-foreground">
+                        <Plus className="h-3 w-3 mr-1" /> Add Flight
+                      </Button>
+                    </div>
+
+                    <div className="space-y-4">
+                      {form.flights?.map((flight) => (
+                        <div key={flight.id} className="grid gap-4 sm:grid-cols-[1fr_1fr_1fr_1fr_1fr_auto] items-center relative group bg-muted/10 p-4 rounded-2xl border border-border/50">
+                          <div>
+                            <Input placeholder="Airline (e.g. Emirates)" className="rounded-xl h-10 bg-background" value={flight.airline} onChange={(e) => handleUpdateFlight(flight.id, 'airline', e.target.value)} />
+                          </div>
+                          <div>
+                            <Input placeholder="Flight No." className="rounded-xl h-10 bg-background" value={flight.flightNo} onChange={(e) => handleUpdateFlight(flight.id, 'flightNo', e.target.value)} />
+                          </div>
+                          <div>
+                            <Input placeholder="Sector (e.g. DEL-DXB)" className="rounded-xl h-10 bg-background" value={flight.sector} onChange={(e) => handleUpdateFlight(flight.id, 'sector', e.target.value)} />
+                          </div>
+                          <div>
+                            <Input placeholder="Date & Time" className="rounded-xl h-10 bg-background" value={flight.dateTime} onChange={(e) => handleUpdateFlight(flight.id, 'dateTime', e.target.value)} />
+                          </div>
+                          <div>
+                            <Input placeholder="PNR" className="rounded-xl h-10 bg-background" value={flight.pnr || ''} onChange={(e) => handleUpdateFlight(flight.id, 'pnr', e.target.value)} />
+                          </div>
+                          <Button type="button" variant="ghost" size="icon" className="h-8 w-8 text-muted-foreground hover:text-destructive rounded-full opacity-0 group-hover:opacity-100 transition-opacity" onClick={() => handleRemoveFlight(flight.id)}>
+                            <XCircle className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Day Wise Itinerary */}
+                {form.packageName !== "Hotel Quote" && (
+                  <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                    <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                      3. Day-Wise Program
+                    </h3>
+                    <div className="space-y-4">
+                      {form.itinerary.map((day, idx) => (
+                        <div
+                          key={idx}
+                          className="p-4 rounded-xl border border-border/80 bg-secondary/20 space-y-2 relative group"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="grid h-6 w-12 place-items-center rounded-lg bg-primary text-primary-foreground text-xs font-bold shrink-0">
+                              Day {day.day}
+                            </span>
+                            <Input
+                              placeholder="Day Title"
+                              value={day.title}
+                              onChange={(e) => handleItineraryChange(idx, "title", e.target.value)}
+                              className="rounded-xl h-8 text-xs bg-background"
+                            />
+                            {idx >= 2 && (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                className="h-7 w-7 shrink-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover:opacity-100 transition-opacity"
                                 onClick={() => {
-                                  if (q.details) {
-                                    try {
-                                      let parsedDetails = q.details;
-                                      if (typeof parsedDetails === 'string') {
-                                        parsedDetails = JSON.parse(parsedDetails);
-                                      }
-                                      const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                      setForm(clonedDetails);
-                                      setEditingQuoteId(q.id);
-                                      setPreviewOpen(true);
-                                    } catch (error) {
-                                      console.error("Failed to parse quote details", error);
-                                      toast.error("Could not load quote details");
-                                    }
-                                  }
+                                  setForm(f => {
+                                    const newItin = [...f.itinerary];
+                                    newItin.splice(idx, 1);
+                                    newItin.forEach((d, i) => d.day = i + 1);
+                                    return { ...f, itinerary: newItin, durationDays: newItin.length };
+                                  });
                                 }}
-                                className="cursor-pointer gap-2 py-2"
                               >
-                                <Eye className="h-4 w-4" /> View
-                              </DropdownMenuItem>
-                              <>{auth?.role === "admin" && (
-                                <DropdownMenuItem
-                                  onClick={() => {
-                                    if (q.details) {
-                                      try {
-                                        let parsedDetails = q.details;
-                                        if (typeof parsedDetails === 'string') {
-                                          parsedDetails = JSON.parse(parsedDetails);
-                                        }
-                                        const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                        setForm(clonedDetails);
-                                        setEditingQuoteId(q.id);
-                                        window.scrollTo({ top: 0, behavior: "smooth" });
-                                        toast.success(`Quote ${q.id} loaded for editing`);
-                                      } catch (error) {
-                                        console.error("Failed to parse quote details", error);
-                                        toast.error("Could not load quote details");
-                                      }
-                                    }
-                                  }}
-                                  className="cursor-pointer gap-2 py-2"
-                                >
-                                  <Edit2 className="h-4 w-4" /> Edit
-                                </DropdownMenuItem>
-                              )}</>
-                              {isAdmin && (
-                                <>{auth?.role === "admin" && (
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
+                            )}
+                          </div>
+                          <Textarea
+                            placeholder="Day details and highlights"
+                            value={day.description}
+                            onChange={(e) => handleItineraryChange(idx, "description", e.target.value)}
+                            className="rounded-xl text-xs bg-background"
+                            rows={2}
+                          />
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        className="w-full rounded-xl border-dashed border-2 mt-2"
+                        onClick={() => setForm(f => ({ ...f, durationDays: Number(f.durationDays) + 1 }))}
+                      >
+                        <Plus className="h-4 w-4 mr-2" /> Add Another Day
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Right Side Column: Pricing & Share */}
+              <div className="space-y-6">
+                {/* Pricing & GST Ledger */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                    {form.packageName === "Hotel Quote" ? "3. Pricing Estimate" : "4. Pricing Estimate"}
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="basep">Base Package Price (₹)</Label>
+                      <Input
+                        id="basep"
+                        type="number"
+                        value={form.basePrice}
+                        onChange={(e) => setForm({ ...form, basePrice: Math.max(0, Number(e.target.value)) })}
+                        className="rounded-xl mt-1.5 font-bold"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="gstrate">GST Rate</Label>
+                      <select
+                        id="gstrate"
+                        value={form.gstRate}
+                        onChange={(e) => setForm({ ...form, gstRate: Number(e.target.value) })}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
+                      >
+                        <option value="0">None</option>
+                        <option value="5">5% GST (Standard Tour)</option>
+                        <option value="18">18% GST (Hotel/Flights)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="tcsrate">TCS Rate (International Pack)</Label>
+                      <select
+                        id="tcsrate"
+                        value={form.tcsRate}
+                        onChange={(e) => setForm({ ...form, tcsRate: Number(e.target.value) })}
+                        className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
+                      >
+                        <option value="0">None</option>
+                        <option value="5">5% TCS (With PAN)</option>
+                        <option value="20">20% TCS (Without PAN)</option>
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="disc">Special Discount</Label>
+                      <div className="flex items-center gap-2 mt-1.5">
+                        <select
+                          value={form.discountType}
+                          onChange={(e) => setForm({ ...form, discountType: e.target.value as "amount" | "percentage" })}
+                          className="rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary w-28 shrink-0"
+                        >
+                          <option value="amount">₹ Flat</option>
+                          <option value="percentage">% Perc</option>
+                        </select>
+                        <Input
+                          id="disc"
+                          type="number"
+                          value={form.discount}
+                          onChange={(e) => setForm({ ...form, discount: Math.max(0, Number(e.target.value)) })}
+                          className="rounded-xl flex-1"
+                          placeholder={form.discountType === "percentage" ? "e.g. 5" : "e.g. 1000"}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="border-t border-border pt-4 mt-2 space-y-2">
+                      <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                        <span>Base Price:</span>
+                        <span>{formatINR(form.basePrice)}</span>
+                      </div>
+                      <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                        <span>GST Amount ({form.gstRate}%):</span>
+                        <span>{formatINR(gstAmount)}</span>
+                      </div>
+                      {form.tcsRate > 0 && (
+                        <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                          <span>TCS Amount ({form.tcsRate}%):</span>
+                          <span>{formatINR(tcsAmount)}</span>
+                        </div>
+                      )}
+                      <div className="flex justify-between text-xs text-muted-foreground font-semibold">
+                        <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
+                        <span className="text-emerald-600">- {formatINR(discountAmount)}</span>
+                      </div>
+                      <div className="flex justify-between border-t border-border pt-3 font-display font-bold text-lg text-primary">
+                        <span>Total Cost:</span>
+                        <span>{formatINR(totalAmount)}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Inclusions & Exclusions */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider">
+                    {form.packageName === "Hotel Quote" ? "4. Inclusions & Exclusions" : "5. Inclusions & Exclusions"}
+                  </h3>
+                  <div className="space-y-3">
+                    <div>
+                      <Label htmlFor="incls">Inclusions</Label>
+                      <Textarea
+                        id="incls"
+                        value={form.inclusions}
+                        onChange={(e) => setForm({ ...form, inclusions: e.target.value })}
+                        className="rounded-xl text-xs mt-1.5"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="excls">Exclusions</Label>
+                      <Textarea
+                        id="excls"
+                        value={form.exclusions}
+                        onChange={(e) => setForm({ ...form, exclusions: e.target.value })}
+                        className="rounded-xl text-xs mt-1.5"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="terms">Terms & Policies</Label>
+                      <Textarea
+                        id="terms"
+                        value={form.terms}
+                        onChange={(e) => setForm({ ...form, terms: e.target.value })}
+                        className="rounded-xl text-xs mt-1.5"
+                        rows={3}
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="bankDetails">Bank Details</Label>
+                      <Textarea
+                        id="bankDetails"
+                        value={form.bankDetails}
+                        onChange={(e) => setForm({ ...form, bankDetails: e.target.value })}
+                        className="rounded-xl text-xs mt-1.5"
+                        rows={3}
+                      />
+                    </div>
+                  </div>
+                </div>
+
+                {/* Recent Quotations */}
+                <div className="rounded-2xl border border-border bg-card p-6 shadow-sm space-y-4">
+                  <h3 className="font-display font-bold text-sm text-primary uppercase tracking-wider flex items-center gap-2">
+                    <History className="h-4 w-4" /> Recent Quotes
+                  </h3>
+                  {!quotations || quotations.length === 0 ? (
+                    <p className="text-xs text-muted-foreground text-center py-4">No recent quotes</p>
+                  ) : (
+                    <div className="space-y-3">
+                      {quotations.slice(0, 5).map((q: any) => (
+                        <div key={q.id} className="flex flex-col gap-1.5 p-3 rounded-xl border border-border bg-muted/30">
+                          <div className="flex items-center justify-between">
+                            <span className="font-semibold text-xs">{q.id} - {q.customer_name}</span>
+                            <span className="font-bold text-primary text-xs">{formatINR(q.total_amount)}</span>
+                          </div>
+                          <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+                            <span className="truncate max-w-[150px]">{q.package_name}</span>
+                            <div className="flex gap-2">
+                              <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
+                                  </Button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent align="end" className="w-40 rounded-xl">
                                   <DropdownMenuItem
                                     onClick={() => {
-                                      setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
-                                      toast.success(`Quote ${q.id} deleted`);
+                                      if (q.details) {
+                                        try {
+                                          let parsedDetails = q.details;
+                                          if (typeof parsedDetails === 'string') {
+                                            parsedDetails = JSON.parse(parsedDetails);
+                                          }
+                                          const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                          setForm(clonedDetails);
+                                          setEditingQuoteId(q.id);
+                                          setPreviewOpen(true);
+                                        } catch (error) {
+                                          console.error("Failed to parse quote details", error);
+                                          toast.error("Could not load quote details");
+                                        }
+                                      }
                                     }}
-                                    className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+                                    className="cursor-pointer gap-2 py-2"
                                   >
-                                    <Trash2 className="h-4 w-4" /> Delete
+                                    <Eye className="h-4 w-4" /> View
                                   </DropdownMenuItem>
-                                )}</>
-                              )}
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </div>
-                      </div>
+                                  <>{auth?.role === "admin" && (
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        if (q.details) {
+                                          try {
+                                            let parsedDetails = q.details;
+                                            if (typeof parsedDetails === 'string') {
+                                              parsedDetails = JSON.parse(parsedDetails);
+                                            }
+                                            const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
+                                            setForm(clonedDetails);
+                                            setEditingQuoteId(q.id);
+                                            window.scrollTo({ top: 0, behavior: "smooth" });
+                                            toast.success(`Quote ${q.id} loaded for editing`);
+                                          } catch (error) {
+                                            console.error("Failed to parse quote details", error);
+                                            toast.error("Could not load quote details");
+                                          }
+                                        }
+                                      }}
+                                      className="cursor-pointer gap-2 py-2"
+                                    >
+                                      <Edit2 className="h-4 w-4" /> Edit
+                                    </DropdownMenuItem>
+                                  )}</>
+                                  {isAdmin && (
+                                    <>{auth?.role === "admin" && (
+                                      <DropdownMenuItem
+                                        onClick={() => {
+                                          setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
+                                          toast.success(`Quote ${q.id} deleted`);
+                                        }}
+                                        className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
+                                      >
+                                        <Trash2 className="h-4 w-4" /> Delete
+                                      </DropdownMenuItem>
+                                    )}</>
+                                  )}
+                                </DropdownMenuContent>
+                              </DropdownMenu>
+                            </div>
+                          </div>
 
+                        </div>
+                      ))}
                     </div>
-                  ))}
+                  )}
                 </div>
-              )}
-            </div>
+              </div>
             </div>
           </div>
-        </div>
-        <DialogFooter className="p-4 bg-card border-t border-border shrink-0 flex justify-end gap-3 z-10">
+          <DialogFooter className="p-4 bg-card border-t border-border shrink-0 flex justify-end gap-3 z-10">
             <Button
               variant="outline"
               onClick={() => {
@@ -1559,8 +1559,8 @@ function QuotationsPage() {
             >
               Cancel
             </Button>
-            <Button 
-              onClick={handleSaveQuotation} 
+            <Button
+              onClick={handleSaveQuotation}
               className="shadow-md border-0 text-white"
               style={{ background: "var(--gradient-brand, var(--color-brand, #0f172a))" }}
             >

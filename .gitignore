@@ -38,3 +38,6 @@ dist-ssr
 # Nested duplicate repository
 /CRM-lookmywebsites
 
+# macOS
+Icon?
+Icon*
