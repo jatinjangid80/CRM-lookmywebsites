@@ -25,7 +25,8 @@ const AUTH_KEY = "crm_auth_v1";
 /* ─── Helpers ─── */
 export function getAuth(): AuthUser | null {
   try {
-    const raw = localStorage.getItem(AUTH_KEY);
+    if (typeof window === "undefined" || !window.localStorage) return null;
+    const raw = window.localStorage.getItem(AUTH_KEY);
     if (!raw) return null;
     return JSON.parse(raw) as AuthUser;
   } catch {
@@ -34,11 +35,15 @@ export function getAuth(): AuthUser | null {
 }
 
 export function setAuth(user: AuthUser): void {
-  localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  if (typeof window !== "undefined" && window.localStorage) {
+    window.localStorage.setItem(AUTH_KEY, JSON.stringify(user));
+  }
 }
 
 export function clearAuth(): void {
-  localStorage.removeItem(AUTH_KEY);
+  if (typeof window !== "undefined" && window.localStorage) {
+    window.localStorage.removeItem(AUTH_KEY);
+  }
 }
 
 export type LoginResult = {
