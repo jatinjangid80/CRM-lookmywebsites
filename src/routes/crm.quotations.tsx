@@ -376,6 +376,38 @@ function QuotationsPage() {
     window.print();
   };
 
+  const handleViewQuote = (quote: any) => {
+    let parsedDetails = quote.details;
+    if (typeof parsedDetails === "string") {
+      try {
+        parsedDetails = JSON.parse(parsedDetails);
+      } catch (e) {
+        console.error("Failed to parse quote details", e);
+      }
+    }
+    const clonedDetails = parsedDetails ? JSON.parse(JSON.stringify(parsedDetails)) : { ...DEFAULT_FORM };
+    setSavedQuoteId(quote.id);
+    setForm(clonedDetails);
+    setPreviewOpen(true);
+  };
+
+  const handleEditQuote = (quote: any) => {
+    let parsedDetails = quote.details;
+    if (typeof parsedDetails === "string") {
+      try {
+        parsedDetails = JSON.parse(parsedDetails);
+      } catch (e) {
+        console.error("Failed to parse quote details", e);
+      }
+    }
+    const clonedDetails = parsedDetails ? JSON.parse(JSON.stringify(parsedDetails)) : { ...DEFAULT_FORM };
+    setEditingQuoteId(quote.id);
+    setSavedQuoteId(quote.id);
+    setForm(clonedDetails);
+    setActiveView("builder");
+    toast.success(`Quote ${quote.id} loaded for editing`);
+  };
+
   // Simulated AI Itinerary generator helper
   const handleGenerateAIItinerary = () => {
     if (!form.destination) {
@@ -824,45 +856,53 @@ function QuotationsPage() {
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
                             <td className="px-4 py-4 whitespace-nowrap text-right">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                                    <MoreVertical className="h-4 w-4" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      setSavedQuoteId(quote.id);
-                                      setForm(quote.details || { ...DEFAULT_FORM });
-                                      setPreviewOpen(true);
-                                    }}
-                                    className="cursor-pointer"
-                                  >
-                                    <Eye className="mr-2 h-4 w-4" /> View / Share
-                                  </DropdownMenuItem>
-                                  <>{auth?.role === "admin" && (
+                              <div className="flex items-center justify-end gap-1.5">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewQuote(quote)}
+                                  className="rounded-full gap-1.5 h-8 px-3 text-xs font-medium border-border hover:bg-secondary transition-colors"
+                                >
+                                  <Eye className="h-3.5 w-3.5" /> View / Share
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleEditQuote(quote)}
+                                  className="rounded-full gap-1.5 h-8 px-3 text-xs font-medium border-primary/30 text-primary hover:bg-primary/10 transition-colors"
+                                >
+                                  <Edit2 className="h-3.5 w-3.5" /> Edit
+                                </Button>
+                                <DropdownMenu>
+                                  <DropdownMenuTrigger asChild>
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
+                                      <MoreVertical className="h-4 w-4" />
+                                    </Button>
+                                  </DropdownMenuTrigger>
+                                  <DropdownMenuContent align="end" className="w-40 rounded-xl">
                                     <DropdownMenuItem
-                                      onClick={() => {
-                                        setEditingQuoteId(quote.id);
-                                        setForm(quote.details || { ...DEFAULT_FORM });
-                                        setActiveView("builder");
-                                      }}
-                                      className="cursor-pointer"
+                                      onClick={() => handleViewQuote(quote)}
+                                      className="cursor-pointer gap-2"
                                     >
-                                      <Edit2 className="mr-2 h-4 w-4" /> Edit
+                                      <Eye className="h-4 w-4" /> View / Share
                                     </DropdownMenuItem>
-                                  )}</>
-                                  <>{auth?.role === "admin" && (
                                     <DropdownMenuItem
-                                      onClick={() => setDeleteQuoteId(quote.id)}
-                                      className="cursor-pointer text-destructive focus:text-destructive"
+                                      onClick={() => handleEditQuote(quote)}
+                                      className="cursor-pointer gap-2"
                                     >
-                                      <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                      <Edit2 className="h-4 w-4" /> Edit
                                     </DropdownMenuItem>
-                                  )}</>
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                                    {isAdmin && (
+                                      <DropdownMenuItem
+                                        onClick={() => setDeleteQuoteId(quote.id)}
+                                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                                      >
+                                        <Trash2 className="h-4 w-4" /> Delete
+                                      </DropdownMenuItem>
+                                    )}
+                                  </DropdownMenuContent>
+                                </DropdownMenu>
+                              </div>
                             </td>
                           </tr>
                         ))}
@@ -1467,76 +1507,42 @@ function QuotationsPage() {
                           </div>
                           <div className="flex items-center justify-between text-[11px] text-muted-foreground">
                             <span className="truncate max-w-[150px]">{q.package_name}</span>
-                            <div className="flex gap-2">
-                              <DropdownMenu>
-                                <DropdownMenuTrigger asChild>
-                                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                                    <MoreVertical className="h-3.5 w-3.5 text-muted-foreground" />
-                                  </Button>
-                                </DropdownMenuTrigger>
-                                <DropdownMenuContent align="end" className="w-40 rounded-xl">
-                                  <DropdownMenuItem
-                                    onClick={() => {
-                                      if (q.details) {
-                                        try {
-                                          let parsedDetails = q.details;
-                                          if (typeof parsedDetails === 'string') {
-                                            parsedDetails = JSON.parse(parsedDetails);
-                                          }
-                                          const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                          setForm(clonedDetails);
-                                          setEditingQuoteId(q.id);
-                                          setPreviewOpen(true);
-                                        } catch (error) {
-                                          console.error("Failed to parse quote details", error);
-                                          toast.error("Could not load quote details");
-                                        }
-                                      }
-                                    }}
-                                    className="cursor-pointer gap-2 py-2"
-                                  >
-                                    <Eye className="h-4 w-4" /> View
-                                  </DropdownMenuItem>
-                                  <>{auth?.role === "admin" && (
-                                    <DropdownMenuItem
-                                      onClick={() => {
-                                        if (q.details) {
-                                          try {
-                                            let parsedDetails = q.details;
-                                            if (typeof parsedDetails === 'string') {
-                                              parsedDetails = JSON.parse(parsedDetails);
-                                            }
-                                            const clonedDetails = JSON.parse(JSON.stringify(parsedDetails));
-                                            setForm(clonedDetails);
-                                            setEditingQuoteId(q.id);
-                                            window.scrollTo({ top: 0, behavior: "smooth" });
-                                            toast.success(`Quote ${q.id} loaded for editing`);
-                                          } catch (error) {
-                                            console.error("Failed to parse quote details", error);
-                                            toast.error("Could not load quote details");
-                                          }
-                                        }
-                                      }}
-                                      className="cursor-pointer gap-2 py-2"
-                                    >
-                                      <Edit2 className="h-4 w-4" /> Edit
-                                    </DropdownMenuItem>
-                                  )}</>
-                                  {isAdmin && (
-                                    <>{auth?.role === "admin" && (
-                                      <DropdownMenuItem
-                                        onClick={() => {
-                                          setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
-                                          toast.success(`Quote ${q.id} deleted`);
-                                        }}
-                                        className="cursor-pointer gap-2 py-2 text-red-600 focus:text-red-600 focus:bg-red-50"
-                                      >
-                                        <Trash2 className="h-4 w-4" /> Delete
-                                      </DropdownMenuItem>
-                                    )}</>
-                                  )}
-                                </DropdownMenuContent>
-                              </DropdownMenu>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="View / Share"
+                                className="h-7 w-7 rounded-lg"
+                                onClick={() => handleViewQuote(q)}
+                              >
+                                <Eye className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                title="Edit"
+                                className="h-7 w-7 rounded-lg"
+                                onClick={() => {
+                                  handleEditQuote(q);
+                                  window.scrollTo({ top: 0, behavior: "smooth" });
+                                }}
+                              >
+                                <Edit2 className="h-3.5 w-3.5 text-muted-foreground hover:text-primary" />
+                              </Button>
+                              {isAdmin && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  title="Delete"
+                                  className="h-7 w-7 rounded-lg text-destructive hover:bg-destructive/10"
+                                  onClick={() => {
+                                    setQuotations(quotations.filter((quote: any) => quote.id !== q.id));
+                                    toast.success(`Quote ${q.id} deleted`);
+                                  }}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </Button>
+                              )}
                             </div>
                           </div>
 
@@ -1582,6 +1588,19 @@ function QuotationsPage() {
                 </DialogDescription>
               </div>
               <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="rounded-xl gap-2 text-xs"
+                  onClick={() => {
+                    setPreviewOpen(false);
+                    if (savedQuoteId) {
+                      setEditingQuoteId(savedQuoteId);
+                    }
+                    setActiveView("builder");
+                  }}
+                >
+                  <Edit2 className="h-4 w-4" /> Edit Quote
+                </Button>
                 <Button variant="outline" className="rounded-xl gap-2 text-xs" onClick={handlePrint}>
                   <Printer className="h-4 w-4" /> Print / Save PDF
                 </Button>
