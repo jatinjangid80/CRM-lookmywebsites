@@ -1283,7 +1283,7 @@ function getLeadDetailFields(lead: any) {
   const formType = getServiceFormType(lead.service);
   let fields: { icon: any; label: string; val: any }[] = [];
 
-  switch(formType) {
+  switch (formType) {
     case "air":
       fields = [
         { icon: <MapPin className="h-4 w-4 text-primary" />, label: "Source City", val: lead.sourceCity || "—" },

@@ -78,6 +78,7 @@ import { generateWhatsAppLink, whatsappTemplates } from "@/lib/whatsapp";
 import logoImg from "../assets/Logo.svg";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { BrandedQuotationDocument } from "@/components/quotations/BrandedQuotationDocument";
 
 export const Route = createFileRoute("/crm/quotations")({
   component: QuotationsPage,
@@ -195,6 +196,79 @@ const DEFAULT_FORM: QuoteForm = {
       day: 2,
       title: "Departure",
       description: "Check out from the hotel. Transfer to the airport for your flight back home.",
+    },
+  ],
+};
+
+const DEFAULT_HOTEL_FORM: QuoteForm = {
+  customerName: "Mr. Rajesh Sharma",
+  customerPhone: "919413095483",
+  customerEmail: "rajesh.sharma@example.com",
+  packageName: "Hotel Quotation - Dubai Luxury Stay",
+  destination: "Dubai, UAE",
+  durationNights: 5,
+  durationDays: 6,
+  hotels: [
+    {
+      id: "1",
+      hotelName: "Grand Hyatt Dubai",
+      rating: "5 Star Luxury",
+      location: "Dubai Healthcare City, Dubai",
+      checkIn: "12 Oct 2026",
+      checkOut: "17 Oct 2026",
+      rooms: "1",
+      adults: "2",
+      children: "1",
+      roomType: "Deluxe King Room",
+      nights: 5,
+      mealPlan: "Daily Breakfast (CP Plan)",
+      confirmationNo: "LMH/HTL/2026/001",
+    },
+  ],
+  flights: [{ ...DEFAULT_FLIGHT }],
+  basePrice: 65000,
+  gstRate: 5,
+  tcsRate: 0,
+  discount: 0,
+  discountType: "amount",
+  inclusions:
+    "Accommodation in 5 Star Luxury Hotel\nDaily Buffet Breakfast at Hotel Restaurant\nComplimentary High-Speed Wi-Fi in room & public areas\nAccess to Temperature-Controlled Swimming Pool & Fitness Center\nComplimentary Airport Return Transfers\nAll Applicable Hotel Taxes & Service Charges\n24/7 Dedicated Concierge & Local Support",
+  exclusions:
+    "Personal Expenses (Minibar, Laundry, Telephone, etc.)\nLunch & Dinner (unless specified in meal plan)\nEarly Check-in & Late Check-out (subject to hotel availability)\nOptional tours, excursions & monument entry fees\nTourism Dirham / City Tax (payable directly at hotel check-out)\nAnything not mentioned under Inclusions",
+  terms:
+    "Hotel standard check-in time: 02:00 PM | Check-out time: 11:00 AM.\nPrices are subject to availability at the time of final confirmation.\nValid Government ID / Passport is mandatory at check-in.\nCancellation & amendment policies apply as per hotel guidelines.\nLook My Holiday reserves the right to modify stay arrangements for operational reasons.",
+  bankDetails:
+    "Bank Name: HDFC Bank\nAccount Name: Look My Holiday Pvt Ltd\nAccount No: 50200012345678\nIFSC Code: HDFC0001234\nBranch: JTM Mall, Jagatpura, Jaipur",
+  itinerary: [
+    {
+      day: 1,
+      title: "Arrival & Check-in at Grand Hyatt Dubai",
+      description:
+        "Arrive at Dubai International Airport. Meet representative and private transfer to the hotel. Smooth check-in and welcome drink. Rest of the day free for leisure & hotel facilities.",
+    },
+    {
+      day: 2,
+      title: "Leisure, Dining & Resort Amenities",
+      description:
+        "Enjoy complimentary morning buffet breakfast. Spend the day exploring nearby attractions or relaxing by the infinity pool & wellness spa.",
+    },
+    {
+      day: 3,
+      title: "City Highlights & Local Experiences",
+      description:
+        "Buffet breakfast at the hotel restaurant. Explore iconic landmarks, shopping hubs, and cultural hotspots.",
+    },
+    {
+      day: 4,
+      title: "Resort Leisure & Evening Relaxation",
+      description:
+        "Relax at the luxury resort amenities, enjoy world-class in-house dining and evening experiences.",
+    },
+    {
+      day: 5,
+      title: "Check-out & Farewell Departure",
+      description:
+        "Enjoy breakfast at the hotel. Complete check-out formalities. Transfer to the airport with wonderful memories of your stay.",
     },
   ],
 };
@@ -371,9 +445,111 @@ function QuotationsPage() {
     window.open(link, "_blank");
   };
 
-  // Trigger PDF print view
+  // Trigger PDF print view with clean iframe printing (guarantees all 5 pages and backgrounds)
   const handlePrint = () => {
-    window.print();
+    const printContent = document.getElementById("quotation-print-area");
+    if (!printContent) {
+      window.print();
+      return;
+    }
+
+    // Create an isolated iframe to print all pages cleanly without dialog clipping
+    const iframe = document.createElement("iframe");
+    iframe.style.position = "fixed";
+    iframe.style.right = "0";
+    iframe.style.bottom = "0";
+    iframe.style.width = "0";
+    iframe.style.height = "0";
+    iframe.style.border = "none";
+    document.body.appendChild(iframe);
+
+    const doc = iframe.contentWindow?.document;
+    if (!doc) {
+      window.print();
+      return;
+    }
+
+    const styles = Array.from(document.querySelectorAll("style, link[rel='stylesheet']"))
+      .map((node) => node.outerHTML)
+      .join("\n");
+
+    doc.open();
+    doc.write(`
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Quotation - ${savedQuoteId || "LookMyHoliday"}</title>
+          ${styles}
+          <style>
+            @page {
+              size: A4 portrait;
+              margin: 0;
+            }
+            *, *:before, *:after {
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+              color-adjust: exact !important;
+            }
+            html, body {
+              background: #ffffff !important;
+              margin: 0 !important;
+              padding: 0 !important;
+              width: 100% !important;
+              height: auto !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+            #quotation-print-area {
+              width: 100% !important;
+              margin: 0 !important;
+              padding: 0 !important;
+            }
+            .print-page {
+              display: flex !important;
+              flex-direction: column !important;
+              justify-content: space-between !important;
+              page-break-after: always !important;
+              break-after: page !important;
+              page-break-inside: avoid !important;
+              break-inside: avoid !important;
+              width: 210mm !important;
+              height: 297mm !important;
+              min-height: 297mm !important;
+              max-height: 297mm !important;
+              margin: 0 auto !important;
+              padding: 0 !important;
+              box-sizing: border-box !important;
+              box-shadow: none !important;
+              border: none !important;
+              background-color: #ffffff !important;
+              -webkit-print-color-adjust: exact !important;
+              print-color-adjust: exact !important;
+            }
+          </style>
+        </head>
+        <body>
+          <div id="quotation-print-area">
+            ${printContent.innerHTML}
+          </div>
+        </body>
+      </html>
+    `);
+    doc.close();
+
+    setTimeout(() => {
+      try {
+        iframe.contentWindow?.focus();
+        iframe.contentWindow?.print();
+      } catch (err) {
+        console.error("Iframe print error, falling back to window.print", err);
+        window.print();
+      }
+      setTimeout(() => {
+        if (document.body.contains(iframe)) {
+          document.body.removeChild(iframe);
+        }
+      }, 2000);
+    }, 400);
   };
 
   const handleViewQuote = (quote: any) => {
@@ -681,7 +857,7 @@ function QuotationsPage() {
           <div className="flex items-center gap-2">
             <Button
               onClick={() => {
-                setForm({ ...DEFAULT_FORM, packageName: "Hotel Quote" });
+                setForm({ ...DEFAULT_HOTEL_FORM });
                 setEditingQuoteId(null);
                 setActiveView("builder");
               }}
@@ -856,38 +1032,34 @@ function QuotationsPage() {
                             </td>
                             <td className="px-4 py-4 whitespace-nowrap text-muted-foreground">{quote.agent_name}</td>
                             <td className="px-4 py-4 whitespace-nowrap text-right">
-                              <div className="flex items-center justify-end gap-1.5">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewQuote(quote)}
-                                  className="rounded-full gap-1.5 h-8 px-3 text-xs font-medium border-border hover:bg-secondary transition-colors"
-                                >
-                                  <Eye className="h-3.5 w-3.5" /> View / Share
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleEditQuote(quote)}
-                                  className="rounded-full gap-1.5 h-8 px-3 text-xs font-medium border-primary/30 text-primary hover:bg-primary/10 transition-colors"
-                                >
-                                  <Edit2 className="h-3.5 w-3.5" /> Edit
-                                </Button>
+                              <div className="flex items-center justify-end">
                                 <DropdownMenu>
                                   <DropdownMenuTrigger asChild>
-                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full">
-                                      <MoreVertical className="h-4 w-4" />
+                                    <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full hover:bg-muted">
+                                      <MoreVertical className="h-4 w-4 text-muted-foreground" />
                                     </Button>
                                   </DropdownMenuTrigger>
-                                  <DropdownMenuContent align="end" className="w-44 rounded-xl">
+                                  <DropdownMenuContent align="end" className="w-48 rounded-xl p-1 shadow-lg">
+                                    <DropdownMenuItem
+                                      onClick={() => handleViewQuote(quote)}
+                                      className="cursor-pointer gap-2 text-xs font-medium py-2 rounded-lg"
+                                    >
+                                      <Eye className="h-4 w-4 text-primary" /> View / Share
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleEditQuote(quote)}
+                                      className="cursor-pointer gap-2 text-xs font-medium py-2 rounded-lg"
+                                    >
+                                      <Edit2 className="h-4 w-4 text-amber-600" /> Edit Quote
+                                    </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => {
                                         handleViewQuote(quote);
                                         setTimeout(() => handlePrint(), 300);
                                       }}
-                                      className="cursor-pointer gap-2"
+                                      className="cursor-pointer gap-2 text-xs font-medium py-2 rounded-lg"
                                     >
-                                      <Printer className="h-4 w-4" /> Print / PDF
+                                      <Printer className="h-4 w-4 text-slate-600 dark:text-slate-300" /> Print / Save PDF
                                     </DropdownMenuItem>
                                     <DropdownMenuItem
                                       onClick={() => {
@@ -901,14 +1073,14 @@ function QuotationsPage() {
                                         const link = generateWhatsAppLink(quote.customer_phone || "919876543210", msg);
                                         window.open(link, "_blank");
                                       }}
-                                      className="cursor-pointer gap-2"
+                                      className="cursor-pointer gap-2 text-xs font-medium py-2 rounded-lg text-emerald-600 focus:text-emerald-600"
                                     >
                                       <Share2 className="h-4 w-4" /> Share WhatsApp
                                     </DropdownMenuItem>
                                     {isAdmin && (
                                       <DropdownMenuItem
                                         onClick={() => setDeleteQuoteId(quote.id)}
-                                        className="cursor-pointer gap-2 text-destructive focus:text-destructive"
+                                        className="cursor-pointer gap-2 text-xs font-medium py-2 rounded-lg text-destructive focus:text-destructive"
                                       >
                                         <Trash2 className="h-4 w-4" /> Delete
                                       </DropdownMenuItem>
@@ -1591,16 +1763,16 @@ function QuotationsPage() {
 
       {/* Branded A4 PDF & Share Preview Panel */}
       <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
-        <DialogContent className="sm:max-w-[1000px] max-h-[90vh] overflow-y-auto rounded-3xl p-0 border border-border shadow-2xl bg-card print:max-w-none print:w-full print:shadow-none print:border-none print:bg-card text-card-foreground print:overflow-visible">
-          <DialogHeader className="px-6 pt-6 pb-4 border-b border-border print:hidden sticky top-0 bg-card z-10">
-            <div className="flex items-center justify-between">
+        <DialogContent className="sm:max-w-[1020px] max-h-[92vh] h-[92vh] flex flex-col rounded-3xl p-0 border border-border shadow-2xl bg-card print:max-w-none print:w-full print:h-auto print:shadow-none print:border-none print:bg-card text-card-foreground overflow-hidden print:overflow-visible">
+          <DialogHeader className="px-6 py-4 border-b border-border bg-card shrink-0 print:hidden z-20">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
               <div className="text-left">
                 <DialogTitle className="font-display font-bold text-lg">Quotation Preview & Sharing</DialogTitle>
                 <DialogDescription className="text-xs text-muted-foreground mt-0.5">
                   Share directly with client or download offline PDF invoice format
                 </DialogDescription>
               </div>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
                 <Button
                   variant="outline"
                   className="rounded-xl gap-2 text-xs"
@@ -1628,387 +1800,12 @@ function QuotationsPage() {
             </div>
           </DialogHeader>
 
-          <div className="p-8 bg-muted/30 print:p-0 print:bg-card text-card-foreground">
-            {/* Cover Page */}
-            <div className="bg-white max-w-3xl mx-auto mb-8 shadow-md print:shadow-none print:w-full print:max-w-none print:mb-0 break-after-page print:break-after-page overflow-hidden" style={{ aspectRatio: '1 / 1.414' }}>
-              <img src="/quotation-cover-page.png" className="w-full h-full object-cover" alt="Quotation Cover" />
-            </div>
-
-            {form.packageName === "Hotel Quote" ? (
-              <div className="rounded-none bg-white max-w-3xl mx-auto shadow-md text-slate-800 print:shadow-none print:w-full print:max-w-none relative overflow-hidden font-sans">
-                {/* Header Background */}
-                <div className="relative h-48 md:h-56 bg-slate-800 flex flex-col justify-between p-8 text-white" style={{
-                  backgroundImage: "linear-gradient(to right, rgba(0,0,0,0.8), rgba(0,0,0,0.4)), url('https://images.unsplash.com/photo-1566073771259-6a8506099945?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&q=80')",
-                  backgroundSize: "cover",
-                  backgroundPosition: "center"
-                }}>
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h2 className="text-4xl font-black tracking-widest uppercase opacity-90">Invoice</h2>
-                      <p className="text-orange-400 font-bold tracking-wider text-sm mt-1 uppercase">LOOK MY HOLIDAYS</p>
-                    </div>
-                    <div className="text-right flex flex-col items-end">
-                      <img
-                        src={logoImg}
-                        alt="Logo"
-                        className="h-10 w-auto bg-white/90 p-1.5 rounded mix-blend-screen"
-                      />
-                    </div>
-                  </div>
-                  <div className="flex justify-between items-end text-xs opacity-80">
-                    <div>
-                      <p>FF-35 1st Floor, Jtm Mall, Jagatpura Fatak,</p>
-                      <p>Model Town, Jagatpura, Jaipur, Rajasthan 302017</p>
-                      <p>lookmyholidays.in</p>
-                    </div>
-                    <div>
-                      <p>Date: {new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'long', day: 'numeric' })}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Customer Name */}
-                <div className="px-8 py-8 flex flex-col gap-1">
-                  <h3 className="text-lg font-bold text-slate-600 uppercase tracking-widest">
-                    {form.customerName || "CUSTOMER NAME"} {form.hotels?.[0]?.hotelName ? `- ${form.hotels[0].hotelName}` : ""}
-                  </h3>
-                </div>
-
-                {/* Invoice Bar & Details */}
-                <div className="mx-8">
-                  <div className="bg-orange-50 px-6 py-3 rounded-t-md border-b-2 border-orange-200">
-                    <p className="text-orange-500 font-bold uppercase tracking-wider text-sm">INVOICE #{savedQuoteId || "N/A"}</p>
-                  </div>
-                  <div className="bg-slate-50 px-6 py-5 rounded-b-md flex gap-8 text-xs text-slate-600">
-                    <div className="flex-1 space-y-1">
-                      <p><span className="font-semibold text-slate-700">Client No.:</span> {form.customerPhone || "N/A"}</p>
-                      <p><span className="font-semibold text-slate-700">Room:</span> {form.hotels?.[0]?.roomType || "N/A"}</p>
-                    </div>
-                    <div className="w-px bg-slate-300 mx-2"></div>
-                    <div className="flex-1 space-y-1">
-                      <p><span className="font-semibold text-slate-700">Arrival Date:</span> {form.hotels?.[0]?.checkIn || "N/A"}</p>
-                      <p><span className="font-semibold text-slate-700">Departure Date:</span> {form.hotels?.[0]?.checkOut || "N/A"}</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Table */}
-                <div className="px-8 pt-8">
-                  <table className="w-full text-xs">
-                    <thead className="text-slate-500 border-b-2 border-slate-700 text-left">
-                      <tr>
-                        <th className="py-3 font-semibold w-1/4">Description</th>
-                        <th className="py-3 font-semibold text-center">Quantity</th>
-                        <th className="py-3 font-semibold text-center">Rate</th>
-                        <th className="py-3 font-semibold text-center">Comment</th>
-                        <th className="py-3 font-semibold text-right">Amount</th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-200">
-                      <tr>
-                        <td className="py-4 font-bold text-slate-700">ROOM CHARGES</td>
-                        <td className="py-4 text-center">{form.hotels?.[0]?.nights || form.durationNights || 3} Nights</td>
-                        <td className="py-4 text-center">{formatINR((form.basePrice / (form.hotels?.[0]?.nights || form.durationNights || 3)) || 50)}/night</td>
-                        <td className="py-4 text-center text-slate-500">{form.hotels?.[0]?.hotelName || "Hotel"}, {form.hotels?.[0]?.roomType || "Standard"}</td>
-                        <td className="py-4 text-right font-semibold text-slate-700">{formatINR(form.basePrice)}</td>
-                      </tr>
-                      {form.discount > 0 && (
-                        <tr>
-                          <td className="py-4 font-bold text-slate-700">DISCOUNT</td>
-                          <td className="py-4 text-center">1</td>
-                          <td className="py-4 text-center">-</td>
-                          <td className="py-4 text-center text-slate-500">{form.discountType === "percentage" ? `${form.discount}% off` : "Flat discount"}</td>
-                          <td className="py-4 text-right font-semibold text-emerald-600">-{formatINR(discountAmount)}</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Additional Details for Hotel Format */}
-                <div className="px-8 pt-6 pb-2">
-                  {form.flights && form.flights.length > 0 && form.flights.some(f => f.airline || f.flightNo) && (
-                    <div className="mb-6">
-                      <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Flight Details</h4>
-                      <div className="grid grid-cols-2 gap-4">
-                        {form.flights.map((flight) => (
-                          <div key={flight.id} className="text-xs text-slate-600 bg-slate-50 p-3 rounded-md border border-slate-100">
-                            <p className="font-semibold text-slate-700 mb-1">{flight.airline || "Airline"} {flight.flightNo && `- ${flight.flightNo}`}</p>
-                            <p>Sector: {flight.sector}</p>
-                            <p>Date & Time: {flight.dateTime}</p>
-                            {flight.pnr && <p>PNR: {flight.pnr}</p>}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="grid grid-cols-2 gap-8 mb-6">
-                    {form.inclusions && (
-                      <div>
-                        <h4 className="font-bold text-emerald-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Inclusions</h4>
-                        <ul className="list-disc pl-4 text-xs text-slate-600 space-y-1">
-                          {form.inclusions.split("\n").filter(inc => inc.trim()).map((inc, i) => (
-                            <li key={i}>{inc}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                    {form.exclusions && (
-                      <div>
-                        <h4 className="font-bold text-rose-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Exclusions</h4>
-                        <ul className="list-disc pl-4 text-xs text-slate-600 space-y-1">
-                          {form.exclusions.split("\n").filter(exc => exc.trim()).map((exc, i) => (
-                            <li key={i}>{exc}</li>
-                          ))}
-                        </ul>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-8">
-                    {form.terms && (
-                      <div>
-                        <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Terms & Policies</h4>
-                        <p className="text-xs text-slate-600 whitespace-pre-wrap">{form.terms}</p>
-                      </div>
-                    )}
-                    {form.bankDetails && (
-                      <div>
-                        <h4 className="font-bold text-slate-700 text-xs mb-2 uppercase tracking-wider border-b border-slate-200 pb-1">Bank Details</h4>
-                        <p className="text-xs text-slate-600 whitespace-pre-wrap">{form.bankDetails}</p>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {/* Footer */}
-                <div className="flex px-8 pt-6 pb-12">
-                  <div className="w-1/2 flex flex-col justify-end">
-                    <p className="text-[10px] text-slate-500 max-w-[200px] mb-4">*Your qualifying points will be automatically added to your premium account.</p>
-                    <div className="bg-[#f0855d] text-white px-4 py-3 w-fit font-bold tracking-widest text-[10px] uppercase shadow-sm">
-                      We hope you had<br />a great stay!
-                    </div>
-                  </div>
-                  <div className="w-1/2">
-                    <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
-                      <span>Subtotal</span>
-                      <span>{formatINR(form.basePrice - discountAmount)}</span>
-                    </div>
-                    {form.tcsRate > 0 && (
-                      <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
-                        <span>TCS ({form.tcsRate}%)</span>
-                        <span>{formatINR(tcsAmount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between py-3 border-b border-slate-200 text-xs text-slate-600 font-semibold">
-                      <span>GST ({form.gstRate}%)</span>
-                      <span>{formatINR(gstAmount)}</span>
-                    </div>
-                    <div className="flex justify-between py-4 text-sm text-slate-800 font-bold">
-                      <span>GRAND TOTAL</span>
-                      <span>{formatINR(totalAmount)}</span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="border border-border/80 rounded-2xl bg-card text-card-foreground p-8 max-w-3xl mx-auto shadow-md text-slate-800 print:border-none print:shadow-none print:p-0 print:text-black">
-                {/* Printable branded A4 block */}
-                {/* Branded Header */}
-                <div className="flex items-center justify-between border-b-2 border-primary/20 pb-6">
-                  <div className="flex items-center gap-3 bg-slate-950 px-4 py-2.5 rounded-xl shadow-inner">
-                    <img
-                      src={logoImg}
-                      alt="Look My Holidays Logo"
-                      className="h-12 w-auto"
-                    />
-                  </div>
-                  <div className="text-right">
-                    <p className="font-mono text-xs font-semibold uppercase px-2.5 py-1 rounded-md bg-secondary text-primary border border-primary/20 inline-block mb-1">
-                      {savedQuoteId || "QT-1002"}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Date: {new Date().toLocaleDateString("en-IN")}
-                    </p>
-                    <p className="text-[10px] text-muted-foreground">
-                      Agent: {auth?.name || "Nikita Bairwa"}
-                    </p>
-                  </div>
-                </div>
-
-                {/* Client info */}
-                <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
-                  <div className="bg-secondary/20 p-4 rounded-xl border border-border/40">
-                    <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
-                      Prepared For
-                    </p>
-                    <p className="font-semibold text-sm">{form.customerName || "Valued Customer"}</p>
-                    <p className="text-muted-foreground mt-0.5">{form.customerPhone}</p>
-                    <p className="text-muted-foreground">{form.customerEmail}</p>
-                  </div>
-                  <div className="bg-secondary/20 p-4 rounded-xl border border-border/40 text-right">
-                    <p className="font-bold text-primary mb-1 uppercase tracking-wider text-[10px]">
-                      Package Summary
-                    </p>
-                    <p className="font-semibold text-sm">{form.packageName}</p>
-                    <p className="text-muted-foreground mt-0.5">
-                      Destination: {form.destination || "Multiple"}
-                    </p>
-                    <p className="text-muted-foreground">
-                      Duration: {form.durationNights} Nights / {form.durationDays} Days
-                    </p>
-                  </div>
-                </div>
-
-                {/* Flight & Hotel configuration details */}
-                <div className="grid grid-cols-2 gap-4 pt-6 text-xs">
-                  {form.hotels?.map((hotel) => (
-                    <div key={hotel.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
-                      <Building2 className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
-                          Stay Option
-                        </p>
-                        <p className="font-semibold mt-0.5">
-                          {hotel.hotelName || "Hotel"} {hotel.rating && `(${hotel.rating})`}
-                        </p>
-                        <p className="text-muted-foreground text-[11px]">
-                          {hotel.nights} Nights at {hotel.location} with {hotel.mealPlan}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                  {form.flights?.map((flight) => (
-                    <div key={flight.id} className="flex items-start gap-2.5 p-3 rounded-xl border border-border">
-                      <Plane className="h-5 w-5 text-primary shrink-0 mt-0.5" />
-                      <div>
-                        <p className="font-bold uppercase tracking-wider text-[9px] text-muted-foreground">
-                          Flight details
-                        </p>
-                        <p className="font-semibold mt-0.5">
-                          {flight.airline || "Airline"} {flight.flightNo && `- ${flight.flightNo}`}
-                        </p>
-                        <p className="text-muted-foreground text-[11px]">{flight.sector} | {flight.dateTime}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Day Wise Itinerary */}
-                <div className="pt-8 text-xs">
-                  <h3 className="font-display font-extrabold text-sm border-b border-border pb-2 text-primary uppercase tracking-wider">
-                    Day-Wise Program
-                  </h3>
-                  <div className="mt-4 space-y-4">
-                    {form.itinerary.map((day, idx) => (
-                      <div key={idx} className="flex gap-4 items-start">
-                        <div className="h-8 w-14 rounded-lg bg-primary/10 border border-primary/20 text-primary flex items-center justify-center shrink-0 font-bold">
-                          Day {day.day}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-sm">{day.title}</p>
-                          <p className="text-muted-foreground mt-1 leading-relaxed text-xs">
-                            {day.description}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Inclusions & Exclusions details grid */}
-                <div className="grid grid-cols-2 gap-6 pt-8 text-xs border-t border-border mt-8">
-                  <div>
-                    <h4 className="flex items-center gap-1.5 font-bold text-emerald-800 dark:text-emerald-300 uppercase tracking-wider text-[10px] mb-2">
-                      <CheckCircle2 className="h-3.5 w-3.5" /> Inclusions
-                    </h4>
-                    <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
-                      {form.inclusions.split("\n").map((inc, i) => (
-                        <li key={i}>{inc}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div>
-                    <h4 className="flex items-center gap-1.5 font-bold text-rose-800 dark:text-rose-300 uppercase tracking-wider text-[10px] mb-2">
-                      <XCircle className="h-3.5 w-3.5" /> Exclusions
-                    </h4>
-                    <ul className="space-y-1.5 list-disc pl-4 text-muted-foreground text-[11px]">
-                      {form.exclusions.split("\n").map((exc, i) => (
-                        <li key={i}>{exc}</li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-
-                {/* Ledger breakdown & UPI QR */}
-                <div className="grid grid-cols-3 gap-6 pt-8 border-t border-border mt-8 items-center bg-secondary/10 p-5 rounded-2xl">
-                  <div className="col-span-2 text-xs space-y-1.5">
-                    <p className="font-bold uppercase tracking-wider text-[10px] text-muted-foreground">
-                      Estimate Summary
-                    </p>
-                    <div className="flex justify-between pr-8 text-muted-foreground">
-                      <span>Base Price:</span>
-                      <span>{formatINR(form.basePrice)}</span>
-                    </div>
-                    <div className="flex justify-between pr-8 text-muted-foreground">
-                      <span>GST ({form.gstRate}%):</span>
-                      <span>{formatINR(gstAmount)}</span>
-                    </div>
-                    {form.tcsRate > 0 && (
-                      <div className="flex justify-between pr-8 text-muted-foreground">
-                        <span>TCS ({form.tcsRate}%):</span>
-                        <span>{formatINR(tcsAmount)}</span>
-                      </div>
-                    )}
-                    {form.discount > 0 && (
-                      <div className="flex justify-between pr-8 text-emerald-600">
-                        <span>Discount {form.discountType === "percentage" ? `(${form.discount}%)` : ""}:</span>
-                        <span>- {formatINR(discountAmount)}</span>
-                      </div>
-                    )}
-                    <div className="flex justify-between pr-8 pt-2 border-t border-border/80 font-display font-black text-base text-primary">
-                      <span>Total Amount:</span>
-                      <span>{formatINR(totalAmount)}</span>
-                    </div>
-                  </div>
-
-                  {/* UPI Payment Code */}
-                  <div className="flex flex-col items-center justify-center p-3 border border-border bg-card rounded-xl text-center overflow-hidden">
-                    <img src="/upi-qr.png" alt="UPI QR Code" className="w-full max-w-[160px] object-contain rounded-md" />
-                    <p className="text-[9px] text-muted-foreground mt-2 font-medium">
-                      Scan to pay with any UPI App
-                    </p>
-                  </div>
-                </div>
-
-                {/* Terms and conditions */}
-                <div className="pt-6 text-[10px] text-muted-foreground border-t border-border mt-6">
-                  <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
-                    Terms & Conditions
-                  </p>
-                  <p className="whitespace-pre-line leading-relaxed">{form.terms}</p>
-
-                  {form.bankDetails && (
-                    <div className="mt-4 pt-4 border-t border-border/40">
-                      <p className="font-bold uppercase tracking-wider mb-1 text-[9px]">
-                        Bank Details
-                      </p>
-                      <p className="whitespace-pre-line leading-relaxed">{form.bankDetails}</p>
-                    </div>
-                  )}
-
-                  <p className="mt-4 text-center font-display font-semibold text-slate-400">
-                    Thank you for letting us plan your holidays! ✈️
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* Back Page */}
-            <div className="bg-white max-w-3xl mx-auto mt-8 shadow-md print:shadow-none print:w-full print:max-w-none print:mt-0 break-before-page print:break-before-page overflow-hidden" style={{ aspectRatio: '1 / 1.414' }}>
-              <img src="/quotation-back-page.png" className="w-full h-full object-cover" alt="Quotation Back" />
-            </div>
+          <div className="flex-1 overflow-y-auto p-4 sm:p-8 bg-slate-100/90 dark:bg-slate-900/90 print:p-0 print:bg-white text-card-foreground print:overflow-visible">
+            <BrandedQuotationDocument
+              form={form}
+              quoteId={savedQuoteId || "LMH/2026/001"}
+              agentName={auth?.name || "Look My Holiday Team"}
+            />
           </div>
         </DialogContent>
       </Dialog>

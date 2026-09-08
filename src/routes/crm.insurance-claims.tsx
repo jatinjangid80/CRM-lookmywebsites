@@ -26,7 +26,7 @@ function InsuranceClaimsPage() {
   const [selectedClaim, setSelectedClaim] = useState<any>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
   const [showVehicleDropdown, setShowVehicleDropdown] = useState(false);
-  
+
   // Local state to store claims temporarily for UI demonstration
   const [claims, setClaims] = useSupabaseTable<any[]>("insurance_claims", []);
   const [newClaim, setNewClaim] = useState({
@@ -56,14 +56,14 @@ function InsuranceClaimsPage() {
 
   const handleAddClaim = () => {
     if (!newClaim.vehicle_no) return;
-    
+
     setClaims([...claims, { id: crypto.randomUUID(), ...newClaim }]);
     setIsAddOpen(false);
     toast.success("Claim saved successfully!");
     setNewClaim({
       vehicle_no: "",
-    customer_name: "",
-    customer_phone: "",
+      customer_name: "",
+      customer_phone: "",
 
       status: "Pending",
       date: new Date().toISOString().split('T')[0],
@@ -71,12 +71,12 @@ function InsuranceClaimsPage() {
     });
   };
 
-  
+
   const handleStatusChange = (id: string, newStatus: string) => {
     setClaims(claims.map(c => c.id === id ? { ...c, status: newStatus } : c));
   };
 
-  const filteredClaims = claims.filter(c => 
+  const filteredClaims = claims.filter(c =>
     (c.vehicle_no || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.customer_name || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
     (c.customer_phone || "").toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -132,24 +132,24 @@ function InsuranceClaimsPage() {
                           {insurancePolicies
                             .filter(p => p.vehicle_number && p.vehicle_number.toLowerCase().includes(newClaim.vehicle_no.toLowerCase()))
                             .map(p => (
-                            <div 
-                              key={p.id} 
-                              className="px-3 py-2 cursor-pointer hover:bg-secondary/50 border-b border-border/50 last:border-0"
-                              onMouseDown={(e) => {
-                                e.preventDefault();
-                                setNewClaim({
-                                  ...newClaim,
-                                  vehicle_no: p.vehicle_number,
-                                  customer_name: p.customer_name || "",
-                                  customer_phone: p.mobile_number || p.alternate_mobile || ""
-                                });
-                                setShowVehicleDropdown(false);
-                              }}
-                            >
-                              <div className="font-bold text-sm">{p.vehicle_number}</div>
-                              <div className="text-xs text-muted-foreground">{p.customer_name}</div>
-                            </div>
-                          ))}
+                              <div
+                                key={p.id}
+                                className="px-3 py-2 cursor-pointer hover:bg-secondary/50 border-b border-border/50 last:border-0"
+                                onMouseDown={(e) => {
+                                  e.preventDefault();
+                                  setNewClaim({
+                                    ...newClaim,
+                                    vehicle_no: p.vehicle_number,
+                                    customer_name: p.customer_name || "",
+                                    customer_phone: p.mobile_number || p.alternate_mobile || ""
+                                  });
+                                  setShowVehicleDropdown(false);
+                                }}
+                              >
+                                <div className="font-bold text-sm">{p.vehicle_number}</div>
+                                <div className="text-xs text-muted-foreground">{p.customer_name}</div>
+                              </div>
+                            ))}
                           {insurancePolicies.filter(p => p.vehicle_number && p.vehicle_number.toLowerCase().includes(newClaim.vehicle_no.toLowerCase())).length === 0 && (
                             <div className="px-3 py-2 text-xs text-muted-foreground text-center">No vehicles found.</div>
                           )}
@@ -382,12 +382,11 @@ function InsuranceClaimsPage() {
                         <select
                           value={claim.status}
                           onChange={(e) => handleStatusChange(claim.id, e.target.value)}
-                          className={`appearance-none outline-none cursor-pointer px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border-0 ${
-                            claim.status === "Approved" ? "bg-emerald-100 text-emerald-700" :
-                            claim.status === "Rejected" ? "bg-red-100 text-red-700" :
-                            claim.status === "Settled" ? "bg-blue-100 text-blue-700" :
-                            "bg-amber-100 text-amber-700"
-                          }`}
+                          className={`appearance-none outline-none cursor-pointer px-2.5 py-1 text-[10px] uppercase font-bold rounded-full border-0 ${claim.status === "Approved" ? "bg-emerald-100 text-emerald-700" :
+                              claim.status === "Rejected" ? "bg-red-100 text-red-700" :
+                                claim.status === "Settled" ? "bg-blue-100 text-blue-700" :
+                                  "bg-amber-100 text-amber-700"
+                            }`}
                         >
                           <option value="Pending">Pending</option>
                           <option value="Approved">Approved</option>
