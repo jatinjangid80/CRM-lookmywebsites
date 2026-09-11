@@ -74,7 +74,11 @@ function AttendancePage() {
         (time.getHours() > 19 || (time.getHours() === 19 && time.getMinutes() >= 30));
         
       if (isPastDay || isTodayPastCheckoutTime) {
-        rec.checkout = "19:30";
+        if (rec.checkin && rec.checkin >= "19:30") {
+          rec.checkout = rec.checkin;
+        } else {
+          rec.checkout = "19:30";
+        }
         rec.status = "Present";
       }
     }
@@ -402,8 +406,7 @@ function AttendancePage() {
                         const [inH, inM] = record.checkin.split(':').map(Number);
                         const [outH, outM] = record.checkout.split(':').map(Number);
                         let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                        if (diff < 0) diff += 24 * 60;
-                        acc[record.date].totalMinutes += diff;
+                        if (diff > 0) acc[record.date].totalMinutes += diff;
                       }
                       if (record.checkin && record.checkin < acc[record.date].firstIn) {
                         acc[record.date].firstIn = record.checkin;
@@ -531,27 +534,26 @@ function AttendancePage() {
                           if (r.remark) dayRemark = r.remark;
                           if (r.checkin && r.checkin < firstIn) firstIn = r.checkin;
                           if (r.checkout && r.checkout > lastOut) lastOut = r.checkout;
+                          if (r.checkin && r.checkin > lastOut) lastOut = r.checkin;
                           if (!r.checkout) isActive = true;
 
                           if (r.checkin && r.checkout) {
                             const [inH, inM] = r.checkin.split(':').map(Number);
                             const [outH, outM] = r.checkout.split(':').map(Number);
                             let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                            if (diff < 0) diff += 24 * 60;
-                            totalMins += diff;
+                            if (diff > 0) totalMins += diff;
                           }
                         });
 
                         // Add active session
                         let currentSessionSecs = 0;
-                        if (isActive) {
+                        if (isActive && date === todayStr) {
                            const activeRecord = records.find((r: any) => !r.checkout);
                            if (activeRecord && activeRecord.checkin) {
                              const [inH, inM] = activeRecord.checkin.split(':').map(Number);
                              // Use 'time' for active tick
                              let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff < 0) diff += 24 * 3600;
-                             currentSessionSecs = diff;
+                             if (diff > 0) currentSessionSecs = diff;
                            }
                         }
 
@@ -563,7 +565,7 @@ function AttendancePage() {
                         if (firstIn !== "23:59") {
                           const [inH, inM] = firstIn.split(':').map(Number);
                           let endH, endM;
-                          if (isActive) {
+                          if (isActive && date === todayStr) {
                             endH = time.getHours();
                             endM = time.getMinutes();
                           } else if (lastOut !== "00:00") {
@@ -572,8 +574,8 @@ function AttendancePage() {
                           } else {
                             endH = inH; endM = inM;
                           }
-                          elapsedMins = (endH * 60 + endM) - (inH * 60 + inM);
-                          if (elapsedMins < 0) elapsedMins += 24 * 60;
+                          let diff = (endH * 60 + endM) - (inH * 60 + inM);
+                          if (diff > 0) elapsedMins = diff;
                         }
 
                         let breakMins = 0;
@@ -587,6 +589,9 @@ function AttendancePage() {
                             let diff = (iH * 60 + iM) - (oH * 60 + oM);
                             if (diff > 0) breakMins += diff;
                           }
+                        }
+                        if (elapsedMins > totalWorkedMins && breakMins === 0) {
+                          breakMins = elapsedMins - totalWorkedMins;
                         }
                         let effectiveSecs = totalWorkedSecs;
 
@@ -759,8 +764,7 @@ function AttendancePage() {
                           const [inH, inM] = record.checkin.split(':').map(Number);
                           const [outH, outM] = record.checkout.split(':').map(Number);
                           let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                          if (diff < 0) diff += 24 * 3600;
-                          acc[record.date].totalSeconds += diff;
+                          if (diff > 0) acc[record.date].totalSeconds += diff;
                         }
                         if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
                           acc[record.date].firstIn = record.checkin;
@@ -768,13 +772,15 @@ function AttendancePage() {
                         if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
                           acc[record.date].lastOut = record.checkout;
                         }
+                        if (record.checkin && (!acc[record.date].lastOut || record.checkin > acc[record.date].lastOut)) {
+                          acc[record.date].lastOut = record.checkin;
+                        }
                         if (!record.checkout) {
                           acc[record.date].hasActive = true;
-                          if (record.checkin) {
+                          if (record.checkin && record.date === todayStr) {
                              const [inH, inM] = record.checkin.split(':').map(Number);
                              let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff < 0) diff += 24 * 3600;
-                             acc[record.date].totalSeconds += diff;
+                             if (diff > 0) acc[record.date].totalSeconds += diff;
                           }
                         }
                         return acc;
@@ -962,24 +968,25 @@ function AttendancePage() {
                         empGroup.firstIn = record.checkin;
                       }
                       
+                      if (record.checkout && record.checkout > empGroup.lastOut) {
+                        empGroup.lastOut = record.checkout;
+                      }
+                      if (record.checkin && record.checkin > empGroup.lastOut) {
+                        empGroup.lastOut = record.checkin;
+                      }
                       if (!record.checkout) {
                         empGroup.isActive = true;
-                        empGroup.lastOut = "00:00";
-                      } else if (record.checkout && !empGroup.isActive && record.checkout > empGroup.lastOut) {
-                        empGroup.lastOut = record.checkout;
                       }
 
                       if (record.checkin && record.checkout) {
                         const [inH, inM] = record.checkin.split(':').map(Number);
                         const [outH, outM] = record.checkout.split(':').map(Number);
                         let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                        if (diff < 0) diff += 24 * 3600;
-                        empGroup.totalSecs += diff;
-                      } else if (!record.checkout && record.checkin) {
+                        if (diff > 0) empGroup.totalSecs += diff;
+                      } else if (!record.checkout && record.checkin && teamSelectedDateStr === todayStr) {
                         const [inH, inM] = record.checkin.split(':').map(Number);
                         let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                        if (diff < 0) diff += 24 * 3600;
-                        empGroup.totalSecs += diff;
+                        if (diff > 0) empGroup.totalSecs += diff;
                       }
 
                       if (record.note && !empGroup.notes.includes(record.note)) empGroup.notes.push(record.note);
@@ -992,25 +999,24 @@ function AttendancePage() {
                     
                     let firstIn = empGroup.firstIn;
                     let lastOut = empGroup.lastOut;
-                    let isActive = empGroup.isActive;
+                    let isActive = empGroup.isActive && teamSelectedDateStr === todayStr;
                     let totalSecs = empGroup.totalSecs;
 
                     let totalElapsedSecs = 0;
                     if (firstIn !== "23:59") {
                         const [fH, fM] = firstIn.split(':').map(Number);
                         let endH = 0, endM = 0, endS = 0;
-                        if (lastOut !== "00:00") {
-                             const [lH, lM] = lastOut.split(':').map(Number);
-                             endH = lH; endM = lM; endS = 0;
-                        } else if (isActive) {
+                        if (isActive) {
                              const now = new Date();
                              endH = now.getHours(); endM = now.getMinutes(); endS = now.getSeconds();
+                        } else if (lastOut !== "00:00") {
+                             const [lH, lM] = lastOut.split(':').map(Number);
+                             endH = lH; endM = lM; endS = 0;
                         }
                         
                         if (endH !== 0 || endM !== 0 || isActive) {
                            let diff = (endH * 3600 + endM * 60 + endS) - (fH * 3600 + fM * 60);
-                           if (diff < 0) diff += 24 * 3600;
-                           totalElapsedSecs = diff;
+                           if (diff > 0) totalElapsedSecs = diff;
                         }
                     }
                     
@@ -1026,6 +1032,13 @@ function AttendancePage() {
                         if (diff > 0) breakSecs += diff;
                       }
                     }
+                    if (totalElapsedSecs > totalSecs && breakSecs === 0) {
+                      breakSecs = totalElapsedSecs - totalSecs;
+                    }
+                    if (totalElapsedSecs < totalSecs + breakSecs) {
+                      totalElapsedSecs = totalSecs + breakSecs;
+                    }
+
                     const breakH = Math.floor(breakSecs / 3600);
                     const breakM = Math.floor((breakSecs % 3600) / 60);
 
@@ -1217,8 +1230,7 @@ function AttendancePage() {
                           const [inH, inM] = record.checkin.split(':').map(Number);
                           const [outH, outM] = record.checkout.split(':').map(Number);
                           let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                          if (diff < 0) diff += 24 * 3600;
-                          acc[record.date].totalSeconds += diff;
+                          if (diff > 0) acc[record.date].totalSeconds += diff;
                         }
                         if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
                           acc[record.date].firstIn = record.checkin;
@@ -1226,13 +1238,15 @@ function AttendancePage() {
                         if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
                           acc[record.date].lastOut = record.checkout;
                         }
+                        if (record.checkin && (!acc[record.date].lastOut || record.checkin > acc[record.date].lastOut)) {
+                          acc[record.date].lastOut = record.checkin;
+                        }
                         if (!record.checkout) {
                           acc[record.date].hasActive = true;
-                          if (record.checkin) {
+                          if (record.checkin && record.date === todayStr) {
                              const [inH, inM] = record.checkin.split(':').map(Number);
                              let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff < 0) diff += 24 * 3600;
-                             acc[record.date].totalSeconds += diff;
+                             if (diff > 0) acc[record.date].totalSeconds += diff;
                           }
                         }
                         return acc;
@@ -1583,7 +1597,7 @@ function AttendancePage() {
                   <p className="text-lg font-bold">
                     {selectedDayInfo?.totalSeconds ? (
                         (() => {
-                           const eff = selectedDayInfo.totalSeconds >= 240 * 60 ? selectedDayInfo.totalSeconds - 45 * 60 : selectedDayInfo.totalSeconds;
+                           const eff = selectedDayInfo.totalSeconds;
                            const h = Math.floor(eff / 3600);
                            const m = Math.floor((eff % 3600) / 60);
                            const s = eff % 60;
