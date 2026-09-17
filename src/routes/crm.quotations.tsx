@@ -127,7 +127,7 @@ interface QuoteForm {
   flights: FlightOption[];
   basePrice: number;
   gstRate: number; // 0, 5, 18
-  tcsRate: number; // 0, 5, 20
+  tcsRate: number; // 0, 2, 5
   discount: number;
   discountType: "amount" | "percentage";
   inclusions: string;
@@ -1573,8 +1573,8 @@ function QuotationsPage() {
                         className="w-full rounded-xl border border-border bg-background px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary mt-1.5"
                       >
                         <option value="0">None</option>
-                        <option value="5">5% TCS (With PAN)</option>
-                        <option value="20">20% TCS (Without PAN)</option>
+                        <option value="2">2% TCS (With PAN)</option>
+                        <option value="5">5% TCS (Without PAN)</option>
                       </select>
                     </div>
                     <div>
