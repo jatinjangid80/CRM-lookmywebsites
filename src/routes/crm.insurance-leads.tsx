@@ -784,7 +784,7 @@ function DynamicFormStep({
   };
 
   return (
-    <div className="flex flex-col gap-0 overflow-y-auto" {...(isAddCustomerOpen ? { inert: "" } : {})}>
+    <div className="flex flex-col gap-0 overflow-y-auto" inert={isAddCustomerOpen || undefined}>
       {/* Sub-header: service badge + back button */}
       <div className="flex items-center gap-3 px-6 py-3 border-b border-border bg-secondary/30">
         <button

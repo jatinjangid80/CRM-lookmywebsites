@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import {
   BarChart,
   Bar,
@@ -14,7 +14,7 @@ import {
   ResponsiveContainer,
   Legend,
 } from "recharts";
-import { IndianRupee, TrendingUp, UserCheck, CalendarCheck, Star, Download } from "lucide-react";
+import { IndianRupee, TrendingUp, UserCheck, CalendarCheck, Star, Download, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatINR } from "@/lib/mock-data";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
@@ -81,6 +81,7 @@ function SectionHeader({ title, sub }: { title: string; sub: string }) {
 }
 
 function ReportsPage() {
+  const navigate = useNavigate();
   const auth = getAuth();
   const isAdmin = (auth?.role === "admin" || auth?.role === "manager") && !auth?.name.toLowerCase().includes("suman");
   const [leadsList] = useSupabaseTable<any[]>("leads", []);
@@ -205,9 +206,11 @@ function ReportsPage() {
     .map(([name, data]) => {
       const conversion = data.leads ? Math.round((data.deals / data.leads) * 100) : 0;
       const emp = employeesList.find((e) => e.name === name);
+      const initials = name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || "?";
       return {
         name,
-        avatar: emp?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=random`,
+        avatar: emp?.avatar || "",
+        initials,
         deals: data.deals,
         revenue: data.revenue,
         conversion,
@@ -219,11 +222,22 @@ function ReportsPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <h1 className="font-display text-3xl font-bold">Reports & Analytics</h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            Revenue, pipeline and consultant performance at a glance.
-          </p>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate({ to: "/crm" })}
+            className="flex h-10 w-10 items-center justify-center rounded-xl border border-border bg-card hover:bg-secondary/60 text-muted-foreground hover:text-foreground transition-all hover:scale-105 active:scale-95 shadow-sm"
+            title="Back to Dashboard"
+            aria-label="Back to Dashboard"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <div>
+            <h1 className="font-display text-3xl font-bold">Reports & Analytics</h1>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Revenue, pipeline and consultant performance at a glance.
+            </p>
+          </div>
         </div>
         {isAdmin && (
           <Button variant="outline" className="gap-2 rounded-xl" onClick={exportCSV}>
@@ -380,17 +394,31 @@ function ReportsPage() {
             >
               {/* Rank */}
               <span
-                className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl font-display text-sm font-bold ${
+                className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl font-display text-xs font-bold border ${
                   i === 0
-                    ? "bg-amber-100 text-amber-700"
+                    ? "bg-amber-500/10 text-amber-600 border-amber-500/20 dark:bg-amber-950/40 dark:text-amber-400"
                     : i === 1
-                      ? "bg-slate-100 text-slate-600"
-                      : "bg-secondary text-muted-foreground"
+                      ? "bg-slate-500/10 text-slate-600 border-slate-500/20 dark:bg-slate-800 dark:text-slate-300"
+                      : i === 2
+                        ? "bg-amber-700/10 text-amber-700 border-amber-700/20 dark:bg-amber-950/30 dark:text-amber-500"
+                        : "bg-secondary/60 text-muted-foreground border-border/50"
                 }`}
               >
                 #{i + 1}
               </span>
-              <img src={c.avatar} alt={c.name} className="h-10 w-10 rounded-full" />
+
+              {/* Themed Avatar */}
+              {c.avatar ? (
+                <img
+                  src={c.avatar}
+                  alt={c.name}
+                  className="h-10 w-10 rounded-full object-cover border border-border shadow-sm"
+                />
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-primary/10 border border-primary/25 flex items-center justify-center font-bold text-primary text-sm shadow-sm">
+                  {c.initials}
+                </div>
+              )}
               <div className="flex-1">
                 <p className="font-semibold">{c.name}</p>
                 <p className="text-xs text-muted-foreground">{c.deals} deals closed</p>

@@ -338,6 +338,7 @@ export type PaymentFollowUp = {
   notes: string;
   createdBy?: string;
   status?: "Pending" | "Completed";
+  outcomeLog?: { status: string; date: string; by: string }[];
 };
 
 

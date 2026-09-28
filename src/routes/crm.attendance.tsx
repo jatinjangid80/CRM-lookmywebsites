@@ -191,27 +191,26 @@ function AttendancePage() {
   const [employeesList] = useSupabaseTable<any[]>("employees", []);
 
   const user = getAuth();
-  
+
   const meInDb = employeesList.find((e: any) => e.name?.toLowerCase().trim() === user?.name?.toLowerCase().trim());
   const myEmpId = user?.empId || (meInDb ? meInDb.id : (user?.name ? `EMP-${user.name.replace(/\s+/g, "").toUpperCase()}` : "EMP001"));
-  
+
   const ceoInDb = employeesList.find((e: any) => e.name === "Manvendra Singhal");
   const ceoId = ceoInDb ? ceoInDb.id : "EMP001";
-  
+
   // Get date in local timezone YYYY-MM-DD
   const todayStr = new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().split("T")[0];
 
   // Normalize EMP001 records to the actual CEO ID to merge history cards
-  // Auto-checkout any active shifts from previous days, or today if past 7:30 PM
+  // Normalize EMP001 records to the actual CEO ID to merge history cards
+  // Auto-checkout any active shifts from previous days ONLY
   const attendance = rawAttendance.map(a => {
     let rec = (a.employeeid === "EMP001" && myEmpId !== "EMP001") ? { ...a, employeeid: ceoId } : { ...a };
-    
+
     if (!rec.checkout) {
       const isPastDay = rec.date < todayStr;
-      const isTodayPastCheckoutTime = rec.date === todayStr && 
-        (time.getHours() > 19 || (time.getHours() === 19 && time.getMinutes() >= 30));
-        
-      if (isPastDay || isTodayPastCheckoutTime) {
+
+      if (isPastDay) {
         if (rec.checkin && rec.checkin >= "19:30") {
           rec.checkout = rec.checkin;
         } else {
@@ -393,10 +392,10 @@ function AttendancePage() {
   const handleSaveRemark = () => {
     if (!remarkTarget) return;
     const updated = rawAttendance.map(a => {
-        if (a.employeeid === remarkTarget.empId && a.date === remarkTarget.date) {
-            return { ...a, remark: remarkDraft };
-        }
-        return a;
+      if (a.employeeid === remarkTarget.empId && a.date === remarkTarget.date) {
+        return { ...a, remark: remarkDraft };
+      }
+      return a;
     });
     setAttendance(updated);
     toast.success("Remark saved successfully!");
@@ -438,21 +437,26 @@ function AttendancePage() {
     const formattedTimeStr = time.toLocaleTimeString("en-US", { hour12: false, hour: "2-digit", minute: "2-digit" });
     if (isClockedIn && myCurrentSession) {
       setAttendance(
-        rawAttendance.map(a => (a.employeeid === myEmpId && a.date === todayStr && !a.checkout) ? { ...a, checkout: formattedTimeStr, status: "Present" } : a)
+        rawAttendance.map(a => (a.id === myCurrentSession.id || (a.employeeid === myEmpId && a.date === todayStr && !a.checkout)) ? { ...a, checkout: formattedTimeStr, status: "Present" } : a)
       );
-      toast.success(`Successfully Clocked Out at ${formattedTimeStr}!`);
+      toast.success(`Successfully Clocked Out at ${formatTime12Hour(formattedTimeStr)}!`);
     } else {
+      const shiftName = time.getHours() < 12 ? "Morning Shift" : time.getHours() < 17 ? "Afternoon Shift" : "Evening Shift";
       const newRecord = {
         id: crypto.randomUUID(),
         employeeid: myEmpId,
+        employee_name: user?.name || meInDb?.name || "Employee",
         date: todayStr,
         checkin: formattedTimeStr,
         checkout: "",
-        status: "Active"
+        status: "Active",
+        shift: shiftName,
+        location: "JTM Mall Office",
+        note: shiftNote.trim() || undefined,
       };
       setAttendance([...rawAttendance, newRecord]);
       setShiftNote("");
-      toast.success(`Successfully Clocked In at ${formattedTimeStr}!`);
+      toast.success(`Successfully Clocked In at ${formatTime12Hour(formattedTimeStr)}!`);
     }
   };
 
@@ -572,7 +576,7 @@ function AttendancePage() {
                         {record.checkout && (
                           <div className="flex justify-between items-center pt-1 border-t border-border/40">
                             <span className="text-muted-foreground">Clocked Out:</span>
-                            <span className="font-semibold text-red-600 dark:text-red-400">{record.checkout}</span>
+                            <span className="font-semibold text-red-600 dark:text-red-400">{formatTime12Hour(record.checkout)}</span>
                           </div>
                         )}
                         {record.note && (
@@ -652,7 +656,7 @@ function AttendancePage() {
                       {(() => {
                         const myAllRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
                         const myRecords = kpiMonth === "all" ? myAllRecords : myAllRecords.filter((r: any) => r.date && r.date.startsWith(kpiMonth));
-                        
+
                         // Group by date
                         const dailyGroup = myRecords.reduce((acc: any, record: any) => {
                           if (!record.date) return acc;
@@ -682,7 +686,7 @@ function AttendancePage() {
 
                         // Calculate absent days (past weekdays in range with no attendance, excluding holidays & approved leaves)
                         let absent = 0;
-                        const monthsToScan = kpiMonth === "all" 
+                        const monthsToScan = kpiMonth === "all"
                           ? Array.from(new Set(myAllRecords.map((r: any) => r.date ? r.date.substring(0, 7) : ""))).filter(Boolean)
                           : [kpiMonth];
 
@@ -701,7 +705,7 @@ function AttendancePage() {
                             if (isWk) continue;
                             const isHol = MASTER_HOLIDAYS.some(h => h.isoDate === dStr);
                             if (isHol) continue;
-                            const isLve = (leaves || []).some((l: any) => 
+                            const isLve = (leaves || []).some((l: any) =>
                               isMatchingEmpLeave(l, currentHistoryEmpId) &&
                               (l.status === 'Approved' || l.status === 'approved') &&
                               dStr >= (l.start_date || l.startdate || '') &&
@@ -799,7 +803,7 @@ function AttendancePage() {
                       <div className="space-y-4">
                         {(() => {
                           const myRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
-                          
+
                           if (myRecords.length === 0) {
                             return (
                               <div className="bg-card rounded-3xl border border-border p-8 text-center text-muted-foreground shadow-sm">
@@ -821,7 +825,7 @@ function AttendancePage() {
                             .map(([date, records]: [string, any]) => {
                               const parsedDate = new Date(date + "T00:00:00");
                               const displayDate = parsedDate.toLocaleDateString("en-GB", { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
-                              
+
                               let dayRemark = "";
                               records.forEach((r: any) => {
                                 if (r.remark) dayRemark = r.remark;
@@ -833,12 +837,12 @@ function AttendancePage() {
                               // For visual timeline (assume 10 AM to 6 PM standard bounds for the bar width)
                               const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
                                 if (!timeStr) {
-                                   if (isOutActive) {
-                                      const now = new Date();
-                                      const currentMin = (now.getHours() * 60) + now.getMinutes();
-                                      return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
-                                   }
-                                   return 100;
+                                  if (isOutActive) {
+                                    const now = new Date();
+                                    const currentMin = (now.getHours() * 60) + now.getMinutes();
+                                    return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
+                                  }
+                                  return 100;
                                 }
                                 const [h, m] = timeStr.split(':').map(Number);
                                 const tMin = (h * 60) + m;
@@ -873,7 +877,7 @@ function AttendancePage() {
                                       )}
                                     </div>
                                   </div>
-                                  
+
                                   {/* Card Body */}
                                   <div className="p-6">
                                     <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
@@ -944,7 +948,7 @@ function AttendancePage() {
                                             return (
                                               <Tooltip key={idx}>
                                                 <TooltipTrigger asChild>
-                                                  <div 
+                                                  <div
                                                     className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
                                                     style={{ left: `${sPct}%`, width: `${wPct}%` }}
                                                   />
@@ -971,9 +975,9 @@ function AttendancePage() {
                           const month = calendarMonth.getMonth();
                           const firstDay = new Date(year, month, 1).getDay();
                           const daysInMonth = new Date(year, month + 1, 0).getDate();
-                          
+
                           const viewRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
-                          
+
                           // Group by date
                           const dailyTotals: any = Object.values(
                             viewRecords.reduce((acc: any, record: any) => {
@@ -987,130 +991,130 @@ function AttendancePage() {
                               return acc;
                             }, {} as Record<string, any>)
                           ).reduce((acc: any, day: any) => {
-                             acc[day.date] = day;
-                             return acc;
+                            acc[day.date] = day;
+                            return acc;
                           }, {} as any);
 
                           const days = [];
                           for (let i = 0; i < firstDay; i++) {
-                              days.push(<div key={`pad-${i}`} className="h-28 bg-secondary/10 border-r border-b border-border/50"></div>);
+                            days.push(<div key={`pad-${i}`} className="h-28 bg-secondary/10 border-r border-b border-border/50"></div>);
                           }
                           for (let d = 1; d <= daysInMonth; d++) {
-                              const dateObj = new Date(year, month, d);
-                              const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
-                              const dayData = dailyTotals[dateStr];
-                              const isWeekend = dateObj.getDay() === 0; // Only Sunday is weekend off (Saturday is a working day)
-                              const isFuture = dateStr > todayStr;
-                              const holiday = MASTER_HOLIDAYS.find(h => h.isoDate === dateStr);
-                              
-                              // Check approved leave
-                              const employeeLeaves = (leaves || []).filter((l: any) => 
-                                isMatchingEmpLeave(l, currentHistoryEmpId) &&
-                                (l.status === 'Approved' || l.status === 'approved') &&
-                                dateStr >= (l.start_date || l.startdate || '') &&
-                                dateStr <= (l.end_date || l.enddate || '')
-                              );
-                              const hasLeave = employeeLeaves.length > 0;
-                              
-                              let status = "Absent";
-                              let color = "text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40";
-                              let displayStr = "🔴 Absent";
-                              let tooltip = "No check-in recorded";
+                            const dateObj = new Date(year, month, d);
+                            const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                            const dayData = dailyTotals[dateStr];
+                            const isWeekend = dateObj.getDay() === 0; // Only Sunday is weekend off (Saturday is a working day)
+                            const isFuture = dateStr > todayStr;
+                            const holiday = MASTER_HOLIDAYS.find(h => h.isoDate === dateStr);
 
-                              if (dayData) {
-                                  const dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
-                                  const { firstIn, lastOut, isHalfDay: dayHalf, isLate: dayLate, workedH, workedM, breakH, breakM, totalH, totalM, isActive } = dayStats;
-                                  
-                                  if (dayHalf) {
-                                      status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40"; displayStr = `🟡 Half Day`; 
-                                  } else {
-                                      status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40"; displayStr = `🟢 ${totalH}h ${totalM}m`;
-                                  }
-                                  tooltip = `Clock In: ${firstIn !== "23:59" ? formatTime12Hour(firstIn) : '--:--'}\nClock Out: ${lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? 'Active Shift' : '--:--')}\nHours Worked: ${workedH}h ${workedM}m\nBreak Time: ${breakH > 0 ? `${breakH}h ` : ''}${breakM}m\nTotal Time: ${totalH}h ${totalM}m`;
-                              } else if (hasLeave) {
-                                  status = "Leave"; color = "text-blue-600 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40"; displayStr = "🟣 Leave"; tooltip = `Approved Leave: ${employeeLeaves[0]?.reason || employeeLeaves[0]?.type || 'Leave'}`;
-                              } else if (holiday) {
-                                  status = "Holiday"; color = "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40"; displayStr = `🎉 ${holiday.name}`; tooltip = `Official Holiday: ${holiday.name} (${holiday.type})`;
-                              } else if (isWeekend) {
-                                  status = "Weekend"; color = "text-slate-500 bg-slate-100 dark:bg-slate-800/60"; displayStr = "⚪ Weekend"; tooltip = "Weekend";
-                              } else if (isFuture) {
-                                  status = "Upcoming"; color = "text-muted-foreground/60 bg-secondary/10 border border-dashed border-border/40"; displayStr = "—"; tooltip = "Upcoming Working Day";
+                            // Check approved leave
+                            const employeeLeaves = (leaves || []).filter((l: any) =>
+                              isMatchingEmpLeave(l, currentHistoryEmpId) &&
+                              (l.status === 'Approved' || l.status === 'approved') &&
+                              dateStr >= (l.start_date || l.startdate || '') &&
+                              dateStr <= (l.end_date || l.enddate || '')
+                            );
+                            const hasLeave = employeeLeaves.length > 0;
+
+                            let status = "Absent";
+                            let color = "text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40";
+                            let displayStr = "🔴 Absent";
+                            let tooltip = "No check-in recorded";
+
+                            if (dayData) {
+                              const dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
+                              const { firstIn, lastOut, isHalfDay: dayHalf, isLate: dayLate, workedH, workedM, breakH, breakM, totalH, totalM, isActive } = dayStats;
+
+                              if (dayHalf) {
+                                status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40"; displayStr = `🟡 Half Day`;
+                              } else {
+                                status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40"; displayStr = `🟢 ${totalH}h ${totalM}m`;
                               }
+                              tooltip = `Clock In: ${firstIn !== "23:59" ? formatTime12Hour(firstIn) : '--:--'}\nClock Out: ${lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? 'Active Shift' : '--:--')}\nHours Worked: ${workedH}h ${workedM}m\nBreak Time: ${breakH > 0 ? `${breakH}h ` : ''}${breakM}m\nTotal Time: ${totalH}h ${totalM}m`;
+                            } else if (hasLeave) {
+                              status = "Leave"; color = "text-blue-600 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40"; displayStr = "🟣 Leave"; tooltip = `Approved Leave: ${employeeLeaves[0]?.reason || employeeLeaves[0]?.type || 'Leave'}`;
+                            } else if (holiday) {
+                              status = "Holiday"; color = "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40"; displayStr = `🎉 ${holiday.name}`; tooltip = `Official Holiday: ${holiday.name} (${holiday.type})`;
+                            } else if (isWeekend) {
+                              status = "Weekend"; color = "text-slate-500 bg-slate-100 dark:bg-slate-800/60"; displayStr = "⚪ Weekend"; tooltip = "Weekend";
+                            } else if (isFuture) {
+                              status = "Upcoming"; color = "text-muted-foreground/60 bg-secondary/10 border border-dashed border-border/40"; displayStr = "—"; tooltip = "Upcoming Working Day";
+                            }
 
-                              let dayStats: any = null;
-                              let isLate = false;
-                              if (dayData) {
-                                dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
-                                isLate = dayStats.isLate;
-                              }
+                            let dayStats: any = null;
+                            let isLate = false;
+                            if (dayData) {
+                              dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
+                              isLate = dayStats.isLate;
+                            }
 
-                              days.push(
-                                <TooltipProvider key={d}>
-                                  <Tooltip>
-                                    <TooltipTrigger asChild>
-                                      <div 
-                                        onClick={() => { 
-                                          setSelectedDayInfo(dayData ? { ...dayData, ...dayStats, employeeid: currentHistoryEmpId } : { 
-                                            date: dateStr, 
-                                            isAbsent: !isWeekend && !isFuture && !holiday && !hasLeave,
-                                            isWeekend,
-                                            isFuture,
-                                            holiday: holiday?.name,
-                                            hasLeave,
-                                            leaveDetails: employeeLeaves[0],
-                                            employeeid: currentHistoryEmpId 
-                                          }); 
-                                          setIsDaySheetOpen(true); 
-                                        }} 
-                                        className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group overflow-hidden"
-                                      >
-                                        <div className="flex justify-between items-start">
-                                          <span className={`text-sm font-semibold ${dayData ? 'text-foreground' : 'text-muted-foreground'}`}>{d}</span>
-                                          {isLate && dayData && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">LATE</span>}
-                                          {holiday && !dayData && <span className="text-[8px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-1 py-0.5 rounded uppercase">HOLIDAY</span>}
-                                        </div>
-                                        <div className={`text-[11px] font-bold px-1.5 py-1 rounded-md text-center shadow-sm transition-transform group-hover:scale-105 flex items-center justify-center min-w-0 overflow-hidden ${color}`}>
-                                          <span className="truncate whitespace-nowrap block max-w-full">{displayStr}</span>
-                                        </div>
+                            days.push(
+                              <TooltipProvider key={d}>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <div
+                                      onClick={() => {
+                                        setSelectedDayInfo(dayData ? { ...dayData, ...dayStats, employeeid: currentHistoryEmpId } : {
+                                          date: dateStr,
+                                          isAbsent: !isWeekend && !isFuture && !holiday && !hasLeave,
+                                          isWeekend,
+                                          isFuture,
+                                          holiday: holiday?.name,
+                                          hasLeave,
+                                          leaveDetails: employeeLeaves[0],
+                                          employeeid: currentHistoryEmpId
+                                        });
+                                        setIsDaySheetOpen(true);
+                                      }}
+                                      className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group overflow-hidden"
+                                    >
+                                      <div className="flex justify-between items-start">
+                                        <span className={`text-sm font-semibold ${dayData ? 'text-foreground' : 'text-muted-foreground'}`}>{d}</span>
+                                        {isLate && dayData && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">LATE</span>}
+                                        {holiday && !dayData && <span className="text-[8px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-1 py-0.5 rounded uppercase">HOLIDAY</span>}
                                       </div>
-                                    </TooltipTrigger>
-                                    <TooltipContent className="whitespace-pre-line text-xs">
-                                      {tooltip}
-                                    </TooltipContent>
-                                  </Tooltip>
-                                </TooltipProvider>
-                              );
+                                      <div className={`text-[11px] font-bold px-1.5 py-1 rounded-md text-center shadow-sm transition-transform group-hover:scale-105 flex items-center justify-center min-w-0 overflow-hidden ${color}`}>
+                                        <span className="truncate whitespace-nowrap block max-w-full">{displayStr}</span>
+                                      </div>
+                                    </div>
+                                  </TooltipTrigger>
+                                  <TooltipContent className="whitespace-pre-line text-xs">
+                                    {tooltip}
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
+                            );
                           }
 
                           return (
-                              <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
-                                  <div className="flex items-center justify-between p-4 border-b border-border/60 bg-secondary/10">
-                                      <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>&lt; Prev</Button>
-                                      <div className="text-center">
-                                        <h3 className="font-bold text-xl tracking-tight">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
-                                      </div>
-                                      <div className="flex items-center gap-2">
-                                        <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(time.getFullYear(), time.getMonth(), 1))}>Today</Button>
-                                        <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}>Next &gt;</Button>
-                                      </div>
-                                  </div>
-                                  <div className="grid grid-cols-7 bg-secondary/30 border-b border-border/60">
-                                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                          <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{day}</div>
-                                      ))}
-                                  </div>
-                                  <div className="grid grid-cols-7 border-l border-t border-border/50 bg-background">
-                                     {days}
-                                  </div>
-                                  <div className="p-4 border-t border-border/60 bg-secondary/10 flex flex-wrap gap-4 items-center justify-center text-xs font-medium text-muted-foreground">
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Present</span>
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Absent</span>
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Half Day</span>
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Leave</span>
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Holiday</span>
-                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Weekend</span>
-                                  </div>
+                            <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
+                              <div className="flex items-center justify-between p-4 border-b border-border/60 bg-secondary/10">
+                                <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>&lt; Prev</Button>
+                                <div className="text-center">
+                                  <h3 className="font-bold text-xl tracking-tight">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(time.getFullYear(), time.getMonth(), 1))}>Today</Button>
+                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}>Next &gt;</Button>
+                                </div>
                               </div>
+                              <div className="grid grid-cols-7 bg-secondary/30 border-b border-border/60">
+                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                  <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{day}</div>
+                                ))}
+                              </div>
+                              <div className="grid grid-cols-7 border-l border-t border-border/50 bg-background">
+                                {days}
+                              </div>
+                              <div className="p-4 border-t border-border/60 bg-secondary/10 flex flex-wrap gap-4 items-center justify-center text-xs font-medium text-muted-foreground">
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Present</span>
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Absent</span>
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Half Day</span>
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Leave</span>
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Holiday</span>
+                                <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Weekend</span>
+                              </div>
+                            </div>
                           );
                         })()}
                       </div>
@@ -1196,14 +1200,14 @@ function AttendancePage() {
                           acc[record.employeeid].remark = record.remark;
                         }
                       }
-                      
+
                       const empGroup = acc[record.employeeid];
                       empGroup.records.push(record);
-                      
+
                       if (record.checkin && record.checkin < empGroup.firstIn) {
                         empGroup.firstIn = record.checkin;
                       }
-                      
+
                       if (record.checkout && record.checkout > empGroup.lastOut) {
                         empGroup.lastOut = record.checkout;
                       }
@@ -1237,12 +1241,12 @@ function AttendancePage() {
 
                     const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
                       if (!timeStr) {
-                         if (isOutActive) {
-                            const now = new Date();
-                            const currentMin = (now.getHours() * 60) + now.getMinutes();
-                            return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
-                         }
-                         return 100;
+                        if (isOutActive) {
+                          const now = new Date();
+                          const currentMin = (now.getHours() * 60) + now.getMinutes();
+                          return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
+                        }
+                        return 100;
                       }
                       const [h, m] = timeStr.split(':').map(Number);
                       const tMin = (h * 60) + m;
@@ -1275,7 +1279,7 @@ function AttendancePage() {
                             )}
                           </div>
                         </div>
-                        
+
                         <div className="p-6">
                           <div className="grid grid-cols-2 sm:grid-cols-7 gap-4 mb-6">
                             <div>
@@ -1313,9 +1317,9 @@ function AttendancePage() {
                                 <div className="flex items-center justify-between mb-1">
                                   <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider">Admin Remark</p>
                                   {canEditRemarks && (
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm" 
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
                                       className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold"
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -1362,7 +1366,7 @@ function AttendancePage() {
                                   return (
                                     <Tooltip key={idx}>
                                       <TooltipTrigger asChild>
-                                        <div 
+                                        <div
                                           className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-emerald-400 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
                                           style={{ left: `${sPct}%`, width: `${wPct}%` }}
                                         />
@@ -1466,31 +1470,31 @@ function AttendancePage() {
                                         {isActive && <span className="opacity-70 ml-0.5">{workedS}s</span>}
                                       </span>
                                     )}
-                                  {canEditRemarks && (
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setRemarkTarget({ empId: empId as string, date: day.date, currentRemark: day.remark || "" });
-                                        setRemarkDraft(day.remark || "");
-                                        setRemarkDialogOpen(true);
-                                      }}
-                                      className="ml-auto text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full font-semibold transition-colors"
-                                    >
-                                      {day.remark ? "Edit Remark" : "Add Remark"}
-                                    </button>
-                                  )}
-                                  {day.remark && (
-                                    <div className="w-full mt-1.5 border-t border-dashed border-border/50 pt-1.5">
-                                      <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium italic">
-                                        <span className="font-semibold text-primary not-italic mr-1">Admin:</span>{day.remark}
-                                      </p>
-                                    </div>
-                                  )}
+                                    {canEditRemarks && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          setRemarkTarget({ empId: empId as string, date: day.date, currentRemark: day.remark || "" });
+                                          setRemarkDraft(day.remark || "");
+                                          setRemarkDialogOpen(true);
+                                        }}
+                                        className="ml-auto text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full font-semibold transition-colors"
+                                      >
+                                        {day.remark ? "Edit Remark" : "Add Remark"}
+                                      </button>
+                                    )}
+                                    {day.remark && (
+                                      <div className="w-full mt-1.5 border-t border-dashed border-border/50 pt-1.5">
+                                        <p className="text-[11px] text-slate-600 dark:text-slate-400 font-medium italic">
+                                          <span className="font-semibold text-primary not-italic mr-1">Admin:</span>{day.remark}
+                                        </p>
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          );
-                        })}
+                            );
+                          })}
                         </div>
                       </div>
                     );
@@ -1594,11 +1598,10 @@ function AttendancePage() {
                             <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
                             <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                (leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                                (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
-                                'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                              }`}>{leave.status || "Pending"}</span>
+                              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                                  (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                                    'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                                }`}>{leave.status || "Pending"}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
                               {(leave.status || "").toLowerCase() === 'pending' || !leave.status ? (
@@ -1661,11 +1664,10 @@ function AttendancePage() {
                         <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
                         <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                            (leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                            (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
-                            'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
-                          }`}>{leave.status || "Pending"}</span>
+                          <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                              (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                                'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                            }`}>{leave.status || "Pending"}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => {
@@ -1740,148 +1742,148 @@ function AttendancePage() {
                   Attendance records and shift details for this day.
                 </DialogDescription>
               </DialogHeader>
-              
-          <div className="space-y-6">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock In</span>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{selectedDayInfo?.firstIn && selectedDayInfo.firstIn !== "23:59" ? formatTime12Hour(selectedDayInfo.firstIn) : "--:--"}</p>
-                </div>
-              </div>
-              
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock Out</span>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                  <p className="text-base font-bold text-rose-600 dark:text-rose-400">{selectedDayInfo?.lastOut && selectedDayInfo.lastOut !== "00:00" ? formatTime12Hour(selectedDayInfo.lastOut) : (selectedDayInfo?.hasActive ? "Active Shift" : "--:--")}</p>
-                </div>
-              </div>
 
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hours Worked</span>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
-                    {selectedDayInfo?.workedH !== undefined ? `${selectedDayInfo.workedH}h ${selectedDayInfo.workedM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
-                    {selectedDayInfo?.hasActive && <span className="text-muted-foreground/70 text-xs ml-1">{selectedDayInfo?.workedS || 0}s</span>}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Break Time</span>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-amber-500"></span>
-                  <p className="text-base font-bold text-amber-600 dark:text-amber-400">
-                    {selectedDayInfo?.breakH !== undefined ? (selectedDayInfo.breakH > 0 ? `${selectedDayInfo.breakH}h ` : "") + `${selectedDayInfo.breakM}m` : "0m"}
-                  </p>
-                </div>
-              </div>
-
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Time</span>
-                <div className="flex items-center gap-2">
-                  <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                  <p className="text-base font-bold text-blue-600 dark:text-blue-400">
-                    {selectedDayInfo?.totalH !== undefined ? `${selectedDayInfo.totalH}h ${selectedDayInfo.totalM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
-                  </p>
-                </div>
-              </div>
-              
-              <div className="space-y-1.5">
-                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
-                <p className="text-base font-bold">
-                  {selectedDayInfo?.holiday ? (
-                    <span className="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md text-xs">
-                      🎉 {selectedDayInfo.holiday}
-                    </span>
-                  ) : selectedDayInfo?.hasLeave ? (
-                    <span className="inline-flex items-center gap-1.5 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md text-xs">
-                      🟣 {selectedDayInfo.leaveDetails?.reason || selectedDayInfo.leaveDetails?.type || "Approved Leave"}
-                    </span>
-                  ) : selectedDayInfo?.isWeekend ? (
-                    <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-xs">
-                      ⚪ Weekend
-                    </span>
-                  ) : selectedDayInfo?.isFuture ? (
-                    <span className="inline-flex items-center gap-1.5 bg-secondary text-muted-foreground px-2 py-0.5 rounded-md text-xs">
-                      📅 Upcoming
-                    </span>
-                  ) : selectedDayInfo?.isAbsent ? (
-                    <span className="inline-flex items-center gap-1.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md text-xs">
-                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md text-xs">
-                        <span className={`h-1.5 w-1.5 rounded-full ${selectedDayInfo?.hasActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`}></span> 
-                        {selectedDayInfo?.hasActive ? "Active" : "Present"}
-                    </span>
-                  )}
-                </p>
-              </div>
-
-              {(selectedDayInfo?.remark || canEditRemarks) && !selectedDayInfo?.isAbsent && (
-                <div className="col-span-2 space-y-2 mt-4 pt-4 border-t border-border/50">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Admin Remark</span>
-                    {canEditRemarks && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setRemarkTarget({ empId: selectedDayInfo.employeeid || myEmpId, date: selectedDayInfo.date, currentRemark: selectedDayInfo.remark || "" });
-                          setRemarkDraft(selectedDayInfo.remark || "");
-                          setRemarkDialogOpen(true);
-                        }}
-                        className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold transition-colors"
-                      >
-                        {selectedDayInfo.remark ? "Edit" : "Add"}
-                      </button>
-                    )}
+              <div className="space-y-6">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock In</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                      <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{selectedDayInfo?.firstIn && selectedDayInfo.firstIn !== "23:59" ? formatTime12Hour(selectedDayInfo.firstIn) : "--:--"}</p>
+                    </div>
                   </div>
-                  <p className="font-medium text-slate-600 dark:text-slate-400">
-                    {selectedDayInfo?.remark || "--"}
-                  </p>
-                </div>
-              )}
-            </div>
-            
-            {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "10:15" && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 mt-6">
-                <div className="bg-amber-100 text-amber-700 p-2 rounded-full shrink-0">⚠️</div>
-                <div>
-                  <h4 className="font-semibold text-amber-900">Late Arrival</h4>
-                  <p className="text-sm text-amber-700">Check-in was after the expected 10:15 AM threshold.</p>
-                </div>
-              </div>
-            )}
 
-            {selectedDayInfo?.records && selectedDayInfo.records.length > 0 && (
-              <div className="mt-8">
-                <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 border-b border-border pb-2">
-                  All Punches Today ({selectedDayInfo.records.length})
-                </h4>
-                <div className="space-y-3">
-                   {selectedDayInfo.records.map((r: any, idx: number) => (
-                      <div key={idx} className="flex justify-between items-center p-4 bg-secondary/20 rounded-xl border border-border/50">
-                        <div className="flex items-center gap-4">
-                           <div className="w-1 h-10 bg-primary/40 rounded-full"></div>
-                           <div>
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock Out</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-rose-500"></span>
+                      <p className="text-base font-bold text-rose-600 dark:text-rose-400">{selectedDayInfo?.lastOut && selectedDayInfo.lastOut !== "00:00" ? formatTime12Hour(selectedDayInfo.lastOut) : (selectedDayInfo?.hasActive ? "Active Shift" : "--:--")}</p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hours Worked</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                      <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                        {selectedDayInfo?.workedH !== undefined ? `${selectedDayInfo.workedH}h ${selectedDayInfo.workedM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
+                        {selectedDayInfo?.hasActive && <span className="text-muted-foreground/70 text-xs ml-1">{selectedDayInfo?.workedS || 0}s</span>}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Break Time</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                      <p className="text-base font-bold text-amber-600 dark:text-amber-400">
+                        {selectedDayInfo?.breakH !== undefined ? (selectedDayInfo.breakH > 0 ? `${selectedDayInfo.breakH}h ` : "") + `${selectedDayInfo.breakM}m` : "0m"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Time</span>
+                    <div className="flex items-center gap-2">
+                      <span className="h-2 w-2 rounded-full bg-blue-500"></span>
+                      <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                        {selectedDayInfo?.totalH !== undefined ? `${selectedDayInfo.totalH}h ${selectedDayInfo.totalM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1.5">
+                    <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+                    <p className="text-base font-bold">
+                      {selectedDayInfo?.holiday ? (
+                        <span className="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md text-xs">
+                          🎉 {selectedDayInfo.holiday}
+                        </span>
+                      ) : selectedDayInfo?.hasLeave ? (
+                        <span className="inline-flex items-center gap-1.5 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md text-xs">
+                          🟣 {selectedDayInfo.leaveDetails?.reason || selectedDayInfo.leaveDetails?.type || "Approved Leave"}
+                        </span>
+                      ) : selectedDayInfo?.isWeekend ? (
+                        <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-xs">
+                          ⚪ Weekend
+                        </span>
+                      ) : selectedDayInfo?.isFuture ? (
+                        <span className="inline-flex items-center gap-1.5 bg-secondary text-muted-foreground px-2 py-0.5 rounded-md text-xs">
+                          📅 Upcoming
+                        </span>
+                      ) : selectedDayInfo?.isAbsent ? (
+                        <span className="inline-flex items-center gap-1.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md text-xs">
+                          <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md text-xs">
+                          <span className={`h-1.5 w-1.5 rounded-full ${selectedDayInfo?.hasActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`}></span>
+                          {selectedDayInfo?.hasActive ? "Active" : "Present"}
+                        </span>
+                      )}
+                    </p>
+                  </div>
+
+                  {(selectedDayInfo?.remark || canEditRemarks) && !selectedDayInfo?.isAbsent && (
+                    <div className="col-span-2 space-y-2 mt-4 pt-4 border-t border-border/50">
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Admin Remark</span>
+                        {canEditRemarks && (
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setRemarkTarget({ empId: selectedDayInfo.employeeid || myEmpId, date: selectedDayInfo.date, currentRemark: selectedDayInfo.remark || "" });
+                              setRemarkDraft(selectedDayInfo.remark || "");
+                              setRemarkDialogOpen(true);
+                            }}
+                            className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold transition-colors"
+                          >
+                            {selectedDayInfo.remark ? "Edit" : "Add"}
+                          </button>
+                        )}
+                      </div>
+                      <p className="font-medium text-slate-600 dark:text-slate-400">
+                        {selectedDayInfo?.remark || "--"}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                {selectedDayInfo?.firstIn && selectedDayInfo.firstIn > "10:15" && (
+                  <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 flex items-start gap-3 mt-6">
+                    <div className="bg-amber-100 text-amber-700 p-2 rounded-full shrink-0">⚠️</div>
+                    <div>
+                      <h4 className="font-semibold text-amber-900">Late Arrival</h4>
+                      <p className="text-sm text-amber-700">Check-in was after the expected 10:15 AM threshold.</p>
+                    </div>
+                  </div>
+                )}
+
+                {selectedDayInfo?.records && selectedDayInfo.records.length > 0 && (
+                  <div className="mt-8">
+                    <h4 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-4 border-b border-border pb-2">
+                      All Punches Today ({selectedDayInfo.records.length})
+                    </h4>
+                    <div className="space-y-3">
+                      {selectedDayInfo.records.map((r: any, idx: number) => (
+                        <div key={idx} className="flex justify-between items-center p-4 bg-secondary/20 rounded-xl border border-border/50">
+                          <div className="flex items-center gap-4">
+                            <div className="w-1 h-10 bg-primary/40 rounded-full"></div>
+                            <div>
                               <p className="font-bold text-foreground text-base">{r.checkin ? formatTime12Hour(r.checkin) : "--:--"}</p>
                               <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Clock In</p>
-                           </div>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="font-bold text-rose-600 dark:text-rose-400 text-base">{r.checkout ? formatTime12Hour(r.checkout) : "Active Shift"}</p>
+                            <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Clock Out</p>
+                          </div>
                         </div>
-                        <div className="text-right">
-                           <p className="font-bold text-rose-600 dark:text-rose-400 text-base">{r.checkout ? formatTime12Hour(r.checkout) : "Active Shift"}</p>
-                           <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Clock Out</p>
-                        </div>
-                      </div>
-                   ))}
-                </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
             </>
           )}
         </DialogContent>

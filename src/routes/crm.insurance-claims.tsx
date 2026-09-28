@@ -408,7 +408,7 @@ function InsuranceClaimsPage() {
                               <Eye className="mr-2 h-4 w-4" />
                               View
                             </DropdownMenuItem>
-                            {auth.role === "admin" && (
+                            {auth?.role === "admin" && (
                               <>
                                 <DropdownMenuItem onSelect={() => { setSelectedClaim(claim); setIsEditOpen(true); }}>
                                   <Edit className="mr-2 h-4 w-4" />

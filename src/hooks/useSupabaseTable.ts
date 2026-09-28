@@ -445,10 +445,29 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
     }
 
     if (tableName === "attendance") {
-      if (newRow.remark !== undefined) {
-        newRow.status = `${newRow.status || ""}---META---${newRow.remark}`;
-        delete newRow.remark;
+      const isUuid = typeof newRow.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(newRow.id);
+      if (!isUuid) {
+        newRow.id = crypto.randomUUID();
       }
+
+      const meta: any = {};
+      if (newRow.remark) meta.remark = newRow.remark;
+      if (newRow.shift) meta.shift = newRow.shift;
+      if (newRow.location) meta.location = newRow.location;
+      if (newRow.note) meta.note = newRow.note;
+
+      const baseStatus = (newRow.status || "Present").split("---META---")[0];
+      if (Object.keys(meta).length > 0) {
+        newRow.status = `${baseStatus}---META---${JSON.stringify(meta)}`;
+      } else {
+        newRow.status = baseStatus;
+      }
+
+      delete newRow.remark;
+      delete newRow.shift;
+      delete newRow.location;
+      delete newRow.note;
+      delete newRow.employee_name;
     }
 
     return newRow;
@@ -808,7 +827,16 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       try {
         const parts = newRow.status.split("---META---");
         newRow.status = parts[0] || "";
-        if (parts[1]) newRow.remark = parts[1];
+        const metaStr = parts.slice(1).join("---META---");
+        if (metaStr.startsWith("{")) {
+          const parsed = JSON.parse(metaStr);
+          if (parsed.remark) newRow.remark = parsed.remark;
+          if (parsed.shift) newRow.shift = parsed.shift;
+          if (parsed.location) newRow.location = parsed.location;
+          if (parsed.note) newRow.note = parsed.note;
+        } else {
+          newRow.remark = metaStr;
+        }
       } catch (e) { }
     }
 
