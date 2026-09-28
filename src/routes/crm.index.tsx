@@ -24,8 +24,10 @@ import {
   Info,
   Car,
   MapPin,
-  ArrowRight,
   Globe,
+  ArrowRight,
+  Clock,
+  Timer,
 } from "lucide-react";
 import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/components/ui/hover-card";
 import {
@@ -151,6 +153,7 @@ function Dashboard() {
   const [employeesList] = useSupabaseTable<any[]>("employees", INITIAL_EMPLOYEES);
   const [packagesList] = useSupabaseTable<any[]>("packages", SEED_PACKAGES);
   const [tasksList, setTasksList] = useSupabaseTable<any[]>("tasks", SEED_TASKS);
+  const [attendanceList] = useSupabaseTable<any[]>("attendance", []);
   
   // Accounts tables for KPIs
   const [transactions] = useSupabaseTable<any[]>("transactions", []);
@@ -272,25 +275,89 @@ function Dashboard() {
     )
     .sort((a, b) => b.revenue - a.revenue || b.totalLeads - a.totalLeads);
 
-  // Employee Task Performance Aggregation
+  // Employee Task & CRM Time Performance Aggregation
   const employeeTaskStats = (employeesList || INITIAL_EMPLOYEES)
     .map((emp) => {
-      const empTasks = (tasksList || []).filter((t) => t.assignee === emp.name);
+      // 1. Task Matching (match assignee or assigned_to by name, ID, or empId)
+      const empTasks = (tasksList || []).filter((t) => {
+        const aTo = (t.assigned_to || t.assignee || "").toLowerCase().trim();
+        const eName = (emp.name || "").toLowerCase().trim();
+        const eId = (emp.id || "").toLowerCase().trim();
+        const eEmpId = (emp.empId || "").toLowerCase().trim();
+        return (
+          aTo === eName ||
+          (eId && aTo === eId) ||
+          (eEmpId && aTo === eEmpId)
+        );
+      });
+
       const completedTasks = empTasks.filter(
-        (t) => t.status === "Done" || t.status === "Completed",
+        (t) => t.status === "Done" || t.status === "Completed" || t.progress === 100,
       ).length;
       const totalTasks = empTasks.length;
+      const pendingTasks = Math.max(0, totalTasks - completedTasks);
 
       const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+      // 2. Attendance & CRM Time Spent Today
+      const empAttendance = (attendanceList || []).filter((a) => {
+        const aEmpId = (a.employeeid || a.employee_id || "").trim();
+        const aEmpName = (a.employee_name || a.name || "").toLowerCase().trim();
+        const eName = (emp.name || "").toLowerCase().trim();
+        const eId = (emp.id || "").trim();
+        const eEmpId = (emp.empId || "").trim();
+        
+        return (
+          (eId && aEmpId === eId) ||
+          (eEmpId && aEmpId === eEmpId) ||
+          (eName && aEmpName === eName) ||
+          (emp.name === "Manvendra Singhal" && (aEmpId === "EMP001" || aEmpId === eId))
+        );
+      });
+
+      const todayRecords = empAttendance.filter((a) => a.date === todayStr);
+      let workedMinutes = 0;
+      let isCurrentlyActive = false;
+
+      todayRecords.forEach((r) => {
+        if (!r.checkin) return;
+        const [inH, inM] = r.checkin.split(":").map(Number);
+        if (isNaN(inH) || isNaN(inM)) return;
+        const inMinutes = inH * 60 + inM;
+
+        let outMinutes = inMinutes;
+        if (r.checkout) {
+          const [outH, outM] = r.checkout.split(":").map(Number);
+          if (!isNaN(outH) && !isNaN(outM)) {
+            outMinutes = Math.max(inMinutes, outH * 60 + outM);
+          }
+        } else {
+          // currently active shift
+          isCurrentlyActive = true;
+          const now = new Date();
+          const nowMinutes = now.getHours() * 60 + now.getMinutes();
+          outMinutes = Math.max(inMinutes, nowMinutes);
+        }
+        workedMinutes += Math.max(0, outMinutes - inMinutes);
+      });
+
+      const workedHours = Math.floor(workedMinutes / 60);
+      const workedM = workedMinutes % 60;
+      const timeSpentStr = workedMinutes > 0 ? `${workedHours}h ${workedM}m` : "0h 0m";
 
       return {
         ...emp,
         completedTasks,
+        pendingTasks,
         totalTasks,
         completionRate,
+        workedMinutes,
+        timeSpentStr,
+        isCurrentlyActive,
+        hasAttendanceToday: todayRecords.length > 0,
       };
     })
-    .sort((a, b) => b.completionRate - a.completionRate || b.totalTasks - a.totalTasks);
+    .sort((a, b) => b.workedMinutes - a.workedMinutes || b.completionRate - a.completionRate || b.totalTasks - a.totalTasks);
 
   // Top Clients Aggregation - Travel
   const travelClientStatsMap: Record<
@@ -982,22 +1049,26 @@ function Dashboard() {
             </div>
 
             <div className="space-y-4">
-              {employeeTaskStats.slice(0, 4).map((staff, idx) => {
+              {employeeTaskStats.slice(0, 4).map((staff) => {
                 const rate = staff.completionRate;
-                let badgeColor = "text-rose-600 bg-rose-50 border-rose-200";
+                let badgeColor = "text-rose-600 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-400";
                 let badgeText = "Needs Focus";
                 let progressColor = "bg-rose-500";
 
-                if (rate >= 80) {
-                  badgeColor = "text-emerald-600 bg-emerald-50 border-emerald-200";
+                if (staff.totalTasks === 0) {
+                  badgeColor = "text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400";
+                  badgeText = "No Tasks";
+                  progressColor = "bg-slate-300 dark:bg-slate-700";
+                } else if (rate >= 80) {
+                  badgeColor = "text-emerald-600 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-400";
                   badgeText = "Outstanding";
                   progressColor = "bg-emerald-500";
                 } else if (rate >= 70) {
-                  badgeColor = "text-blue-600 bg-blue-50 border-blue-200";
+                  badgeColor = "text-blue-600 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-400";
                   badgeText = "Good";
                   progressColor = "bg-blue-500";
                 } else if (rate >= 50) {
-                  badgeColor = "text-amber-600 bg-amber-50 border-amber-200";
+                  badgeColor = "text-amber-600 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-400";
                   badgeText = "Average";
                   progressColor = "bg-amber-500";
                 }
@@ -1005,7 +1076,7 @@ function Dashboard() {
                 return (
                   <div
                     key={staff.name}
-                    className="flex items-center justify-between gap-4 p-2.5 rounded-xl hover:bg-secondary/40 transition-colors"
+                    className="flex items-center justify-between gap-4 p-3 rounded-2xl hover:bg-secondary/40 transition-colors border border-border/40"
                   >
                     <div className="flex items-center gap-3 min-w-0">
                       <div className="relative">
@@ -1013,28 +1084,51 @@ function Dashboard() {
                           <img
                             src={staff.avatar}
                             alt={staff.name}
-                            className="h-10 w-10 rounded-xl object-cover border border-border"
+                            className="h-10 w-10 rounded-xl object-cover border border-border shadow-sm"
                           />
                         ) : (
-                          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center">
+                          <div className="h-10 w-10 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center shadow-sm">
                             <span className="text-sm font-bold text-primary">
                               {staff.name.split(' ').map((n: string) => n[0]).join('').toUpperCase().substring(0, 2) || "?"}
                             </span>
                           </div>
                         )}
+                        {staff.isCurrentlyActive && (
+                          <span className="absolute -bottom-0.5 -right-0.5 h-3 w-3 rounded-full bg-emerald-500 border-2 border-background animate-pulse" />
+                        )}
                       </div>
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold truncate text-foreground">
-                          {staff.name}
-                        </p>
-                        <p className="text-[10px] text-muted-foreground truncate">{staff.role}</p>
+                        <div className="flex items-center gap-1.5">
+                          <p className="text-sm font-semibold truncate text-foreground">
+                            {staff.name}
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-2 mt-0.5">
+                          <p className="text-[11px] text-muted-foreground truncate">{staff.role}</p>
+                          <span className="text-muted-foreground/40 text-[10px]">•</span>
+                          <span className={`inline-flex items-center gap-1 text-[10px] font-semibold ${staff.isCurrentlyActive ? "text-emerald-600 dark:text-emerald-400 font-bold" : staff.hasAttendanceToday ? "text-slate-600 dark:text-slate-300" : "text-muted-foreground"}`}>
+                            {staff.isCurrentlyActive ? (
+                              <>
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-ping" />
+                                <span>Active ({staff.timeSpentStr})</span>
+                              </>
+                            ) : staff.hasAttendanceToday ? (
+                              <>
+                                <Clock className="h-3 w-3 text-slate-500" />
+                                <span>{staff.timeSpentStr} today</span>
+                              </>
+                            ) : (
+                              <span>0h (Not in)</span>
+                            )}
+                          </span>
+                        </div>
                       </div>
                     </div>
 
-                    <div className="flex flex-col items-end shrink-0 text-right min-w-[120px]">
+                    <div className="flex flex-col items-end shrink-0 text-right min-w-[130px]">
                       <div className="flex items-center gap-2">
                         <span className="text-xs font-semibold text-muted-foreground">
-                          {staff.totalTasks - staff.completedTasks} Pending Tasks
+                          {staff.totalTasks > 0 ? `${staff.completedTasks}/${staff.totalTasks} Done` : "0 Tasks"}
                         </span>
                         <span
                           className={`text-[9px] font-bold px-1.5 py-0.5 rounded border ${badgeColor}`}
@@ -1042,15 +1136,15 @@ function Dashboard() {
                           {badgeText}
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5 mt-1 w-24">
+                      <div className="flex items-center gap-1.5 mt-1.5 w-28">
                         <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
                           <div
-                            className={`h-full rounded-full ${progressColor}`}
-                            style={{ width: `${rate}%` }}
+                            className={`h-full rounded-full transition-all duration-500 ${progressColor}`}
+                            style={{ width: `${staff.totalTasks > 0 ? rate : 0}%` }}
                           />
                         </div>
-                        <span className="text-[10px] font-semibold text-muted-foreground w-6 text-right">
-                          {rate}%
+                        <span className="text-[10px] font-semibold text-muted-foreground w-7 text-right">
+                          {staff.totalTasks > 0 ? `${rate}%` : "—"}
                         </span>
                       </div>
                     </div>
@@ -1099,7 +1193,14 @@ function Dashboard() {
                   allowDecimals={false}
                 />
                 <Tooltip cursor={{ fill: "rgba(255,107,0,0.05)" }} />
-                <Bar dataKey="bookings" fill="var(--primary)" radius={[6, 6, 0, 0]} />
+                <Bar dataKey="bookings" radius={[6, 6, 0, 0]}>
+                  {bookingTrendData.map((_, index) => (
+                    <Cell
+                      key={`booking-bar-cell-${index}`}
+                      fill={FUNNEL_COLORS[index % FUNNEL_COLORS.length]}
+                    />
+                  ))}
+                </Bar>
               </BarChart>
             </ResponsiveContainer>
           </div>

@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
-import { useState, useEffect, useMemo } from "react";
-import { getUpcomingHolidays } from "@/lib/holidays";
+import { createFileRoute } from '@tanstack/react-router';
+import { useState, useEffect, useMemo, useCallback } from "react";
+import { getUpcomingHolidays, MASTER_HOLIDAYS } from "@/lib/holidays";
 import { Clock, Play, Building2, Square, Users, TrendingUp, Download, Calendar as CalendarIcon, Activity, PlusCircle, Search, FileText, Smartphone, Trash2 } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -26,6 +26,144 @@ function formatTime12Hour(timeStr?: string) {
   const ampm = h >= 12 ? 'PM' : 'AM';
   const hour12 = h % 12 || 12;
   return `${hour12}:${m.toString().padStart(2, '0')} ${ampm}`;
+}
+
+function computeDayAttendance(
+  records: any[],
+  dateStr: string,
+  todayStr: string,
+  currentTime: Date
+) {
+  const isToday = dateStr === todayStr;
+  const currentNowSec = currentTime.getHours() * 3600 + currentTime.getMinutes() * 60 + currentTime.getSeconds();
+
+  let hasActive = false;
+  const rawIntervals: Array<{ start: number; end: number; isRecActive: boolean; rawCheckin: string; rawCheckout?: string }> = [];
+
+  for (const r of records) {
+    if (!r.checkin) continue;
+    const [inH, inM] = r.checkin.split(':').map(Number);
+    if (isNaN(inH) || isNaN(inM)) continue;
+    const startSec = inH * 3600 + inM * 60;
+
+    let endSec = startSec;
+    let isRecActive = false;
+
+    if (r.checkout) {
+      const [outH, outM] = r.checkout.split(':').map(Number);
+      if (!isNaN(outH) && !isNaN(outM)) {
+        endSec = Math.max(startSec, outH * 3600 + outM * 60);
+      }
+    } else if (isToday) {
+      isRecActive = true;
+      hasActive = true;
+      endSec = Math.max(startSec, currentNowSec);
+    } else {
+      endSec = startSec;
+    }
+
+    rawIntervals.push({
+      start: startSec,
+      end: endSec,
+      isRecActive,
+      rawCheckin: r.checkin,
+      rawCheckout: r.checkout,
+    });
+  }
+
+  if (rawIntervals.length === 0) {
+    return {
+      firstIn: "23:59",
+      lastOut: "00:00",
+      isActive: false,
+      workedSecs: 0,
+      breakSecs: 0,
+      totalSecs: 0,
+      workedH: 0,
+      workedM: 0,
+      workedS: 0,
+      breakH: 0,
+      breakM: 0,
+      totalH: 0,
+      totalM: 0,
+      isLate: false,
+      isHalfDay: false,
+      mergedIntervals: [],
+    };
+  }
+
+  // Sort raw intervals by start ascending, then by duration / end descending
+  rawIntervals.sort((a, b) => {
+    if (a.start !== b.start) return a.start - b.start;
+    return b.end - a.end;
+  });
+
+  // Merge overlapping or adjacent intervals
+  const merged: Array<{ start: number; end: number; isRecActive: boolean }> = [];
+  for (const interval of rawIntervals) {
+    if (merged.length === 0) {
+      merged.push({ ...interval });
+    } else {
+      const prev = merged[merged.length - 1];
+      if (interval.start <= prev.end) {
+        prev.end = Math.max(prev.end, interval.end);
+        prev.isRecActive = prev.isRecActive || interval.isRecActive;
+      } else {
+        merged.push({ ...interval });
+      }
+    }
+  }
+
+  // Calculate worked seconds
+  let workedSecs = 0;
+  for (const m of merged) {
+    workedSecs += Math.max(0, m.end - m.start);
+  }
+
+  // Calculate break seconds as sum of gaps between consecutive working periods
+  let breakSecs = 0;
+  for (let i = 0; i < merged.length - 1; i++) {
+    const gap = merged[i + 1].start - merged[i].end;
+    if (gap > 0) breakSecs += gap;
+  }
+
+  const totalElapsedSecs = workedSecs + breakSecs;
+
+  // Format firstIn & lastOut strings
+  const firstInStr = rawIntervals.reduce((minStr, cur) => (cur.rawCheckin < minStr ? cur.rawCheckin : minStr), rawIntervals[0].rawCheckin);
+
+  let lastOutStr = "00:00";
+  if (!hasActive) {
+    const completedCheckouts = rawIntervals.filter(r => r.rawCheckout).map(r => r.rawCheckout!);
+    if (completedCheckouts.length > 0) {
+      lastOutStr = [...completedCheckouts].sort().reverse()[0];
+    } else {
+      lastOutStr = firstInStr;
+    }
+  }
+
+  const [fH, fM] = firstInStr.split(':').map(Number);
+  const isLate = fH > 10 || (fH === 10 && fM > 15);
+  const isHalfDay = workedSecs > 0 && workedSecs < 240 * 60 && !hasActive;
+
+  return {
+    firstIn: firstInStr,
+    lastOut: lastOutStr,
+    isActive: hasActive,
+    workedSecs,
+    breakSecs,
+    totalSecs: totalElapsedSecs,
+    workedH: Math.floor(workedSecs / 3600),
+    workedM: Math.floor((workedSecs % 3600) / 60),
+    workedS: workedSecs % 60,
+    breakH: Math.floor(breakSecs / 3600),
+    breakM: Math.floor((breakSecs % 3600) / 60),
+    totalH: Math.floor(totalElapsedSecs / 3600),
+    totalM: Math.floor((totalElapsedSecs % 3600) / 60),
+    isLate,
+    isHalfDay,
+    mergedIntervals: merged,
+  };
 }
 
 export const Route = createFileRoute("/crm/attendance")({
@@ -91,9 +229,78 @@ function AttendancePage() {
   const [leaveStartDate, setLeaveStartDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveEndDate, setLeaveEndDate] = useState(new Date().toISOString().split("T")[0]);
   const [leaveReason, setLeaveReason] = useState("");
-  const [kpiMonth, setKpiMonth] = useState("all");
+  const [leaveSearch, setLeaveSearch] = useState("");
+  const currentMonthStr = todayStr.substring(0, 7);
+  const [kpiMonth, setKpiMonth] = useState(currentMonthStr);
   const myTodayRecords = [...attendance.filter(a => a.employeeid === myEmpId && a.date === todayStr)].sort((a, b) => (b.checkin || "").localeCompare(a.checkin || ""));
   const myCurrentSession = myTodayRecords.find(a => !a.checkout);
+
+  const isMatchingEmpLeave = useCallback((l: any, empId: string) => {
+    if (!l) return false;
+    const lEmpId = l.employeeid || l.employee_id || "";
+    const lEmpName = l.employee_name || l.name || "";
+    if (lEmpId === empId) return true;
+    const empRec = employeesList.find((e: any) => e.id === empId || e.empId === empId);
+    if (empRec) {
+      if (lEmpId === empRec.id || lEmpId === empRec.empId) return true;
+      if (empRec.name && lEmpName && empRec.name.toLowerCase().trim() === lEmpName.toLowerCase().trim()) return true;
+      if (empRec.name && lEmpId && empRec.name.toLowerCase().trim() === lEmpId.toLowerCase().trim()) return true;
+    }
+    if (empId === myEmpId && user?.name) {
+      if (lEmpName && user.name.toLowerCase().trim() === lEmpName.toLowerCase().trim()) return true;
+      if (lEmpId && user.name.toLowerCase().trim() === lEmpId.toLowerCase().trim()) return true;
+    }
+    return false;
+  }, [employeesList, myEmpId, user]);
+
+  const getLeaveDaysCount = (l: any) => {
+    const start = l.start_date || l.startdate;
+    const end = l.end_date || l.enddate;
+    if (!start) return 1;
+    if (!end || start === end) return 1;
+    const s = new Date(start);
+    const e = new Date(end);
+    const diffDays = Math.round((e.getTime() - s.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+    return Math.max(1, isNaN(diffDays) ? 1 : diffDays);
+  };
+
+  const myLeaves = useMemo(() => {
+    return (leaves || []).filter(l => isMatchingEmpLeave(l, myEmpId));
+  }, [leaves, myEmpId, isMatchingEmpLeave]);
+
+  const myApprovedLeaves = useMemo(() => {
+    return myLeaves.filter(l => (l.status || "").toLowerCase() === "approved");
+  }, [myLeaves]);
+
+  const myPendingLeaves = useMemo(() => {
+    return myLeaves.filter(l => (l.status || "").toLowerCase() === "pending" || !l.status);
+  }, [myLeaves]);
+
+  const teamPendingLeaves = useMemo(() => {
+    return (leaves || []).filter(l => (l.status || "").toLowerCase() === "pending" || !l.status);
+  }, [leaves]);
+
+  const casualUsed = useMemo(() => {
+    return myApprovedLeaves
+      .filter(l => (l.type || "").toLowerCase().includes("casual"))
+      .reduce((acc, l) => acc + getLeaveDaysCount(l), 0);
+  }, [myApprovedLeaves]);
+
+  const sickUsed = useMemo(() => {
+    return myApprovedLeaves
+      .filter(l => (l.type || "").toLowerCase().includes("sick"))
+      .reduce((acc, l) => acc + getLeaveDaysCount(l), 0);
+  }, [myApprovedLeaves]);
+
+  const earnedUsed = useMemo(() => {
+    return myApprovedLeaves
+      .filter(l => (l.type || "").toLowerCase().includes("earned"))
+      .reduce((acc, l) => acc + getLeaveDaysCount(l), 0);
+  }, [myApprovedLeaves]);
+
+  const casualBalance = Math.max(0, 12 - casualUsed);
+  const sickBalance = Math.max(0, 10 - sickUsed);
+  const earnedBalance = Math.max(0, 15 - earnedUsed);
 
   // Export State
   const [isExportOpen, setIsExportOpen] = useState(false);
@@ -148,6 +355,36 @@ function AttendancePage() {
   };
   const isClockedIn = !!myCurrentSession;
 
+  const filteredTeamLeaves = useMemo(() => {
+    return (leaves || []).filter((leave: any) => {
+      if (!leaveSearch.trim()) return true;
+      const q = leaveSearch.toLowerCase();
+      const emp = getEmpDetails(leave.employeeid || leave.employee_id);
+      return (
+        (emp.name && emp.name.toLowerCase().includes(q)) ||
+        (leave.type && leave.type.toLowerCase().includes(q)) ||
+        (leave.reason && leave.reason.toLowerCase().includes(q)) ||
+        (leave.status && leave.status.toLowerCase().includes(q)) ||
+        (leave.startdate && leave.startdate.includes(q)) ||
+        (leave.enddate && leave.enddate.includes(q))
+      );
+    });
+  }, [leaves, leaveSearch, employeesList, user, myEmpId]);
+
+  const filteredMyLeaves = useMemo(() => {
+    return myLeaves.filter((leave: any) => {
+      if (!leaveSearch.trim()) return true;
+      const q = leaveSearch.toLowerCase();
+      return (
+        (leave.type && leave.type.toLowerCase().includes(q)) ||
+        (leave.reason && leave.reason.toLowerCase().includes(q)) ||
+        (leave.status && leave.status.toLowerCase().includes(q)) ||
+        (leave.startdate && leave.startdate.includes(q)) ||
+        (leave.enddate && leave.enddate.includes(q))
+      );
+    });
+  }, [myLeaves, leaveSearch]);
+
   const uniqueEmpIds = Array.from(new Set(attendance.map((a: any) => a.employeeid)));
   const displayEmpIds = Array.from(new Set([...employeesList.map((e: any) => e.id), ...uniqueEmpIds]));
 
@@ -175,6 +412,7 @@ function AttendancePage() {
     const newLeave = {
       id: crypto.randomUUID(),
       employeeid: myEmpId,
+      employee_name: user?.name || meInDb?.name || "Employee",
       type: leaveType,
       startdate: leaveStartDate,
       enddate: leaveEndDate,
@@ -375,513 +613,511 @@ function AttendancePage() {
               </div>
             </div>
             <div className="lg:col-span-2 space-y-6">
-              {/* Top KPI Cards */}
-              <div className="flex items-center justify-between">
-                <h3 className="font-semibold text-lg text-foreground">Attendance Statistics</h3>
-                <select
-                  value={kpiMonth}
-                  onChange={(e) => setKpiMonth(e.target.value)}
-                  className="bg-transparent border border-border text-xs font-semibold rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary cursor-pointer"
-                >
-                  <option value="all">All Time</option>
-                  {Array.from(new Set(attendance.filter((r) => r.employeeid === myEmpId).map((r: any) => r.date.substring(0, 7)))).sort().reverse().map(m => {
-                    const [year, month] = m.split('-');
-                    const date = new Date(Number(year), Number(month) - 1, 1);
-                    return <option key={m} value={m}>{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</option>
-                  })}
-                </select>
-              </div>
-              <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-                {(() => {
-                  const myAllRecords = attendance.filter((record) => record.employeeid === myEmpId);
-                  const myRecords = kpiMonth === "all" ? myAllRecords : myAllRecords.filter((r: any) => r.date.startsWith(kpiMonth));
-                  
-                  // Group by date to get daily totals
-                  const dailyTotals = Object.values(
-                    myRecords.reduce((acc: any, record: any) => {
-                      if (!acc[record.date]) {
-                        acc[record.date] = { date: record.date, totalMinutes: 0, firstIn: record.checkin, isPresent: true };
-                      }
-                      if (record.checkin && record.checkout) {
-                        const [inH, inM] = record.checkin.split(':').map(Number);
-                        const [outH, outM] = record.checkout.split(':').map(Number);
-                        let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                        if (diff > 0) acc[record.date].totalMinutes += diff;
-                      }
-                      if (record.checkin && record.checkin < acc[record.date].firstIn) {
-                        acc[record.date].firstIn = record.checkin;
-                      }
-                      return acc;
-                    }, {})
-                  );
+              {(() => {
+                const currentHistoryEmpId = (isAdmin && selectedHistoryEmpId) ? selectedHistoryEmpId : myEmpId;
+                const currentHistoryEmp = employeesList.find((e: any) => e.id === currentHistoryEmpId) || (currentHistoryEmpId === myEmpId ? (meInDb || { name: auth?.name || "My" }) : null);
 
-                  const present = dailyTotals.length;
-                  const absent = 0; // Mock or calculate based on working days
-                  
-                  let late = 0;
-                  let overtimeMinutes = 0;
-                  let halfDays = 0;
-                  let totalWorkedMinutes = 0;
-
-                  dailyTotals.forEach((day: any) => {
-                     // Late if clocked in after 10:15 AM
-                     if (day.firstIn) {
-                        const [h, m] = day.firstIn.split(':').map(Number);
-                        if (h > 10 || (h === 10 && m > 15)) late++;
-                     }
-                     const effMins = day.totalMinutes >= 240 ? day.totalMinutes - 45 : day.totalMinutes;
-                     // Half day if worked less than 4 hours (240 mins)
-                     if (effMins > 0 && effMins < 240) halfDays++;
-                     // Overtime if worked more than 8 hours (480 mins)
-                     if (effMins > 480) overtimeMinutes += (effMins - 480);
-                     
-                     totalWorkedMinutes += effMins;
-                  });
-
-                  const otHours = Math.floor(overtimeMinutes / 60);
-                  const avgMins = present > 0 ? Math.floor(totalWorkedMinutes / present) : 0;
-                  const avgHours = Math.floor(avgMins / 60);
-                  const avgM = avgMins % 60;
-
-                  return (
-                    <>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Present</span>
-                        <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{present}</div>
+                return (
+                  <>
+                    {/* Top KPI Cards */}
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-lg text-foreground">Attendance Statistics</h3>
+                        {currentHistoryEmp && (
+                          <span className="text-xs bg-primary/10 text-primary font-semibold px-2 py-0.5 rounded-full">
+                            {currentHistoryEmp.name || currentHistoryEmpId}
+                          </span>
+                        )}
                       </div>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Absent</span>
-                        <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{absent}</div>
-                      </div>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Late</span>
-                        <div className="text-2xl font-bold text-amber-500 mt-2">{late}</div>
-                      </div>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Half Day</span>
-                        <div className="text-2xl font-bold text-indigo-500 mt-2">{halfDays}</div>
-                      </div>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Overtime</span>
-                        <div className="text-2xl font-bold text-purple-500 mt-2">{otHours}h</div>
-                      </div>
-                      <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
-                        <span className="text-xs font-semibold text-muted-foreground uppercase">Avg Hours</span>
-                        <div className="text-2xl font-bold text-blue-500 mt-2">{avgHours}h {avgM}m</div>
-                      </div>
-                    </>
-                  );
-                })()}
-              </div>
+                      <select
+                        value={kpiMonth}
+                        onChange={(e) => setKpiMonth(e.target.value)}
+                        className="bg-transparent border border-border text-xs font-semibold rounded-md px-3 py-1.5 outline-none focus:ring-1 focus:ring-primary cursor-pointer"
+                      >
+                        <option value={currentMonthStr}>This Month ({time.toLocaleString('default', { month: 'long', year: 'numeric' })})</option>
+                        <option value="all">All Time</option>
+                        {Array.from(new Set(attendance.filter((r) => r.employeeid === currentHistoryEmpId).map((r: any) => r.date ? r.date.substring(0, 7) : "")))
+                          .filter(m => Boolean(m) && m !== currentMonthStr)
+                          .sort()
+                          .reverse()
+                          .map(m => {
+                            const [year, month] = m.split('-');
+                            const date = new Date(Number(year), Number(month) - 1, 1);
+                            return <option key={m} value={m}>{date.toLocaleString('default', { month: 'long', year: 'numeric' })}</option>
+                          })}
+                      </select>
+                    </div>
 
-              <div className="flex items-center justify-between mt-2">
-                <h3 className="font-semibold text-lg">{auth?.name ? `${auth.name}'s Attendance History` : "My Attendance History"}</h3>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-muted-foreground font-medium">
-                    {attendance.filter((record) => record.employeeid === myEmpId).length} total shifts logged
-                  </span>
-                  <div className="flex items-center bg-secondary p-1 rounded-lg">
-                    <button
-                      onClick={() => setMyViewMode("table")}
-                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Table
-                    </button>
-                    <button
-                      onClick={() => setMyViewMode("calendar")}
-                      className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "calendar" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
-                    >
-                      Calendar
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {myViewMode === "table" ? (
-                <div className="space-y-4">
-                  {(() => {
-                    const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
-                    
-                    if (myRecords.length === 0) {
-                      return (
-                        <div className="bg-card rounded-3xl border border-border p-8 text-center text-muted-foreground shadow-sm">
-                          No attendance history found.
-                        </div>
-                      );
-                    }
-
-                    // Group by date
-                    const grouped = myRecords.reduce((acc: any, record: any) => {
-                      if (!acc[record.date]) acc[record.date] = [];
-                      acc[record.date].push(record);
-                      return acc;
-                    }, {});
-
-                    return Object.entries(grouped)
-                      .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
-                      .map(([date, records]: [string, any]) => {
-                        const parsedDate = new Date(date);
-                        const displayDate = parsedDate.toLocaleDateString("en-GB", { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                    <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
+                      {(() => {
+                        const myAllRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
+                        const myRecords = kpiMonth === "all" ? myAllRecords : myAllRecords.filter((r: any) => r.date && r.date.startsWith(kpiMonth));
                         
-                        // Calculate total hours
-                        let totalMins = 0;
-                        let firstIn = "23:59";
-                        let lastOut = "00:00";
-                        let isActive = false;
-                        let dayRemark = "";
+                        // Group by date
+                        const dailyGroup = myRecords.reduce((acc: any, record: any) => {
+                          if (!record.date) return acc;
+                          if (!acc[record.date]) acc[record.date] = [];
+                          acc[record.date].push(record);
+                          return acc;
+                        }, {} as Record<string, any[]>);
 
-                        records.forEach((r: any) => {
-                          if (r.remark) dayRemark = r.remark;
-                          if (r.checkin && r.checkin < firstIn) firstIn = r.checkin;
-                          if (r.checkout && r.checkout > lastOut) lastOut = r.checkout;
-                          if (r.checkin && r.checkin > lastOut) lastOut = r.checkin;
-                          if (!r.checkout) isActive = true;
+                        let present = 0;
+                        let late = 0;
+                        let overtimeMinutes = 0;
+                        let halfDays = 0;
+                        let totalWorkedMinutes = 0;
 
-                          if (r.checkin && r.checkout) {
-                            const [inH, inM] = r.checkin.split(':').map(Number);
-                            const [outH, outM] = r.checkout.split(':').map(Number);
-                            let diff = (outH * 60 + outM) - (inH * 60 + inM);
-                            if (diff > 0) totalMins += diff;
+                        Object.entries(dailyGroup).forEach(([dStr, recs]: [string, any]) => {
+                          const stats = computeDayAttendance(recs as any[], dStr, todayStr, time);
+                          if (stats.isHalfDay) {
+                            halfDays++;
+                          } else {
+                            present++;
+                          }
+                          if (stats.isLate) late++;
+                          const workedMins = Math.floor(stats.workedSecs / 60);
+                          if (workedMins > 480) overtimeMinutes += (workedMins - 480);
+                          totalWorkedMinutes += workedMins;
+                        });
+
+                        // Calculate absent days (past weekdays in range with no attendance, excluding holidays & approved leaves)
+                        let absent = 0;
+                        const monthsToScan = kpiMonth === "all" 
+                          ? Array.from(new Set(myAllRecords.map((r: any) => r.date ? r.date.substring(0, 7) : ""))).filter(Boolean)
+                          : [kpiMonth];
+
+                        if (monthsToScan.length === 0) monthsToScan.push(currentMonthStr);
+
+                        monthsToScan.forEach((mStrFull) => {
+                          const [yStr, mStr] = mStrFull.split("-");
+                          const yNum = Number(yStr);
+                          const mNum = Number(mStr) - 1;
+                          const totalDays = new Date(yNum, mNum + 1, 0).getDate();
+                          for (let d = 1; d <= totalDays; d++) {
+                            const dDate = new Date(yNum, mNum, d);
+                            const dStr = `${yNum}-${String(mNum + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                            if (dStr > todayStr) continue; // skip future
+                            const isWk = dDate.getDay() === 0; // Only Sunday is weekend off (Saturday is a working day)
+                            if (isWk) continue;
+                            const isHol = MASTER_HOLIDAYS.some(h => h.isoDate === dStr);
+                            if (isHol) continue;
+                            const isLve = (leaves || []).some((l: any) => 
+                              isMatchingEmpLeave(l, currentHistoryEmpId) &&
+                              (l.status === 'Approved' || l.status === 'approved') &&
+                              dStr >= (l.start_date || l.startdate || '') &&
+                              dStr <= (l.end_date || l.enddate || '')
+                            );
+                            if (isLve) continue;
+                            if (!dailyGroup[dStr]) absent++;
                           }
                         });
 
-                        // Add active session
-                        let currentSessionSecs = 0;
-                        if (isActive && date === todayStr) {
-                           const activeRecord = records.find((r: any) => !r.checkout);
-                           if (activeRecord && activeRecord.checkin) {
-                             const [inH, inM] = activeRecord.checkin.split(':').map(Number);
-                             // Use 'time' for active tick
-                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff > 0) currentSessionSecs = diff;
-                           }
-                        }
-
-                        let totalWorkedSecs = totalMins * 60 + currentSessionSecs;
-                        let totalWorkedMins = Math.floor(totalWorkedSecs / 60);
-
-                        // Calculate total elapsed
-                        let elapsedMins = 0;
-                        if (firstIn !== "23:59") {
-                          const [inH, inM] = firstIn.split(':').map(Number);
-                          let endH, endM;
-                          if (isActive && date === todayStr) {
-                            endH = time.getHours();
-                            endM = time.getMinutes();
-                          } else if (lastOut !== "00:00") {
-                            const [outH, outM] = lastOut.split(':').map(Number);
-                            endH = outH; endM = outM;
-                          } else {
-                            endH = inH; endM = inM;
-                          }
-                          let diff = (endH * 60 + endM) - (inH * 60 + inM);
-                          if (diff > 0) elapsedMins = diff;
-                        }
-
-                        let breakMins = 0;
-                        const sortedRecs = [...records].sort((a, b) => (a.checkin || "").localeCompare(b.checkin || ""));
-                        for (let i = 0; i < sortedRecs.length - 1; i++) {
-                          const prevOut = sortedRecs[i].checkout;
-                          const nextIn = sortedRecs[i + 1].checkin;
-                          if (prevOut && nextIn) {
-                            const [oH, oM] = prevOut.split(':').map(Number);
-                            const [iH, iM] = nextIn.split(':').map(Number);
-                            let diff = (iH * 60 + iM) - (oH * 60 + oM);
-                            if (diff > 0) breakMins += diff;
-                          }
-                        }
-                        if (elapsedMins > totalWorkedMins && breakMins === 0) {
-                          breakMins = elapsedMins - totalWorkedMins;
-                        }
-                        let effectiveSecs = totalWorkedSecs;
-
-                        const workedH = Math.floor(effectiveSecs / 3600);
-                        const workedM = Math.floor((effectiveSecs % 3600) / 60);
-                        const workedS = effectiveSecs % 60;
-
-                        // Determine status
-                        let isLate = false;
-                        if (firstIn !== "23:59") {
-                           const [h, m] = firstIn.split(':').map(Number);
-                           if (h > 10 || (h === 10 && m > 15)) isLate = true;
-                        }
-                        
-                        const isHalfDay = totalWorkedMins > 0 && totalWorkedMins < 240 && !isActive;
-
-                        // For visual timeline (assume 10 AM to 6 PM standard bounds for the bar width)
-                        // 10 AM = 10 * 60 = 600
-                        // 6 PM = 18 * 60 = 1080
-                        // Total bounds = 480 mins
-                        const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
-                          if (!timeStr) {
-                             if (isOutActive) {
-                                const now = new Date();
-                                const currentMin = (now.getHours() * 60) + now.getMinutes();
-                                return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
-                             }
-                             return 100;
-                          }
-                          const [h, m] = timeStr.split(':').map(Number);
-                          const tMin = (h * 60) + m;
-                          return Math.max(0, Math.min(100, ((tMin - 600) / 480) * 100));
-                        };
+                        const otHours = Math.floor(overtimeMinutes / 60);
+                        const totalActiveDays = present + halfDays;
+                        const avgMins = totalActiveDays > 0 ? Math.floor(totalWorkedMinutes / totalActiveDays) : 0;
+                        const avgHours = Math.floor(avgMins / 60);
+                        const avgM = avgMins % 60;
 
                         return (
-                          <div key={date} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
-                            {/* Card Header */}
-                            <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
-                              <div className="flex items-center gap-3">
-                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex flex-col items-center justify-center text-primary">
-                                  <span className="text-[10px] font-bold uppercase leading-none">{parsedDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
-                                  <span className="text-lg font-black leading-none">{parsedDate.getDate()}</span>
-                                </div>
-                                <div>
-                                  <h4 className="font-bold text-foreground">{displayDate}</h4>
-                                  <p className="text-xs text-muted-foreground">{records.length} punch{records.length > 1 ? 'es' : ''} logged</p>
-                                </div>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
-                                {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
-                                {isActive ? (
-                                  <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
-                                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
-                                  </span>
-                                ) : (
-                                  <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold">Present</span>
-                                )}
-                              </div>
+                          <>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Present</span>
+                              <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-2">{present}</div>
                             </div>
-                            
-                            {/* Card Body */}
-                            <div className="p-6">
-                              <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
-                                <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">First In</p>
-                                  <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Last Out</p>
-                                  <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
-                                  <p className="font-bold text-foreground">
-                                    {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
-                                  <p className="font-bold text-amber-600 dark:text-amber-400">
-                                    {Math.floor(breakMins / 60) > 0 ? `${Math.floor(breakMins / 60)}h ` : ''}{breakMins % 60}m
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Time</p>
-                                  <p className="font-bold text-blue-600 dark:text-blue-400">
-                                    {Math.floor((effectiveSecs + breakMins * 60) / 3600)}h {Math.floor(((effectiveSecs + breakMins * 60) % 3600) / 60)}m
-                                  </p>
-                                </div>
-                              </div>
-
-                              {/* Timeline Visual */}
-                              {records.length > 1 && (
-                                <div className="mb-4 pt-4 border-t border-border/30">
-                                  <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({records.length})</p>
-                                  <div className="flex flex-wrap gap-2">
-                                    {[...records].sort((a: any, b: any) => (a.checkin || "").localeCompare(b.checkin || "")).map((r: any, i: number) => (
-                                      <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
-                                        {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
-                                      </span>
-                                    ))}
-                                  </div>
-                                </div>
-                              )}
-
-                              {dayRemark && (
-                                <div className="mb-4 pt-4 border-t border-border/30">
-                                  <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-wider">Admin Remark</p>
-                                  <p className="font-medium text-slate-700 dark:text-slate-300 text-sm">
-                                    {dayRemark}
-                                  </p>
-                                </div>
-                              )}
-
-                              <div className="mt-4 pt-4 border-t border-border/60">
-                                <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
-                                  <span>10:00 AM</span>
-                                  <span>06:00 PM</span>
-                                </div>
-                                <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
-                                  <TooltipProvider>
-                                    {records.map((r: any, idx: number) => {
-                                      const sPct = getPercent(r.checkin);
-                                      const isRecActive = !r.checkout;
-                                      const ePct = getPercent(r.checkout, isRecActive);
-                                      const wPct = Math.max(0.5, ePct - sPct);
-                                      const tooltipText = `${r.checkin ? formatTime12Hour(r.checkin) : '--'} - ${r.checkout ? formatTime12Hour(r.checkout) : 'Active'}`;
-                                      return (
-                                        <Tooltip key={idx}>
-                                          <TooltipTrigger asChild>
-                                            <div 
-                                              className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
-                                              style={{ left: `${sPct}%`, width: `${wPct}%` }}
-                                            />
-                                          </TooltipTrigger>
-                                          <TooltipContent>
-                                            <p className="font-semibold text-xs">{tooltipText}</p>
-                                          </TooltipContent>
-                                        </Tooltip>
-                                      );
-                                    })}
-                                  </TooltipProvider>
-                                </div>
-                              </div>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Absent</span>
+                              <div className="text-2xl font-bold text-rose-600 dark:text-rose-400 mt-2">{absent}</div>
                             </div>
-                          </div>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Late</span>
+                              <div className="text-2xl font-bold text-amber-500 mt-2">{late}</div>
+                            </div>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Half Day</span>
+                              <div className="text-2xl font-bold text-indigo-500 mt-2">{halfDays}</div>
+                            </div>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Overtime</span>
+                              <div className="text-2xl font-bold text-purple-500 mt-2">{otHours}h</div>
+                            </div>
+                            <div className="bg-card rounded-2xl border border-border p-4 shadow-sm flex flex-col justify-between">
+                              <span className="text-xs font-semibold text-muted-foreground uppercase">Avg Hours</span>
+                              <div className="text-2xl font-bold text-blue-500 mt-2">{avgHours}h {avgM}m</div>
+                            </div>
+                          </>
                         );
-                      });
-                  })()}
-                </div>
-              ) : (
-                <div className="space-y-6">
-                  {(() => {
-                    const year = calendarMonth.getFullYear();
-                    const month = calendarMonth.getMonth();
-                    const firstDay = new Date(year, month, 1).getDay();
-                    const daysInMonth = new Date(year, month + 1, 0).getDate();
-                    
-                    const myRecords = attendance.filter((record) => record.employeeid === myEmpId);
-                    
-                    // Group by date
-                    const dailyTotals: any = Object.values(
-                      myRecords.reduce((acc: any, record: any) => {
-                        if (!acc[record.date]) {
-                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false };
-                        }
-                        acc[record.date].records.push(record);
-                        if (record.checkin && record.checkout) {
-                          const [inH, inM] = record.checkin.split(':').map(Number);
-                          const [outH, outM] = record.checkout.split(':').map(Number);
-                          let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                          if (diff > 0) acc[record.date].totalSeconds += diff;
-                        }
-                        if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
-                          acc[record.date].firstIn = record.checkin;
-                        }
-                        if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
-                          acc[record.date].lastOut = record.checkout;
-                        }
-                        if (record.checkin && (!acc[record.date].lastOut || record.checkin > acc[record.date].lastOut)) {
-                          acc[record.date].lastOut = record.checkin;
-                        }
-                        if (!record.checkout) {
-                          acc[record.date].hasActive = true;
-                          if (record.checkin && record.date === todayStr) {
-                             const [inH, inM] = record.checkin.split(':').map(Number);
-                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff > 0) acc[record.date].totalSeconds += diff;
-                          }
-                        }
-                        return acc;
-                      }, {} as Record<string, any>)
-                    ).reduce((acc: any, day: any) => {
-                       acc[day.date] = day;
-                       return acc;
-                    }, {} as any);
+                      })()}
+                    </div>
 
-                    const days = [];
-                    for (let i = 0; i < firstDay; i++) {
-                        days.push(<div key={`pad-${i}`} className="h-28 bg-secondary/10 border-r border-b border-border/50"></div>);
-                    }
-                    for (let d = 1; d <= daysInMonth; d++) {
-                        const dateObj = new Date(year, month, d);
-                        const dateStr = new Date(dateObj.getTime() - dateObj.getTimezoneOffset() * 60000).toISOString().split("T")[0];
-                        const dayData = dailyTotals[dateStr];
-                        const isWeekend = dateObj.getDay() === 0 || dateObj.getDay() === 6;
-                        
-                        let status = "Absent";
-                        let color = "text-rose-600 bg-rose-50 dark:bg-rose-950/30";
-                        let displayStr = "🔴 Absent";
-                        let tooltip = "No check-in recorded";
-
-                        if (isWeekend) {
-                             status = "Weekend"; color = "text-slate-500 bg-slate-100 dark:bg-slate-800"; displayStr = "⚪ Weekend"; tooltip = "Weekend";
-                        }
-                        
-                        let isLate = false;
-                        if (dayData) {
-                            const effSecs = dayData.totalSeconds >= 240 * 60 ? dayData.totalSeconds - 45 * 60 : dayData.totalSeconds;
-                            const workedH = Math.floor(effSecs / 3600);
-                            const workedM = Math.floor((effSecs % 3600) / 60);
-                            const isHalfDay = dayData.totalSeconds > 0 && dayData.totalSeconds < 240 * 60;
-                            isLate = dayData.firstIn > "10:15";
-                            
-                            if (isHalfDay) {
-                                status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30"; displayStr = `🟡 Half Day`; 
-                            } else {
-                                status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"; displayStr = `🟢 ${workedH}h ${workedM}m`;
-                            }
-                            tooltip = `Check In: ${dayData.firstIn ? formatTime12Hour(dayData.firstIn) : '--:--'}\nCheck Out: ${dayData.lastOut ? formatTime12Hour(dayData.lastOut) : 'Active'}\nWorked: ${workedH}h ${workedM}m`;
-                        }
-
-                        days.push(
-                          <TooltipProvider key={d}>
-                            <Tooltip>
-                              <TooltipTrigger asChild>
-                                <div 
-                                  onClick={() => { setSelectedDayInfo(dayData ? { ...dayData, employeeid: myEmpId } : { date: dateStr, isAbsent: true, employeeid: myEmpId }); setIsDaySheetOpen(true); }} 
-                                  className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group"
-                                >
-                                  <div className="flex justify-between items-start">
-                                    <span className={`text-sm font-semibold ${dayData ? 'text-foreground' : 'text-muted-foreground'}`}>{d}</span>
-                                    {isLate && dayData && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">LATE</span>}
-                                  </div>
-                                  <div className={`text-xs font-bold px-1.5 py-1 rounded-md text-center shadow-sm transition-transform group-hover:scale-105 ${color}`}>
-                                      {displayStr}
-                                  </div>
-                                </div>
-                              </TooltipTrigger>
-                              <TooltipContent className="whitespace-pre-line text-xs">
-                                {tooltip}
-                              </TooltipContent>
-                            </Tooltip>
-                          </TooltipProvider>
-                        );
-                    }
-
-                    return (
-                        <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
-                            <div className="flex items-center justify-between p-4 border-b border-border/60 bg-secondary/10">
-                                <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>&lt; Prev</Button>
-                                <div className="text-center">
-                                  <h3 className="font-bold text-xl tracking-tight">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(time.getFullYear(), time.getMonth(), 1))}>Today</Button>
-                                  <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}>Next &gt;</Button>
-                                </div>
-                            </div>
-                            <div className="grid grid-cols-7 bg-secondary/30 border-b border-border/60">
-                                {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-                                    <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{day}</div>
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <h3 className="font-semibold text-lg">
+                          {currentHistoryEmpId === myEmpId ? (auth?.name ? `${auth.name}'s Attendance` : "My Attendance") : `${currentHistoryEmp?.name || currentHistoryEmpId}'s Attendance`}
+                        </h3>
+                        {isAdmin && (
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-xs text-muted-foreground font-medium">Viewing:</span>
+                            <select
+                              value={selectedHistoryEmpId || myEmpId}
+                              onChange={(e) => setSelectedHistoryEmpId(e.target.value === myEmpId ? "" : e.target.value)}
+                              className="bg-secondary border border-border text-xs font-semibold rounded-lg px-2.5 py-1 text-foreground outline-none focus:ring-1 focus:ring-primary cursor-pointer max-w-[200px]"
+                            >
+                              <option value={myEmpId}>👤 My Records ({auth?.name || "Me"})</option>
+                              {employeesList
+                                .filter((e: any) => e.id !== myEmpId)
+                                .map((e: any) => (
+                                  <option key={e.id} value={e.id}>
+                                    {e.name} ({e.designation || e.role || e.id})
+                                  </option>
                                 ))}
-                            </div>
-                            <div className="grid grid-cols-7 border-l border-t border-border/50 bg-background">
-                               {days}
-                            </div>
-                            <div className="p-4 border-t border-border/60 bg-secondary/10 flex flex-wrap gap-4 items-center justify-center text-xs font-medium text-muted-foreground">
-                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Present</span>
-                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Absent</span>
-                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Half Day</span>
-                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Leave</span>
-                              <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Weekend</span>
-                            </div>
+                            </select>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs text-muted-foreground font-medium">
+                          {attendance.filter((record) => record.employeeid === currentHistoryEmpId).length} total shifts logged
+                        </span>
+                        <div className="flex items-center bg-secondary p-1 rounded-lg">
+                          <button
+                            onClick={() => setMyViewMode("table")}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "table" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          >
+                            Table
+                          </button>
+                          <button
+                            onClick={() => setMyViewMode("calendar")}
+                            className={`px-3 py-1 text-xs font-semibold rounded-md transition-all ${myViewMode === "calendar" ? "bg-background shadow-sm text-foreground" : "text-muted-foreground hover:text-foreground"}`}
+                          >
+                            Calendar
+                          </button>
                         </div>
-                    );
-                  })()}
-                </div>
-              )}
+                      </div>
+                    </div>
+
+                    {myViewMode === "table" ? (
+                      <div className="space-y-4">
+                        {(() => {
+                          const myRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
+                          
+                          if (myRecords.length === 0) {
+                            return (
+                              <div className="bg-card rounded-3xl border border-border p-8 text-center text-muted-foreground shadow-sm">
+                                No attendance history found for this employee.
+                              </div>
+                            );
+                          }
+
+                          // Group by date
+                          const grouped = myRecords.reduce((acc: any, record: any) => {
+                            if (!record.date) return acc;
+                            if (!acc[record.date]) acc[record.date] = [];
+                            acc[record.date].push(record);
+                            return acc;
+                          }, {});
+
+                          return Object.entries(grouped)
+                            .sort(([dateA], [dateB]) => dateB.localeCompare(dateA))
+                            .map(([date, records]: [string, any]) => {
+                              const parsedDate = new Date(date + "T00:00:00");
+                              const displayDate = parsedDate.toLocaleDateString("en-GB", { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' });
+                              
+                              let dayRemark = "";
+                              records.forEach((r: any) => {
+                                if (r.remark) dayRemark = r.remark;
+                              });
+
+                              const stats = computeDayAttendance(records, date, todayStr, time);
+                              const { firstIn, lastOut, isActive, isLate, isHalfDay, workedH, workedM, workedS, breakH, breakM, totalH, totalM } = stats;
+
+                              // For visual timeline (assume 10 AM to 6 PM standard bounds for the bar width)
+                              const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
+                                if (!timeStr) {
+                                   if (isOutActive) {
+                                      const now = new Date();
+                                      const currentMin = (now.getHours() * 60) + now.getMinutes();
+                                      return Math.max(0, Math.min(100, ((currentMin - 600) / 480) * 100));
+                                   }
+                                   return 100;
+                                }
+                                const [h, m] = timeStr.split(':').map(Number);
+                                const tMin = (h * 60) + m;
+                                return Math.max(0, Math.min(100, ((tMin - 600) / 480) * 100));
+                              };
+
+                              return (
+                                <div key={date} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
+                                  {/* Card Header */}
+                                  <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-10 w-10 rounded-xl bg-primary/10 flex flex-col items-center justify-center text-primary">
+                                        <span className="text-[10px] font-bold uppercase leading-none">{parsedDate.toLocaleDateString('en-GB', { month: 'short' })}</span>
+                                        <span className="text-lg font-black leading-none">{parsedDate.getDate()}</span>
+                                      </div>
+                                      <div>
+                                        <h4 className="font-bold text-foreground">{displayDate}</h4>
+                                        <p className="text-xs text-muted-foreground">{records.length} punch{records.length > 1 ? 'es' : ''} logged</p>
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                      {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
+                                      {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
+                                      {isActive ? (
+                                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
+                                        </span>
+                                      ) : (
+                                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Present
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Card Body */}
+                                  <div className="p-6">
+                                    <div className="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">First In</p>
+                                        <p className="font-bold text-emerald-600 dark:text-emerald-400">{firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Last Out</p>
+                                        <p className="font-bold text-rose-600 dark:text-rose-400">{lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? "Active Shift" : "--:--")}</p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Hours Worked</p>
+                                        <p className="font-bold text-foreground">
+                                          {workedH}h {workedM}m {isActive && <span className="text-muted-foreground/70 text-xs ml-0.5">{workedS}s</span>}
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
+                                        <p className="font-bold text-amber-600 dark:text-amber-400">
+                                          {breakH > 0 ? `${breakH}h ` : ''}{breakM}m
+                                        </p>
+                                      </div>
+                                      <div>
+                                        <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Time</p>
+                                        <p className="font-bold text-blue-600 dark:text-blue-400">
+                                          {totalH}h {totalM}m
+                                        </p>
+                                      </div>
+                                    </div>
+
+                                    {/* Timeline Visual */}
+                                    {records.length > 1 && (
+                                      <div className="mb-4 pt-4 border-t border-border/30">
+                                        <p className="text-xs text-muted-foreground font-semibold mb-2">Check-in Segments ({records.length})</p>
+                                        <div className="flex flex-wrap gap-2">
+                                          {[...records].sort((a: any, b: any) => (a.checkin || "").localeCompare(b.checkin || "")).map((r: any, i: number) => (
+                                            <span key={r.id || i} className="text-xs bg-secondary px-2 py-1 rounded-md text-foreground shadow-sm">
+                                              {r.checkin ? formatTime12Hour(r.checkin) : '--'} - {r.checkout ? formatTime12Hour(r.checkout) : 'Active'}
+                                            </span>
+                                          ))}
+                                        </div>
+                                      </div>
+                                    )}
+
+                                    {dayRemark && (
+                                      <div className="mb-4 pt-4 border-t border-border/30">
+                                        <p className="text-xs text-muted-foreground font-semibold mb-1 uppercase tracking-wider">Admin Remark</p>
+                                        <p className="font-medium text-slate-700 dark:text-slate-300 text-sm">
+                                          {dayRemark}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    <div className="mt-4 pt-4 border-t border-border/60">
+                                      <div className="flex justify-between text-[10px] text-muted-foreground font-semibold mb-1.5 px-1">
+                                        <span>10:00 AM</span>
+                                        <span>06:00 PM</span>
+                                      </div>
+                                      <div className="h-3 w-full bg-secondary rounded-full overflow-hidden relative">
+                                        <TooltipProvider>
+                                          {records.map((r: any, idx: number) => {
+                                            const sPct = getPercent(r.checkin);
+                                            const isRecActive = !r.checkout;
+                                            const ePct = getPercent(r.checkout, isRecActive);
+                                            const wPct = Math.max(0.5, ePct - sPct);
+                                            const tooltipText = `${r.checkin ? formatTime12Hour(r.checkin) : '--'} - ${r.checkout ? formatTime12Hour(r.checkout) : 'Active'}`;
+                                            return (
+                                              <Tooltip key={idx}>
+                                                <TooltipTrigger asChild>
+                                                  <div 
+                                                    className={`absolute top-0 bottom-0 ${isRecActive ? 'bg-primary/80 animate-pulse' : 'bg-primary'} rounded-full transition-all duration-1000 cursor-pointer hover:opacity-80`}
+                                                    style={{ left: `${sPct}%`, width: `${wPct}%` }}
+                                                  />
+                                                </TooltipTrigger>
+                                                <TooltipContent>
+                                                  <p className="font-semibold text-xs">{tooltipText}</p>
+                                                </TooltipContent>
+                                              </Tooltip>
+                                            );
+                                          })}
+                                        </TooltipProvider>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </div>
+                              );
+                            });
+                        })()}
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {(() => {
+                          const year = calendarMonth.getFullYear();
+                          const month = calendarMonth.getMonth();
+                          const firstDay = new Date(year, month, 1).getDay();
+                          const daysInMonth = new Date(year, month + 1, 0).getDate();
+                          
+                          const viewRecords = attendance.filter((record) => record.employeeid === currentHistoryEmpId);
+                          
+                          // Group by date
+                          const dailyTotals: any = Object.values(
+                            viewRecords.reduce((acc: any, record: any) => {
+                              if (!record.date) return acc;
+                              if (!acc[record.date]) {
+                                acc[record.date] = { date: record.date, records: [], remark: record.remark || "" };
+                              } else if (!acc[record.date].remark && record.remark) {
+                                acc[record.date].remark = record.remark;
+                              }
+                              acc[record.date].records.push(record);
+                              return acc;
+                            }, {} as Record<string, any>)
+                          ).reduce((acc: any, day: any) => {
+                             acc[day.date] = day;
+                             return acc;
+                          }, {} as any);
+
+                          const days = [];
+                          for (let i = 0; i < firstDay; i++) {
+                              days.push(<div key={`pad-${i}`} className="h-28 bg-secondary/10 border-r border-b border-border/50"></div>);
+                          }
+                          for (let d = 1; d <= daysInMonth; d++) {
+                              const dateObj = new Date(year, month, d);
+                              const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+                              const dayData = dailyTotals[dateStr];
+                              const isWeekend = dateObj.getDay() === 0; // Only Sunday is weekend off (Saturday is a working day)
+                              const isFuture = dateStr > todayStr;
+                              const holiday = MASTER_HOLIDAYS.find(h => h.isoDate === dateStr);
+                              
+                              // Check approved leave
+                              const employeeLeaves = (leaves || []).filter((l: any) => 
+                                isMatchingEmpLeave(l, currentHistoryEmpId) &&
+                                (l.status === 'Approved' || l.status === 'approved') &&
+                                dateStr >= (l.start_date || l.startdate || '') &&
+                                dateStr <= (l.end_date || l.enddate || '')
+                              );
+                              const hasLeave = employeeLeaves.length > 0;
+                              
+                              let status = "Absent";
+                              let color = "text-rose-600 bg-rose-50 dark:bg-rose-950/30 border border-rose-200 dark:border-rose-900/40";
+                              let displayStr = "🔴 Absent";
+                              let tooltip = "No check-in recorded";
+
+                              if (dayData) {
+                                  const dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
+                                  const { firstIn, lastOut, isHalfDay: dayHalf, isLate: dayLate, workedH, workedM, breakH, breakM, totalH, totalM, isActive } = dayStats;
+                                  
+                                  if (dayHalf) {
+                                      status = "Half Day"; color = "text-amber-600 bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-900/40"; displayStr = `🟡 Half Day`; 
+                                  } else {
+                                      status = "Present"; color = "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-900/40"; displayStr = `🟢 ${totalH}h ${totalM}m`;
+                                  }
+                                  tooltip = `Clock In: ${firstIn !== "23:59" ? formatTime12Hour(firstIn) : '--:--'}\nClock Out: ${lastOut !== "00:00" ? formatTime12Hour(lastOut) : (isActive ? 'Active Shift' : '--:--')}\nHours Worked: ${workedH}h ${workedM}m\nBreak Time: ${breakH > 0 ? `${breakH}h ` : ''}${breakM}m\nTotal Time: ${totalH}h ${totalM}m`;
+                              } else if (hasLeave) {
+                                  status = "Leave"; color = "text-blue-600 bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-900/40"; displayStr = "🟣 Leave"; tooltip = `Approved Leave: ${employeeLeaves[0]?.reason || employeeLeaves[0]?.type || 'Leave'}`;
+                              } else if (holiday) {
+                                  status = "Holiday"; color = "text-indigo-600 bg-indigo-50 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-900/40"; displayStr = `🎉 ${holiday.name}`; tooltip = `Official Holiday: ${holiday.name} (${holiday.type})`;
+                              } else if (isWeekend) {
+                                  status = "Weekend"; color = "text-slate-500 bg-slate-100 dark:bg-slate-800/60"; displayStr = "⚪ Weekend"; tooltip = "Weekend";
+                              } else if (isFuture) {
+                                  status = "Upcoming"; color = "text-muted-foreground/60 bg-secondary/10 border border-dashed border-border/40"; displayStr = "—"; tooltip = "Upcoming Working Day";
+                              }
+
+                              let dayStats: any = null;
+                              let isLate = false;
+                              if (dayData) {
+                                dayStats = computeDayAttendance(dayData.records, dateStr, todayStr, time);
+                                isLate = dayStats.isLate;
+                              }
+
+                              days.push(
+                                <TooltipProvider key={d}>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <div 
+                                        onClick={() => { 
+                                          setSelectedDayInfo(dayData ? { ...dayData, ...dayStats, employeeid: currentHistoryEmpId } : { 
+                                            date: dateStr, 
+                                            isAbsent: !isWeekend && !isFuture && !holiday && !hasLeave,
+                                            isWeekend,
+                                            isFuture,
+                                            holiday: holiday?.name,
+                                            hasLeave,
+                                            leaveDetails: employeeLeaves[0],
+                                            employeeid: currentHistoryEmpId 
+                                          }); 
+                                          setIsDaySheetOpen(true); 
+                                        }} 
+                                        className="h-28 p-2 border-r border-b border-border/50 hover:bg-secondary/20 cursor-pointer transition-all relative flex flex-col justify-between group overflow-hidden"
+                                      >
+                                        <div className="flex justify-between items-start">
+                                          <span className={`text-sm font-semibold ${dayData ? 'text-foreground' : 'text-muted-foreground'}`}>{d}</span>
+                                          {isLate && dayData && <span className="text-[9px] font-bold bg-amber-100 text-amber-700 px-1 rounded">LATE</span>}
+                                          {holiday && !dayData && <span className="text-[8px] font-bold bg-indigo-100 dark:bg-indigo-900/40 text-indigo-700 dark:text-indigo-400 px-1 py-0.5 rounded uppercase">HOLIDAY</span>}
+                                        </div>
+                                        <div className={`text-[11px] font-bold px-1.5 py-1 rounded-md text-center shadow-sm transition-transform group-hover:scale-105 flex items-center justify-center min-w-0 overflow-hidden ${color}`}>
+                                          <span className="truncate whitespace-nowrap block max-w-full">{displayStr}</span>
+                                        </div>
+                                      </div>
+                                    </TooltipTrigger>
+                                    <TooltipContent className="whitespace-pre-line text-xs">
+                                      {tooltip}
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                              );
+                          }
+
+                          return (
+                              <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden flex flex-col animate-in fade-in zoom-in-95 duration-300">
+                                  <div className="flex items-center justify-between p-4 border-b border-border/60 bg-secondary/10">
+                                      <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month - 1, 1))}>&lt; Prev</Button>
+                                      <div className="text-center">
+                                        <h3 className="font-bold text-xl tracking-tight">{calendarMonth.toLocaleString('default', { month: 'long', year: 'numeric' })}</h3>
+                                      </div>
+                                      <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(time.getFullYear(), time.getMonth(), 1))}>Today</Button>
+                                        <Button variant="outline" size="sm" onClick={() => setCalendarMonth(new Date(year, month + 1, 1))}>Next &gt;</Button>
+                                      </div>
+                                  </div>
+                                  <div className="grid grid-cols-7 bg-secondary/30 border-b border-border/60">
+                                      {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                                          <div key={day} className="py-3 text-center text-xs font-bold uppercase tracking-wider text-muted-foreground">{day}</div>
+                                      ))}
+                                  </div>
+                                  <div className="grid grid-cols-7 border-l border-t border-border/50 bg-background">
+                                     {days}
+                                  </div>
+                                  <div className="p-4 border-t border-border/60 bg-secondary/10 flex flex-wrap gap-4 items-center justify-center text-xs font-medium text-muted-foreground">
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-emerald-500"></span> Present</span>
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-rose-500"></span> Absent</span>
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-amber-500"></span> Half Day</span>
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-blue-500"></span> Leave</span>
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-indigo-500"></span> Holiday</span>
+                                    <span className="flex items-center gap-1.5"><span className="h-2.5 w-2.5 rounded-full bg-slate-400"></span> Weekend</span>
+                                  </div>
+                              </div>
+                          );
+                        })()}
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
           </div>
         </TabsContent>
@@ -996,63 +1232,8 @@ function AttendancePage() {
                     }, {})
                   ).map((empGroup: any) => {
                     const empDetails = getEmpDetails(empGroup.employeeid);
-                    
-                    let firstIn = empGroup.firstIn;
-                    let lastOut = empGroup.lastOut;
-                    let isActive = empGroup.isActive && teamSelectedDateStr === todayStr;
-                    let totalSecs = empGroup.totalSecs;
-
-                    let totalElapsedSecs = 0;
-                    if (firstIn !== "23:59") {
-                        const [fH, fM] = firstIn.split(':').map(Number);
-                        let endH = 0, endM = 0, endS = 0;
-                        if (isActive) {
-                             const now = new Date();
-                             endH = now.getHours(); endM = now.getMinutes(); endS = now.getSeconds();
-                        } else if (lastOut !== "00:00") {
-                             const [lH, lM] = lastOut.split(':').map(Number);
-                             endH = lH; endM = lM; endS = 0;
-                        }
-                        
-                        if (endH !== 0 || endM !== 0 || isActive) {
-                           let diff = (endH * 3600 + endM * 60 + endS) - (fH * 3600 + fM * 60);
-                           if (diff > 0) totalElapsedSecs = diff;
-                        }
-                    }
-                    
-                    let breakSecs = 0;
-                    const sortedEmpRecs = [...empGroup.records].sort((a, b) => (a.checkin || "").localeCompare(b.checkin || ""));
-                    for (let i = 0; i < sortedEmpRecs.length - 1; i++) {
-                      const prevOut = sortedEmpRecs[i].checkout;
-                      const nextIn = sortedEmpRecs[i + 1].checkin;
-                      if (prevOut && nextIn) {
-                        const [oH, oM] = prevOut.split(':').map(Number);
-                        const [iH, iM] = nextIn.split(':').map(Number);
-                        let diff = (iH * 3600 + iM * 60) - (oH * 3600 + oM * 60);
-                        if (diff > 0) breakSecs += diff;
-                      }
-                    }
-                    if (totalElapsedSecs > totalSecs && breakSecs === 0) {
-                      breakSecs = totalElapsedSecs - totalSecs;
-                    }
-                    if (totalElapsedSecs < totalSecs + breakSecs) {
-                      totalElapsedSecs = totalSecs + breakSecs;
-                    }
-
-                    const breakH = Math.floor(breakSecs / 3600);
-                    const breakM = Math.floor((breakSecs % 3600) / 60);
-
-                    const workedH = Math.floor(totalSecs / 3600);
-                    const workedM = Math.floor((totalSecs % 3600) / 60);
-                    const workedS = totalSecs % 60;
-
-                    let isLate = false;
-                    if (firstIn !== "23:59") {
-                        const [h, m] = firstIn.split(':').map(Number);
-                        if (h > 10 || (h === 10 && m > 15)) isLate = true;
-                    }
-                    
-                    const isHalfDay = totalSecs > 0 && totalSecs < 240 * 60 && !isActive;
+                    const stats = computeDayAttendance(empGroup.records, teamSelectedDateStr, todayStr, time);
+                    const { firstIn, lastOut, isActive, isLate, isHalfDay, workedH, workedM, workedS, breakH, breakM, totalH, totalM, workedSecs } = stats;
 
                     const getPercent = (timeStr: string | null, isOutActive: boolean = false) => {
                       if (!timeStr) {
@@ -1069,7 +1250,7 @@ function AttendancePage() {
                     };
 
                     return (
-                      <div key={empGroup.id} onClick={() => { setSelectedDayInfo({ ...empGroup, date: teamSelectedDateStr, hasActive: isActive, totalSeconds: totalSecs, isAbsent: false }); setIsDaySheetOpen(true); }} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
+                      <div key={empGroup.id} onClick={() => { setSelectedDayInfo({ ...empGroup, ...stats, date: teamSelectedDateStr, hasActive: isActive, totalSeconds: workedSecs, isAbsent: false }); setIsDaySheetOpen(true); }} className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer">
                         <div className="flex items-center justify-between px-6 py-4 border-b border-border/60 bg-secondary/20">
                           <div className="flex items-center gap-3">
                             <div className="h-10 w-10 rounded-full bg-primary/10 text-primary flex items-center justify-center font-bold text-sm">
@@ -1088,7 +1269,9 @@ function AttendancePage() {
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>Active
                               </span>
                             ) : (
-                              <span className="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300 px-2.5 py-1 rounded-full text-xs font-bold">Completed</span>
+                              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Present
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1112,13 +1295,13 @@ function AttendancePage() {
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Break Time</p>
                               <p className="font-bold text-amber-600 dark:text-amber-400">
-                                {breakH}h {breakM}m
+                                {breakH > 0 ? `${breakH}h ` : ''}{breakM}m
                               </p>
                             </div>
                             <div>
                               <p className="text-xs text-muted-foreground font-semibold uppercase tracking-wider mb-1">Total Time</p>
                               <p className="font-bold text-blue-600 dark:text-blue-400">
-                                {Math.floor(totalElapsedSecs / 3600)}h {Math.floor((totalElapsedSecs % 3600) / 60)}m
+                                {totalH}h {totalM}m
                               </p>
                             </div>
                             <div className="col-span-2">
@@ -1219,36 +1402,13 @@ function AttendancePage() {
                     const dailyTotals = Object.values(
                       empRecords.reduce((acc: any, record: any) => {
                         if (!acc[record.date]) {
-                          acc[record.date] = { date: record.date, totalSeconds: 0, firstIn: record.checkin, lastOut: record.checkout, isPresent: true, records: [], hasActive: false, remark: record.remark || "" };
+                          acc[record.date] = { date: record.date, records: [], remark: record.remark || "" };
                         } else {
                           if (!acc[record.date].remark && record.remark) {
                             acc[record.date].remark = record.remark;
                           }
                         }
                         acc[record.date].records.push(record);
-                        if (record.checkin && record.checkout) {
-                          const [inH, inM] = record.checkin.split(':').map(Number);
-                          const [outH, outM] = record.checkout.split(':').map(Number);
-                          let diff = (outH * 3600 + outM * 60) - (inH * 3600 + inM * 60);
-                          if (diff > 0) acc[record.date].totalSeconds += diff;
-                        }
-                        if (record.checkin && (!acc[record.date].firstIn || record.checkin < acc[record.date].firstIn)) {
-                          acc[record.date].firstIn = record.checkin;
-                        }
-                        if (record.checkout && (!acc[record.date].lastOut || record.checkout > acc[record.date].lastOut)) {
-                          acc[record.date].lastOut = record.checkout;
-                        }
-                        if (record.checkin && (!acc[record.date].lastOut || record.checkin > acc[record.date].lastOut)) {
-                          acc[record.date].lastOut = record.checkin;
-                        }
-                        if (!record.checkout) {
-                          acc[record.date].hasActive = true;
-                          if (record.checkin && record.date === todayStr) {
-                             const [inH, inM] = record.checkin.split(':').map(Number);
-                             let diff = (time.getHours() * 3600 + time.getMinutes() * 60 + time.getSeconds()) - (inH * 3600 + inM * 60);
-                             if (diff > 0) acc[record.date].totalSeconds += diff;
-                          }
-                        }
                         return acc;
                       }, {})
                     ).sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
@@ -1265,43 +1425,47 @@ function AttendancePage() {
                           </div>
                         </div>
                         <div className="space-y-3 max-h-[320px] overflow-y-auto pr-2 custom-scrollbar">
-                          {dailyTotals.map((day: any) => (
-                            <div key={day.date} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
-                              <div className="mt-0.5">
-                                {!day.hasActive ? (
-                                  <Square className="h-4 w-4 text-primary" />
-                                ) : (
-                                  <Play className="h-4 w-4 text-primary fill-primary" />
-                                )}
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center justify-between gap-2">
-                                  <p className="text-sm font-semibold truncate text-foreground">
-                                    {day.date}
-                                  </p>
-                                  <div className="flex items-center gap-2 shrink-0">
-                                    <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${!day.hasActive
-                                      ? "bg-secondary text-muted-foreground"
-                                      : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
-                                      }`}>
-                                      {!day.hasActive ? "Completed" : "Active"}
-                                    </span>
-                                  </div>
-                                </div>
-                                <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-                                  <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
-                                    <Clock className="h-3 w-3" />
-                                    {day.firstIn ? formatTime12Hour(day.firstIn) : "--:--"} {!day.hasActive ? `- ${day.lastOut ? formatTime12Hour(day.lastOut) : "--:--"}` : ""}
-                                  </span>
-                                  <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
-                                    <Building2 className="h-3 w-3 shrink-0" /> Office
-                                  </span>
-                                  {day.totalSeconds > 0 && (
-                                    <span className="flex items-center gap-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[10px] font-bold">
-                                      {Math.floor(day.totalSeconds / 3600)}h {Math.floor((day.totalSeconds % 3600) / 60)}m
-                                      {day.hasActive && <span className="opacity-70 ml-0.5">{day.totalSeconds % 60}s</span>}
-                                    </span>
+                          {dailyTotals.map((day: any) => {
+                            const stats = computeDayAttendance(day.records, day.date, todayStr, time);
+                            const { firstIn, lastOut, isActive, workedH, workedM, workedS, workedSecs } = stats;
+
+                            return (
+                              <div key={day.date} className="group flex items-start gap-3 rounded-xl border border-border/60 bg-background p-3 shadow-sm hover:border-primary/30 transition-colors">
+                                <div className="mt-0.5">
+                                  {!isActive ? (
+                                    <Square className="h-4 w-4 text-primary" />
+                                  ) : (
+                                    <Play className="h-4 w-4 text-primary fill-primary" />
                                   )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <p className="text-sm font-semibold truncate text-foreground">
+                                      {day.date}
+                                    </p>
+                                    <div className="flex items-center gap-2 shrink-0">
+                                      <span className={`inline-flex px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide ${!isActive
+                                        ? "bg-secondary text-muted-foreground"
+                                        : "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary"
+                                        }`}>
+                                        {!isActive ? "Completed" : "Active"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  <div className="mt-1 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
+                                    <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md">
+                                      <Clock className="h-3 w-3" />
+                                      {firstIn !== "23:59" ? formatTime12Hour(firstIn) : "--:--"} {!isActive ? `- ${lastOut !== "00:00" ? formatTime12Hour(lastOut) : "--:--"}` : ""}
+                                    </span>
+                                    <span className="flex items-center gap-1 bg-secondary/50 px-1.5 py-0.5 rounded-md truncate max-w-[120px]">
+                                      <Building2 className="h-3 w-3 shrink-0" /> Office
+                                    </span>
+                                    {workedSecs > 0 && (
+                                      <span className="flex items-center gap-1 bg-primary/10 text-primary px-1.5 py-0.5 rounded-md text-[10px] font-bold">
+                                        {workedH}h {workedM}m
+                                        {isActive && <span className="opacity-70 ml-0.5">{workedS}s</span>}
+                                      </span>
+                                    )}
                                   {canEditRemarks && (
                                     <button
                                       onClick={(e) => {
@@ -1325,7 +1489,8 @@ function AttendancePage() {
                                 </div>
                               </div>
                             </div>
-                          ))}
+                          );
+                        })}
                         </div>
                       </div>
                     );
@@ -1343,42 +1508,46 @@ function AttendancePage() {
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Casual Leave Balance</span>
                 <CalendarIcon className="h-4 w-4 text-blue-500" />
               </div>
-              <div className="text-2xl font-bold">12<span className="text-muted-foreground text-lg"> / 12</span></div>
-              <p className="text-xs text-muted-foreground">Days remaining</p>
+              <div className="text-2xl font-bold">{casualBalance}<span className="text-muted-foreground text-lg"> / 12</span></div>
+              <p className="text-xs text-muted-foreground">{casualUsed > 0 ? `${casualUsed} day${casualUsed > 1 ? 's' : ''} used` : 'Days remaining'}</p>
             </div>
             <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Sick Leave Balance</span>
                 <PlusCircle className="h-4 w-4 text-rose-500" />
               </div>
-              <div className="text-2xl font-bold">10<span className="text-muted-foreground text-lg"> / 10</span></div>
-              <p className="text-xs text-muted-foreground">Days remaining</p>
+              <div className="text-2xl font-bold">{sickBalance}<span className="text-muted-foreground text-lg"> / 10</span></div>
+              <p className="text-xs text-muted-foreground">{sickUsed > 0 ? `${sickUsed} day${sickUsed > 1 ? 's' : ''} used` : 'Days remaining'}</p>
             </div>
             <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Earned Leave Balance</span>
                 <Activity className="h-4 w-4 text-emerald-500" />
               </div>
-              <div className="text-2xl font-bold">15<span className="text-muted-foreground text-lg"> / 15</span></div>
-              <p className="text-xs text-muted-foreground">Days remaining</p>
+              <div className="text-2xl font-bold">{earnedBalance}<span className="text-muted-foreground text-lg"> / 15</span></div>
+              <p className="text-xs text-muted-foreground">{earnedUsed > 0 ? `${earnedUsed} day${earnedUsed > 1 ? 's' : ''} used` : 'Days remaining'}</p>
             </div>
             <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
               <div className="flex items-center justify-between">
                 <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Pending Requests</span>
                 <Clock className="h-4 w-4 text-amber-500" />
               </div>
-              <div className="text-2xl font-bold">{leaves.length}</div>
-              <p className="text-xs text-muted-foreground">Awaiting approval</p>
+              <div className="text-2xl font-bold">{isAdmin ? teamPendingLeaves.length : myPendingLeaves.length}</div>
+              <p className="text-xs text-muted-foreground">{isAdmin ? 'Team awaiting approval' : 'Awaiting approval'}</p>
             </div>
           </div>
 
           <div className="flex items-center justify-between flex-wrap gap-4">
             <div className="relative w-full md:w-96">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <input placeholder="Search leaves by name or reason..." className="flex h-10 w-full rounded-full border border-border bg-background px-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20" />
+              <input
+                value={leaveSearch}
+                onChange={(e) => setLeaveSearch(e.target.value)}
+                placeholder="Search leaves by employee, reason, or status..."
+                className="flex h-10 w-full rounded-full border border-border bg-background px-9 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
             </div>
             <div className="flex items-center gap-3">
-
               <button
                 onClick={() => setIsApplyLeaveOpen(true)}
                 className="inline-flex items-center justify-center text-sm font-semibold h-10 px-5 rounded-full bg-primary hover:bg-primary/90 text-primary-foreground transition-colors"
@@ -1392,7 +1561,7 @@ function AttendancePage() {
             <div className="space-y-4 pt-4">
               <div className="flex items-center justify-between">
                 <h3 className="font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" /> Team Leave Applications</h3>
-                <span className="text-xs text-muted-foreground font-medium">{leaves.length} total team applications</span>
+                <span className="text-xs text-muted-foreground font-medium">{filteredTeamLeaves.length} total team applications</span>
               </div>
               <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
@@ -1409,30 +1578,30 @@ function AttendancePage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border/80 text-center">
-                      {leaves.length === 0 ? (
+                      {filteredTeamLeaves.length === 0 ? (
                         <tr>
                           <td colSpan={7} className="px-6 py-12 text-muted-foreground italic">
-                            No team leave applications found.
+                            {leaveSearch.trim() ? "No team leave applications matched your search." : "No team leave applications found."}
                           </td>
                         </tr>
-                      ) : leaves.map((leave: any) => {
-                        const emp = getEmpDetails(leave.employeeid);
+                      ) : filteredTeamLeaves.map((leave: any) => {
+                        const emp = getEmpDetails(leave.employeeid || leave.employee_id);
                         return (
                           <tr key={leave.id} className="hover:bg-secondary/20 transition-colors">
                             <td className="px-6 py-4 font-semibold">{emp.name}</td>
-                            <td className="px-6 py-4 text-muted-foreground">{leave.type}</td>
-                            <td className="px-6 py-4 text-muted-foreground">{leave.startdate}</td>
-                            <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
-                            <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.type || "Casual"}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.startdate || leave.start_date}</td>
+                            <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
+                            <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                             <td className="px-6 py-4">
                               <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                                leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
-                                leave.status === 'Declined' ? 'bg-rose-50 text-rose-700' :
-                                'bg-amber-50 text-amber-700'
-                              }`}>{leave.status}</span>
+                                (leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                                (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                                'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                              }`}>{leave.status || "Pending"}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
-                              {leave.status === 'Pending' ? (
+                              {(leave.status || "").toLowerCase() === 'pending' || !leave.status ? (
                                 <div className="flex items-center justify-end gap-2">
                                   <button onClick={() => {
                                     setLeaves(leaves.map((l: any) => l.id === leave.id ? { ...l, status: 'Approved' } : l));
@@ -1451,7 +1620,7 @@ function AttendancePage() {
                               )}
                             </td>
                           </tr>
-                        )
+                        );
                       })}
                     </tbody>
                   </table>
@@ -1463,7 +1632,7 @@ function AttendancePage() {
           <div className="space-y-4 pt-4">
             <div className="flex items-center justify-between">
               <h3 className="font-bold flex items-center gap-2"><FileText className="h-5 w-5 text-emerald-600" /> My Leave Applications</h3>
-              <span className="text-xs text-muted-foreground font-medium">{leaves.filter(l => l.employeeid === myEmpId).length} applications total</span>
+              <span className="text-xs text-muted-foreground font-medium">{filteredMyLeaves.length} applications total</span>
             </div>
             <div className="bg-card rounded-3xl border border-border shadow-sm overflow-hidden">
               <div className="overflow-x-auto">
@@ -1479,28 +1648,28 @@ function AttendancePage() {
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-border/80 text-center">
-                    {leaves.filter(l => l.employeeid === myEmpId).length === 0 ? (
+                    {filteredMyLeaves.length === 0 ? (
                       <tr>
                         <td colSpan={6} className="px-6 py-12 text-sm text-muted-foreground italic">
-                          You haven't submitted any leave applications.
+                          {leaveSearch.trim() ? "No leave applications matched your search." : "You haven't submitted any leave applications."}
                         </td>
                       </tr>
-                    ) : leaves.filter(l => l.employeeid === myEmpId).map((leave: any) => (
+                    ) : filteredMyLeaves.map((leave: any) => (
                       <tr key={leave.id} className="hover:bg-secondary/20 transition-colors">
-                        <td className="px-6 py-4 font-semibold">{leave.type}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{leave.startdate}</td>
-                        <td className="px-6 py-4 font-semibold">{leave.enddate}</td>
-                        <td className="px-6 py-4 text-muted-foreground">{leave.reason}</td>
+                        <td className="px-6 py-4 font-semibold">{leave.type || "Casual"}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{leave.startdate || leave.start_date}</td>
+                        <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
+                        <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                         <td className="px-6 py-4">
                           <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                            leave.status === 'Approved' ? 'bg-emerald-50 text-emerald-700' :
-                            leave.status === 'Declined' ? 'bg-rose-50 text-rose-700' :
-                            'bg-amber-50 text-amber-700'
-                          }`}>{leave.status}</span>
+                            (leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
+                            (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
+                            'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                          }`}>{leave.status || "Pending"}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
                           <button onClick={() => {
-                            setLeaves(leaves.filter(l => l.id !== leave.id));
+                            setLeaves(leaves.filter((l: any) => l.id !== leave.id));
                             toast.success("Leave request removed");
                           }} className="text-rose-500 hover:underline text-xs font-medium">Cancel</button>
                         </td>
@@ -1573,48 +1742,79 @@ function AttendancePage() {
               </DialogHeader>
               
           <div className="space-y-6">
-            <div className="grid grid-cols-2 gap-y-6 gap-x-4">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-y-6 gap-x-4">
               <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Check In</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock In</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
-                  <p className="text-lg font-bold">{selectedDayInfo?.firstIn ? formatTime12Hour(selectedDayInfo.firstIn) : "--:--"}</p>
+                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">{selectedDayInfo?.firstIn && selectedDayInfo.firstIn !== "23:59" ? formatTime12Hour(selectedDayInfo.firstIn) : "--:--"}</p>
                 </div>
               </div>
               
               <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Check Out</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Clock Out</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-rose-500"></span>
-                  <p className="text-lg font-bold">{selectedDayInfo?.lastOut ? formatTime12Hour(selectedDayInfo.lastOut) : (selectedDayInfo?.hasActive ? "Active Shift" : "--:--")}</p>
+                  <p className="text-base font-bold text-rose-600 dark:text-rose-400">{selectedDayInfo?.lastOut && selectedDayInfo.lastOut !== "00:00" ? formatTime12Hour(selectedDayInfo.lastOut) : (selectedDayInfo?.hasActive ? "Active Shift" : "--:--")}</p>
                 </div>
               </div>
 
               <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Worked</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Hours Worked</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-emerald-500"></span>
+                  <p className="text-base font-bold text-emerald-600 dark:text-emerald-400">
+                    {selectedDayInfo?.workedH !== undefined ? `${selectedDayInfo.workedH}h ${selectedDayInfo.workedM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
+                    {selectedDayInfo?.hasActive && <span className="text-muted-foreground/70 text-xs ml-1">{selectedDayInfo?.workedS || 0}s</span>}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Break Time</span>
+                <div className="flex items-center gap-2">
+                  <span className="h-2 w-2 rounded-full bg-amber-500"></span>
+                  <p className="text-base font-bold text-amber-600 dark:text-amber-400">
+                    {selectedDayInfo?.breakH !== undefined ? (selectedDayInfo.breakH > 0 ? `${selectedDayInfo.breakH}h ` : "") + `${selectedDayInfo.breakM}m` : "0m"}
+                  </p>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Total Time</span>
                 <div className="flex items-center gap-2">
                   <span className="h-2 w-2 rounded-full bg-blue-500"></span>
-                  <p className="text-lg font-bold">
-                    {selectedDayInfo?.totalSeconds ? (
-                        (() => {
-                           const eff = selectedDayInfo.totalSeconds;
-                           const h = Math.floor(eff / 3600);
-                           const m = Math.floor((eff % 3600) / 60);
-                           const s = eff % 60;
-                           return <>{h}h {m}m {selectedDayInfo.hasActive && <span className="text-muted-foreground/70 text-sm ml-1">{s}s</span>}</>;
-                        })()
-                    ) : "0h 0m"}
+                  <p className="text-base font-bold text-blue-600 dark:text-blue-400">
+                    {selectedDayInfo?.totalH !== undefined ? `${selectedDayInfo.totalH}h ${selectedDayInfo.totalM}m` : (selectedDayInfo?.totalSeconds ? `${Math.floor(selectedDayInfo.totalSeconds / 3600)}h ${Math.floor((selectedDayInfo.totalSeconds % 3600) / 60)}m` : "0h 0m")}
                   </p>
                 </div>
               </div>
               
               <div className="space-y-1.5">
-                <span className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
-                <p className="text-lg font-bold">
-                  {selectedDayInfo?.isAbsent ? (
-                    <span className="inline-flex items-center gap-1.5 bg-rose-100 text-rose-700 px-2 py-1 rounded-md text-sm"><span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent</span>
+                <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Status</span>
+                <p className="text-base font-bold">
+                  {selectedDayInfo?.holiday ? (
+                    <span className="inline-flex items-center gap-1.5 bg-indigo-100 dark:bg-indigo-950/50 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-md text-xs">
+                      🎉 {selectedDayInfo.holiday}
+                    </span>
+                  ) : selectedDayInfo?.hasLeave ? (
+                    <span className="inline-flex items-center gap-1.5 bg-blue-100 dark:bg-blue-950/50 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-md text-xs">
+                      🟣 {selectedDayInfo.leaveDetails?.reason || selectedDayInfo.leaveDetails?.type || "Approved Leave"}
+                    </span>
+                  ) : selectedDayInfo?.isWeekend ? (
+                    <span className="inline-flex items-center gap-1.5 bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-2 py-0.5 rounded-md text-xs">
+                      ⚪ Weekend
+                    </span>
+                  ) : selectedDayInfo?.isFuture ? (
+                    <span className="inline-flex items-center gap-1.5 bg-secondary text-muted-foreground px-2 py-0.5 rounded-md text-xs">
+                      📅 Upcoming
+                    </span>
+                  ) : selectedDayInfo?.isAbsent ? (
+                    <span className="inline-flex items-center gap-1.5 bg-rose-100 dark:bg-rose-950/50 text-rose-700 dark:text-rose-300 px-2 py-0.5 rounded-md text-xs">
+                      <span className="h-1.5 w-1.5 rounded-full bg-rose-500"></span> Absent
+                    </span>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 text-emerald-700 px-2 py-1 rounded-md text-sm">
+                    <span className="inline-flex items-center gap-1.5 bg-emerald-100 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-300 px-2 py-0.5 rounded-md text-xs">
                         <span className={`h-1.5 w-1.5 rounded-full ${selectedDayInfo?.hasActive ? "bg-emerald-500 animate-pulse" : "bg-emerald-500"}`}></span> 
                         {selectedDayInfo?.hasActive ? "Active" : "Present"}
                     </span>
