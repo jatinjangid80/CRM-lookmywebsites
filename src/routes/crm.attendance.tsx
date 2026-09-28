@@ -864,14 +864,14 @@ function AttendancePage() {
                                       </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
-                                      {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
+                                      {isHalfDay && <span className="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
+                                      {isLate && <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
                                       {isActive ? (
-                                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                        <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
                                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse"></span>Active
                                         </span>
                                       ) : (
-                                        <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                                        <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
                                           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Present
                                         </span>
                                       )}
@@ -1133,7 +1133,9 @@ function AttendancePage() {
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Present Today</span>
-                    <Users className="h-4 w-4 text-emerald-500" />
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25">
+                      <Users className="h-4 w-4" />
+                    </span>
                   </div>
                   <div className="text-2xl font-bold">{teamTodayRecords.length}<span className="text-muted-foreground text-lg"> / {employeesList.length}</span></div>
                   <p className="text-xs text-muted-foreground">Checked-in staff</p>
@@ -1141,7 +1143,9 @@ function AttendancePage() {
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Attendance Rate</span>
-                    <TrendingUp className="h-4 w-4 text-purple-500" />
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25">
+                      <TrendingUp className="h-4 w-4" />
+                    </span>
                   </div>
                   <div className="text-2xl font-bold">{Math.round((teamTodayRecords.length / (employeesList.length || 1)) * 100) || 0}%</div>
                   <p className="text-xs text-muted-foreground">Active ratio</p>
@@ -1149,7 +1153,9 @@ function AttendancePage() {
                 <div className="bg-card rounded-3xl border border-border p-6 shadow-sm space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Active Shifts</span>
-                    <Clock className="h-4 w-4 text-amber-500" />
+                    <span className="grid h-8 w-8 place-items-center rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25">
+                      <Clock className="h-4 w-4" />
+                    </span>
                   </div>
                   <div className="text-2xl font-bold">{teamTodayRecords.filter(r => !r.checkout).length}</div>
                   <p className="text-xs text-muted-foreground">Still on clock</p>
@@ -1266,14 +1272,14 @@ function AttendancePage() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            {isHalfDay && <span className="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
-                            {isLate && <span className="bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
+                            {isHalfDay && <span className="bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25 px-2.5 py-1 rounded-full text-xs font-bold">Half Day</span>}
+                            {isLate && <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-2.5 py-1 rounded-full text-xs font-bold">Late</span>}
                             {isActive ? (
-                              <span className="bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                              <span className="bg-primary/15 text-primary border border-primary/25 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
                                 <span className="h-1.5 w-1.5 rounded-full bg-primary animate-pulse"></span>Active
                               </span>
                             ) : (
-                              <span className="bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-800/40 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
+                              <span className="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-2.5 py-1 rounded-full text-xs font-bold flex items-center gap-1.5">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>Present
                               </span>
                             )}
@@ -1320,7 +1326,7 @@ function AttendancePage() {
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold"
+                                      className="h-6 px-3 text-xs bg-orange-500/15 hover:bg-orange-500/25 text-orange-600 dark:text-orange-400 border border-orange-500/30 rounded-full font-semibold transition-colors"
                                       onClick={(e) => {
                                         e.stopPropagation();
                                         setRemarkTarget({ empId: empGroup.employeeid, date: teamSelectedDateStr, currentRemark: empGroup.remark || "" });
@@ -1478,7 +1484,7 @@ function AttendancePage() {
                                           setRemarkDraft(day.remark || "");
                                           setRemarkDialogOpen(true);
                                         }}
-                                        className="ml-auto text-[10px] bg-orange-100 hover:bg-orange-200 text-orange-900 px-2 py-0.5 rounded-full font-semibold transition-colors"
+                                        className="ml-auto text-[10px] bg-orange-500/15 hover:bg-orange-500/25 text-orange-600 dark:text-orange-400 border border-orange-500/30 px-2.5 py-0.5 rounded-full font-semibold transition-colors cursor-pointer"
                                       >
                                         {day.remark ? "Edit Remark" : "Add Remark"}
                                       </button>
@@ -1598,9 +1604,9 @@ function AttendancePage() {
                             <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
                             <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                             <td className="px-6 py-4">
-                              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                                  (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
-                                    'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                              <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold border ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' :
+                                  (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25' :
+                                    'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25'
                                 }`}>{leave.status || "Pending"}</span>
                             </td>
                             <td className="px-6 py-4 text-right">
@@ -1609,17 +1615,17 @@ function AttendancePage() {
                                   <button onClick={() => {
                                     setLeaves(leaves.map((l: any) => l.id === leave.id ? { ...l, status: 'Approved' } : l));
                                     toast.success("Leave approved");
-                                  }} className="bg-emerald-100 hover:bg-emerald-200 text-emerald-700 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider">Approve</button>
+                                  }} className="bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider cursor-pointer">Approve</button>
                                   <button onClick={() => {
                                     setLeaves(leaves.map((l: any) => l.id === leave.id ? { ...l, status: 'Declined' } : l));
                                     toast.success("Leave declined");
-                                  }} className="bg-rose-100 hover:bg-rose-200 text-rose-700 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider">Decline</button>
+                                  }} className="bg-rose-500/15 hover:bg-rose-500/25 text-rose-600 dark:text-rose-400 border border-rose-500/30 px-3 py-1.5 rounded-lg text-[10px] font-bold transition-colors uppercase tracking-wider cursor-pointer">Decline</button>
                                 </div>
                               ) : (
                                 <button onClick={() => {
                                   setLeaves(leaves.filter((l: any) => l.id !== leave.id));
                                   toast.success("Leave request removed");
-                                }} className="text-muted-foreground hover:text-rose-500 hover:underline text-xs font-medium transition-colors">Remove</button>
+                                }} className="text-muted-foreground hover:text-rose-500 hover:underline text-xs font-medium transition-colors cursor-pointer">Remove</button>
                               )}
                             </td>
                           </tr>
@@ -1664,9 +1670,9 @@ function AttendancePage() {
                         <td className="px-6 py-4 font-semibold">{leave.enddate || leave.end_date}</td>
                         <td className="px-6 py-4 text-muted-foreground">{leave.reason || "—"}</td>
                         <td className="px-6 py-4">
-                          <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-400' :
-                              (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-400' :
-                                'bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-400'
+                          <span className={`inline-block rounded-full px-2.5 py-1 text-[11px] font-bold border ${(leave.status || "").toLowerCase() === 'approved' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25' :
+                              (leave.status || "").toLowerCase() === 'declined' ? 'bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25' :
+                                'bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25'
                             }`}>{leave.status || "Pending"}</span>
                         </td>
                         <td className="px-6 py-4 text-right">
@@ -1836,7 +1842,7 @@ function AttendancePage() {
                               setRemarkDraft(selectedDayInfo.remark || "");
                               setRemarkDialogOpen(true);
                             }}
-                            className="h-6 px-3 text-xs bg-orange-100 hover:bg-orange-200 text-orange-900 rounded-full font-semibold transition-colors"
+                            className="h-6 px-3 text-xs bg-orange-500/15 hover:bg-orange-500/25 text-orange-600 dark:text-orange-400 border border-orange-500/30 rounded-full font-semibold transition-colors cursor-pointer"
                           >
                             {selectedDayInfo.remark ? "Edit" : "Add"}
                           </button>

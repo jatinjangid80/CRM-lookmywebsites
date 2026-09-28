@@ -560,9 +560,9 @@ function GeneralInsurancePage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/25 border border-rose-500/25">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -574,9 +574,9 @@ function GeneralInsurancePage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/25 border border-emerald-500/25">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -588,9 +588,9 @@ function GeneralInsurancePage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 border border-blue-500/25">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

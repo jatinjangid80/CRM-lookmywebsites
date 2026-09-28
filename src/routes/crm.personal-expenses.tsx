@@ -121,18 +121,18 @@ function PinLockScreen({ onUnlock }: { onUnlock: () => void }) {
 
 
 const CATEGORIES = [
-  { label: "Food & Dining", icon: Utensils, color: "bg-orange-100 text-orange-600" },
-  { label: "Travel", icon: Plane, color: "bg-blue-100 text-blue-600" },
-  { label: "Transport", icon: Car, color: "bg-indigo-100 text-indigo-600" },
-  { label: "Shopping", icon: ShoppingCart, color: "bg-pink-100 text-pink-600" },
-  { label: "Home & Rent", icon: Home, color: "bg-yellow-100 text-yellow-600" },
-  { label: "Office", icon: Briefcase, color: "bg-violet-100 text-violet-600" },
-  { label: "Health", icon: HeartPulse, color: "bg-red-100 text-red-600" },
-  { label: "Education", icon: BookOpen, color: "bg-teal-100 text-teal-600" },
-  { label: "Entertainment", icon: Music, color: "bg-purple-100 text-purple-600" },
-  { label: "Coffee & Snacks", icon: Coffee, color: "bg-amber-100 text-amber-600" },
-  { label: "Gifts", icon: Gift, color: "bg-rose-100 text-rose-600" },
-  { label: "Other", icon: MoreHorizontal, color: "bg-gray-100 text-gray-600" },
+  { label: "Food & Dining", icon: Utensils, color: "bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/25" },
+  { label: "Travel", icon: Plane, color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25" },
+  { label: "Transport", icon: Car, color: "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25" },
+  { label: "Shopping", icon: ShoppingCart, color: "bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25" },
+  { label: "Home & Rent", icon: Home, color: "bg-yellow-500/15 text-yellow-600 dark:text-yellow-400 border border-yellow-500/25" },
+  { label: "Office", icon: Briefcase, color: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25" },
+  { label: "Health", icon: HeartPulse, color: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25" },
+  { label: "Education", icon: BookOpen, color: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25" },
+  { label: "Entertainment", icon: Music, color: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25" },
+  { label: "Coffee & Snacks", icon: Coffee, color: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25" },
+  { label: "Gifts", icon: Gift, color: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25" },
+  { label: "Other", icon: MoreHorizontal, color: "bg-muted text-muted-foreground border border-border" },
 ];
 
 function getCategoryMeta(label: string) {
@@ -308,7 +308,7 @@ function PersonalExpensesPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-full bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 flex items-center justify-center">
               <TrendingDown className="h-5 w-5" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">This Month</p>
@@ -319,7 +319,7 @@ function PersonalExpensesPage() {
 
         <div className="rounded-2xl border border-border bg-card p-6 shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-4">
-            <div className="h-10 w-10 rounded-full bg-orange-100 text-orange-600 flex items-center justify-center">
+            <div className="h-10 w-10 rounded-full bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/25 flex items-center justify-center">
               <Tag className="h-5 w-5" />
             </div>
             <p className="text-sm font-medium text-muted-foreground">Top Category</p>

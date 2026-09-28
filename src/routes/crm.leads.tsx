@@ -205,23 +205,23 @@ const STATUSES: LeadStatus[] = [
 ];
 
 const STATUS_PILL: Record<LeadStatus, string> = {
-  "New Lead": "bg-blue-100 text-blue-700",
-  Contacted: "bg-amber-100 text-amber-700",
-  "Quotation Sent": "bg-cyan-100 text-cyan-700",
-  Negotiation: "bg-purple-100 text-purple-700",
-  Confirmed: "bg-teal-100 text-teal-700",
-  "Payment Pending": "bg-rose-100 text-rose-700",
-  "on conform": "bg-indigo-100 text-indigo-700",
-  "in process": "bg-emerald-100 text-emerald-700",
-  "Postponed": "bg-pink-100 text-pink-700",
-  "Completed": "bg-fuchsia-100 text-fuchsia-700",
-  Lost: "bg-slate-100 text-slate-700",
+  "New Lead": "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  Contacted: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  "Quotation Sent": "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25",
+  Negotiation: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25",
+  Confirmed: "bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25",
+  "Payment Pending": "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
+  "on conform": "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25",
+  "in process": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  "Postponed": "bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25",
+  "Completed": "bg-fuchsia-500/15 text-fuchsia-600 dark:text-fuchsia-400 border border-fuchsia-500/25",
+  Lost: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25",
 };
 
 const PRIORITY_PILL: Record<string, string> = {
-  High: "bg-red-100 text-red-700",
-  Medium: "bg-yellow-100 text-yellow-700",
-  Low: "bg-green-100 text-green-700",
+  High: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
+  Medium: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  Low: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
 };
 
 const STATUS_ACCENT: Record<LeadStatus, string> = {
@@ -649,9 +649,9 @@ const SVC_COLOR: Record<string, string> = {
   Business: "from-violet-500/10 to-purple-500/5 hover:from-violet-500/20 border-violet-200/60",
 };
 const SVC_BADGE: Record<string, string> = {
-  "Travel Services": "bg-blue-100 text-blue-700",
-  "Holiday Packages": "bg-teal-100 text-teal-700",
-  Business: "bg-violet-100 text-violet-700",
+  "Travel Services": "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  "Holiday Packages": "bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25",
+  Business: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25",
 };
 
 // ── Helper: which sub-form to render ────────────────────────────────────────
@@ -690,7 +690,7 @@ function ServiceSelectorStep({ onSelect }: { onSelect: (service: string) => void
       {SERVICES.map((group) => (
         <div key={group.group}>
           <div className="flex items-center gap-2 mb-3">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-gray-100 text-gray-600"}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-secondary text-muted-foreground"}`}>
               {group.group}
             </span>
             <div className="flex-1 h-px bg-border" />
@@ -2508,14 +2508,14 @@ function LeadsPage() {
               label: "Total Leads",
               value: leads.length,
               icon: <UserCheck className="h-4 w-4" />,
-              color: "bg-blue-100 text-blue-600",
+              color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
               sub: `${newToday} added today`,
             },
             {
               label: "Completed",
               value: completedLeads,
               icon: <Sparkles className="h-4 w-4" />,
-              color: "bg-emerald-100 text-emerald-600",
+              color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
               sub: `${conversion}% conversion`,
             },
 
@@ -2523,7 +2523,7 @@ function LeadsPage() {
               label: "Avg Budget",
               value: formatINR(leads.length ? Math.round(totalBudget / leads.length) : 0),
               icon: <TrendingUp className="h-4 w-4" />,
-              color: "bg-violet-100 text-violet-600",
+              color: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25",
               sub: "Per lead",
             },
           ].map((s) => (
@@ -2769,8 +2769,8 @@ function LeadsPage() {
                           </Select>
                         </td>
                         <td className="px-4 py-3 text-sm align-top min-w-[140px]">
-                          <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
-                          <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
+                          <div className="mb-2 font-semibold text-foreground">{l.assignedTo || "-"}</div>
+                          <div className="pl-2.5 border-l-[3px] border-primary/30 dark:border-primary/40 py-0.5 flex flex-col gap-1.5">
                             <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
                               {Array.isArray(l.allNotes) && l.allNotes.length > 0 ? (
                                 [...l.allNotes].reverse().map((n, i) => (
@@ -3005,9 +3005,9 @@ function LeadsPage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/25 border border-rose-500/25">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -3019,9 +3019,9 @@ function LeadsPage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/25 border border-emerald-500/25">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -3033,9 +3033,9 @@ function LeadsPage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 border border-blue-500/25">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

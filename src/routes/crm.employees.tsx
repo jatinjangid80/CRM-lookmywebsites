@@ -137,26 +137,27 @@ type Status = "Active" | "On Leave" | "Inactive" | "Terminated";
 type AccessRole = "Admin" | "Manager" | "Employee";
 
 const STATUS_COLOR: Record<Status, string> = {
-  Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
-  "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
-  Inactive: "bg-slate-100 text-slate-800 border-slate-200",
-  Terminated: "bg-rose-100 text-rose-800 border-rose-200",
+  Active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  "On Leave": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  Inactive: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25",
+  Terminated: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
 };
 
 const ROLE_COLOR: Record<string, string> = {
-  "Operations Manager": "bg-blue-100 text-blue-800 border-blue-200",
-  "Travel Consultant": "bg-indigo-100 text-indigo-800 border-indigo-200",
-  "Visa Executive": "bg-purple-100 text-purple-800 border-purple-200",
-  "Accounts": "bg-pink-100 text-pink-800 border-pink-200",
-  "Marketing": "bg-orange-100 text-orange-800 border-orange-200",
-  "Sales Executive": "bg-yellow-100 text-yellow-800 border-yellow-200",
-  "Executive": "bg-gray-100 text-gray-800 border-gray-200",
-  "HR & Admin Manager": "bg-teal-100 text-teal-800 border-teal-200",
-  "Accounts Manager": "bg-rose-100 text-rose-800 border-rose-200",
-  "Ceo Founder": "bg-slate-800 text-white border-slate-900",
-  "Insurance Sales": "bg-cyan-100 text-cyan-800 border-cyan-200",
-  "Web Design Internship": "bg-lime-100 text-lime-800 border-lime-200",
-  "other": "bg-gray-100 text-gray-800 border-gray-200",
+  "Operations Manager": "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  "Travel Consultant": "bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 border border-indigo-500/25",
+  "Visa Executive": "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25",
+  "Accounts": "bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25",
+  "Marketing": "bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/25",
+  "Sales Executive": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  "Sales": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  "Executive": "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25",
+  "HR & Admin Manager": "bg-teal-500/15 text-teal-600 dark:text-teal-400 border border-teal-500/25",
+  "Accounts Manager": "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
+  "Ceo Founder": "bg-blue-600/15 text-blue-600 dark:text-blue-400 border border-blue-600/25",
+  "Insurance Sales": "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25",
+  "Web Design Internship": "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  "other": "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25",
 };
 
 interface Employee {
@@ -1088,25 +1089,25 @@ function EmployeesPage() {
                 label: "Total Staff",
                 value: employees.length,
                 icon: <UserCog className="h-4 w-4" />,
-                color: "bg-blue-100 text-blue-600",
+                color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
               },
               {
                 label: "Present Today",
                 value: `${teamTodayRecords.length} / ${employees.length}`,
                 icon: <UserCheck className="h-4 w-4" />,
-                color: "bg-emerald-100 text-emerald-600",
+                color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
               },
               {
                 label: "Attendance Rate",
                 value: `${Math.round((teamTodayRecords.length / (employees.length || 1)) * 100) || 0}%`,
                 icon: <TrendingUp className="h-4 w-4" />,
-                color: "bg-purple-100 text-purple-600",
+                color: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25",
               },
               {
                 label: "Active Shifts",
                 value: teamTodayRecords.filter((r) => !r.checkout).length,
                 icon: <Clock className="h-4 w-4" />,
-                color: "bg-amber-100 text-amber-600",
+                color: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
               },
             ].map((s) => (
               <div
@@ -1117,7 +1118,7 @@ function EmployeesPage() {
                   <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                     {s.label}
                   </p>
-                  <span className={`grid h-8 w-8 place-items-center rounded-xl ${s.color}`}>
+                  <span className={`grid h-8 w-8 place-items-center rounded-full ${s.color}`}>
                     {s.icon}
                   </span>
                 </div>
@@ -1188,7 +1189,7 @@ function EmployeesPage() {
                   </div>
                   <div className="flex items-center gap-1.5 -mr-1.5 -mt-1.5">
                     <span
-                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[emp.status]}`}
+                      className={`rounded-full px-2.5 py-1 text-xs font-semibold ${STATUS_COLOR[emp.status] || "bg-secondary text-secondary-foreground border border-border"}`}
                     >
                       {emp.status}
                     </span>
@@ -1215,7 +1216,7 @@ function EmployeesPage() {
                 {/* Role */}
                 <div className="mt-3 flex flex-wrap gap-2">
                   <span
-                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[emp.role]}`}
+                    className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${ROLE_COLOR[emp.role] || "bg-secondary/60 text-foreground border border-border"}`}
                   >
                     <Shield className="h-3 w-3" /> {emp.role}
                   </span>
@@ -1532,12 +1533,12 @@ function EmployeesPage() {
                     </div>
 
                     {/* Quick Stats inside Banner */}
-                    <div className="flex items-center gap-4 bg-gray-50 border border-gray-100 rounded-xl p-3.5 px-5">
+                    <div className="flex items-center gap-4 bg-secondary/40 border border-border rounded-xl p-3.5 px-5">
                       <div className="text-center pr-4 border-r border-border">
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
                           Employee ID
                         </p>
-                        <p className="text-sm font-bold text-gray-800 mt-0.5">{cur.id}</p>
+                        <p className="text-sm font-bold text-foreground mt-0.5">{cur.id}</p>
                       </div>
                       <div className="text-center pl-1">
                         <p className="text-[10px] uppercase font-semibold text-muted-foreground tracking-wider">
@@ -1553,7 +1554,7 @@ function EmployeesPage() {
                             className="text-xs bg-card text-card-foreground border border-border rounded px-1.5 py-0.5 mt-0.5 focus:outline-none focus:ring-1 focus:ring-primary"
                           />
                         ) : (
-                          <p className="text-sm font-bold text-gray-800 mt-0.5">
+                          <p className="text-sm font-bold text-foreground mt-0.5">
                             {safeFormatDate(cur.joinDate, "en-IN", {
                               day: "numeric",
                               month: "short",
@@ -1850,19 +1851,19 @@ function EmployeesPage() {
                               label: "Attendance %",
                               value: `${mockPerf.attendancePct}%`,
                               icon: <Clock className="h-4 w-4" />,
-                              color: "bg-emerald-50 text-emerald-600 border-emerald-100",
+                              color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
                             },
                             {
                               label: "Projects Completed",
                               value: mockPerf.projectsCompleted,
                               icon: <CheckCircle className="h-4 w-4" />,
-                              color: "bg-blue-50 text-blue-600 border-blue-100",
+                              color: "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/20",
                             },
                             {
                               label: "Monthly Rating",
                               value: `${mockPerf.monthlyRating} / 5`,
                               icon: <TrendingUp className="h-4 w-4" />,
-                              color: "bg-purple-50 text-purple-600 border-purple-100",
+                              color: "bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/20",
                             },
                           ].map((stat) => (
                             <div

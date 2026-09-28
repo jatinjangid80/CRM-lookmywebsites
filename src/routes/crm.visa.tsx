@@ -107,12 +107,12 @@ interface VisaRequirement {
 }
 
 const STATUS_STYLE: Record<VisaStatus, string> = {
-  "Pending Documents": "bg-amber-100 text-amber-700",
-  "Documents Complete": "bg-cyan-100 text-cyan-700",
-  Submitted: "bg-blue-100 text-blue-700",
-  "Under Review": "bg-violet-100 text-violet-700",
-  Approved: "bg-emerald-100 text-emerald-700",
-  Rejected: "bg-red-100 text-red-700",
+  "Pending Documents": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  "Documents Complete": "bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25",
+  Submitted: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  "Under Review": "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25",
+  Approved: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  Rejected: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
 };
 
 const STATUS_ICON: Record<VisaStatus, React.ReactNode> = {
@@ -1665,21 +1665,21 @@ function VisaPage() {
                     label: "Total Applications",
                     value: apps.length,
                     icon: <FileText className="h-4 w-4" />,
-                    color: "bg-blue-100 text-blue-600",
+                    color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
                     sub: "All applications",
                   },
                   {
                     label: "Approved",
                     value: counts["Approved"] || 0,
                     icon: <CheckCircle2 className="h-4 w-4" />,
-                    color: "bg-emerald-100 text-emerald-600",
+                    color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
                     sub: "Successfully processed",
                   },
                   {
                     label: "Pending Action",
                     value: (counts["Pending Documents"] || 0) + (counts["Under Review"] || 0),
                     icon: <Clock className="h-4 w-4" />,
-                    color: "bg-amber-100 text-amber-600",
+                    color: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
                     sub: "Awaiting documents/review",
                   },
                 ].map((s) => (
@@ -1965,7 +1965,7 @@ function VisaPage() {
                     label: "Total Bookings",
                     value: filteredVisaBookings.length,
                     icon: <Briefcase className="h-4 w-4" />,
-                    color: "bg-blue-100 text-blue-600",
+                    color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
                     sub: "Total visa bookings",
                   },
                   {
@@ -1975,7 +1975,7 @@ function VisaPage() {
                       return sum + (isNaN(val) ? 0 : val);
                     }, 0).toLocaleString()}`,
                     icon: <Globe className="h-4 w-4" />,
-                    color: "bg-emerald-100 text-emerald-600",
+                    color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
                     sub: "Overall revenue",
                   },
                   ...(isAdmin ? [{
@@ -1985,7 +1985,7 @@ function VisaPage() {
                       return sum + (isNaN(val) ? 0 : val);
                     }, 0).toLocaleString()}`,
                     icon: <CheckCircle2 className="h-4 w-4" />,
-                    color: "bg-violet-100 text-violet-600",
+                    color: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25",
                     sub: "Overall profit margin",
                   }] : []),
                 ].map((s) => (
@@ -2035,10 +2035,10 @@ function VisaPage() {
                             <td className="px-4 py-3">{booking.visa_type}</td>
                             <td className="px-4 py-3">{booking.supplier}</td>
                             <td className="px-4 py-3">
-                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
-                                  booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
-                                    booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
-                                      "bg-amber-100 text-amber-700"
+                              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${booking.application_status === "Approved" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" :
+                                  booking.application_status === "Rejected" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25" :
+                                    booking.application_status === "Submitted" ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" :
+                                      "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
                                 }`}>
                                 {booking.application_status}
                               </span>
@@ -2424,9 +2424,9 @@ function VisaPage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/25 border border-rose-500/25">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -2438,9 +2438,9 @@ function VisaPage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/25 border border-emerald-500/25">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -2452,9 +2452,9 @@ function VisaPage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 border border-blue-500/25">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

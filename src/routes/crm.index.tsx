@@ -631,7 +631,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Today's Leads Details</span>
-            <span className="text-[10px] font-semibold bg-blue-100 text-blue-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25 px-2 py-0.5 rounded-full">
               {todayLeadsCount} Today
             </span>
           </div>
@@ -678,7 +678,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Today's Sales Breakdown</span>
-            <span className="text-[10px] font-semibold bg-emerald-100 text-emerald-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25 px-2 py-0.5 rounded-full">
               {formatINR(todaySalesAmount)}
             </span>
           </div>
@@ -725,7 +725,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Active Bookings Details</span>
-            <span className="text-[10px] font-semibold bg-violet-100 text-violet-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25 px-2 py-0.5 rounded-full">
               {activeBookingsCount} Total
             </span>
           </div>
@@ -761,7 +761,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Pending Payments List</span>
-            <span className="text-[10px] font-semibold bg-rose-100 text-rose-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25 px-2 py-0.5 rounded-full">
               {formatINR(pendingPaymentsAmount)}
             </span>
           </div>
@@ -803,7 +803,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Scheduled Follow-Ups</span>
-            <span className="text-[10px] font-semibold bg-amber-100 text-amber-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25 px-2 py-0.5 rounded-full">
               {followupsTodayCount} Today
             </span>
           </div>
@@ -815,7 +815,7 @@ function Dashboard() {
                     <p className="font-semibold text-foreground">{l.name}</p>
                     <p className="text-[10px] text-muted-foreground">{l.phone || l.assignedTo || "Lead"}</p>
                   </div>
-                  <span className="text-[10px] font-semibold text-amber-700 bg-amber-50 px-2 py-0.5 rounded border border-amber-200">
+                  <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 bg-amber-500/15 px-2 py-0.5 rounded border border-amber-500/25">
                     {l.nextFollowUp || "Today"}
                   </span>
                 </div>
@@ -841,7 +841,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Upcoming Departures</span>
-            <span className="text-[10px] font-semibold bg-cyan-100 text-cyan-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-cyan-500/15 text-cyan-600 dark:text-cyan-400 border border-cyan-500/25 px-2 py-0.5 rounded-full">
               Next 7 Days ({upcomingDeparturesCount})
             </span>
           </div>
@@ -853,7 +853,7 @@ function Dashboard() {
                     <p className="font-semibold text-foreground">{b.customer || b.name}</p>
                     <p className="text-[10px] text-muted-foreground">{b.details?.destination || b.package || "Destination"}</p>
                   </div>
-                  <span className="text-[10px] font-semibold text-cyan-700 bg-cyan-50 px-2 py-0.5 rounded border border-cyan-200">
+                  <span className="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/15 px-2 py-0.5 rounded border border-cyan-500/25">
                     {b.travelDate}
                   </span>
                 </div>
@@ -879,7 +879,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Lead Conversion Info</span>
-            <span className="text-[10px] font-semibold bg-pink-100 text-pink-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-pink-500/15 text-pink-600 dark:text-pink-400 border border-pink-500/25 px-2 py-0.5 rounded-full">
               {conversionRate}% Rate
             </span>
           </div>
@@ -921,7 +921,7 @@ function Dashboard() {
         <div className="space-y-3">
           <div className="flex items-center justify-between border-b border-border pb-2">
             <span className="text-xs font-bold text-foreground">Monthly Revenue Details</span>
-            <span className="text-[10px] font-semibold bg-orange-100 text-orange-700 px-2 py-0.5 rounded-full">
+            <span className="text-[10px] font-semibold bg-orange-500/15 text-orange-600 dark:text-orange-400 border border-orange-500/25 px-2 py-0.5 rounded-full">
               {formatINR(monthlyRevenueTotal)}
             </span>
           </div>
@@ -1717,18 +1717,21 @@ function Dashboard() {
             
             <div className="space-y-3">
               {taxiBookingsList.slice(0, 5).map((booking) => (
-                <div key={booking.id} className="rounded-[1.25rem] border border-[#E5E5E5] bg-[#FAF5F0]/50 p-4 shadow-sm relative">
-                  <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900 truncate">{booking.customer_name}</span>
-                    <span className="text-yellow-300 font-black px-1 shrink-0">—</span>
-                    <span className="text-sm font-medium text-gray-700 truncate">{booking.vehicle_type || ""}</span>
+                <div key={booking.id} className="rounded-2xl border border-border bg-secondary/20 hover:bg-secondary/35 transition-colors p-3.5 shadow-sm relative">
+                  <div className="flex items-center justify-between gap-2 mb-1.5">
+                    <span className="text-sm font-semibold text-foreground truncate">{booking.customer_name}</span>
+                    {booking.vehicle_type && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                        {booking.vehicle_type}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 text-primary/70 shrink-0" />
                     {booking.from_location && booking.to_location ? (
                       <>
                         <span className="truncate">{booking.from_location}</span>
-                        <ArrowRight className="h-3 w-3 shrink-0" />
+                        <ArrowRight className="h-3 w-3 text-muted-foreground/60 shrink-0" />
                         <span className="truncate">{booking.to_location}</span>
                       </>
                     ) : (
@@ -1773,11 +1776,11 @@ function Dashboard() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <p className="text-sm font-semibold text-foreground truncate">{booking.customer_name}</p>
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                        booking.application_status === "Approved" ? "bg-green-100 text-green-700" :
-                        booking.application_status === "Rejected" ? "bg-red-100 text-red-700" :
-                        booking.application_status === "Submitted" ? "bg-blue-100 text-blue-700" :
-                        "bg-amber-100 text-amber-700"
+                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium border ${
+                        booking.application_status === "Approved" ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/25" :
+                        booking.application_status === "Rejected" ? "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/25" :
+                        booking.application_status === "Submitted" ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" :
+                        "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
                       }`}>
                         {booking.application_status}
                       </span>

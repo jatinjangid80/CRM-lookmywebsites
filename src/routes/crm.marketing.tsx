@@ -77,10 +77,10 @@ function MarketingPage() {
   const allChannels = Array.from(new Set(["WhatsApp", "Email", "SMS", ...templates.map(t => t.channel)]));
 
   const getChannelStyles = (channel: string) => {
-    if (channel === "WhatsApp") return { bgLight: "bg-emerald-100", text: "text-emerald-600", dot: "bg-emerald-400", hover: "hover:text-emerald-600", border: "border-emerald-200", btnHover: "hover:bg-emerald-50", icon: MessageCircle, title: "WhatsApp Templates" };
-    if (channel === "Email") return { bgLight: "bg-blue-100", text: "text-blue-600", dot: "bg-blue-400", hover: "hover:text-blue-600", border: "border-blue-200", btnHover: "hover:bg-blue-50", icon: Mail, title: "Email Templates" };
-    if (channel === "SMS") return { bgLight: "bg-violet-100", text: "text-violet-600", dot: "bg-violet-400", hover: "hover:text-violet-600", border: "border-violet-200", btnHover: "hover:bg-violet-50", icon: Send, title: "SMS Templates" };
-    return { bgLight: "bg-slate-100", text: "text-slate-600", dot: "bg-slate-400", hover: "hover:text-slate-600", border: "border-slate-200", btnHover: "hover:bg-slate-50", icon: MessageSquare, title: `${channel} Templates` };
+    if (channel === "WhatsApp") return { bgLight: "bg-emerald-500/15", text: "text-emerald-600 dark:text-emerald-400", dot: "bg-emerald-400", hover: "hover:text-emerald-600 dark:hover:text-emerald-400", border: "border-emerald-500/30", btnHover: "hover:bg-emerald-500/15 hover:text-emerald-700 dark:hover:text-emerald-300", icon: MessageCircle, title: "WhatsApp Templates" };
+    if (channel === "Email") return { bgLight: "bg-blue-500/15", text: "text-blue-600 dark:text-blue-400", dot: "bg-blue-400", hover: "hover:text-blue-600 dark:hover:text-blue-400", border: "border-blue-500/30", btnHover: "hover:bg-blue-500/15 hover:text-blue-700 dark:hover:text-blue-300", icon: Mail, title: "Email Templates" };
+    if (channel === "SMS") return { bgLight: "bg-violet-500/15", text: "text-violet-600 dark:text-violet-400", dot: "bg-violet-400", hover: "hover:text-violet-600 dark:hover:text-violet-400", border: "border-violet-500/30", btnHover: "hover:bg-violet-500/15 hover:text-violet-700 dark:hover:text-violet-300", icon: Send, title: "SMS Templates" };
+    return { bgLight: "bg-secondary/50", text: "text-foreground", dot: "bg-muted-foreground", hover: "hover:text-foreground", border: "border-border", btnHover: "hover:bg-secondary hover:text-foreground", icon: MessageSquare, title: `${channel} Templates` };
   };
 
   const filteredTemplates = templates.filter(t => {
@@ -169,8 +169,8 @@ function MarketingPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-xl h-10 bg-white">
-                <Filter className="h-4 w-4 mr-2" />
+              <Button variant="outline" className="rounded-xl h-10 border-border bg-background hover:bg-secondary/40 text-foreground font-medium shadow-sm">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
                 Category: {selectedCategory}
               </Button>
             </DropdownMenuTrigger>
@@ -189,8 +189,8 @@ function MarketingPage() {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="rounded-xl h-10 bg-white">
-                <Filter className="h-4 w-4 mr-2" />
+              <Button variant="outline" className="rounded-xl h-10 border-border bg-background hover:bg-secondary/40 text-foreground font-medium shadow-sm">
+                <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
                 Channel: {selectedChannel}
               </Button>
             </DropdownMenuTrigger>
@@ -244,13 +244,13 @@ function MarketingPage() {
 
       {/* Table Section */}
       <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-card mt-8">
-        <div className="px-6 py-4 border-b border-border bg-gray-50/50 flex justify-between items-center">
-          <h2 className="font-semibold text-lg font-display">All Templates</h2>
-          <span className="text-sm text-muted-foreground bg-muted px-2.5 py-1 rounded-md font-medium">{filteredTemplates.length} results</span>
+        <div className="px-6 py-4 border-b border-border bg-secondary/20 flex justify-between items-center">
+          <h2 className="font-semibold text-lg font-display text-foreground">All Templates</h2>
+          <span className="text-xs text-muted-foreground bg-secondary/80 px-2.5 py-1 rounded-full font-medium">{filteredTemplates.length} results</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm text-left">
-            <thead className="bg-muted/30 text-muted-foreground">
+            <thead className="bg-secondary/30 text-muted-foreground border-b border-border">
               <tr>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Template Name</th>
                 <th className="px-6 py-4 font-semibold uppercase tracking-wider text-xs">Category</th>
@@ -262,36 +262,36 @@ function MarketingPage() {
             </thead>
             <tbody className="divide-y divide-border">
               {filteredTemplates.map((template) => (
-                <tr key={template.id} className="hover:bg-muted/30 transition-colors">
+                <tr key={template.id} className="hover:bg-secondary/20 transition-colors">
                   <td className="px-6 py-4">
                     <div className="font-semibold text-foreground">{template.name}</div>
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{template.category}</td>
                   <td className="px-6 py-4">
                     {template.channel === "WhatsApp" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800/40 px-2.5 py-0.5 text-xs font-semibold">
                         <MessageCircle className="h-3 w-3" /> WhatsApp
                       </span>
                     )}
                     {template.channel === "Email" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-semibold text-blue-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950/50 dark:text-blue-300 dark:border dark:border-blue-800/40 px-2.5 py-0.5 text-xs font-semibold">
                         <Mail className="h-3 w-3" /> Email
                       </span>
                     )}
                     {template.channel === "SMS" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 text-violet-800 dark:bg-violet-950/50 dark:text-violet-300 dark:border dark:border-violet-800/40 px-2.5 py-0.5 text-xs font-semibold">
                         <Send className="h-3 w-3" /> SMS
                       </span>
                     )}
                     {template.channel !== "WhatsApp" && template.channel !== "Email" && template.channel !== "SMS" && (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-700">
+                      <span className="inline-flex items-center gap-1.5 rounded-full bg-secondary text-muted-foreground px-2.5 py-0.5 text-xs font-semibold">
                         <MessageSquare className="h-3 w-3" /> {template.channel || "Other"}
                       </span>
                     )}
                   </td>
                   <td className="px-6 py-4 text-muted-foreground">{template.lastUpdated}</td>
                   <td className="px-6 py-4">
-                    <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700">
+                    <span className="inline-flex items-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-300 dark:border dark:border-emerald-800/40 px-2.5 py-0.5 text-xs font-semibold">
                       {template.status}
                     </span>
                   </td>
@@ -339,9 +339,9 @@ function MarketingPage() {
               <div className="bg-muted/50 p-6 border-b border-border">
                 <div className="flex items-center justify-between mb-2">
                   <DialogTitle className="text-xl font-display">{previewTemplate.name}</DialogTitle>
-                  {previewTemplate.channel === "WhatsApp" && <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700"><MessageCircle className="h-3.5 w-3.5"/> WhatsApp</span>}
-                  {previewTemplate.channel === "Email" && <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-100 px-2.5 py-1 text-xs font-semibold text-blue-700"><Mail className="h-3.5 w-3.5"/> Email</span>}
-                  {previewTemplate.channel === "SMS" && <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-100 px-2.5 py-1 text-xs font-semibold text-violet-700"><Send className="h-3.5 w-3.5"/> SMS</span>}
+                  {previewTemplate.channel === "WhatsApp" && <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-500/15 px-2.5 py-1 text-xs font-semibold text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"><MessageCircle className="h-3.5 w-3.5"/> WhatsApp</span>}
+                  {previewTemplate.channel === "Email" && <span className="inline-flex items-center gap-1.5 rounded-full bg-blue-500/15 px-2.5 py-1 text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-500/25"><Mail className="h-3.5 w-3.5"/> Email</span>}
+                  {previewTemplate.channel === "SMS" && <span className="inline-flex items-center gap-1.5 rounded-full bg-violet-500/15 px-2.5 py-1 text-xs font-semibold text-violet-600 dark:text-violet-400 border border-violet-500/25"><Send className="h-3.5 w-3.5"/> SMS</span>}
                 </div>
                 <DialogDescription>
                   Preview of the template content.

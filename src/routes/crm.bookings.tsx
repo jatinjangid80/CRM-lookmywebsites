@@ -120,13 +120,13 @@ export const Route = createFileRoute("/crm/bookings")({
 });
 
 const statusColor: Record<Booking["status"], string> = {
-  Confirmed: "bg-emerald-100 text-emerald-700",
-  Pending: "bg-amber-100 text-amber-700",
-  Cancelled: "bg-rose-100 text-rose-700",
-  Completed: "bg-blue-100 text-blue-700",
-  Partial: "bg-blue-100 text-blue-700",
-  Paid: "bg-emerald-100 text-emerald-700",
-  Refunded: "bg-purple-100 text-purple-700",
+  Confirmed: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  Pending: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+  Cancelled: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
+  Completed: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  Partial: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
+  Paid: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+  Refunded: "bg-purple-500/15 text-purple-600 dark:text-purple-400 border border-purple-500/25",
 };
 
 const SERVICES = [
@@ -780,9 +780,9 @@ function BookingsPage() {
   }
 
   const priorityColor = {
-    High: "bg-red-50 text-red-700 border-red-200",
-    Medium: "bg-amber-50 text-amber-700 border-amber-200",
-    Low: "bg-blue-50 text-blue-700 border-blue-200",
+    High: "bg-red-500/15 text-red-600 dark:text-red-400 border-red-500/25",
+    Medium: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25",
+    Low: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25",
   };
 
   const handleImportBookings = (data: any[]) => {
@@ -1134,19 +1134,19 @@ function BookingsPage() {
           <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Purchase Price</p>
           <p className="text-xl font-bold">{formatINR(booking.purchasePrice || 0)}</p>
         </div>
-        <div className="bg-emerald-50 text-emerald-800 p-4 rounded-xl border border-emerald-200">
+        <div className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 p-4 rounded-xl border border-emerald-500/20">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Amount Received</p>
           <p className="text-xl font-bold">{formatINR(booking.paid || 0)}</p>
         </div>
-        <div className="bg-rose-50 text-rose-800 p-4 rounded-xl border border-rose-200">
+        <div className="bg-rose-500/10 text-rose-600 dark:text-rose-400 p-4 rounded-xl border border-rose-500/20">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Pending Amount</p>
           <p className="text-xl font-bold">{formatINR((booking.sellingPrice || booking.amount || 0) - (booking.paid || 0))}</p>
         </div>
-        <div className="bg-blue-50 text-blue-800 p-4 rounded-xl border border-blue-200">
+        <div className="bg-blue-500/10 text-blue-600 dark:text-blue-400 p-4 rounded-xl border border-blue-500/20">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Profit</p>
           <p className="text-xl font-bold">{formatINR(booking.profit || 0)}</p>
         </div>
-        <div className="bg-purple-50 text-purple-800 p-4 rounded-xl border border-purple-200">
+        <div className="bg-purple-500/10 text-purple-600 dark:text-purple-400 p-4 rounded-xl border border-purple-500/20">
           <p className="text-xs uppercase tracking-wider mb-1 opacity-80">Margin</p>
           <p className="text-xl font-bold">{booking.margin || 0}%</p>
         </div>
@@ -1631,7 +1631,7 @@ function BookingsPage() {
 
         {/* Row 3: Status Summary */}
         <div className="grid grid-cols-4 gap-3 bg-card p-2 rounded-xl border border-border">
-          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-emerald-50 text-emerald-700">
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
             <div className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Confirmed</span>
@@ -1640,7 +1640,7 @@ function BookingsPage() {
               {dashboardData.statusCounts.confirmedCount}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-amber-50 text-amber-700">
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20">
             <div className="flex items-center gap-1.5">
               <Clock className="h-4 w-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Pending</span>
@@ -1649,7 +1649,7 @@ function BookingsPage() {
               {dashboardData.statusCounts.pendingCount}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-rose-50 text-rose-700">
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20">
             <div className="flex items-center gap-1.5">
               <XCircle className="h-4 w-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Cancelled</span>
@@ -1658,7 +1658,7 @@ function BookingsPage() {
               {dashboardData.statusCounts.cancelledCount}
             </span>
           </div>
-          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-purple-50 text-purple-700">
+          <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20">
             <div className="flex items-center gap-1.5">
               <Undo2 className="h-4 w-4" />
               <span className="text-xs font-bold uppercase tracking-wider">Refunded</span>
@@ -1999,9 +1999,9 @@ function BookingsPage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-600 dark:hover:text-rose-400 transition-all text-center group cursor-pointer"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/10 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/20">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -2013,9 +2013,9 @@ function BookingsPage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400 transition-all text-center group cursor-pointer"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/20">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -2027,9 +2027,9 @@ function BookingsPage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-600 dark:hover:text-blue-400 transition-all text-center group cursor-pointer"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/20">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

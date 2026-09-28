@@ -216,7 +216,7 @@ function TaxiBookingPage() {
             label: "Total Bookings",
             value: filteredBookings.length,
             icon: <Briefcase className="h-4 w-4" />,
-            color: "bg-blue-100 text-blue-600",
+            color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
             sub: "Total taxi bookings",
           },
           {
@@ -226,7 +226,7 @@ function TaxiBookingPage() {
               return sum + (isNaN(val) ? 0 : val);
             }, 0).toLocaleString()}`,
             icon: <Globe className="h-4 w-4" />,
-            color: "bg-emerald-100 text-emerald-600",
+            color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
             sub: "Overall revenue",
           },
           ...(isAdmin ? [{
@@ -236,7 +236,7 @@ function TaxiBookingPage() {
               return sum + (isNaN(val) ? 0 : val);
             }, 0).toLocaleString()}`,
             icon: <CheckCircle2 className="h-4 w-4" />,
-            color: "bg-violet-100 text-violet-600",
+            color: "bg-violet-500/15 text-violet-600 dark:text-violet-400 border border-violet-500/25",
             sub: "Overall profit margin",
           }] : []),
         ].map((s) => (
@@ -359,14 +359,17 @@ function TaxiBookingPage() {
               <div className="text-center text-muted-foreground py-8">No bookings found.</div>
             ) : (
               filteredBookings.map((b) => (
-                <div key={b.id} className="rounded-[1.25rem] border border-[#E5E5E5] bg-[#FAF5F0]/50 p-4 shadow-sm relative">
+                <div key={b.id} className="rounded-2xl border border-border bg-secondary/20 hover:bg-secondary/35 transition-colors p-4 shadow-sm relative">
                   <div className="flex items-center gap-2 mb-2">
-                    <span className="font-bold text-gray-900">{b.customer_name}</span>
-                    <span className="text-yellow-300 font-black px-1">—</span>
-                    <span className="text-sm font-medium text-gray-700">{b.vehicle_type || ""}</span>
+                    <span className="font-bold text-foreground">{b.customer_name}</span>
+                    {b.vehicle_type && (
+                      <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20 shrink-0">
+                        {b.vehicle_type}
+                      </span>
+                    )}
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 shrink-0" />
+                  <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                    <MapPin className="h-3.5 w-3.5 text-primary/70 shrink-0" />
                     {b.from_location && b.to_location ? (
                       <>
                         <span className="truncate">{b.from_location}</span>
@@ -507,9 +510,9 @@ function TaxiBookingPage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/25 border border-rose-500/25">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -521,9 +524,9 @@ function TaxiBookingPage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/25 border border-emerald-500/25">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -535,9 +538,9 @@ function TaxiBookingPage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 border border-blue-500/25">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

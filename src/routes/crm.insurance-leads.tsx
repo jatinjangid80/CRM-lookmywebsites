@@ -657,7 +657,7 @@ function ServiceSelectorStep({ onSelect }: { onSelect: (service: string) => void
       {SERVICES.map((group) => (
         <div key={group.group}>
           <div className="flex items-center gap-2 mb-3">
-            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-gray-100 text-gray-600"}`}>
+            <span className={`text-[10px] font-bold uppercase tracking-widest px-2 py-0.5 rounded-full ${SVC_BADGE[group.group] ?? "bg-secondary text-muted-foreground"}`}>
               {group.group}
             </span>
             <div className="flex-1 h-px bg-border" />
@@ -2506,14 +2506,14 @@ function LeadsPage() {
               label: "Total Leads",
               value: genInsuranceLeads.length,
               icon: <UserCheck className="h-4 w-4" />,
-              color: "bg-blue-100 text-blue-600",
+              color: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25",
               sub: `${newToday} added today`,
             },
             {
               label: "Completed",
               value: completedLeads,
               icon: <Sparkles className="h-4 w-4" />,
-              color: "bg-emerald-100 text-emerald-600",
+              color: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
               sub: `${conversion}% conversion`,
             },
           ].map((s) => (
@@ -2756,8 +2756,8 @@ function LeadsPage() {
                           </Select>
                         </td>
                         <td className="px-4 py-3 text-sm align-top min-w-[140px]">
-                          <div className="mb-2 font-medium text-gray-800">{l.assignedTo || "-"}</div>
-                          <div className="pl-2.5 border-l-[3px] border-[#e8dfd5] py-0.5 flex flex-col gap-1.5">
+                          <div className="mb-2 font-semibold text-foreground">{l.assignedTo || "-"}</div>
+                          <div className="pl-2.5 border-l-[3px] border-primary/30 dark:border-primary/40 py-0.5 flex flex-col gap-1.5">
                             <div className="flex flex-col gap-2.5 max-h-[54px] overflow-y-auto pr-1 custom-scrollbar">
                               {Array.isArray(l.allNotes) && l.allNotes.length > 0 ? (
                                 [...l.allNotes].reverse().map((n, i) => (

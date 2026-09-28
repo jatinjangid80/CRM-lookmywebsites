@@ -378,9 +378,9 @@ function CustomersPage() {
 
   const StatusBadge = ({ status }: { status: string }) => {
     switch (status) {
-      case "VIP": return <span className="bg-amber-100 text-amber-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider shadow-sm border border-amber-200">VIP</span>;
-      case "Active": return <span className="bg-primary/10 text-primary px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Active</span>;
-      default: return <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Inactive</span>;
+      case "VIP": return <span className="bg-amber-500/15 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider border border-amber-500/25">VIP</span>;
+      case "Active": return <span className="bg-primary/10 text-primary border border-primary/20 px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Active</span>;
+      default: return <span className="bg-muted text-muted-foreground border border-border px-2 py-0.5 rounded-md text-xs font-bold uppercase tracking-wider">Inactive</span>;
     }
   };
 
@@ -515,10 +515,10 @@ function CustomersPage() {
                         <div className="text-xs text-muted-foreground">{c.id}</div>
                         <div className="flex flex-wrap gap-1 mt-1">
                           {c.phone && travelPhones.has(String(c.phone).trim()) && (
-                            <span className="text-[10px] bg-blue-100 text-blue-700 px-1.5 py-0.5 rounded border border-blue-200 font-medium">Travel</span>
+                            <span className="text-[10px] bg-blue-500/15 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded border border-blue-500/25 font-medium">Travel</span>
                           )}
                           {c.phone && insurancePhones.has(String(c.phone).trim()) && (
-                            <span className="text-[10px] bg-purple-100 text-purple-700 px-1.5 py-0.5 rounded border border-purple-200 font-medium">Gen. Insurance</span>
+                            <span className="text-[10px] bg-purple-500/15 text-purple-600 dark:text-purple-400 px-1.5 py-0.5 rounded border border-purple-500/25 font-medium">Gen. Insurance</span>
                           )}
                         </div>
                       </div>
@@ -853,8 +853,8 @@ function CustomersPage() {
                               </div>
                               <div className="text-right">
                                 <p className="font-display font-bold text-primary">{formatINR(b.amount)}</p>
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                  b.status === "Confirmed" || b.status === "Completed" ? "bg-primary/10 text-primary" : "bg-amber-100 text-amber-700"
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                  b.status === "Confirmed" || b.status === "Completed" ? "bg-primary/10 text-primary border-primary/20" : "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
                                 }`}>{b.status}</span>
                               </div>
                             </div>
@@ -946,10 +946,10 @@ function CustomersPage() {
                                 <p className="text-xs text-muted-foreground mt-1">Due {t.due_date} • Priority: {t.priority}</p>
                               </div>
                               <div className="text-right">
-                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold ${
-                                  t.status === "Completed" ? "bg-primary/10 text-primary" :
-                                  t.status === "In Progress" ? "bg-blue-100 text-blue-700" :
-                                  "bg-amber-100 text-amber-700"
+                                <span className={`px-2 py-0.5 rounded-full text-xs font-bold border ${
+                                  t.status === "Completed" ? "bg-primary/10 text-primary border-primary/20" :
+                                  t.status === "In Progress" ? "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/25" :
+                                  "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/25"
                                 }`}>
                                   {t.status}
                                 </span>
@@ -1033,9 +1033,9 @@ function CustomersPage() {
                 exportToPDF();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-300 hover:bg-rose-50/50 hover:text-rose-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-rose-500/40 hover:bg-rose-500/10 hover:text-rose-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-50 text-rose-600 group-hover:bg-rose-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-rose-500/15 text-rose-600 dark:text-rose-400 group-hover:bg-rose-500/25 border border-rose-500/25">
                 <FileText className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">PDF Report</span>
@@ -1047,9 +1047,9 @@ function CustomersPage() {
                 exportToExcel();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-300 hover:bg-emerald-50/50 hover:text-emerald-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-emerald-500/40 hover:bg-emerald-500/10 hover:text-emerald-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-50 text-emerald-600 group-hover:bg-emerald-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 group-hover:bg-emerald-500/25 border border-emerald-500/25">
                 <Table2 className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Excel (CSV)</span>
@@ -1061,9 +1061,9 @@ function CustomersPage() {
                 exportToWord();
                 setIsExportOpen(false);
               }}
-              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-300 hover:bg-blue-50/50 hover:text-blue-600 transition-all text-center group"
+              className="flex flex-col items-center justify-center gap-2 rounded-xl border border-border p-4 hover:border-blue-500/40 hover:bg-blue-500/10 hover:text-blue-500 transition-all text-center group"
             >
-              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-50 text-blue-600 group-hover:bg-blue-100">
+              <div className="grid h-10 w-10 place-items-center rounded-lg bg-blue-500/15 text-blue-600 dark:text-blue-400 group-hover:bg-blue-500/25 border border-blue-500/25">
                 <Briefcase className="h-5 w-5" />
               </div>
               <span className="text-xs font-semibold">Word (.doc)</span>

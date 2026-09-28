@@ -563,10 +563,10 @@ function EmployeeProfileModalInner({
   };
 
   const STATUS_COLOR = {
-    Active: "bg-emerald-100 text-emerald-800 border-emerald-200",
-    "On Leave": "bg-amber-100 text-amber-800 border-amber-200",
-    Inactive: "bg-slate-100 text-slate-800 border-slate-200",
-    Terminated: "bg-rose-100 text-rose-800 border-rose-200",
+    Active: "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25",
+    "On Leave": "bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25",
+    Inactive: "bg-slate-500/15 text-slate-600 dark:text-slate-400 border border-slate-500/25",
+    Terminated: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border border-rose-500/25",
   };
 
   // Calculate dynamic stats

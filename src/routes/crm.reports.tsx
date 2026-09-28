@@ -253,28 +253,28 @@ function ReportsPage() {
           value={formatINR(totalRevenue)}
           icon={<IndianRupee className="h-4 w-4" />}
           sub="Collected this month"
-          color="bg-primary/15 text-primary"
+          color="bg-primary/15 text-primary border border-primary/25"
         />
         <KpiCard
           label="Pending Amount"
           value={formatINR(pendingAmount)}
           icon={<TrendingUp className="h-4 w-4" />}
           sub="Awaiting collection"
-          color="bg-amber-100 text-amber-600"
+          color="bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/25"
         />
         <KpiCard
           label="Won Leads"
           value={`${wonLeads} / ${leadsList.length}`}
           icon={<UserCheck className="h-4 w-4" />}
           sub="Conversion rate"
-          color="bg-emerald-100 text-emerald-600"
+          color="bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/25"
         />
         <KpiCard
           label="Active Bookings"
           value={String(bookingsList.filter((b) => b.status !== "Cancelled").length)}
           icon={<CalendarCheck className="h-4 w-4" />}
           sub="Non-cancelled"
-          color="bg-blue-100 text-blue-600"
+          color="bg-blue-500/15 text-blue-600 dark:text-blue-400 border border-blue-500/25"
         />
       </div>
 
