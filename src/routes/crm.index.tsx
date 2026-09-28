@@ -57,6 +57,7 @@ import { Button } from "@/components/ui/button";
 import { useSupabaseTable } from "@/hooks/useSupabaseTable";
 import { INITIAL_EMPLOYEES } from "./crm.employees";
 import { SEED_PACKAGES } from "./crm.packages";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/crm/")({
   component: Dashboard,
@@ -475,17 +476,78 @@ function Dashboard() {
     }));
   }, [bookingsList]);
 
-  // User Action Items (Row 4)
-  const myPendingTasks = tasksList
-    .filter((t) => t.status !== "Done" && t.status !== "Completed")
-    .sort((a, b) => new Date(a.dueDate || a.due_date || 0).getTime() - new Date(b.dueDate || b.due_date || 0).getTime())
-    .slice(0, 5);
+  // User Action Items (Row 4) - Pending Tasks with Today / Overdue filtering
+  const [taskFilterTab, setTaskFilterTab] = useState<"all" | "today" | "overdue">("all");
+
+  const allPendingTasks = useMemo(() => {
+    return (tasksList || []).filter(
+      (t) => t.status !== "Done" && t.status !== "Completed" && t.progress !== 100
+    );
+  }, [tasksList]);
+
+  const todayPendingTasks = useMemo(() => {
+    return allPendingTasks.filter((t) => {
+      const d = (t.dueDate || t.due_date || "").slice(0, 10);
+      return d === todayStr;
+    });
+  }, [allPendingTasks, todayStr]);
+
+  const overduePendingTasks = useMemo(() => {
+    return allPendingTasks.filter((t) => {
+      const d = (t.dueDate || t.due_date || "").slice(0, 10);
+      return d && d < todayStr;
+    });
+  }, [allPendingTasks, todayStr]);
+
+  const displayedPendingTasks = useMemo(() => {
+    let list = allPendingTasks;
+    if (taskFilterTab === "today") {
+      list = todayPendingTasks;
+    } else if (taskFilterTab === "overdue") {
+      list = overduePendingTasks;
+    }
+    return [...list]
+      .sort((a, b) => {
+        const dateA = a.dueDate || a.due_date || "9999-99-99";
+        const dateB = b.dueDate || b.due_date || "9999-99-99";
+        return dateA.localeCompare(dateB);
+      })
+      .slice(0, 6);
+  }, [allPendingTasks, taskFilterTab, todayPendingTasks, overduePendingTasks]);
+
+  const getDueInfo = (dueDateStr?: string) => {
+    if (!dueDateStr) {
+      return { label: "No date", badgeColor: "text-muted-foreground bg-secondary/50", isOverdue: false, isToday: false };
+    }
+    const dStr = dueDateStr.slice(0, 10);
+    if (dStr === todayStr) {
+      return { label: "Due Today", badgeColor: "text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-300 font-bold", isOverdue: false, isToday: true };
+    }
+    if (dStr < todayStr) {
+      return { label: `Overdue (${dStr})`, badgeColor: "text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-300 font-bold", isOverdue: true, isToday: false };
+    }
+    const tomorrow = new Date();
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const tomorrowStr = tomorrow.toISOString().slice(0, 10);
+    if (dStr === tomorrowStr) {
+      return { label: "Due Tomorrow", badgeColor: "text-blue-700 bg-blue-50 border-blue-200 dark:bg-blue-950/40 dark:border-blue-900/50 dark:text-blue-300", isOverdue: false, isToday: false };
+    }
+    return { label: `Due: ${dStr}`, badgeColor: "text-slate-600 bg-slate-100 border-slate-200 dark:bg-slate-800 dark:border-slate-700 dark:text-slate-400", isOverdue: false, isToday: false };
+  };
 
   const handleToggleTask = (id: string) => {
     setTasksList((prev: any[]) =>
-      prev.map((t) =>
-        t.id === id ? { ...t, status: t.status === "Done" ? "Pending" : "Done" } : t,
-      ),
+      prev.map((t) => {
+        if (t.id === id) {
+          const isDone = t.status === "Done" || t.status === "Completed";
+          const newStatus = isDone ? "Pending" : "Done";
+          if (!isDone) {
+            toast.success(`Task completed: "${t.title}"`);
+          }
+          return { ...t, status: newStatus, progress: isDone ? 0 : 100 };
+        }
+        return t;
+      })
     );
   };
 
@@ -1281,76 +1343,131 @@ function Dashboard() {
 
       {/* Row 4: Tasks, Follow-ups, Celebrations, Top Clients */}
       <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-        {/* My Pending Tasks */}
+        {/* Pending Tasks */}
         <div className="rounded-2xl border border-border bg-card p-6 shadow-card min-w-0 flex flex-col justify-between">
           <div>
-            <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center justify-between flex-wrap gap-2 mb-4">
               <div>
                 <h3 className="font-display text-lg font-bold flex items-center gap-2">
                   <CheckCircle2 className="h-5 w-5 text-primary" /> Pending Tasks
                 </h3>
                 <p className="text-xs text-muted-foreground">Action items for employees</p>
               </div>
+
+              {/* Filter Tabs */}
+              <div className="flex items-center bg-secondary/60 p-1 rounded-xl text-xs">
+                <button
+                  type="button"
+                  onClick={() => setTaskFilterTab("all")}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                    taskFilterTab === "all"
+                      ? "bg-background text-foreground shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  All ({allPendingTasks.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskFilterTab("today")}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                    taskFilterTab === "today"
+                      ? "bg-background text-foreground shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  Today ({todayPendingTasks.length})
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setTaskFilterTab("overdue")}
+                  className={`px-2.5 py-1 rounded-lg font-medium transition-all ${
+                    taskFilterTab === "overdue"
+                      ? "bg-background text-rose-600 dark:text-rose-400 shadow-sm font-semibold"
+                      : "text-muted-foreground hover:text-rose-600"
+                  }`}
+                >
+                  Overdue ({overduePendingTasks.length})
+                </button>
+              </div>
             </div>
 
             <div className="space-y-3">
-              {myPendingTasks.length > 0 ? (
-                myPendingTasks.map((task) => (
-                  <div
-                    key={task.id}
-                    className="flex items-start gap-3 p-3 rounded-xl border border-border hover:bg-secondary/40 transition-colors"
-                  >
-                    <button
-                      onClick={() => handleToggleTask(task.id)}
-                      className="mt-0.5 shrink-0 transition-transform hover:scale-110 active:scale-95 text-muted-foreground hover:text-primary"
-                      aria-label="Mark as done"
+              {displayedPendingTasks.length > 0 ? (
+                displayedPendingTasks.map((task) => {
+                  const dueInfo = getDueInfo(task.dueDate || task.due_date);
+                  return (
+                    <div
+                      key={task.id}
+                      className="group flex items-start gap-3 p-3 rounded-2xl border border-border hover:bg-secondary/40 transition-all hover:shadow-sm"
                     >
-                      <Circle className="h-5 w-5" />
-                    </button>
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-semibold truncate text-foreground">{task.title}</p>
-                      <p className="text-[10px] text-muted-foreground mt-1 flex items-center gap-2 flex-wrap">
-                        <span className={`font-medium px-1.5 py-0.5 rounded border ${
-                          task.priority === "High" ? "text-red-600 bg-red-50 border-red-100" :
-                          task.priority === "Medium" ? "text-amber-600 bg-amber-50 border-amber-100" :
-                          "text-green-600 bg-green-50 border-green-100"
-                        }`}>
-                          {task.priority}
-                        </span>
-                        <span>Due: {task.dueDate || task.due_date}</span>
-                        {(task.assignee || task.assigned_to) && (
-                          <>
-                            <span className="text-muted-foreground/50">•</span>
-                            <span className="font-medium text-foreground/80">For: {task.assignee || task.assigned_to}</span>
-                          </>
-                        )}
-                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleTask(task.id)}
+                        className="mt-0.5 shrink-0 transition-transform hover:scale-125 active:scale-90 text-muted-foreground hover:text-emerald-600"
+                        title="Click to mark as done"
+                        aria-label="Mark as done"
+                      >
+                        <Circle className="h-5 w-5" />
+                      </button>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-semibold text-foreground group-hover:text-primary transition-colors line-clamp-1">
+                          {task.title}
+                        </p>
+                        <div className="text-[11px] text-muted-foreground mt-1.5 flex items-center gap-2 flex-wrap">
+                          <span
+                            className={`font-semibold px-2 py-0.5 rounded-md border text-[10px] ${
+                              task.priority === "High"
+                                ? "text-rose-700 bg-rose-50 border-rose-200 dark:bg-rose-950/40 dark:border-rose-900/50 dark:text-rose-300"
+                                : task.priority === "Medium"
+                                ? "text-amber-700 bg-amber-50 border-amber-200 dark:bg-amber-950/40 dark:border-amber-900/50 dark:text-amber-300"
+                                : "text-emerald-700 bg-emerald-50 border-emerald-200 dark:bg-emerald-950/40 dark:border-emerald-900/50 dark:text-emerald-300"
+                            }`}
+                          >
+                            {task.priority || "Medium"}
+                          </span>
+
+                          <span
+                            className={`inline-flex items-center gap-1 text-[10px] font-medium px-2 py-0.5 rounded-md border ${dueInfo.badgeColor}`}
+                          >
+                            {dueInfo.isToday && <Clock className="h-3 w-3 text-amber-600" />}
+                            {dueInfo.isOverdue && <AlertCircle className="h-3 w-3 text-rose-600" />}
+                            {dueInfo.label}
+                          </span>
+
+                          {(task.assignee || task.assigned_to) && (
+                            <span className="text-muted-foreground font-medium text-[11px] bg-secondary/50 px-2 py-0.5 rounded-md">
+                              For: <strong className="text-foreground">{task.assignee || task.assigned_to}</strong>
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               ) : (
-                <div className="py-8 text-center bg-secondary/20 rounded-xl border border-dashed border-border">
-                  <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2 opacity-50" />
-                  <p className="text-sm font-semibold text-foreground">All caught up!</p>
+                <div className="py-10 text-center bg-secondary/20 rounded-2xl border border-dashed border-border">
+                  <CheckCircle2 className="h-8 w-8 text-emerald-500 mx-auto mb-2 opacity-60" />
+                  <p className="text-sm font-semibold text-foreground">
+                    {taskFilterTab === "today" ? "No tasks due today!" : taskFilterTab === "overdue" ? "No overdue tasks!" : "All caught up!"}
+                  </p>
                   <p className="text-xs text-muted-foreground mt-1">
-                    No pending tasks found for employees.
+                    {taskFilterTab === "today" ? "All tasks for today are completed." : "No pending action items found."}
                   </p>
                 </div>
               )}
             </div>
           </div>
-          {myPendingTasks.length > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="w-full mt-4 text-xs font-semibold rounded-xl text-primary hover:text-primary-foreground hover:bg-primary"
-              asChild
-            >
-              <Link to="/crm/tasks" className="flex items-center justify-center gap-1">
-                View all tasks <ChevronRight className="h-3 w-3" />
-              </Link>
-            </Button>
-          )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="w-full mt-4 text-xs font-semibold rounded-xl text-primary hover:text-primary-foreground hover:bg-primary"
+            asChild
+          >
+            <Link to="/crm/tasks" className="flex items-center justify-center gap-1">
+              View all tasks <ChevronRight className="h-3 w-3" />
+            </Link>
+          </Button>
         </div>
 
         {/* Upcoming Follow-ups */}
