@@ -23,7 +23,24 @@ import { getAuth } from "@/lib/auth";
 
 export const Route = createFileRoute("/crm/reports")({ component: ReportsPage });
 
-const COLORS = ["var(--primary)", "#FF8A33", "#FFA666", "#FFC299", "#FFDEC0", "#FFC8A2"];
+const COLORS = [
+  "var(--primary)",
+  "color-mix(in oklch, var(--primary) 85%, var(--background))",
+  "color-mix(in oklch, var(--primary) 70%, var(--background))",
+  "color-mix(in oklch, var(--primary) 55%, var(--background))",
+  "color-mix(in oklch, var(--primary) 40%, var(--background))",
+  "color-mix(in oklch, var(--primary) 25%, var(--background))"
+];
+
+const SOURCE_COLORS = [
+  "#3b82f6", // vibrant blue
+  "#8b5cf6", // purple
+  "#ec4899", // pink
+  "#f59e0b", // amber
+  "#10b981", // emerald
+  "#06b6d4", // cyan
+  "#64748b", // slate
+];
 
 function KpiCard({
   label,
@@ -122,7 +139,7 @@ function ReportsPage() {
   // Compute destData
   const destMap = new Map();
   bookingsList.forEach((b) => {
-    const destRaw = b.details?.destination || b.destination || "Other";
+    const destRaw = b.details?.destination || b.package?.split(" ")[0] || b.destination || b.supplier || "Other";
     const dest = destRaw.trim().toUpperCase();
     destMap.set(dest, (destMap.get(dest) || 0) + (b.amount || 0));
   });
@@ -324,7 +341,7 @@ function ReportsPage() {
                     label={false}
                   >
                     {sourceData.map((_, i) => (
-                      <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                      <Cell key={i} fill={SOURCE_COLORS[i % SOURCE_COLORS.length]} />
                     ))}
                   </Pie>
                   <Tooltip />
@@ -336,7 +353,7 @@ function ReportsPage() {
                 <div key={s.name} className="flex items-center gap-3">
                   <span
                     className="h-2.5 w-2.5 shrink-0 rounded-full"
-                    style={{ background: COLORS[i] }}
+                    style={{ background: SOURCE_COLORS[i % SOURCE_COLORS.length] }}
                   />
                   <span className="flex-1 text-sm">{s.name}</span>
                   <span className="text-sm font-semibold">{s.value}%</span>
