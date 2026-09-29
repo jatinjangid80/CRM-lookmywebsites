@@ -470,6 +470,29 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       delete newRow.employee_name;
     }
 
+    if (tableName === "it_support_tickets") {
+      const isUuid = typeof newRow.id === "string" && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(newRow.id);
+      if (!isUuid && !newRow.id) {
+        newRow.id = crypto.randomUUID();
+      }
+      if (newRow.ticketNumber !== undefined) { newRow.ticket_number = newRow.ticketNumber; delete newRow.ticketNumber; }
+      if (newRow.requesterName !== undefined) { newRow.requester_name = newRow.requesterName; delete newRow.requesterName; }
+      if (newRow.requesterRole !== undefined) { newRow.requester_role = newRow.requesterRole; delete newRow.requesterRole; }
+      if (newRow.requesterEmail !== undefined) { newRow.requester_email = newRow.requesterEmail; delete newRow.requesterEmail; }
+      if (newRow.requesterPhone !== undefined) { newRow.requester_phone = newRow.requesterPhone; delete newRow.requesterPhone; }
+      if (newRow.relatedReference !== undefined) { newRow.related_reference = newRow.relatedReference; delete newRow.relatedReference; }
+      if (newRow.stepsToReproduce !== undefined) { newRow.steps_to_reproduce = newRow.stepsToReproduce; delete newRow.stepsToReproduce; }
+      if (newRow.screenshotUrl !== undefined) { newRow.screenshot_url = newRow.screenshotUrl; delete newRow.screenshotUrl; }
+      if (newRow.itAssignee !== undefined) { newRow.it_assignee = newRow.itAssignee; delete newRow.itAssignee; }
+      if (newRow.itResolutionNotes !== undefined) { newRow.it_resolution_notes = newRow.itResolutionNotes; delete newRow.itResolutionNotes; }
+      if (newRow.resolutionDate !== undefined) { newRow.resolution_date = newRow.resolutionDate; delete newRow.resolutionDate; }
+      if (newRow.feedbackRating !== undefined) { newRow.feedback_rating = newRow.feedbackRating; delete newRow.feedbackRating; }
+      if (newRow.feedbackText !== undefined) { newRow.feedback_text = newRow.feedbackText; delete newRow.feedbackText; }
+      if (newRow.feedbackSubmittedAt !== undefined) { newRow.feedback_submitted_at = newRow.feedbackSubmittedAt; delete newRow.feedbackSubmittedAt; }
+      if (newRow.createdAt !== undefined) { newRow.created_at = newRow.createdAt; delete newRow.createdAt; }
+      if (newRow.updatedAt !== undefined) { newRow.updated_at = newRow.updatedAt; delete newRow.updatedAt; }
+    }
+
     return newRow;
   }
 
@@ -840,6 +863,31 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
       } catch (e) { }
     }
 
+    if (tableName === "it_support_tickets") {
+      if (newRow.ticket_number && !newRow.ticketNumber) newRow.ticketNumber = newRow.ticket_number;
+      if (newRow.requester_name && !newRow.requesterName) newRow.requesterName = newRow.requester_name;
+      if (newRow.requester_role && !newRow.requesterRole) newRow.requesterRole = newRow.requester_role;
+      if (newRow.requester_email && !newRow.requesterEmail) newRow.requesterEmail = newRow.requester_email;
+      if (newRow.requester_phone && !newRow.requesterPhone) newRow.requesterPhone = newRow.requester_phone;
+      if (newRow.related_reference && !newRow.relatedReference) newRow.relatedReference = newRow.related_reference;
+      if (newRow.steps_to_reproduce && !newRow.stepsToReproduce) newRow.stepsToReproduce = newRow.steps_to_reproduce;
+      if (newRow.screenshot_url && !newRow.screenshotUrl) newRow.screenshotUrl = newRow.screenshot_url;
+      if (newRow.it_assignee && !newRow.itAssignee) newRow.itAssignee = newRow.it_assignee;
+      if (newRow.it_resolution_notes && !newRow.itResolutionNotes) newRow.itResolutionNotes = newRow.it_resolution_notes;
+      if (newRow.feedback_rating !== undefined && newRow.feedbackRating === undefined) newRow.feedbackRating = newRow.feedback_rating;
+      if (newRow.feedback_text !== undefined && newRow.feedbackText === undefined) newRow.feedbackText = newRow.feedback_text;
+      if (newRow.feedback_submitted_at !== undefined && newRow.feedbackSubmittedAt === undefined) newRow.feedbackSubmittedAt = newRow.feedback_submitted_at;
+      if (newRow.created_at && !newRow.createdAt) newRow.createdAt = newRow.created_at;
+      if (newRow.updated_at && !newRow.updatedAt) newRow.updatedAt = newRow.updated_at;
+      if (typeof newRow.comments === "string") {
+        try {
+          newRow.comments = JSON.parse(newRow.comments);
+        } catch {
+          newRow.comments = [];
+        }
+      }
+    }
+
     return newRow;
   }
 
@@ -890,6 +938,32 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
             });
           }
         }
+
+        // Fallback for it_support_tickets INSERT
+        if (tableName === "it_support_tickets" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          const fallbackRows = toInsert.map((row: any) => {
+            const safe = { ...row };
+            delete safe.feedback_rating;
+            delete safe.feedback_text;
+            delete safe.feedback_submitted_at;
+            return safe;
+          });
+          const { error: err2, data: data2 } = await supabase.from(tableName).insert(fallbackRows).select();
+          if (err2) {
+            console.error(`[${tableName}] Fallback INSERT also failed:`, err2.message);
+          } else if (data2 && data2.length > 0) {
+            console.log(`[${tableName}] Fallback INSERT success:`, data2);
+            const unsanitized = data2.map(unSanitizeRow);
+            setData((prev: any) => {
+              const updated = prev.map((item: any) => {
+                const saved = unsanitized.find((u: any) => u.id === item.id);
+                return saved ? { ...item, ...saved } : item;
+              });
+              lastSyncedData.current = updated;
+              return updated;
+            });
+          }
+        }
       } else if (data && data.length > 0) {
         console.log(`[${tableName}] INSERT success:`, data);
         const unsanitized = data.map(unSanitizeRow);
@@ -929,6 +1003,16 @@ export function useSupabaseTable<T extends Array<any>>(tableName: string, initia
           for (const col of NEW_CUST_COLS) delete safe[col];
           const { error: err2 } = await supabase.from(tableName).update(safe).eq("id", item.id);
           if (err2) console.error("[customers] Fallback UPDATE failed:", err2.message);
+        }
+
+        // Fallback for it_support_tickets UPDATE
+        if (tableName === "it_support_tickets" && (error.message?.includes("column") || error.code === "42703" || error.code === "PGRST204")) {
+          const safe = { ...item };
+          delete safe.feedback_rating;
+          delete safe.feedback_text;
+          delete safe.feedback_submitted_at;
+          const { error: err2 } = await supabase.from(tableName).update(safe).eq("id", item.id);
+          if (err2) console.error("[it_support_tickets] Fallback UPDATE failed:", err2.message);
         }
 
       } else {

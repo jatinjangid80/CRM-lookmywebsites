@@ -25,6 +25,15 @@ import {
   CommandItem,
 } from "@/components/ui/command";
 
+function cleanName(val: string | null | undefined): string {
+  if (!val) return "";
+  let str = String(val);
+  if (str.includes("---META---")) {
+    str = str.split("---META---")[0];
+  }
+  return str.trim();
+}
+
 export function CommandPalette() {
   const [open, setOpen] = React.useState(false);
   const [query, setQuery] = React.useState("");
@@ -202,58 +211,73 @@ export function CommandPalette() {
           {/* Leads */}
           {leads.length > 0 && (
             <CommandGroup heading="Leads">
-              {leads.map((l) => (
-                <CommandItem
-                  key={l.id}
-                  onSelect={() => runCommand(() => navigate({ to: "/crm/leads" }))}
-                  className="cursor-pointer"
-                >
-                  <Users className="mr-2 h-4 w-4 text-blue-500" />
-                  <span>
-                    {l.name}{" "}
-                    <span className="text-xs text-muted-foreground">
-                      ({l.destination || "Inquiry"})
+              {leads.map((l) => {
+                const displayName = cleanName(l.name);
+                return (
+                  <CommandItem
+                    key={l.id}
+                    value={`${displayName} ${l.destination || ""}`}
+                    onSelect={() => runCommand(() => navigate({ to: "/crm/leads" }))}
+                    className="cursor-pointer"
+                  >
+                    <Users className="mr-2 h-4 w-4 text-blue-500 shrink-0" />
+                    <span className="truncate">
+                      {displayName}{" "}
+                      <span className="text-xs text-muted-foreground">
+                        ({l.destination || "Inquiry"})
+                      </span>
                     </span>
-                  </span>
-                </CommandItem>
-              ))}
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
 
           {/* Bookings */}
           {bookings.length > 0 && (
             <CommandGroup heading="Bookings">
-              {bookings.map((b) => (
-                <CommandItem
-                  key={b.id}
-                  onSelect={() => runCommand(() => navigate({ to: "/crm/bookings" }))}
-                  className="cursor-pointer"
-                >
-                  <CalendarCheck className="mr-2 h-4 w-4 text-emerald-500" />
-                  <span>
-                    {b.customer}{" "}
-                    <span className="text-xs text-muted-foreground">({b.package})</span>
-                  </span>
-                </CommandItem>
-              ))}
+              {bookings.map((b) => {
+                const displayCustomer = cleanName(b.customer);
+                return (
+                  <CommandItem
+                    key={b.id}
+                    value={`${displayCustomer} ${b.package || ""}`}
+                    onSelect={() => runCommand(() => navigate({ to: "/crm/bookings" }))}
+                    className="cursor-pointer"
+                  >
+                    <CalendarCheck className="mr-2 h-4 w-4 text-emerald-500 shrink-0" />
+                    <span className="truncate">
+                      {displayCustomer}{" "}
+                      <span className="text-xs text-muted-foreground">({b.package})</span>
+                    </span>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
 
           {/* Customers */}
           {customers.length > 0 && (
             <CommandGroup heading="Customers">
-              {customers.map((c) => (
-                <CommandItem
-                  key={c.id}
-                  onSelect={() => runCommand(() => navigate({ to: "/crm/customers" }))}
-                  className="cursor-pointer"
-                >
-                  <User className="mr-2 h-4 w-4 text-indigo-500" />
-                  <span>
-                    {c.name} <span className="text-xs text-muted-foreground">({c.phone})</span>
-                  </span>
-                </CommandItem>
-              ))}
+              {customers.map((c) => {
+                const displayName = cleanName(c.name);
+                return (
+                  <CommandItem
+                    key={c.id}
+                    value={`${displayName} ${c.phone || ""}`}
+                    onSelect={() => runCommand(() => navigate({ to: "/crm/customers" }))}
+                    className="cursor-pointer"
+                  >
+                    <User className="mr-2 h-4 w-4 text-indigo-500 shrink-0" />
+                    <span className="truncate">
+                      {displayName}{" "}
+                      {c.phone && (
+                        <span className="text-xs text-muted-foreground">({c.phone})</span>
+                      )}
+                    </span>
+                  </CommandItem>
+                );
+              })}
             </CommandGroup>
           )}
 

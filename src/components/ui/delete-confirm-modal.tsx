@@ -47,7 +47,7 @@ export function DeleteConfirmModal({
               onConfirm();
               onClose();
             }}
-            className="rounded-full bg-primary hover:bg-primary/90 text-primary-foreground font-medium h-10 px-6 m-0 shadow-sm"
+            className="rounded-full bg-rose-600 hover:bg-rose-700 text-white font-medium h-10 px-6 m-0 shadow-sm"
           >
             Delete
           </AlertDialogAction>

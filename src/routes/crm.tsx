@@ -43,6 +43,7 @@ import {
   Wallet,
   Car,
   Share2,
+  LifeBuoy,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -112,72 +113,65 @@ const FULL_NAV: NavItem[] = [
   { to: "/crm/personal-expenses", label: "Personal Expenses", icon: Wallet },
   { to: "/crm/marketing", label: "Marketing", icon: Megaphone },
   { to: "/crm/settings", label: "Settings", icon: Settings },
+  { to: "/crm/help", label: "Help & Support", icon: LifeBuoy },
 ];
 
 function getNavForUser(auth: AuthUser): NavItem[] {
   const name = auth.name.toLowerCase();
+
+  let userNav: NavItem[] = [];
 
   // IMPORTANT: We check specific names FIRST because some users (like Suman/HR) 
   // might have an "admin" role in the database for permissions (like Edit/Delete),
   // but we still want to strictly limit which tabs they can see.
 
   if (name.includes("pushplata")) {
-    return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Marketing"
+    userNav = FULL_NAV.filter((n) => [
+      "Leads", "Quotations", "Tasks", "Customers", "Documents", "Packages", "Accounts", "Attendance", "Vendors", "Marketing", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("deepak")) {
-    return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing", "Vendors"
+  } else if (name.includes("deepak")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Leads", "Quotations", "Tasks", "Visa", "Customers", "Bookings", "Packages", "Attendance", "Accounts", "Marketing", "Vendors", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("suman")) {
-    return FULL_NAV.filter((n) => [
-      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing"
+  } else if (name.includes("suman")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Leads", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("nikita")) {
-    return FULL_NAV.filter((n) => [
-      "Tasks", "Customers", "General Insurance", "Attendance", "Marketing"
+  } else if (name.includes("nikita")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Tasks", "Customers", "General Insurance", "Attendance", "Marketing", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("aman")) {
-    return FULL_NAV.filter((n) => [
-      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing"
+  } else if (name.includes("aman")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Employees", "Tasks", "Customers", "Bookings", "General Insurance", "Attendance", "Accounts", "Vendors", "Documents", "Marketing", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("bhumika")) {
-    return FULL_NAV.filter((n) => [
-      "Leads", "Customers", "Tasks", "Bookings", "Attendance", "Vendors", "Quotations"
+  } else if (name.includes("bhumika")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Leads", "Customers", "Tasks", "Bookings", "Attendance", "Vendors", "Quotations", "Help & Support"
     ].includes(n.label));
-  }
-
-  if (name.includes("bhavya")) {
-    return FULL_NAV.filter((n) => [
-      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Taxi Booking", "Attendance", "Vendors", "Marketing"
+  } else if (name.includes("bhavya")) {
+    userNav = FULL_NAV.filter((n) => [
+      "Leads", "Quotations", "Tasks", "Customers", "Bookings", "Documents", "Packages", "Taxi Booking", "Attendance", "Vendors", "Marketing", "Help & Support"
     ].includes(n.label));
+  } else if (name.includes("jatin")) {
+    userNav = FULL_NAV;
+  } else if (auth.role === "admin") {
+    // Pure Admin gives full access
+    userNav = FULL_NAV;
+  } else if (auth.role === "manager") {
+    userNav = FULL_NAV.filter((n) => n.label !== "Settings");
+  } else {
+    // Default for other employees
+    userNav = FULL_NAV.filter((n) => !["Dashboard", "Employees", "Settings", "Payments", "Personal Expenses"].includes(n.label));
   }
 
-  if (name.includes("jatin")) {
-    return FULL_NAV;
+  // Guarantee that Help & Support is always available to EVERY team member
+  if (!userNav.some((n) => n.to === "/crm/help")) {
+    const helpItem = FULL_NAV.find((n) => n.to === "/crm/help");
+    if (helpItem) userNav.push(helpItem);
   }
 
-  // After name checks, if they are a pure Admin, give them full access to everything.
-  if (auth.role === "admin") {
-    return FULL_NAV;
-  }
-
-  if (auth.role === "manager") {
-    return FULL_NAV.filter((n) => n.label !== "Settings");
-  }
-
-  // Default for other employees
-  return FULL_NAV.filter((n) => !["Dashboard", "Employees", "Settings", "Payments", "Personal Expenses"].includes(n.label));
+  return userNav;
 }
 
 function CrmLayout() {
@@ -261,7 +255,7 @@ function CrmLayout() {
         role: auth.role === "admin" ? "HR & Admin Manager" : "Travel Consultant",
         email:
           auth.role === "admin" ? "insurancesolutions58@gmail.com" : "employee@lookmyholidays.in",
-        phone: "+91 9887155570",
+        phone: "+91 73400 98982",
         joinDate: "2022-01-15",
         status: "Active",
         leads: 0,
@@ -407,14 +401,22 @@ function CrmLayout() {
       <div className="flex min-w-0 flex-1 flex-col print:block">
         {/* Topbar */}
         <header className="print:hidden sticky top-0 z-40 flex h-16 items-center gap-4 border-b border-border bg-background/80 px-4 backdrop-blur sm:px-8">
-          {isAdmin && (
-            <div className="flex-1">
-              <CommandPalette />
-            </div>
-          )}
+          <div className="flex-1">
+            <CommandPalette />
+          </div>
 
           {/* Right side items */}
-          <div className="ml-auto flex items-center gap-4">
+          <div className="ml-auto flex items-center gap-3">
+            {/* Quick IT Support / Help Desk button */}
+            <Link
+              to="/crm/help"
+              className="flex items-center gap-1.5 rounded-full border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary hover:bg-primary/20 hover:scale-[1.02] transition-all shadow-sm"
+              title="IT Help Desk — Raise Query / Report Issue"
+            >
+              <LifeBuoy className="h-3.5 w-3.5 animate-spin-slow" />
+              <span className="hidden sm:inline">IT Help Desk</span>
+            </Link>
+
             {/* Interactive User profile block */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -537,6 +539,13 @@ function CrmLayout() {
                   >
                     <Settings className="h-4 w-4 text-slate-500" />
                     <span>Settings</span>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    onClick={() => navigate({ to: "/crm/help" })}
+                    className="cursor-pointer gap-2.5 py-2.5 text-sm rounded-lg col-span-2 bg-primary/5 text-primary hover:bg-primary/10"
+                  >
+                    <LifeBuoy className="h-4 w-4 text-primary" />
+                    <span className="font-semibold">IT Help Desk & Tickets</span>
                   </DropdownMenuItem>
                 </div>
 

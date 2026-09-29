@@ -31,6 +31,7 @@ import { Route as CrmInsuranceLeadsRouteImport } from './routes/crm.insurance-le
 import { Route as CrmInsuranceEndorsementRouteImport } from './routes/crm.insurance-endorsement'
 import { Route as CrmInsuranceClaimsRouteImport } from './routes/crm.insurance-claims'
 import { Route as CrmInsuranceRouteImport } from './routes/crm.insurance'
+import { Route as CrmHelpRouteImport } from './routes/crm.help'
 import { Route as CrmEmployeesRouteImport } from './routes/crm.employees'
 import { Route as CrmDocumentsRouteImport } from './routes/crm.documents'
 import { Route as CrmCustomersRouteImport } from './routes/crm.customers'
@@ -158,6 +159,11 @@ const CrmInsuranceRoute = CrmInsuranceRouteImport.update({
   path: '/insurance',
   getParentRoute: () => CrmRoute,
 } as any)
+const CrmHelpRoute = CrmHelpRouteImport.update({
+  id: '/help',
+  path: '/help',
+  getParentRoute: () => CrmRoute,
+} as any)
 const CrmEmployeesRoute = CrmEmployeesRouteImport.update({
   id: '/employees',
   path: '/employees',
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/help': typeof CrmHelpRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
@@ -291,6 +298,7 @@ export interface FileRoutesByTo {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/help': typeof CrmHelpRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
@@ -332,6 +340,7 @@ export interface FileRoutesById {
   '/crm/customers': typeof CrmCustomersRoute
   '/crm/documents': typeof CrmDocumentsRoute
   '/crm/employees': typeof CrmEmployeesRoute
+  '/crm/help': typeof CrmHelpRoute
   '/crm/insurance': typeof CrmInsuranceRoute
   '/crm/insurance-claims': typeof CrmInsuranceClaimsRoute
   '/crm/insurance-endorsement': typeof CrmInsuranceEndorsementRoute
@@ -374,6 +383,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/help'
     | '/crm/insurance'
     | '/crm/insurance-claims'
     | '/crm/insurance-endorsement'
@@ -413,6 +423,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/help'
     | '/crm/insurance'
     | '/crm/insurance-claims'
     | '/crm/insurance-endorsement'
@@ -453,6 +464,7 @@ export interface FileRouteTypes {
     | '/crm/customers'
     | '/crm/documents'
     | '/crm/employees'
+    | '/crm/help'
     | '/crm/insurance'
     | '/crm/insurance-claims'
     | '/crm/insurance-endorsement'
@@ -645,6 +657,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CrmInsuranceRouteImport
       parentRoute: typeof CrmRoute
     }
+    '/crm/help': {
+      id: '/crm/help'
+      path: '/help'
+      fullPath: '/crm/help'
+      preLoaderRoute: typeof CrmHelpRouteImport
+      parentRoute: typeof CrmRoute
+    }
     '/crm/employees': {
       id: '/crm/employees'
       path: '/employees'
@@ -768,6 +787,7 @@ interface CrmRouteChildren {
   CrmCustomersRoute: typeof CrmCustomersRoute
   CrmDocumentsRoute: typeof CrmDocumentsRoute
   CrmEmployeesRoute: typeof CrmEmployeesRoute
+  CrmHelpRoute: typeof CrmHelpRoute
   CrmInsuranceRoute: typeof CrmInsuranceRoute
   CrmInsuranceClaimsRoute: typeof CrmInsuranceClaimsRoute
   CrmInsuranceEndorsementRoute: typeof CrmInsuranceEndorsementRoute
@@ -806,6 +826,7 @@ const CrmRouteChildren: CrmRouteChildren = {
   CrmCustomersRoute: CrmCustomersRoute,
   CrmDocumentsRoute: CrmDocumentsRoute,
   CrmEmployeesRoute: CrmEmployeesRoute,
+  CrmHelpRoute: CrmHelpRoute,
   CrmInsuranceRoute: CrmInsuranceRoute,
   CrmInsuranceClaimsRoute: CrmInsuranceClaimsRoute,
   CrmInsuranceEndorsementRoute: CrmInsuranceEndorsementRoute,
